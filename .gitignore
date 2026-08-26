@@ -1,0 +1,5 @@
+node_modules/
+*.crdownload
+deploy/
+app/probe-*.html
+app/*.tmp

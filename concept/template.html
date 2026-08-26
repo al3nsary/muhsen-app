@@ -1,0 +1,1240 @@
+<title>تصوّر تطبيق مُحسن</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&family=Readex+Pro:wght@300;400;500;600&display=swap">
+
+<style>
+  :root{
+    --green:#14593F; --green-deep:#0B3527; --green-live:#0B8A4B; --gold:#A8875A;
+    --ink:#101914; --slate:#5A6C63; --sand:#F7F4ED;
+    --amber:#B8791A; --danger:#C0392B;
+
+    --page-bg:var(--sand); --page-fg:var(--ink); --card:#FFFFFF;
+    --card-brd:rgba(20,89,63,.08); --muted:var(--slate); --rule:rgba(20,89,63,.13);
+    --accent:var(--green);
+    --shadow:inset 0 1px 0 #fff, 0 1px 2px rgba(11,53,39,.05), 0 22px 44px -26px rgba(11,53,39,.32);
+    --sans:"Almarai","Segoe UI",system-ui,sans-serif;
+    --display:"Readex Pro","Almarai",system-ui,sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --page-bg:#08110D; --page-fg:#E9EFEA; --card:rgba(22,36,30,.62); --card-brd:rgba(120,170,145,.18);
+      --muted:#93A79B; --rule:rgba(150,200,175,.14); --accent:#66C795;
+      --shadow:0 2px 6px rgba(0,0,0,.4), 0 24px 50px -24px rgba(0,0,0,.8);
+    }
+  }
+  :root[data-theme="dark"]{
+    --page-bg:#08110D; --page-fg:#E9EFEA; --card:rgba(22,36,30,.62); --card-brd:rgba(120,170,145,.18);
+    --muted:#93A79B; --rule:rgba(150,200,175,.14); --accent:#66C795;
+    --shadow:0 2px 6px rgba(0,0,0,.4), 0 24px 50px -24px rgba(0,0,0,.8);
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; direction:rtl; background:var(--page-bg); color:var(--page-fg);
+    font-family:var(--sans); font-size:16px; line-height:1.85; -webkit-font-smoothing:antialiased}
+  h1,h2,h3,h4,h5{font-family:var(--display); font-weight:500; line-height:1.35; text-wrap:balance; margin:0}
+  p{margin:0}
+  button{font:inherit; color:inherit; border:0; background:none; cursor:pointer}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:8px}
+
+  .wrap{max-width:1280px; margin-inline:auto; padding-inline:24px}
+  section{padding-block:80px; border-top:1px solid var(--rule)}
+  .eyebrow{font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted);
+    font-weight:700; display:flex; align-items:center; gap:10px}
+  .eyebrow::before{content:""; width:22px; height:22px; border-radius:50%; border:1.5px solid var(--gold);
+    flex:none; background:radial-gradient(circle, var(--gold) 0 2.5px, transparent 3px)}
+  .sec-head{display:flex; flex-direction:column; gap:14px; margin-bottom:42px; max-width:66ch}
+  .sec-head h2{font-size:clamp(27px,3.3vw,38px)}
+  .lede{color:var(--muted); font-size:17px; line-height:1.9}
+
+  .ic{width:22px; height:22px; flex:none; fill:none; stroke:currentColor;
+    stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; display:block}
+  .ic.solid{fill:currentColor; stroke:none}
+  .ic.s16{width:16px; height:16px; stroke-width:1.9}
+  .ic.s14{width:14px; height:14px; stroke-width:2}
+  .ic.s26{width:26px; height:26px}
+
+  /* ===== hero ===== */
+  .hero{position:relative; overflow:hidden; border-top:0; color:#F2F7F3}
+  .hero .bg{position:absolute; inset:0; background-image:url({{pilgrims_w}}); background-size:cover;
+    background-position:center; transform:scale(1.08); filter:saturate(.85)}
+  .hero .veil{position:absolute; inset:0;
+    background:linear-gradient(155deg, rgba(11,53,39,.94) 0%, rgba(20,89,63,.86) 50%, rgba(24,111,81,.78) 100%)}
+  .hero .topo{position:absolute; inset:0; width:100%; height:100%}
+  .hero-in{position:relative; display:grid; grid-template-columns:1.12fr .88fr; gap:54px;
+    align-items:center; padding-block:96px}
+  .lockup{display:flex; align-items:center; gap:16px; margin-bottom:30px}
+  .lockup-txt{display:flex; flex-direction:column; line-height:1.15}
+  .lockup-txt b{font-family:var(--display); font-size:22px; letter-spacing:.18em; font-weight:500}
+  .lockup-txt span{font-size:19px; color:#DFCFAE}
+  .hero h1{font-size:clamp(32px,4.5vw,52px); color:#fff; margin-bottom:18px; font-weight:400}
+  .hero h1 em{font-style:normal; color:#DFCFAE}
+  .hero p{color:#CBDCD1; font-size:18px; max-width:52ch}
+  .hero-meta{display:flex; gap:16px; margin-top:38px; flex-wrap:wrap}
+  .hero-meta div{display:flex; flex-direction:column; line-height:1.4; padding:13px 20px; background:rgba(255,255,255,.07); border:1px solid rgba(216,198,164,.32); border-radius:16px}
+  .hero-meta b{font-family:var(--display); font-size:24px; color:#fff; font-variant-numeric:tabular-nums; font-weight:500}
+  .hero-meta span{font-size:12.5px; color:#B4CBBD}
+
+  .fence{position:relative; aspect-ratio:1; max-width:350px; margin-inline:auto; display:grid; place-items:center}
+  .fence i{position:absolute; inset:0; border-radius:50%; border:1px solid rgba(223,207,174,.3)}
+  .fence i:nth-child(2){inset:13%; border-color:rgba(223,207,174,.44)}
+  .fence i:nth-child(3){inset:26%; border-color:rgba(223,207,174,.62)}
+  .fence i:nth-child(4){inset:39%; background:rgba(11,138,75,.24); border-color:rgba(127,211,166,.85);}
+  .pulse{position:absolute; inset:39%; border-radius:50%; border:1.5px solid #7FD3A6; animation:pulse 3.4s ease-out infinite}
+  @keyframes pulse{0%{transform:scale(1);opacity:.85} 70%{transform:scale(1.62);opacity:0} 100%{opacity:0}}
+  .fence-core{position:relative; text-align:center; z-index:2}
+  .fence-core b{display:block; font-family:var(--display); font-size:35px; color:#fff;
+    font-variant-numeric:tabular-nums; letter-spacing:.04em; font-weight:500}
+  .fence-core span{font-size:12.5px; color:#B4CBBD}
+  @media (prefers-reduced-motion: reduce){.pulse{animation:none}}
+
+  .grid{display:grid; gap:22px}
+  .g2{grid-template-columns:repeat(2,1fr)} .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .card{background:var(--card); border:1px solid var(--card-brd); border-radius:22px; padding:28px; box-shadow:var(--shadow)}
+  .card h3{font-size:18px; margin-bottom:8px}
+  .card p{color:var(--muted); font-size:15px}
+
+  .swatch{border-radius:20px; overflow:hidden; background:var(--card); border:1px solid var(--card-brd); box-shadow:var(--shadow)}
+  .swatch .chip{height:100px}
+  .swatch .meta{display:flex; padding:15px 2px; border-radius:20px; background:#fff; box-shadow:inset 0 1px 0 #fff, 0 1px 2px rgba(11,53,39,.05), 0 18px 34px -22px rgba(11,53,39,.3)}
+  .swatch b{display:block; font-size:15px}
+  .swatch code{font-size:12.5px; color:var(--muted); font-family:var(--sans); letter-spacing:.05em}
+  .swatch small{display:block; color:var(--muted); font-size:13px; margin-top:4px; line-height:1.6}
+
+  /* ===== PHONE ===== */
+  .board{display:flex; gap:44px; overflow-x:auto; padding:12px 4px 34px; scroll-snap-type:x proximity}
+  .board::-webkit-scrollbar{height:8px}
+  .board::-webkit-scrollbar-thumb{background:var(--rule); border-radius:99px}
+  .slot{flex:none; width:414px; scroll-snap-align:start}
+  .slot > h4{font-size:18px; margin-bottom:5px}
+  .slot > p{font-size:14.5px; color:var(--muted); margin-bottom:22px; min-height:52px; line-height:1.7}
+
+  .phone{width:414px; height:868px; background:#131C18; border-radius:56px; padding:12px;
+    box-shadow:0 2px 8px rgba(11,53,39,.22), 0 44px 72px -32px rgba(11,53,39,.6)}
+  .screen{height:100%; background:#FCFBF8; border-radius:44px; overflow:hidden; position:relative;
+    display:flex; flex-direction:column; color:#0F1A15; font-size:14px; line-height:1.6; font-family:var(--sans)}
+
+  .ground{position:absolute; inset:0; z-index:0}
+  .ground .ph{position:absolute; inset:-14%; background-size:cover; background-position:center; filter:blur(34px) saturate(1.05); opacity:0; transition:opacity .3s}
+  .ground .tint{position:absolute; inset:0; background:#FCFBF8}
+  .ground .topo{position:absolute; inset:0; width:100%; height:100%; opacity:0; transition:opacity .3s}
+
+  body[data-bg="lines"] .ground .topo{opacity:.5}
+  body[data-bg="photo"] .ground .topo{opacity:.8}
+  body[data-bg="photo"] .ground .ph{opacity:.24}
+  body[data-bg="photo"] .ground .tint{
+    background:linear-gradient(180deg, rgba(18,72,51,.3) 0%, rgba(252,251,248,.94) 30%, #FCFBF8 62%)}
+
+  .bgswitch{position:fixed; inset-block-end:22px; inset-inline-start:22px; z-index:60; display:flex; gap:4px;
+    padding:5px; border-radius:99px; background:var(--card); border:1px solid var(--card-brd);
+    box-shadow:0 6px 24px -8px rgba(11,53,39,.4)}
+  .bgswitch button{padding:8px 16px; border-radius:99px; font-size:13px; font-weight:700; color:var(--muted)}
+  .bgswitch button[aria-pressed="true"]{background:linear-gradient(150deg,#1D7452,#0C3A29); color:#fff}
+  @media (max-width:640px){ .bgswitch{inset-block-end:12px; inset-inline-start:12px} .bgswitch button{padding:7px 11px; font-size:12px} }
+
+  .statusbar{display:flex; justify-content:space-between; align-items:center; padding:14px 26px 2px;
+    font-size:15px; font-weight:700; color:#fff; letter-spacing:.02em}
+  .topbar{position:relative; z-index:3; padding-bottom:16px; border-radius:0 0 26px 26px; background:linear-gradient(158deg,#1A6B4C 0%,#12513A 55%,#0D3E2C 100%); box-shadow:0 10px 30px -14px rgba(11,53,39,.6)}
+  .topbar::after{content:""; position:absolute; left:26px; right:26px; bottom:0; height:1px; background:linear-gradient(90deg,transparent,rgba(216,198,164,.55),transparent)}
+  .appbar{color:#fff; padding:6px 18px 4px; display:flex; align-items:center; gap:12px}
+  .appbar .t{flex:1; text-align:center; font-size:17px; font-weight:700}
+  .appbar a{color:#fff; display:grid; place-items:center; width:26px; height:26px}
+
+  .stage{flex:1; position:relative; overflow:hidden}
+  .body{position:relative; z-index:2; height:100%; overflow:hidden; padding:16px 16px 4px;
+    display:flex; flex-direction:column; gap:12px}
+
+  .tabbar{display:flex; justify-content:space-around; align-items:flex-start; padding:12px 6px 17px; position:relative; z-index:3; background:#fff; box-shadow:0 -1px 0 rgba(20,89,63,.07), 0 -16px 34px -26px rgba(11,53,39,.55)}
+  .tabbar a{display:flex; flex-direction:column; align-items:center; gap:5px; font-size:11px;
+    color:#8C9B92; font-weight:400; width:62px}
+  .tabbar a.on{color:#14593F; font-weight:700}
+  .tabbar .wrapi{position:relative}
+  .tabbar a.home{color:#14593F; font-weight:700}
+  .tabbar .hb{width:56px; height:56px; border-radius:50%; color:#fff; display:grid; place-items:center; margin-top:-28px; border:3px solid #fff; background:linear-gradient(150deg,#1D7452,#0C3A29); box-shadow:0 0 0 1px rgba(198,168,111,.5), 0 10px 22px -8px rgba(11,53,39,.75)}
+  .tabbar a.home.on .hb{background:linear-gradient(150deg,#12A05A,#0A7040)}
+  .badge{position:absolute; top:-5px; left:-8px; background:#D0342C; color:#fff; font-size:9.5px;
+    min-width:17px; height:17px; border-radius:99px; display:grid; place-items:center; font-weight:700;
+    padding:0 4px; border:2px solid #fff; line-height:1}
+
+  /* glass card */
+  .c{position:relative; background:#fff; border-radius:20px; padding:15px; box-shadow:inset 0 1px 0 #fff, 0 1px 2px rgba(11,53,39,.05), 0 4px 10px -4px rgba(11,53,39,.07), 0 18px 34px -22px rgba(11,53,39,.3)}
+  .c.p16{padding:16px}
+  .c.gold::before{content:""; position:absolute; top:0; left:22px; right:22px; height:1.5px; border-radius:2px; background:linear-gradient(90deg,transparent,#C6A86F,transparent)}
+  .rowb{display:flex; align-items:center; justify-content:space-between; gap:10px}
+  .muted{color:#6E7E75}
+  .tiny{font-size:12px; line-height:1.65}
+  .lbl{font-size:15px; font-weight:700; margin:4px 2px 0}
+  .lbl::after{content:""; display:block; width:36px; height:2px; border-radius:2px; margin-top:7px; background:linear-gradient(90deg,#C6A86F,rgba(198,168,111,0))}
+  .lbl small{display:block; font-size:12px; font-weight:400; color:#75857B; margin-top:1px}
+
+  .pill{font-size:11.5px; font-weight:700; padding:5px 12px; border-radius:99px; white-space:nowrap; line-height:1.5}
+  .pill.live{background:#E4F2E9; color:#0B6540}
+  .pill.wait{background:#FBF1DE; color:#7F5310}
+  .pill.no{background:#FBE9E7; color:#93261C}
+  .pill.grey{background:#EFF1ED; color:#5A6C63}
+  .pill.gold{background:#F5EDDF; color:#6E5729; box-shadow:inset 0 0 0 1px rgba(198,168,111,.45)}
+
+  .svc{display:flex; gap:12px; align-items:flex-start}
+  .svc .txt{flex:1; min-width:0}
+  .svc h5{font-size:16px; font-weight:700; margin-bottom:4px; font-family:var(--sans)}
+  .svc .sub{font-size:12.5px; color:#6E7E75; line-height:1.65}
+  .svc .loc{display:flex; align-items:center; gap:5px; font-size:12.5px; color:#6E7E75; margin-top:2px}
+  .thumb{width:84px; height:66px; border-radius:14px; flex:none; background-size:cover; background-position:center; box-shadow:0 0 0 1px rgba(198,168,111,.5), 0 6px 16px -7px rgba(11,53,39,.6)}
+  .status-out{margin-top:12px; display:flex}
+
+  .banner{height:132px; border-radius:20px; position:relative; overflow:hidden; background-size:cover; background-position:center; display:flex; align-items:flex-end; padding:14px; box-shadow:0 0 0 1px rgba(198,168,111,.45), 0 16px 32px -18px rgba(11,53,39,.7)}
+  .banner::after{content:""; position:absolute; inset:0; background:linear-gradient(180deg, rgba(11,53,39,0) 30%, rgba(9,43,31,.86))}
+  .banner .bt{position:relative; z-index:2; color:#fff}
+  .banner .bt b{display:block; font-size:15px; font-weight:700}
+  .banner .bt span{display:block; font-size:11.5px; opacity:.85}
+
+  .meta{display:flex; padding:14px 2px; border-radius:18px;
+    background:rgba(255,255,255,.72); border:1px solid rgba(255,255,255,.85);
+    box-shadow:0 10px 26px -16px rgba(11,53,39,.4)}
+  .meta > div{flex:1; text-align:center; padding:0 6px; border-inline-start:1px solid rgba(20,89,63,.1)}
+  .meta > div:first-child{border:0}
+  .meta .k{display:flex; align-items:center; justify-content:center; gap:4px; font-size:10.5px;
+    color:#75857B; margin-bottom:5px}
+  .meta b{display:block; font-size:13px; font-weight:700; font-variant-numeric:tabular-nums; line-height:1.45}
+  .meta b span{display:block; font-weight:400; font-size:11.5px; color:#6E7E75}
+
+  .cta{position:relative; display:flex; align-items:center; gap:14px; border-radius:18px; padding:15px 18px; color:#fff; background:linear-gradient(150deg,#1D7452 0%,#12523A 55%,#0C3A29 100%); box-shadow:inset 0 1px 0 rgba(255,255,255,.18), 0 14px 28px -14px rgba(11,53,39,.9)}
+  .cta.off{background:#EAEDE9; color:#93A099; box-shadow:inset 0 1px 0 #fff, 0 1px 2px rgba(11,53,39,.05)}
+  .cta .txt{flex:1; text-align:center}
+  .cta b{display:block; font-size:15px; font-weight:700}
+  .cta span{display:block; font-size:11.5px; opacity:.82; margin-top:1px}
+
+  .btn{display:flex; align-items:center; justify-content:center; gap:8px; border-radius:14px;
+    padding:14px; font-weight:700; font-size:14px}
+  .btn.primary{background:linear-gradient(150deg,#1D7452,#0C3A29); color:#fff; box-shadow:inset 0 1px 0 rgba(255,255,255,.18), 0 12px 24px -14px rgba(11,53,39,.9)}
+  .btn.ghost{background:#fff; color:#14593F; border:1.5px solid rgba(20,89,63,.35); box-shadow:0 1px 2px rgba(11,53,39,.05)}
+  .btn.line{background:#fff; color:#14593F; box-shadow:inset 0 0 0 1px rgba(198,168,111,.5), 0 1px 2px rgba(11,53,39,.05), 0 10px 22px -16px rgba(11,53,39,.4)}
+  .btn.off{background:#EAEDE9; color:#93A099}
+  .btn.danger{background:#fff; color:#C0392B; border:1.5px solid rgba(192,57,43,.3); box-shadow:0 1px 2px rgba(11,53,39,.05)}
+
+  .prow{display:flex; align-items:center; gap:12px; border-radius:18px; padding:12px 14px; background:#fff; box-shadow:inset 0 1px 0 #fff, 0 1px 2px rgba(11,53,39,.05), 0 14px 28px -22px rgba(11,53,39,.3)}
+  .prow .nm{flex:1; min-width:0}
+  .prow .nm b{display:block; font-size:14px; font-weight:700; line-height:1.5}
+  .prow .nm span{display:block; font-size:11.5px; color:#75857B; line-height:1.5}
+  .av{width:46px; height:46px; border-radius:50%; flex:none; overflow:hidden; box-shadow:0 0 0 1.5px rgba(198,168,111,.55), 0 4px 12px -5px rgba(11,53,39,.45)}
+  .av svg{width:100%; height:100%; display:block}
+  .av.sm{width:34px; height:34px} .av.lg{width:58px; height:58px} .av.xl{width:66px; height:66px}
+  .av.p1{--skin:#EDC59B;--beard:#382D22;--check:#BE4B40;--thobe:#6B6047;--avbg:#E9F1EB}
+  .av.p2{--skin:#D9A87B;--beard:#4A3B2C;--check:transparent;--thobe:#77694D;--avbg:#EDF2EC}
+  .av.p3{--skin:#C68B5E;--beard:#241D16;--check:#BE4B40;--thobe:#5F5641;--avbg:#E8EFE9}
+  .av.p4{--skin:#F1CDA6;--beard:#7A6247;--check:transparent;--thobe:#6E6349;--avbg:#EFF3ED}
+  .av.p5{--skin:#EDC59B;--hijab:#1E1A17;--abaya:#57452F;--avbg:#F0EAE1}
+  .av.p6{--skin:#D9A87B;--hijab:#23322B;--abaya:#4B5A50;--avbg:#EBEFEA}
+  .av.p7{--skin:#C68B5E;--hijab:#2C2320;--abaya:#5E4C39;--avbg:#F0EAE1}
+  .empty-av{width:44px; height:44px; border-radius:50%; border:1.6px dashed rgba(20,89,63,.3); flex:none;
+    display:grid; place-items:center; color:rgba(20,89,63,.4)}
+  .box{width:23px; height:23px; border-radius:8px; border:1.7px solid rgba(20,89,63,.24); flex:none; display:grid; place-items:center; color:#fff; background:#fff}
+  .box.on{background:linear-gradient(150deg,#1D7452,#0C3A29); border-color:transparent; box-shadow:0 4px 10px -4px rgba(11,53,39,.7)}
+  .vdots{color:#A9B6AE; display:grid; place-items:center; width:20px; flex:none}
+  .att{display:flex; align-items:center; gap:6px; color:#0B6540; font-size:12.5px; font-weight:700}
+  .att span{display:block; font-size:10.5px; color:#75857B; font-weight:400}
+
+  .selfield{display:flex; align-items:center; gap:10px; border-radius:16px; padding:14px; color:#75857B; font-size:13.5px; background:#fff; box-shadow:inset 0 0 0 1px rgba(20,89,63,.1), 0 1px 2px rgba(11,53,39,.04)}
+  .foot-note{display:flex; align-items:center; gap:6px; justify-content:center; color:#84948B; font-size:11.5px}
+
+  .sub-row{display:flex; align-items:center; gap:11px; padding:11px 0; border-bottom:1px solid rgba(20,89,63,.08)}
+  .sub-row:last-child{border-bottom:0}
+  .sub-row .t{flex:1; font-size:13.5px}
+  .tick{width:22px; height:22px; border-radius:8px; flex:none; border:1.7px solid rgba(20,89,63,.22); display:grid; place-items:center; color:#fff; background:#fff}
+  .tick.on{background:linear-gradient(150deg,#12A05A,#0A7040); border-color:transparent; box-shadow:0 4px 10px -4px rgba(10,112,64,.7)}
+
+  .meter{height:7px; border-radius:99px; background:rgba(20,89,63,.12); overflow:hidden}
+  .meter i{display:block; height:100%; background:linear-gradient(90deg,#12A05A,#0A7040); border-radius:99px}
+  .kpi{position:relative; border-radius:18px; padding:14px 8px; text-align:center; background:#fff; box-shadow:inset 0 1px 0 #fff, 0 1px 2px rgba(11,53,39,.05), 0 16px 30px -22px rgba(11,53,39,.32)}
+  .kpi b{display:block; font-family:var(--display); font-size:22px; font-variant-numeric:tabular-nums;
+    color:#14593F; line-height:1.3; font-weight:500}
+  .kpi span{font-size:11px; color:#75857B}
+  .kpi::after{content:""; position:absolute; top:0; left:26px; right:26px; height:1.5px; border-radius:2px; background:linear-gradient(90deg,transparent,#C6A86F,transparent)}
+
+  .map{height:136px; border-radius:20px; position:relative; overflow:hidden; box-shadow:0 0 0 1px rgba(198,168,111,.45), 0 16px 30px -20px rgba(11,53,39,.6)}
+  .map svg.base{position:absolute; inset:0; width:100%; height:100%}
+  .ring{position:absolute; inset:50% auto auto 50%; transform:translate(50%,-50%); width:108px; height:108px; border-radius:50%; background:rgba(11,138,75,.14); border:1.6px solid rgba(11,138,75,.55)}
+  .dot{position:absolute; inset:50% auto auto 50%; transform:translate(50%,-50%); width:16px; height:16px;
+    border-radius:50%; background:#14593F; border:3px solid #fff; box-shadow:0 2px 8px rgba(11,53,39,.5)}
+  .scale{position:absolute; bottom:9px; inset-inline-start:11px; background:#fff; border-radius:9px; padding:3px 10px; font-size:10px; color:#5A6C63; font-weight:700; box-shadow:0 2px 8px -3px rgba(11,53,39,.5)}
+
+  .timer{display:flex; justify-content:center; align-items:baseline; gap:9px;
+    font-family:var(--display); font-variant-numeric:tabular-nums}
+  .timer b{font-size:34px; color:#14593F; font-weight:500}
+  .timer i{font-size:28px; color:rgba(20,89,63,.28); font-style:normal}
+  .tunits{display:flex; justify-content:center; gap:40px; font-size:10.5px; color:#75857B; margin-top:1px}
+
+  .note{border-radius:16px; padding:13px 14px; font-size:12.5px; display:flex; gap:10px; align-items:flex-start; line-height:1.7}
+  .note.amber{background:#FCF5E7; color:#7A5512; box-shadow:inset 0 0 0 1px rgba(198,168,111,.4)}
+  .note.green{background:#E9F4EE; color:#0B5A3B; box-shadow:inset 0 0 0 1px rgba(11,138,75,.18)}
+  .note.red{background:#FCEDEB; color:#93261C; box-shadow:inset 0 0 0 1px rgba(192,57,43,.18)}
+  .note .ic{margin-top:2px}
+
+  /* login */
+  .rolegrid{display:grid; grid-template-columns:1fr 1fr; gap:11px}
+  .role{border-radius:20px; padding:17px 12px; text-align:center; cursor:pointer; background:#fff; border:1.5px solid rgba(20,89,63,.1); box-shadow:0 1px 2px rgba(11,53,39,.05); transition:.18s}
+  .role .ci{width:46px; height:46px; border-radius:14px; margin:0 auto 9px; display:grid; place-items:center;
+    background:rgba(20,89,63,.1); color:#14593F}
+  .role b{display:block; font-size:14px; font-weight:700}
+  .role span{display:block; font-size:11px; color:#75857B}
+  .role[aria-pressed="true"]{border-color:#14593F; background:rgba(20,89,63,.1)}
+  .role[aria-pressed="true"] .ci{background:linear-gradient(140deg,#1A6D4D,#0E3F2C); color:#fff}
+  .prow.pick{cursor:pointer; transition:.16s; width:100%; text-align:right}
+  .prow.pick:hover{background:rgba(255,255,255,.92); transform:translateY(-1px)}
+  .prow.pick[aria-pressed="true"]{border-color:#14593F; box-shadow:0 0 0 1.5px #14593F, 0 10px 24px -16px rgba(11,53,39,.5)}
+  .picked-mark{color:#0B8A4B; display:none}
+  .prow.pick[aria-pressed="true"] .picked-mark{display:block}
+
+  /* misc */
+  .flow{display:grid; gap:18px}
+  .step{display:grid; grid-template-columns:48px 1fr; gap:18px; align-items:start}
+  .step .n{width:48px; height:48px; border-radius:50%; border:1.5px solid var(--gold); display:grid;
+    place-items:center; font-family:var(--display); color:var(--accent); font-size:16px; background:var(--card)}
+  .step h4{font-size:16px; margin-bottom:3px}
+  .step p{color:var(--muted); font-size:14.5px}
+
+  table{width:100%; border-collapse:collapse; font-size:14.5px}
+  th,td{text-align:right; padding:14px; border-bottom:1px solid var(--rule); vertical-align:top}
+  th{font-size:12px; letter-spacing:.06em; color:var(--muted); font-weight:700; text-transform:uppercase}
+  tr:last-child td{border-bottom:0}
+  .tbl-wrap{overflow-x:auto; border-radius:22px; background:var(--card); border:1px solid var(--card-brd); box-shadow:var(--shadow)}
+
+  .ask{border-inline-start:3px solid var(--gold); padding:10px 20px; background:var(--card);
+    border-radius:0 16px 16px 0; box-shadow:var(--shadow)}
+  .ask h4{font-size:16px; margin-bottom:4px}
+  .ask p{color:var(--muted); font-size:14.5px}
+
+  footer{padding:48px 0 68px; color:var(--muted); font-size:13.5px; border-top:1px solid var(--rule)}
+  footer a{color:var(--accent)}
+  .credits{font-size:12.5px; line-height:2; margin-top:14px}
+
+  @media (max-width:900px){
+    .hero-in{grid-template-columns:1fr; padding-block:60px; gap:36px}
+    .g4{grid-template-columns:repeat(2,1fr)} .g3,.g2{grid-template-columns:1fr}
+  }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <g id="contour" fill="none" stroke="#A8875A" stroke-width="1">
+    <ellipse cx="330" cy="70" rx="70" ry="190" transform="rotate(-22 330 70)"/>
+    <ellipse cx="330" cy="70" rx="110" ry="240" transform="rotate(-22 330 70)"/>
+    <ellipse cx="330" cy="70" rx="152" ry="292" transform="rotate(-22 330 70)"/>
+    <ellipse cx="330" cy="70" rx="196" ry="346" transform="rotate(-22 330 70)"/>
+    <ellipse cx="330" cy="70" rx="242" ry="402" transform="rotate(-22 330 70)"/>
+    <ellipse cx="330" cy="70" rx="290" ry="460" transform="rotate(-22 330 70)"/>
+    <ellipse cx="330" cy="70" rx="340" ry="520" transform="rotate(-22 330 70)"/>
+    <ellipse cx="330" cy="70" rx="392" ry="582" transform="rotate(-22 330 70)"/>
+    <ellipse cx="330" cy="70" rx="446" ry="646" transform="rotate(-22 330 70)"/>
+    <ellipse cx="330" cy="70" rx="502" ry="712" transform="rotate(-22 330 70)"/>
+  </g>
+
+  <symbol id="av-m" viewBox="0 0 44 44">
+    <rect width="44" height="44" fill="var(--avbg,#E9F1EB)"/>
+    <path d="M1 44c1.5-8.5 9-12 21-12s19.5 3.5 21 12z" fill="var(--thobe,#6B6047)"/>
+    <path d="M22 32l-3 12h6z" fill="#CBBB93"/>
+    <path d="M18.6 25h6.8v7h-6.8z" fill="var(--skin,#EDC59B)" opacity=".82"/>
+    <path d="M9 36V19c0-7.7 5.6-12.6 13-12.6S35 11.3 35 19v17l-4.4 1.2V21.4c0-5.2-3.8-8.6-8.6-8.6s-8.6 3.4-8.6 8.6v15.8z" fill="#FBF9F5"/>
+    <g stroke="var(--check,#BE4B40)" stroke-width=".9" opacity=".7">
+      <path d="M10.2 22h3.4M10.2 26.4h3.4M10.2 30.8h3.4M30.4 22h3.4M30.4 26.4h3.4M30.4 30.8h3.4"/>
+    </g>
+    <ellipse cx="22" cy="21" rx="7.2" ry="8.3" fill="var(--skin,#EDC59B)"/>
+    <path d="M14.9 22.6c.4 5.7 3.4 8.6 7.1 8.6s6.7-2.9 7.1-8.6c-.7 3.3-3.4 4.6-7.1 4.6s-6.4-1.3-7.1-4.6z" fill="var(--beard,#382D22)"/>
+    <path d="M22 5.4c-7 0-12 4.4-12.5 11.3 2.7-3.8 7-5.7 12.5-5.7s9.8 1.9 12.5 5.7C34 9.8 29 5.4 22 5.4z" fill="#FEFDFB"/>
+    <rect x="10.3" y="6" width="23.4" height="4" rx="2" fill="#1D1A16"/>
+    <rect x="10.3" y="10.6" width="23.4" height="2.7" rx="1.35" fill="#2A2620"/>
+  </symbol>
+  <symbol id="av-f" viewBox="0 0 44 44">
+    <rect width="44" height="44" fill="var(--avbg,#F0EAE1)"/>
+    <path d="M1 44c1.5-8 9-11.5 21-11.5S40.5 36 42 44z" fill="var(--abaya,#57452F)"/>
+    <path d="M7 37.5V20.4C7 11.6 13.2 5.2 22 5.2s15 6.4 15 15.2v17.1c-3.7-2.9-8.8-4.4-15-4.4s-11.3 1.5-15 4.4z" fill="var(--hijab,#1E1A17)"/>
+    <ellipse cx="22" cy="21.4" rx="7" ry="8.3" fill="var(--skin,#EDC59B)"/>
+    <path d="M22 9.2c-5.5 0-9.2 3.8-9.2 9 2-2.9 5.3-4.4 9.2-4.4s7.2 1.5 9.2 4.4c0-5.2-3.7-9-9.2-9z" fill="#000" opacity=".45"/>
+    <path d="M22 32.5c5 0 9.4 1.1 12.7 3l-.7 2.7c-3-2-7.2-3-12-3s-9 1-12 3l-.7-2.7c3.3-1.9 7.7-3 12.7-3z" fill="#A8875A" opacity=".55"/>
+  </symbol>
+
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M14.5 5.5L8 12l6.5 6.5"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="5.2" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="18.8" cy="12" r="1.7"/></symbol>
+  <symbol id="i-vdots" viewBox="0 0 24 24"><circle cx="12" cy="5.4" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="18.6" r="1.6"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.2v13.6L19 12z"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21.5s7-6 7-11.5a7 7 0 10-14 0c0 5.5 7 11.5 7 11.5z"/><circle cx="12" cy="10" r="2.6"/></symbol>
+  <symbol id="i-hash" viewBox="0 0 24 24"><path d="M9.5 4L7.5 20M16.5 4l-2 16M4 9h16M3.5 15h16"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3.2v4M16 3.2v4"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M12 7.2V12l3.2 2"/></symbol>
+  <symbol id="i-hour" viewBox="0 0 24 24"><path d="M7 3.2h10M7 20.8h10M8.4 3.2v3.4c0 2.6 3.6 3.6 3.6 5.4s-3.6 2.8-3.6 5.4v3.4M15.6 3.2v3.4c0 2.6-3.6 3.6-3.6 5.4s3.6 2.8 3.6 5.4v3.4"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.1 2.1 0 10-3-3L5 17z"/><path d="M15 7l3 3"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.6l4.6 4.6L19 7.4"/></symbol>
+  <symbol id="i-checkc" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.2 12.2l2.6 2.6 5-5.4"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.2" r="3.8"/><path d="M4.6 20.2c.9-4.2 3.9-6.2 7.4-6.2s6.5 2 7.4 6.2"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.4"/><path d="M2.6 20c.8-4 3.4-5.9 6.4-5.9s5.6 1.9 6.4 5.9"/><path d="M16.4 5.2a3.4 3.4 0 010 6.4M18 14.6c2.2.7 3.6 2.5 4 5.4"/></symbol>
+  <symbol id="i-assign" viewBox="0 0 24 24"><circle cx="9.5" cy="8.2" r="3.6"/><path d="M2.8 20c.8-4 3.5-6 6.7-6 1.2 0 2.3.3 3.2.8"/><path d="M15 17.5h6M18.4 14.6l2.9 2.9-2.9 2.9"/></symbol>
+  <symbol id="i-chevdown" viewBox="0 0 24 24"><path d="M6.5 9.5l5.5 5.5 5.5-5.5"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.8"/><path d="M12 11.2v5.4"/><circle cx="12" cy="7.9" r=".9" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-cancel" viewBox="0 0 24 24"><rect x="4.5" y="4" width="15" height="16.5" rx="3"/><path d="M9.2 11.6l5.6 5.6M14.8 11.6l-5.6 5.6M8.8 3v3M15.2 3v3"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3.6 10.4L12 3.6l8.4 6.8V20a1 1 0 01-1 1h-4.6v-6.2H9.2V21H4.6a1 1 0 01-1-1z"/></symbol>
+  <symbol id="i-tasks" viewBox="0 0 24 24"><rect x="4.6" y="4.2" width="14.8" height="17" rx="3"/><path d="M9 3h6a1 1 0 011 1v2.2H8V4a1 1 0 011-1z"/><path d="M8.6 11.6h6.8M8.6 15.8h4.4"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6.2 10a5.8 5.8 0 1111.6 0c0 4.2 1.7 5.9 1.7 5.9H4.5S6.2 14.2 6.2 10z"/><path d="M9.7 19.2a2.4 2.4 0 004.6 0"/></symbol>
+  <symbol id="i-report" viewBox="0 0 24 24"><rect x="4.4" y="3.4" width="15.2" height="17.2" rx="3"/><path d="M8.6 15.4v2.2M12 10.6v7M15.4 13.4v4.2"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.6"/><path d="M15.6 15.6L20 20"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><circle cx="12" cy="12" r="3.4"/><path d="M12 1.6v3M12 19.4v3M1.6 12h3M19.4 12h3"/></symbol>
+  <symbol id="i-ticket" viewBox="0 0 24 24"><path d="M3.6 9.3V6.6a1.6 1.6 0 011.6-1.6h13.6a1.6 1.6 0 011.6 1.6v2.7a2.7 2.7 0 000 5.4v2.7a1.6 1.6 0 01-1.6 1.6H5.2a1.6 1.6 0 01-1.6-1.6v-2.7a2.7 2.7 0 000-5.4z"/><path d="M13.4 5v14" stroke-dasharray="2 2.4"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.6" y="10" width="14.8" height="10.6" rx="3"/><path d="M8.2 10V7.6a3.8 3.8 0 017.6 0V10"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6.4" y="2.6" width="11.2" height="18.8" rx="3"/><path d="M10.6 18.4h2.8"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.6l2.7 5.5 6 .9-4.35 4.25L17.4 20 12 17.2 6.6 20l1.05-5.75L3.3 10l6-.9z"/></symbol>
+</defs></svg>
+
+<header class="hero">
+  <div class="bg"></div><div class="veil"></div>
+  <svg class="topo" viewBox="0 0 1200 460" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <g opacity=".2" transform="translate(720,-60) scale(1.55)"><use href="#contour"/></g>
+  </svg>
+  <div class="wrap hero-in">
+    <div>
+      <div class="lockup">
+        <svg width="54" height="54" viewBox="0 0 64 64" aria-hidden="true">
+          <path d="M8 54V16l14 14 10-10 10 10 14-14v38" fill="none" stroke="#DFCFAE" stroke-width="7"/>
+        </svg>
+        <span class="lockup-txt"><b>MUHSEN</b><span>مُحسن</span></span>
+      </div>
+      <h1>تطبيق الميدان لفريق <em>مُحسن</em></h1>
+      <p>واجهة زجاجية بهوية مُحسن — يدخل بها المحسن الليدر ويعمل بها المحسن: تسكين المجموعات، إثبات الحضور داخل النطاق، تنفيذ المهام الفرعية، وإغلاق المهمة.</p>
+      <div class="hero-meta">
+        <div><b>حسابان</b><span>ليدر ومُحسن — اختر شخصيتك</span></div>
+        <div><b>٤٧</b><span>نوع نشاط من الكتالوج</span></div>
+        <div><b>٢ كم</b><span>نطاق إثبات الحضور</span></div>
+      </div>
+    </div>
+    <div class="fence" aria-hidden="true">
+      <i></i><i></i><i></i><i></i><span class="pulse"></span>
+      <span class="fence-core"><b>٠٠:١٨:٤٥</b><span>وقت التحضير المتبقي · داخل النطاق</span></span>
+    </div>
+  </div>
+</header>
+
+<!-- ============ LOGIN ============ -->
+<section class="wrap">
+  <div class="sec-head">
+    <span class="eyebrow">الدخول</span>
+    <h2>حسابان — اختر الشخصية التي تريد تجربتها</h2>
+    <p class="lede">اضغط على أي شخصية في الشاشة اليمنى وسترى اسمها وبياناتها تنتقل إلى كل شاشات التطبيق أدناه.</p>
+  </div>
+
+  <div class="board">
+    <div class="slot">
+      <h4>تسجيل الدخول</h4>
+      <p>اختيار الدور أولًا: محسن ليدر أو محسن. رقم الجوال ورمز تحقق — لا كلمات مرور في الميدان.</p>
+      <div class="phone"><div class="screen">
+        <div class="ground">
+          <div class="ph" style="background-image:url({{haram_w}})"></div>
+          <div class="tint" style="background:linear-gradient(180deg, rgba(11,53,39,.72) 0%, rgba(20,89,63,.55) 40%, rgba(247,244,237,.9) 100%)"></div>
+          <svg class="topo" viewBox="0 0 390 760" preserveAspectRatio="xMidYMid slice"><g opacity=".2" transform="translate(-60,150)"><use href="#contour"/></g></svg>
+        </div>
+        <div class="body" style="justify-content:center; gap:16px; padding:26px">
+          <div style="text-align:center; margin-bottom:6px">
+            <svg width="62" height="62" viewBox="0 0 64 64" style="margin:0 auto 10px; display:block">
+              <path d="M8 54V16l14 14 10-10 10 10 14-14v38" fill="none" stroke="#DFCFAE" stroke-width="7"/>
+            </svg>
+            <div style="font-family:var(--display); font-size:19px; letter-spacing:.2em; color:#fff">MUHSEN</div>
+            <div style="font-size:16px; color:#DFCFAE">مُحسن</div>
+          </div>
+
+          <div class="c p16" style="background:rgba(255,255,255,.82)">
+            <div class="lbl" style="margin-bottom:11px">اختر دورك</div>
+            <div class="rolegrid">
+              <button class="role" data-role="leader" aria-pressed="true">
+                <span class="ci"><svg class="ic s26"><use href="#i-users"/></svg></span>
+                <b>محسن ليدر</b><span>قائد فريق KT</span>
+              </button>
+              <button class="role" data-role="muhsen" aria-pressed="false">
+                <span class="ci"><svg class="ic s26"><use href="#i-user"/></svg></span>
+                <b>مُحسن</b><span>عضو ميداني</span>
+              </button>
+            </div>
+
+            <div class="lbl" style="margin:16px 0 8px">رقم الجوال</div>
+            <div class="selfield" style="background:rgba(255,255,255,.7)">
+              <svg class="ic s16"><use href="#i-phone"/></svg>
+              <span style="flex:1; color:#0F1A15; font-weight:700; letter-spacing:.06em">٩٦٦ ٥٤ ٩٤٩ ٣١٩٤</span>
+            </div>
+
+            <div class="lbl" style="margin:14px 0 8px">رمز التحقق</div>
+            <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:9px">
+              <div class="selfield" style="justify-content:center; color:#0F1A15; font-weight:700; font-size:19px; padding:11px 0">٤</div>
+              <div class="selfield" style="justify-content:center; color:#0F1A15; font-weight:700; font-size:19px; padding:11px 0">٨</div>
+              <div class="selfield" style="justify-content:center; color:#0F1A15; font-weight:700; font-size:19px; padding:11px 0">١</div>
+              <div class="selfield" style="justify-content:center; color:#0F1A15; font-weight:700; font-size:19px; padding:11px 0">٦</div>
+            </div>
+
+            <div class="btn primary" style="margin-top:16px"><svg class="ic s16"><use href="#i-lock"/></svg>دخول</div>
+            <div class="foot-note" style="margin-top:11px"><svg class="ic s14"><use href="#i-info"/></svg><span>يعمل التطبيق دون اتصال ويزامن لاحقًا</span></div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="slot">
+      <h4>اختيار الحساب</h4>
+      <p>القائمة تتغيّر حسب الدور المختار. اضغط أي شخصية لتصبح هي المستخدم في كل الشاشات.</p>
+      <div class="phone"><div class="screen">
+        <div class="ground">
+          <div class="ph" style="background-image:url({{kaaba_w}})"></div>
+          <div class="tint"></div>
+          <svg class="topo" viewBox="0 0 390 760" preserveAspectRatio="xMidYMid slice"><g opacity=".16" transform="translate(-60,150)"><use href="#contour"/></g></svg>
+        </div>
+        <div class="topbar">
+          <div class="statusbar"><span>٩:٤١</span>
+            <svg class="ic s16 solid" viewBox="0 0 44 16"><rect x="0" y="9" width="3" height="5" rx="1"/><rect x="5" y="6.5" width="3" height="7.5" rx="1"/><rect x="10" y="4" width="3" height="10" rx="1"/><rect x="15" y="1.5" width="3" height="12.5" rx="1"/><path d="M26.5 4.2a8 8 0 019 0l-4.5 6z"/><rect x="38" y="4" width="5.5" height="9" rx="1.6"/></svg>
+          </div>
+          <div class="appbar">
+            <a><svg class="ic"><use href="#i-back"/></svg></a>
+            <span class="t">اختر الحساب</span>
+            <a><svg class="ic"><use href="#i-search"/></svg></a>
+          </div>
+        </div>
+        <div class="stage"><div class="body">
+          <div class="c p16">
+            <div class="rowb"><b style="font-size:15px" id="pickTitle">حسابات المحسن الليدر</b>
+              <span class="pill gold" id="pickCount">٥ حسابات</span></div>
+            <div class="tiny muted" style="margin-top:3px">بيانات تجريبية مبنية على مجموعات حقيقية من موسم سابق</div>
+          </div>
+          <div id="pickList" style="display:flex; flex-direction:column; gap:10px; overflow:hidden"></div>
+        </div></div>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ LEADER ============ -->
+<section class="wrap">
+  <div class="sec-head">
+    <span class="eyebrow">شاشات المحسن الليدر</span>
+    <h2 id="leaderHead">شاشات محمد القحطاني</h2>
+    <p class="lede">تتغيّر البيانات تلقائيًا حسب الشخصية التي اخترتها في الأعلى — بما فيها إتاحة «إسناد صلاحية الليدر» التي تعمل مع الشركات فقط.</p>
+  </div>
+
+  <div class="board">
+
+    <!-- home -->
+    <div class="slot">
+      <h4>الرئيسية</h4>
+      <p>صورة الموقع، أرقام الفريق، وأقرب ثلاث مهام — أول ما يراه الليدر.</p>
+      <div class="phone"><div class="screen">
+        <div class="ground">
+          <div class="ph" style="background-image:url({{haram_w}})"></div><div class="tint"></div>
+          <svg class="topo" viewBox="0 0 390 760" preserveAspectRatio="xMidYMid slice"><g opacity=".14" transform="translate(-60,150)"><use href="#contour"/></g></svg>
+        </div>
+        <div class="topbar">
+          <div class="statusbar"><span>٩:٤١</span>
+            <svg class="ic s16 solid" viewBox="0 0 44 16"><rect x="0" y="9" width="3" height="5" rx="1"/><rect x="5" y="6.5" width="3" height="7.5" rx="1"/><rect x="10" y="4" width="3" height="10" rx="1"/><rect x="15" y="1.5" width="3" height="12.5" rx="1"/><path d="M26.5 4.2a8 8 0 019 0l-4.5 6z"/><rect x="38" y="4" width="5.5" height="9" rx="1.6"/></svg>
+          </div>
+          <div class="appbar"><a><svg class="ic"><use href="#i-menu"/></svg></a>
+            <span class="t">مُحسن ليدر</span><a><svg class="ic"><use href="#i-search"/></svg></a></div>
+        </div>
+        <div class="stage"><div class="body">
+          <div class="c p16" style="display:flex; align-items:center; gap:13px">
+            <span class="av lg" data-bind="l-av"><svg viewBox="0 0 44 44"><use href="#av-m"/></svg></span>
+            <div style="flex:1">
+              <div class="rowb"><b style="font-size:16px" data-bind="l-name">محمد القحطاني</b>
+                <span class="pill gold" data-bind="l-kt">KT085</span></div>
+              <div class="tiny muted" data-bind="l-org">بعثة TABUNG HAJI · ماليزيا</div>
+            </div>
+          </div>
+
+          <div class="banner" style="background-image:url({{haram_w}})">
+            <span class="bt"><b>المسجد الحرام — الدور الأرضي</b><span>موقع مهمة اليوم · باب الملك فهد</span></span>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px">
+            <div class="kpi"><b data-bind="l-pil">٥٠٠</b><span>حاج</span></div>
+            <div class="kpi"><b data-bind="l-muh">٢٥</b><span>محسن</span></div>
+            <div class="kpi"><b data-bind="l-grp">١١</b><span>مجموعة</span></div>
+          </div>
+
+          <div class="lbl">المهام القادمة</div>
+          <div class="c p16">
+            <div class="rowb"><b style="font-size:15px">تسجيل الدخول للفندق</b><span class="pill wait">بعد ساعتين</span></div>
+            <div class="tiny muted" style="margin:5px 0 12px">١٤٤٨/١٢/٢٠ · ٠٨:٠٠ ص · فندق منازل المقام</div>
+            <div class="meter"><i style="width:82%"></i></div>
+            <div class="rowb tiny muted" style="margin-top:7px"><span>التسكين</span><span>٩ من ١١ مجموعة</span></div>
+          </div>
+          <div class="c p16">
+            <div class="rowb"><b style="font-size:15px">عمرة القدوم</b><span class="pill grey">غدًا</span></div>
+            <div class="tiny muted" style="margin-top:5px">١٤٤٨/١٢/٢١ · ٠٢:٠٠ م · المسجد الحرام</div>
+          </div>
+          <div class="c p16" style="display:flex; align-items:center; gap:11px">
+            <svg class="ic" style="color:#B8791A"><use href="#i-ticket"/></svg>
+            <span style="flex:1"><b style="font-size:14px; display:block">٣ تذاكر بانتظار الرد</b>
+              <span class="tiny muted">أقدمها منذ ٤٠ دقيقة</span></span>
+            <svg class="ic s16" style="color:#A9B6AE; transform:rotate(90deg)"><use href="#i-chevdown"/></svg>
+          </div>
+        </div></div>
+        <div class="tabbar" data-nav="leader" data-active="home"></div>
+      </div></div>
+    </div>
+
+    <!-- task details: choose -->
+    <div class="slot">
+      <h4>تفاصيل المهمة — اختيار المحسنين</h4>
+      <p>مطابقة لتصميمكم: بطاقة الخدمة، شريط البيانات الرباعي، زر البدء، قائمة الاختيار، وإسناد البداية.</p>
+      <div class="phone"><div class="screen">
+        <div class="ground">
+          <div class="ph" style="background-image:url({{kaaba_w}})"></div><div class="tint"></div>
+          <svg class="topo" viewBox="0 0 390 760" preserveAspectRatio="xMidYMid slice"><g opacity=".14" transform="translate(-60,150)"><use href="#contour"/></g></svg>
+        </div>
+        <div class="topbar">
+          <div class="statusbar"><span>٩:٤١</span>
+            <svg class="ic s16 solid" viewBox="0 0 44 16"><rect x="0" y="9" width="3" height="5" rx="1"/><rect x="5" y="6.5" width="3" height="7.5" rx="1"/><rect x="10" y="4" width="3" height="10" rx="1"/><rect x="15" y="1.5" width="3" height="12.5" rx="1"/><path d="M26.5 4.2a8 8 0 019 0l-4.5 6z"/><rect x="38" y="4" width="5.5" height="9" rx="1.6"/></svg>
+          </div>
+          <div class="appbar"><a><svg class="ic"><use href="#i-back"/></svg></a>
+            <span class="t">تفاصيل المهمة</span><a><svg class="ic"><use href="#i-dots"/></svg></a></div>
+        </div>
+        <div class="stage"><div class="body">
+          <div class="c p16 gold">
+            <div class="svc">
+              <div class="txt">
+                <h5>خدمة ضيوف الرحمن</h5>
+                <div class="sub">توجيه الحجاج — باب الملك فهد</div>
+                <div class="loc"><svg class="ic s14"><use href="#i-pin"/></svg><span>المسجد الحرام — الدور الأرضي</span></div>
+              </div>
+              <span class="thumb" style="background-image:url({{kaaba_t}})"></span>
+            </div>
+            <div class="status-out"><span class="pill live">جارية</span></div>
+          </div>
+
+          <div class="meta">
+            <div><span class="k"><svg class="ic s14"><use href="#i-hash"/></svg>رقم المهمة</span><b>#١٢٥٨</b></div>
+            <div><span class="k"><svg class="ic s14"><use href="#i-cal"/></svg>تاريخ المهمة</span><b>١٤٤٨/١٢/٢٠</b></div>
+            <div><span class="k"><svg class="ic s14"><use href="#i-clock"/></svg>وقت المهمة</span><b>٠٨:٠٠ ص<span>إلى ٠٢:٠٠ م</span></b></div>
+            <div><span class="k"><svg class="ic s14"><use href="#i-hour"/></svg>مدة المهمة</span><b>٦ ساعات</b></div>
+          </div>
+
+          <div class="cta off">
+            <svg class="ic s26 solid"><use href="#i-play"/></svg>
+            <span class="txt"><b>بدء المهمة</b><span>يمكن بدء المهمة بعد حضور المحسنين</span></span>
+          </div>
+
+          <div class="lbl">اختر المحسنين الذين يحضرون معك (٢/٢)<small>يجب اختيار ٢ محسن من أصل ٥</small></div>
+
+          <div style="display:flex; flex-direction:column; gap:10px; flex:1; overflow:hidden">
+            <div class="prow"><span class="av p1"><svg viewBox="0 0 44 44"><use href="#av-m"/></svg></span>
+              <span class="nm"><b>أحمد عبدالله</b><span>#١٠٠١</span></span>
+              <span class="pill live">تم اختياره</span>
+              <span class="box on"><svg class="ic s14"><use href="#i-check"/></svg></span></div>
+            <div class="prow"><span class="av p2"><svg viewBox="0 0 44 44"><use href="#av-m"/></svg></span>
+              <span class="nm"><b>محمد السبيعي</b><span>#١٠٠٢</span></span>
+              <span class="pill live">تم اختياره</span>
+              <span class="box on"><svg class="ic s14"><use href="#i-check"/></svg></span></div>
+            <div class="prow"><span class="av p3"><svg viewBox="0 0 44 44"><use href="#av-m"/></svg></span>
+              <span class="nm"><b>خالد الزهراني</b><span>#١٠٠٣</span></span><span class="box"></span></div>
+            <div class="prow"><span class="av p5"><svg viewBox="0 0 44 44"><use href="#av-f"/></svg></span>
+              <span class="nm"><b>هند العتيبي</b><span>#١٠٠٤</span></span><span class="box"></span></div>
+            <div class="prow"><span class="av p4"><svg viewBox="0 0 44 44"><use href="#av-m"/></svg></span>
+              <span class="nm"><b>فهد المطيري</b><span>#١٠٠٥</span></span><span class="box"></span></div>
+          </div>
+
+          <div class="foot-note"><svg class="ic s14"><use href="#i-info"/></svg><span>المهمة ستظهر فقط للمحسنين المختارين</span></div>
+
+          <div class="lbl">إسناد البداية (اختياري)<small data-bind="assign-note">يمكنك إسناد بدء المهمة لأحد المحسنين المختارين</small></div>
+          <div class="selfield" data-bind="assign-field">
+            <svg class="ic s16"><use href="#i-user"/></svg>
+            <span style="flex:1">اختر محسنًا لإسناد بداية المهمة</span>
+            <svg class="ic s16"><use href="#i-chevdown"/></svg>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1.25fr 1fr; gap:10px; margin-top:2px">
+            <span class="btn primary">حفظ الاختيارات</span>
+            <span class="btn danger"><svg class="ic s16"><use href="#i-cancel"/></svg>إلغاء المهمة</span>
+          </div>
+        </div></div>
+        <div class="tabbar" data-nav="leader" data-active="tasks"></div>
+      </div></div>
+    </div>
+
+    <!-- task details: after -->
+    <div class="slot">
+      <h4>تفاصيل المهمة — بعد الاختيار</h4>
+      <p>حالة حضور كل محسن بوقتها، وبطاقة الإسناد بصلاحية بدء المهمة قابلة للإلغاء.</p>
+      <div class="phone"><div class="screen">
+        <div class="ground">
+          <div class="ph" style="background-image:url({{kaaba_w}})"></div><div class="tint"></div>
+          <svg class="topo" viewBox="0 0 390 760" preserveAspectRatio="xMidYMid slice"><g opacity=".14" transform="translate(-60,150)"><use href="#contour"/></g></svg>
+        </div>
+        <div class="topbar">
+          <div class="statusbar"><span>٩:٤١</span>
+            <svg class="ic s16 solid" viewBox="0 0 44 16"><rect x="0" y="9" width="3" height="5" rx="1"/><rect x="5" y="6.5" width="3" height="7.5" rx="1"/><rect x="10" y="4" width="3" height="10" rx="1"/><rect x="15" y="1.5" width="3" height="12.5" rx="1"/><path d="M26.5 4.2a8 8 0 019 0l-4.5 6z"/><rect x="38" y="4" width="5.5" height="9" rx="1.6"/></svg>
+          </div>
+          <div class="appbar"><a><svg class="ic"><use href="#i-back"/></svg></a>
+            <span class="t">تفاصيل المهمة</span><a><svg class="ic"><use href="#i-dots"/></svg></a></div>
+        </div>
+        <div class="stage"><div class="body">
+          <div class="c p16 gold">
+            <div class="svc">
+              <div class="txt">
+                <h5>خدمة ضيوف الرحمن</h5>
+                <div class="sub">توجيه الحجاج — باب الملك فهد</div>
+                <div class="loc"><svg class="ic s14"><use href="#i-pin"/></svg><span>المسجد الحرام — الدور الأرضي</span></div>
+              </div>
+              <span class="thumb" style="background-image:url({{kaaba_t}})"></span>
+            </div>
+            <div class="status-out"><span class="pill live">جارية</span></div>
+          </div>
+
+          <div class="meta">
+            <div><span class="k"><svg class="ic s14"><use href="#i-hash"/></svg>رقم المهمة</span><b>#١٢٥٨</b></div>
+            <div><span class="k"><svg class="ic s14"><use href="#i-cal"/></svg>تاريخ المهمة</span><b>١٤٤٨/١٢/٢٠</b></div>
+            <div><span class="k"><svg class="ic s14"><use href="#i-clock"/></svg>وقت المهمة</span><b>٠٨:٠٠ ص<span>إلى ٠٢:٠٠ م</span></b></div>
+            <div><span class="k"><svg class="ic s14"><use href="#i-hour"/></svg>مدة المهمة</span><b>٦ ساعات</b></div>
+          </div>
+
+          <div class="cta">
+            <svg class="ic s26 solid"><use href="#i-play"/></svg>
+            <span class="txt"><b>بدء المهمة</b><span>يمكن بدء المهمة الآن</span></span>
+          </div>
+
+          <span class="btn line"><svg class="ic s16"><use href="#i-edit"/></svg>تحديث اختيار المحسنين</span>
+
+          <div class="lbl">المحسنون المختارون (٢)</div>
+          <div style="display:flex; flex-direction:column; gap:10px">
+            <div class="prow"><span class="av p1"><svg viewBox="0 0 44 44"><use href="#av-m"/></svg></span>
+              <span class="nm"><b>أحمد عبدالله</b><span>#١٠٠١</span></span>
+              <span class="att"><svg class="ic s16"><use href="#i-checkc"/></svg><span style="text-align:center">حاضر<span>٠٨:١٥ ص</span></span></span>
+              <span class="vdots"><svg class="ic s16"><use href="#i-vdots"/></svg></span></div>
+            <div class="prow"><span class="av p2"><svg viewBox="0 0 44 44"><use href="#av-m"/></svg></span>
+              <span class="nm"><b>محمد السبيعي</b><span>#١٠٠٢</span></span>
+              <span class="att"><svg class="ic s16"><use href="#i-checkc"/></svg><span style="text-align:center">حاضر<span>٠٨:١٧ ص</span></span></span>
+              <span class="vdots"><svg class="ic s16"><use href="#i-vdots"/></svg></span></div>
+          </div>
+
+          <div class="lbl" style="display:flex; align-items:center; gap:7px">
+            <svg class="ic s16" style="color:#A8875A"><use href="#i-assign"/></svg>إسناد بداية المهمة</div>
+          <div class="c p16" data-bind="assign-card">
+            <div class="tiny muted" style="margin-bottom:10px">تم إسناد بداية المهمة إلى</div>
+            <div style="display:flex; align-items:center; gap:12px">
+              <span class="av xl p1"><svg viewBox="0 0 44 44"><use href="#av-m"/></svg></span>
+              <span style="flex:1"><b style="font-size:16px; display:block">أحمد عبدالله</b>
+                <span class="tiny muted">#١٠٠١</span></span>
+            </div>
+            <div class="rowb" style="margin-top:12px">
+              <span class="pill live">يملك صلاحية بدء المهمة</span>
+              <span style="color:#C0392B; font-size:12.5px; font-weight:700">إلغاء الإسناد</span>
+            </div>
+          </div>
+
+          <span class="btn danger" style="margin-top:2px"><svg class="ic s16"><use href="#i-cancel"/></svg>إلغاء المهمة</span>
+        </div></div>
+        <div class="tabbar" data-nav="leader" data-active="tasks"></div>
+      </div></div>
+    </div>
+
+    <!-- assignment -->
+    <div class="slot">
+      <h4>تسكين المجموعات</h4>
+      <p>محسن لكل مجموعة، لا فراغ ولا ازدواج. زر البدء يبقى ظاهرًا ويشرح سبب تعطّله.</p>
+      <div class="phone"><div class="screen">
+        <div class="ground">
+          <div class="ph" style="background-image:url({{airport_w}})"></div><div class="tint"></div>
+          <svg class="topo" viewBox="0 0 390 760" preserveAspectRatio="xMidYMid slice"><g opacity=".14" transform="translate(-60,150)"><use href="#contour"/></g></svg>
+        </div>
+        <div class="topbar">
+          <div class="statusbar"><span>٩:٤١</span>
+            <svg class="ic s16 solid" viewBox="0 0 44 16"><rect x="0" y="9" width="3" height="5" rx="1"/><rect x="5" y="6.5" width="3" height="7.5" rx="1"/><rect x="10" y="4" width="3" height="10" rx="1"/><rect x="15" y="1.5" width="3" height="12.5" rx="1"/><path d="M26.5 4.2a8 8 0 019 0l-4.5 6z"/><rect x="38" y="4" width="5.5" height="9" rx="1.6"/></svg>
+          </div>
+          <div class="appbar"><a><svg class="ic"><use href="#i-back"/></svg></a>
+            <span class="t">تسكين المجموعات</span><a><svg class="ic"><use href="#i-dots"/></svg></a></div>
+        </div>
+        <div class="stage"><div class="body">
+          <div class="banner" style="background-image:url({{airport_w}})">
+            <span class="bt"><b>استقبال الحجاج من المطار</b><span>صالة الحج — مطار الملك عبدالعزيز · ٠٦:٠٠ ص</span></span>
+          </div>
+          <div class="c p16">
+            <div class="rowb"><b style="font-size:15px">تسجيل الدخول للفندق</b><span class="pill wait">تبدأ ٠٨:٠٠</span></div>
+            <div class="meter" style="margin:11px 0 7px"><i style="width:82%"></i></div>
+            <div class="rowb tiny muted"><span>٩ من ١١ مجموعة مكتملة</span><span>٤٧ حاجًا لكل مجموعة</span></div>
+          </div>
+
+          <div class="lbl">المجموعات</div>
+          <div style="display:flex; flex-direction:column; gap:10px; flex:1; overflow:hidden">
+            <div class="prow"><span class="av p1"><svg viewBox="0 0 44 44"><use href="#av-m"/></svg></span>
+              <span class="nm"><b>أحمد عبدالله</b><span>مجموعة ١ · #١٠٠١</span></span>
+              <span class="pill live">قبِل</span><span class="vdots"><svg class="ic s16"><use href="#i-vdots"/></svg></span></div>
+            <div class="prow"><span class="av p2"><svg viewBox="0 0 44 44"><use href="#av-m"/></svg></span>
+              <span class="nm"><b>محمد السبيعي</b><span>مجموعة ٢ · #١٠٠٢</span></span>
+              <span class="pill live">قبِل</span><span class="vdots"><svg class="ic s16"><use href="#i-vdots"/></svg></span></div>
+            <div class="prow"><span class="av p3"><svg viewBox="0 0 44 44"><use href="#av-m"/></svg></span>
+              <span class="nm"><b>خالد الزهراني</b><span>بانتظار الرد منذ ٤٠ دقيقة</span></span>
+              <span class="pill wait">معلّق</span><span class="vdots"><svg class="ic s16"><use href="#i-vdots"/></svg></span></div>
+            <div class="prow"><span class="av p5"><svg viewBox="0 0 44 44"><use href="#av-f"/></svg></span>
+              <span class="nm"><b>هند العتيبي</b><span>رفضت: «مسندة على مهمة أخرى»</span></span>
+              <span class="pill no">رفض</span><span class="vdots"><svg class="ic s16"><use href="#i-vdots"/></svg></span></div>
+            <div class="prow" style="border-style:dashed; border-color:rgba(20,89,63,.25); background:rgba(255,255,255,.45)">
+              <span class="empty-av"><svg class="ic s16"><use href="#i-user"/></svg></span>
+              <span class="nm"><b class="muted">مجموعة ٥</b><span>بلا محسن · ٤٧ حاجًا</span></span>
+              <span class="pill gold">اختر محسنًا</span></div>
+            <div class="prow"><span class="av p4"><svg viewBox="0 0 44 44"><use href="#av-m"/></svg></span>
+              <span class="nm"><b>فهد المطيري</b><span>مجموعة ٦ · #١٠٠٥</span></span>
+              <span class="pill live">قبِل</span><span class="vdots"><svg class="ic s16"><use href="#i-vdots"/></svg></span></div>
+          </div>
+
+          <div class="note amber"><svg class="ic s16"><use href="#i-info"/></svg><span>مجموعتان بلا محسن — لا يمكن بدء المهمة قبل اكتمال التسكين.</span></div>
+          <div style="display:grid; grid-template-columns:1fr 1.2fr; gap:10px">
+            <span class="btn ghost">حفظ كمسودة</span><span class="btn off">بدء المهمة</span>
+          </div>
+        </div></div>
+        <div class="tabbar" data-nav="leader" data-active="tasks"></div>
+      </div></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ MUHSEN ============ -->
+<section class="wrap">
+  <div class="sec-head">
+    <span class="eyebrow">شاشات المحسن</span>
+    <h2 id="muhsenHead">شاشات أحمد عبدالله</h2>
+    <p class="lede">المحسن لا يدير — ينفّذ. النطاق المسموح لإثبات الحضور ٢ كيلومتر من موقع المهمة.</p>
+  </div>
+
+  <div class="board">
+
+    <div class="slot">
+      <h4>المهمة الحالية — إثبات الحضور</h4>
+      <p>عدّاد التحضير، خريطة النطاق بنصف قطر ٢ كم، وزر لا يعمل خارج الموقع.</p>
+      <div class="phone"><div class="screen">
+        <div class="ground">
+          <div class="ph" style="background-image:url({{kaaba_w}})"></div><div class="tint"></div>
+          <svg class="topo" viewBox="0 0 390 760" preserveAspectRatio="xMidYMid slice"><g opacity=".14" transform="translate(-60,150)"><use href="#contour"/></g></svg>
+        </div>
+        <div class="topbar">
+          <div class="statusbar"><span>٩:٤١</span>
+            <svg class="ic s16 solid" viewBox="0 0 44 16"><rect x="0" y="9" width="3" height="5" rx="1"/><rect x="5" y="6.5" width="3" height="7.5" rx="1"/><rect x="10" y="4" width="3" height="10" rx="1"/><rect x="15" y="1.5" width="3" height="12.5" rx="1"/><path d="M26.5 4.2a8 8 0 019 0l-4.5 6z"/><rect x="38" y="4" width="5.5" height="9" rx="1.6"/></svg>
+          </div>
+          <div class="appbar"><a><svg class="ic"><use href="#i-bell"/></svg></a>
+            <span class="t">المهمة الحالية</span><a><svg class="ic"><use href="#i-menu"/></svg></a></div>
+        </div>
+        <div class="stage"><div class="body">
+          <div class="c p16 gold">
+            <div class="svc">
+              <div class="txt">
+                <h5>خدمة ضيوف الرحمن</h5>
+                <div class="sub">توجيه الحجاج — باب الملك فهد</div>
+                <div class="loc"><svg class="ic s14"><use href="#i-pin"/></svg><span>المسجد الحرام — الدور الأرضي</span></div>
+              </div>
+              <span class="thumb" style="background-image:url({{kaaba_t}})"></span>
+            </div>
+            <div class="status-out"><span class="pill live">جارية</span></div>
+          </div>
+
+          <div class="note amber"><svg class="ic s16"><use href="#i-info"/></svg>
+            <span>تم إسناد بداية المهمة لك من قِبل <b data-bind="m-leader">محمد القحطاني</b> — بمجرد بدء المهمة يمكنك إثبات حضورك.</span></div>
+
+          <div class="c p16" style="text-align:center">
+            <div class="tiny muted" style="margin-bottom:6px">وقت التحضير المتبقي</div>
+            <div class="timer"><b>٠٠</b><i>:</i><b>١٨</b><i>:</i><b>٤٥</b></div>
+            <div class="tunits"><span>ساعة</span><span>دقيقة</span><span>ثانية</span></div>
+            <div class="tiny muted" style="margin-top:10px">آخر وقت لإثبات الحضور ٠٧:٤٥ ص</div>
+          </div>
+
+          <div class="lbl">موقع المهمة</div>
+          <div class="map">
+            <svg class="base" viewBox="0 0 358 132" preserveAspectRatio="none" aria-hidden="true">
+              <rect width="358" height="132" fill="#EBEEE7"/>
+              <g stroke="#DFE3D9" stroke-width="10" fill="none">
+                <path d="M-10 36H368"/><path d="M-10 98H368"/><path d="M84-10V142"/><path d="M250-10V142"/></g>
+              <g fill="#E4E8DE"><rect x="100" y="48" width="58" height="34" rx="4"/>
+                <rect x="264" y="46" width="52" height="38" rx="4"/><rect x="16" y="48" width="52" height="34" rx="4"/></g>
+            </svg>
+            <span class="ring"></span><span class="dot"></span><span class="scale">النطاق ٢ كم</span>
+          </div>
+          <div class="note green"><svg class="ic s16"><use href="#i-checkc"/></svg>
+            <span>أنت داخل النطاق المسموح · ٤٠٠ متر من موقع المهمة</span></div>
+
+          <div class="cta">
+            <svg class="ic s26"><use href="#i-target"/></svg>
+            <span class="txt"><b>إثبات الحضور</b><span>يُسجَّل وقتك وموقعك تلقائيًا</span></span>
+          </div>
+        </div></div>
+        <div class="tabbar" data-nav="muhsen" data-active="home"></div>
+      </div></div>
+    </div>
+
+    <div class="slot">
+      <h4>خارج النطاق</h4>
+      <p>الحالة السلبية مصمَّمة بنفس العناية: تشرح البُعد بالكيلومتر وتقدّم مخرجًا.</p>
+      <div class="phone"><div class="screen">
+        <div class="ground">
+          <div class="ph" style="background-image:url({{mina_w}})"></div><div class="tint"></div>
+          <svg class="topo" viewBox="0 0 390 760" preserveAspectRatio="xMidYMid slice"><g opacity=".14" transform="translate(-60,150)"><use href="#contour"/></g></svg>
+        </div>
+        <div class="topbar">
+          <div class="statusbar"><span>٧:٥١</span>
+            <svg class="ic s16 solid" viewBox="0 0 44 16"><rect x="0" y="9" width="3" height="5" rx="1"/><rect x="5" y="6.5" width="3" height="7.5" rx="1"/><rect x="10" y="4" width="3" height="10" rx="1"/><rect x="15" y="1.5" width="3" height="12.5" rx="1"/><path d="M26.5 4.2a8 8 0 019 0l-4.5 6z"/><rect x="38" y="4" width="5.5" height="9" rx="1.6"/></svg>
+          </div>
+          <div class="appbar"><a><svg class="ic"><use href="#i-bell"/></svg></a>
+            <span class="t">المهمة الحالية</span><a><svg class="ic"><use href="#i-menu"/></svg></a></div>
+        </div>
+        <div class="stage"><div class="body">
+          <div class="c p16 gold">
+            <div class="svc">
+              <div class="txt">
+                <h5>مبيت منى — يوم التروية</h5>
+                <div class="sub">استقبال الحجاج في المخيم</div>
+                <div class="loc"><svg class="ic s14"><use href="#i-pin"/></svg><span>منى — مخيم ١٠٨</span></div>
+              </div>
+              <span class="thumb" style="background-image:url({{mina_t}})"></span>
+            </div>
+            <div class="status-out"><span class="pill wait">لم تبدأ</span></div>
+          </div>
+
+          <div class="c p16" style="text-align:center">
+            <div class="tiny muted" style="margin-bottom:6px">وقت التحضير المتبقي</div>
+            <div class="timer"><b style="color:#C0392B">٠٠</b><i>:</i><b style="color:#C0392B">٠٨</b><i>:</i><b style="color:#C0392B">١٢</b></div>
+            <div class="tunits"><span>ساعة</span><span>دقيقة</span><span>ثانية</span></div>
+            <div class="tiny" style="color:#C0392B; margin-top:10px; font-weight:700">يُبلَّغ القائد والكونترول عند انتهاء المهلة</div>
+          </div>
+
+          <div class="lbl">موقع المهمة</div>
+          <div class="map">
+            <svg class="base" viewBox="0 0 358 132" preserveAspectRatio="none" aria-hidden="true">
+              <rect width="358" height="132" fill="#EFECE4"/>
+              <g stroke="#E3DFD3" stroke-width="10" fill="none">
+                <path d="M-10 36H368"/><path d="M-10 98H368"/><path d="M84-10V142"/><path d="M250-10V142"/></g>
+              <path d="M64 26L172 66" stroke="#C0392B" stroke-width="1.8" stroke-dasharray="5 5" fill="none"/>
+            </svg>
+            <span class="ring" style="background:rgba(192,57,43,.1); border-color:rgba(192,57,43,.42)"></span>
+            <span class="dot" style="inset:20% auto auto 16%; background:#C0392B"></span>
+            <span class="scale">النطاق ٢ كم</span>
+          </div>
+          <div class="note red"><svg class="ic s16"><use href="#i-info"/></svg>
+            <span>أنت خارج النطاق بـ ٢.٦ كم. اقترب من موقع المهمة لتفعيل إثبات الحضور.</span></div>
+
+          <div class="cta off">
+            <svg class="ic s26"><use href="#i-target"/></svg>
+            <span class="txt"><b>إثبات الحضور</b><span>يتفعّل داخل النطاق فقط</span></span>
+          </div>
+          <span class="btn line"><svg class="ic s16"><use href="#i-pin"/></svg>فتح الاتجاهات إلى الموقع</span>
+        </div></div>
+        <div class="tabbar" data-nav="muhsen" data-active="home"></div>
+      </div></div>
+    </div>
+
+    <div class="slot">
+      <h4>مهمتي — المهام الفرعية</h4>
+      <p>اسم المهمة الفعلية وتفاصيلها ومهامها الفرعية العشر كما ينفّذها المحسن واحدة بعد أخرى.</p>
+      <div class="phone"><div class="screen">
+        <div class="ground">
+          <div class="ph" style="background-image:url({{pilgrims_w}})"></div><div class="tint"></div>
+          <svg class="topo" viewBox="0 0 390 760" preserveAspectRatio="xMidYMid slice"><g opacity=".14" transform="translate(-60,150)"><use href="#contour"/></g></svg>
+        </div>
+        <div class="topbar">
+          <div class="statusbar"><span>٠٨:٢٤</span>
+            <svg class="ic s16 solid" viewBox="0 0 44 16"><rect x="0" y="9" width="3" height="5" rx="1"/><rect x="5" y="6.5" width="3" height="7.5" rx="1"/><rect x="10" y="4" width="3" height="10" rx="1"/><rect x="15" y="1.5" width="3" height="12.5" rx="1"/><path d="M26.5 4.2a8 8 0 019 0l-4.5 6z"/><rect x="38" y="4" width="5.5" height="9" rx="1.6"/></svg>
+          </div>
+          <div class="appbar"><a><svg class="ic"><use href="#i-back"/></svg></a>
+            <span class="t">تسجيل الدخول للفندق</span><a><svg class="ic"><use href="#i-dots"/></svg></a></div>
+        </div>
+        <div class="stage"><div class="body">
+          <div class="c p16 gold">
+            <div class="svc">
+              <div class="txt">
+                <h5>تسجيل الدخول للفندق</h5>
+                <div class="sub">استقبال الحجاج — فندق منازل المقام</div>
+                <div class="loc"><svg class="ic s14"><use href="#i-users"/></svg><span data-bind="m-group">مجموعة ١ · ٤٧ حاجًا · KT085</span></div>
+              </div>
+              <span class="thumb" style="background-image:url({{pilgrims_t}})"></span>
+            </div>
+            <div class="rowb" style="margin-top:12px">
+              <span class="pill live">جارية</span>
+              <span class="tiny muted">حضورك مُثبَت ٠٦:٠٥ ص</span>
+            </div>
+          </div>
+
+          <div class="meta">
+            <div><span class="k"><svg class="ic s14"><use href="#i-hash"/></svg>رقم المهمة</span><b>#١٢٥٨</b></div>
+            <div><span class="k"><svg class="ic s14"><use href="#i-cal"/></svg>التاريخ</span><b>١٤٤٨/١٢/٢٠</b></div>
+            <div><span class="k"><svg class="ic s14"><use href="#i-clock"/></svg>الوقت</span><b>٠٨:٠٠ ص<span>إلى ٠٢:٠٠ م</span></b></div>
+            <div><span class="k"><svg class="ic s14"><use href="#i-hour"/></svg>المدة</span><b>٦ ساعات</b></div>
+          </div>
+
+          <div class="lbl" style="display:flex; align-items:center; justify-content:space-between">
+            <span>المهام الفرعية</span><span class="tiny muted" style="font-weight:400">٤ من ١٠</span></div>
+
+          <div class="c p16" style="flex:1; overflow:hidden; padding-block:6px">
+            <div class="sub-row"><span class="tick on"><svg class="ic s14"><use href="#i-check"/></svg></span><span class="t">جاهزية السكن</span><span class="tiny muted">٠٧:٤٠</span></div>
+            <div class="sub-row"><span class="tick on"><svg class="ic s14"><use href="#i-check"/></svg></span><span class="t">الوصول قبل ساعتين</span><span class="tiny muted">٠٦:٠٥</span></div>
+            <div class="sub-row"><span class="tick on"><svg class="ic s14"><use href="#i-check"/></svg></span><span class="t">استلام المفاتيح</span><span class="tiny muted">٠٨:١٢</span></div>
+            <div class="sub-row"><span class="tick on"><svg class="ic s14"><use href="#i-check"/></svg></span><span class="t">فحص الغرف</span><span class="tiny muted">٠٨:٣٠</span></div>
+            <div class="sub-row" style="background:rgba(11,138,75,.09); margin:2px -10px; padding:11px 10px; border-radius:12px; border:0">
+              <span class="tick"></span><span class="t"><b>استقبال الحجاج</b></span><span class="pill wait">التالية</span></div>
+            <div class="sub-row"><span class="tick"></span><span class="t muted">جمع الجوازات</span></div>
+            <div class="sub-row"><span class="tick"></span><span class="t muted">تسليم بطاقات نُسك</span></div>
+            <div class="sub-row"><span class="tick"></span><span class="t muted">توزيع المفاتيح</span></div>
+            <div class="sub-row"><span class="tick"></span><span class="t muted">نقل الحقائب للغرف</span></div>
+          </div>
+
+          <div class="note green"><svg class="ic s16"><use href="#i-info"/></svg>
+            <span>تُسجَّل المهمة الفرعية بوقتك وموقعك. إنهاء المهمة كاملةً من صلاحية الليدر.</span></div>
+
+          <div class="cta">
+            <svg class="ic s26"><use href="#i-checkc"/></svg>
+            <span class="txt"><b>تسجيل إنجاز «استقبال الحجاج»</b><span>المهمة الفرعية الخامسة من عشر</span></span>
+          </div>
+        </div></div>
+        <div class="tabbar" data-nav="muhsen" data-active="tasks"></div>
+      </div></div>
+    </div>
+
+    <div class="slot">
+      <h4>الطلبات</h4>
+      <p>كل طلب يعرض المهمة كاملة قبل القرار — لا قبول لمجهول. والسجلّ لا يُمحى.</p>
+      <div class="phone"><div class="screen">
+        <div class="ground">
+          <div class="ph" style="background-image:url({{airport_w}})"></div><div class="tint"></div>
+          <svg class="topo" viewBox="0 0 390 760" preserveAspectRatio="xMidYMid slice"><g opacity=".14" transform="translate(-60,150)"><use href="#contour"/></g></svg>
+        </div>
+        <div class="topbar">
+          <div class="statusbar"><span>٩:٤١</span>
+            <svg class="ic s16 solid" viewBox="0 0 44 16"><rect x="0" y="9" width="3" height="5" rx="1"/><rect x="5" y="6.5" width="3" height="7.5" rx="1"/><rect x="10" y="4" width="3" height="10" rx="1"/><rect x="15" y="1.5" width="3" height="12.5" rx="1"/><path d="M26.5 4.2a8 8 0 019 0l-4.5 6z"/><rect x="38" y="4" width="5.5" height="9" rx="1.6"/></svg>
+          </div>
+          <div class="appbar"><a><svg class="ic"><use href="#i-back"/></svg></a>
+            <span class="t">الطلبات</span><a><svg class="ic"><use href="#i-search"/></svg></a></div>
+        </div>
+        <div class="stage"><div class="body">
+          <div class="c p16">
+            <div class="rowb"><b style="font-size:15px">طلب تسكين</b><span class="pill wait">يحتاج ردًا</span></div>
+            <div style="background:rgba(255,255,255,.6); border:1px solid rgba(255,255,255,.9); border-radius:14px; padding:13px; margin:12px 0">
+              <div class="rowb"><b style="font-size:14px">استقبال الحجاج من المطار</b><span class="pill grey">١٩ مهمة فرعية</span></div>
+              <div class="tiny muted" style="margin-top:5px">مجموعة ٥ · ٤٧ حاجًا · صالة الحج — جدة</div>
+              <div class="tiny muted">١٤٤٨/١٢/٢٠ · ٠٦:٠٠ ص إلى ١١:٠٠ ص · ٥ ساعات</div>
+              <div style="display:flex; align-items:center; gap:5px; margin-top:9px; color:#14593F; font-size:12.5px; font-weight:700">
+                <span>عرض تفاصيل المهمة والمهام الفرعية</span>
+                <svg class="ic s14" style="transform:rotate(90deg)"><use href="#i-chevdown"/></svg>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:13px">
+              <span class="av sm p1"><svg viewBox="0 0 44 44"><use href="#av-m"/></svg></span>
+              <span class="tiny muted" style="flex:1">من <b data-bind="m-leader2">محمد القحطاني</b> · قبل ٦ دقائق</span>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1.25fr; gap:10px">
+              <span class="btn danger">رفض</span><span class="btn primary">قبول</span>
+            </div>
+          </div>
+
+          <div class="c p16">
+            <div class="rowb"><b style="font-size:15px">طلب استبدال</b><span class="pill wait">يحتاج ردًا</span></div>
+            <div class="tiny muted" style="margin:6px 0 11px">عمرة القدوم · من مجموعة ٢ إلى مجموعة ٦</div>
+            <div class="note amber"><svg class="ic s16"><use href="#i-edit"/></svg>
+              <span>ملاحظة الليدر: «أحتاجك على مجموعة ٦، بها حجاج ذوو احتياج خاص»</span></div>
+          </div>
+
+          <div class="lbl">السجل</div>
+          <div style="display:flex; flex-direction:column; gap:10px">
+            <div class="prow"><span class="nm"><b>جولة مكة · مجموعة ٤</b><span>أمس ٠٧:٢٠ ص</span></span><span class="pill live">قبلت</span></div>
+            <div class="prow"><span class="nm"><b>طواف الوداع · مجموعة ٩</b><span>قبل ٣ أيام</span></span><span class="pill no">رفضت</span></div>
+            <div class="prow"><span class="nm"><b>استبدال · مجموعة ١</b><span>قبل ٤ أيام</span></span><span class="pill live">قبلت</span></div>
+          </div>
+        </div></div>
+        <div class="tabbar" data-nav="muhsen" data-active="req"></div>
+      </div></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ identity ============ -->
+<section class="wrap">
+  <div class="sec-head">
+    <span class="eyebrow">الهوية والأسلوب</span>
+    <h2>زجاج على أرضية صور الحرم</h2>
+    <p class="lede">البطاقات شفافة بنسبة ٧٢٪ مع ضبابية خلفية ٢٢ بكسل وحافة بيضاء رفيعة، فوق صورة حقيقية مموّهة بتدرّج أخضر إلى رملي. النص يبقى أسود مائلًا للأخضر لضمان التباين تحت الشمس.</p>
+  </div>
+  <div class="grid g4">
+    <div class="swatch"><div class="chip" style="background:#14593F"></div><div class="meta"><b>الأخضر الداكن</b><code>#14593F</code><small>العناية والرعاية · اللون الأساسي</small></div></div>
+    <div class="swatch"><div class="chip" style="background:#0B8A4B"></div><div class="meta"><b>الأخضر الحيوي</b><code>#0B8A4B</code><small>الإيجابية · النجاح والحضور</small></div></div>
+    <div class="swatch"><div class="chip" style="background:#A8875A"></div><div class="meta"><b>الذهبي</b><code>#A8875A</code><small>الإنجاز والقيادة · النقش</small></div></div>
+    <div class="swatch"><div class="chip" style="background:#101914"></div><div class="meta"><b>الأسود الأخضر</b><code>#101914</code><small>الدقة والاحترافية · النصوص</small></div></div>
+  </div>
+
+  <div class="grid g2" style="margin-top:26px">
+    <div class="card">
+      <h3>الأفاتار</h3>
+      <p style="margin-bottom:18px">سبع شخصيات متجهة بدرجات بشرة وشماغ وحجاب مختلفة — تكبر لأي مقاس دون فقدان جودة. لا صور فوتوغرافية لأشخاص.</p>
+      <div style="display:flex; gap:14px; flex-wrap:wrap">
+        <span class="av lg p1"><svg viewBox="0 0 44 44"><use href="#av-m"/></svg></span>
+        <span class="av lg p2"><svg viewBox="0 0 44 44"><use href="#av-m"/></svg></span>
+        <span class="av lg p3"><svg viewBox="0 0 44 44"><use href="#av-m"/></svg></span>
+        <span class="av lg p4"><svg viewBox="0 0 44 44"><use href="#av-m"/></svg></span>
+        <span class="av lg p5"><svg viewBox="0 0 44 44"><use href="#av-f"/></svg></span>
+        <span class="av lg p6"><svg viewBox="0 0 44 44"><use href="#av-f"/></svg></span>
+        <span class="av lg p7"><svg viewBox="0 0 44 44"><use href="#av-f"/></svg></span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>الأيقونات</h3>
+      <p style="margin-bottom:18px">أيقونات خطية بسُمك موحّد ١.٧ ونهايات دائرية، مرسومة خصيصًا — لا خليط من مكتبات مختلفة.</p>
+      <div style="display:flex; flex-wrap:wrap; gap:20px; color:var(--accent)">
+        <svg class="ic s26"><use href="#i-home"/></svg><svg class="ic s26"><use href="#i-tasks"/></svg>
+        <svg class="ic s26"><use href="#i-bell"/></svg><svg class="ic s26"><use href="#i-report"/></svg>
+        <svg class="ic s26"><use href="#i-pin"/></svg><svg class="ic s26"><use href="#i-clock"/></svg>
+        <svg class="ic s26"><use href="#i-hour"/></svg><svg class="ic s26"><use href="#i-cal"/></svg>
+        <svg class="ic s26"><use href="#i-target"/></svg><svg class="ic s26"><use href="#i-assign"/></svg>
+        <svg class="ic s26"><use href="#i-ticket"/></svg><svg class="ic s26"><use href="#i-users"/></svg>
+        <svg class="ic s26"><use href="#i-edit"/></svg><svg class="ic s26"><use href="#i-checkc"/></svg>
+        <svg class="ic s26"><use href="#i-cancel"/></svg><svg class="ic s26"><use href="#i-lock"/></svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="sec-head"><span class="eyebrow">التدفق</span><h2>من التسكين إلى الإغلاق</h2></div>
+  <div class="flow">
+    <div class="step"><span class="n">١</span><div><h4>الليدر يسكّن المجموعات</h4><p>محسن لكل مجموعة. لا فراغ، ولا محسن على مجموعتين. الحفظ كمسودة متاح.</p></div></div>
+    <div class="step"><span class="n">٢</span><div><h4>المحسن يقبل أو يرفض</h4><p>الرفض يعود بإشعار وسبب، والليدر يرسل لغيره. الصمت حتى ٣ ساعات قبل المهمة ينبّه الليدر لسحب الطلب.</p></div></div>
+    <div class="step"><span class="n">٣</span><div><h4>التحضير قبل ساعتين</h4><p>المحسن والليدر يثبتان الحضور داخل نطاق ٢ كم من موقع المهمة. التخلّف يُسجَّل ملاحظة ويُبلَّغ الكونترول.</p></div></div>
+    <div class="step"><span class="n">٤</span><div><h4>الليدر يبدأ المهمة</h4><p>الزر لا يعمل قبل اكتمال التسكين وإثبات الحضور. المهام الفرعية ترث كل شيء من الرئيسية.</p></div></div>
+    <div class="step"><span class="n">٥</span><div><h4>التنفيذ والمتابعة</h4><p>المحسن ينفّذ الفرعية ميدانيًا، والليدر يراقب ويقيّم. التذاكر والبلاغات تجري بالتوازي.</p></div></div>
+    <div class="step"><span class="n">٦</span><div><h4>الإغلاق</h4><p>الليدر ينهي المهمة. الإنهاء المبكر يُسجَّل تلقائيًا: «انتهت قبل وقتها بـ ٢٧ دقيقة»، مع ملاحظات الطرفين.</p></div></div>
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="sec-head">
+    <span class="eyebrow">البناء</span>
+    <h2>Flutter — تطبيق جوال أصيل بلا خادم</h2>
+    <p class="lede">لا ربط بأي API. البيانات محمّلة داخل التطبيق: مأخوذة من نظام العام الماضي وأُعيدت صياغتها لتناسب البزنس الجديد.</p>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>القرار</th><th>الاختيار</th><th>السبب</th></tr></thead>
+    <tbody>
+      <tr><td>الإطار</td><td><strong>Flutter</strong> · iOS وAndroid بكود واحد</td><td>دعم RTL ناضج، وتأثير الزجاج (BackdropFilter) مدعوم أصلًا وبأداء أصيل.</td></tr>
+      <tr><td>البيانات</td><td>ملفات JSON داخل التطبيق</td><td>يفتح ويعمل بلا إنترنت وبلا خادم. التعديل اليومي = تعديل ملف وإعادة تشغيل.</td></tr>
+      <tr><td>الحسابات</td><td>ليدر ومُحسن · اختيار الشخصية عند الدخول</td><td>يتيح تجربة الإجراء من الطرفين في الجهاز نفسه.</td></tr>
+      <tr><td>الحالة</td><td>Riverpod</td><td>قواعد العمل (منع الازدواج، منع البدء قبل الاكتمال) قابلة للاختبار وحدها.</td></tr>
+      <tr><td>النطاق</td><td>٢ كم من موقع المهمة</td><td>مطبَّق في كل شاشات إثبات الحضور.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<footer class="wrap">
+  تصوّر تطبيق مُحسن · النسخة الرابعة · البيانات مأخوذة من نظام Muhsen Activity V2.3 وأُعيدت صياغتها للبزنس الجديد.
+  <div class="credits">
+    <strong>مصادر الصور</strong> — جميعها برخص المشاع الإبداعي من ويكيميديا كومنز:<br>
+    الكعبة أثناء الحج: <em>Adli Wahid</em> (CC BY-SA 4.0) · الطواف في المسجد الحرام: <em>Basheer Olakara</em> (CC BY 2.0) ·
+    خيام منى: <em>Omar Chatriwala / Al Jazeera English</em> (CC BY-SA 2.0) · صالة الحج بمطار جدة: <em>Shah134pk</em> (CC BY-SA 4.0) ·
+    الحجاج في طريقهم إلى عرفة: <em>Omar Chatriwala / Al Jazeera English</em> (CC BY-SA 2.0)
+  </div>
+</footer>
+
+<div class="bgswitch" role="group" aria-label="خلفية التطبيق">
+  <button data-bg="plain">أبيض نقي</button>
+  <button data-bg="lines" aria-pressed="true">خطوط خفيفة</button>
+  <button data-bg="photo">خطوط وصورة</button>
+</div>
+
+<script>
+(function(){
+  document.body.setAttribute("data-bg","lines");
+  document.querySelectorAll(".bgswitch button").forEach(function(b){
+    b.addEventListener("click", function(){
+      document.body.setAttribute("data-bg", b.getAttribute("data-bg"));
+      document.querySelectorAll(".bgswitch button").forEach(function(x){
+        x.setAttribute("aria-pressed", x === b ? "true" : "false");
+      });
+    });
+  });
+})();
+</script>
+
+<script>
+(function(){
+  var LEADERS=[
+    {n:"محمد القحطاني",kt:"KT085",org:"بعثة TABUNG HAJI · ماليزيا",type:"بعثة",pil:"٥٠٠",muh:"٢٥",grp:"١١",av:"p1",g:"m"},
+    {n:"سعود بن حسين",kt:"KT062",org:"شركة Rayhar Travels · ماليزيا",type:"شركة",pil:"٤٧٠",muh:"٢٢",grp:"١٠",av:"p2",g:"m"},
+    {n:"عبدالرحمن الشريف",kt:"KT031",org:"بعثة AMPHURI · إندونيسيا",type:"بعثة",pil:"٣٨٠",muh:"١٨",grp:"٩",av:"p3",g:"m"},
+    {n:"ماجد الحربي",kt:"KT018",org:"شركة Sahid Gema Wisata · إندونيسيا",type:"شركة",pil:"٣٢٠",muh:"١٦",grp:"٨",av:"p4",g:"m"},
+    {n:"تركي الدوسري",kt:"KT007",org:"بعثة Darussalam Services · بروناي",type:"بعثة",pil:"٢٦٠",muh:"١٤",grp:"٦",av:"p1",g:"m"}
+  ];
+  var MUHSENS=[
+    {n:"أحمد عبدالله",id:"#١٠٠١",grp:"مجموعة ١",av:"p1",g:"m"},
+    {n:"محمد السبيعي",id:"#١٠٠٢",grp:"مجموعة ٢",av:"p2",g:"m"},
+    {n:"خالد الزهراني",id:"#١٠٠٣",grp:"مجموعة ٣",av:"p3",g:"m"},
+    {n:"هند العتيبي",id:"#١٠٠٤",grp:"مجموعة ٤",av:"p5",g:"f"},
+    {n:"سميرة القرني",id:"#١٠٠٥",grp:"مجموعة ٥",av:"p6",g:"f"},
+    {n:"فهد المطيري",id:"#١٠٠٦",grp:"مجموعة ٦",av:"p4",g:"m"}
+  ];
+  var role="leader", li=0, mi=0;
+
+  var NAV={
+    leader:[{k:"tasks",i:"i-tasks",l:"المهام"},{k:"alerts",i:"i-bell",l:"الإشعارات",b:"٣"},
+            {k:"home",i:"i-home",l:"الرئيسية",home:true},
+            {k:"reports",i:"i-report",l:"التقارير"},{k:"more",i:"i-dots",l:"المزيد"}],
+    muhsen:[{k:"tasks",i:"i-tasks",l:"مهمتي"},{k:"req",i:"i-bell",l:"الطلبات",b:"٢"},
+            {k:"home",i:"i-home",l:"الرئيسية",home:true},
+            {k:"reports",i:"i-report",l:"التقارير"},{k:"more",i:"i-dots",l:"المزيد"}]
+  };
+  document.querySelectorAll("[data-nav]").forEach(function(bar){
+    var items=NAV[bar.getAttribute("data-nav")], act=bar.getAttribute("data-active");
+    bar.innerHTML=items.map(function(it){
+      var on=it.k===act;
+      if(it.home) return '<a class="home'+(on?' on':'')+'"><span class="wrapi hb"><svg class="ic s26"><use href="#i-home"/></svg></span>الرئيسية</a>';
+      return '<a'+(on?' class="on"':'')+'><span class="wrapi"><svg class="ic"><use href="#'+it.i+'"/></svg>'+
+        (it.b?'<span class="badge">'+it.b+'</span>':'')+'</span>'+it.l+'</a>';
+    }).join("");
+  });
+
+  function avatar(p,size){
+    return '<span class="av '+(size||'')+' '+p.av+'"><svg viewBox="0 0 44 44"><use href="#av-'+p.g+'"/></svg></span>';
+  }
+  function set(key,val){
+    document.querySelectorAll('[data-bind="'+key+'"]').forEach(function(el){ el.textContent=val; });
+  }
+  function render(){
+    var L=LEADERS[li], M=MUHSENS[mi];
+    set("l-name",L.n); set("l-kt",L.kt); set("l-org",L.org);
+    set("l-pil",L.pil); set("l-muh",L.muh); set("l-grp",L.grp);
+    document.querySelectorAll('[data-bind="l-av"]').forEach(function(el){
+      el.className="av lg "+L.av;
+      el.innerHTML='<svg viewBox="0 0 44 44"><use href="#av-'+L.g+'"/></svg>';
+    });
+    document.getElementById("leaderHead").textContent="شاشات "+L.n;
+    document.getElementById("muhsenHead").textContent="شاشات "+M.n;
+    set("m-leader",L.n); set("m-leader2",L.n);
+    set("m-group",M.grp+" · ٤٧ حاجًا · "+L.kt);
+
+    var isCompany=L.type==="شركة";
+    document.querySelectorAll('[data-bind="assign-note"]').forEach(function(el){
+      el.textContent=isCompany?"متاح — هذه المهمة تتبع شركة، ويمكن إسناد صلاحية الليدر":"غير متاح — هذه المهمة تتبع بعثة، والإسناد للشركات فقط";
+    });
+    document.querySelectorAll('[data-bind="assign-field"],[data-bind="assign-card"]').forEach(function(el){
+      el.style.opacity=isCompany?"1":".42";
+    });
+
+    var host=document.getElementById("pickList");
+    var list=role==="leader"?LEADERS:MUHSENS, sel=role==="leader"?li:mi;
+    document.getElementById("pickTitle").textContent=role==="leader"?"حسابات المحسن الليدر":"حسابات المُحسن";
+    document.getElementById("pickCount").textContent=(role==="leader"?"٥":"٦")+" حسابات";
+    host.innerHTML=list.map(function(p,i){
+      var sub=role==="leader"?(p.kt+" · "+p.org):(p.id+" · "+p.grp);
+      return '<button class="prow pick" data-i="'+i+'" aria-pressed="'+(i===sel)+'">'+
+        avatar(p)+'<span class="nm"><b>'+p.n+'</b><span>'+sub+'</span></span>'+
+        '<span class="picked-mark"><svg class="ic s16"><use href="#i-checkc"/></svg></span></button>';
+    }).join("");
+    host.querySelectorAll(".pick").forEach(function(b){
+      b.addEventListener("click",function(){
+        var i=+b.getAttribute("data-i");
+        if(role==="leader") li=i; else mi=i;
+        render();
+      });
+    });
+  }
+  document.querySelectorAll(".role").forEach(function(b){
+    b.addEventListener("click",function(){
+      role=b.getAttribute("data-role");
+      document.querySelectorAll(".role").forEach(function(x){ x.setAttribute("aria-pressed", x===b ? "true":"false"); });
+      render();
+    });
+  });
+  render();
+})();
+</script>
