@@ -353,3 +353,95 @@
   .admfield input,.admfield select{color:#EAF2F6}
   .admfield select option{background:#132833}
 </style>
+
+<style>
+  /* ===================== تحسينات النسخة النهائية ===================== */
+
+  /* الجهاز يتكيّف مع أي شاشة — بلا فراغ أسفل الشريط */
+  html, body { height: 100%; height: 100dvh; }
+  #device { height: 868px; max-height: calc(100dvh - 40px); }
+  @media (max-width: 520px) {
+    #device { width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; padding: 0; }
+    #screen { border-radius: 0; }
+    .top { padding-top: env(safe-area-inset-top); }
+    .tabs { padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
+    .sheet { padding-bottom: calc(22px + env(safe-area-inset-bottom)); }
+    .toast { bottom: calc(96px + env(safe-area-inset-bottom)); }
+  }
+  /* شاشات قصيرة: نضغط الفراغات بدل أن يتمدد الفراغ */
+  @media (max-height: 720px) {
+    .view { padding: 11px 12px 18px; gap: 10px; }
+    .c { padding: 12px; } .banner { height: 104px; } .map { height: 140px; }
+    .timer b { font-size: 28px; } .phead { padding: 16px; }
+  }
+
+  /* أزرار الشريط العلوي */
+  .nav .avbtn { width: 34px; height: 34px; padding: 0; }
+  .nav .avbtn .av { width: 34px; height: 34px; }
+  .nav button.wi { position: relative; }
+  .nav .badge { top: -3px; left: -5px; }
+
+  /* أقسام مجزّأة بعدّاد */
+  .seg { flex-wrap: wrap; }
+  .seg button { position: relative; display: flex; align-items: center; justify-content: center; gap: 5px; }
+  .seg button i { font-style: normal; font-size: 10px; font-weight: 800; padding: 1px 6px;
+    border-radius: 99px; background: rgba(20,89,63,.1); color: var(--g); }
+  .seg button.on i { background: rgba(20,89,63,.14); }
+
+  /* النجوم */
+  .stars { display: inline-flex; align-items: center; gap: 2px; justify-content: center; }
+  .stars .ic { fill: #DDE2DC; stroke: none; }
+  .stars .ic.on { fill: #E3B341; }
+  .stars .ic.half { fill: url(#halfgrad); fill: #EEDCA8; }
+  .stars b { font-size: 12px; margin-inline-start: 5px; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .stars.lg b { font-size: 15px; }
+  .bigstars { display: flex; justify-content: center; }
+
+  .rank { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+    background: #EFF4F0; color: var(--g); font-weight: 800; font-size: 12px; flex: none; }
+
+  /* تدفق الطلب: من ← إلى */
+  .flow2 { display: flex; align-items: center; gap: 8px; margin: 11px 0 9px; flex-wrap: wrap; }
+  .flow2 .who { display: flex; align-items: center; gap: 7px; }
+  .flow2 .who .tiny b { display: block; }
+  .flow2 .who .tiny span { display: block; }
+  .flow2 .arrow { color: var(--gold); display: flex; }
+  .reqtask { gap: 9px; width: 100%; background: #F8F6F0; border-radius: 13px; padding: 10px; }
+
+  /* التقويم */
+  .week { display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 5px; margin-top: 12px; }
+  .week .day { border-radius: 13px; padding: 8px 2px; text-align: center; background: #F4F6F2; color: #5A6C63; }
+  .week .day.today { background: #E4F2E9; color: #0B6540; }
+  .week .day.on { background: linear-gradient(150deg, var(--g3), var(--g2)); color: #fff; }
+  .week .dn { display: block; font-size: 9.5px; opacity: .85; }
+  .week .dd { display: block; font-size: 16px; font-weight: 800; line-height: 1.5; }
+  .week .dots { display: flex; gap: 3px; justify-content: center; height: 6px; }
+  .week .dots i, i.lg { width: 5px; height: 5px; border-radius: 50%; display: inline-block; }
+  i.lg { width: 7px; height: 7px; vertical-align: middle; }
+  .dots i.g, i.lg.g { background: var(--live); } .dots i.r { background: var(--red); }
+  .dots i.a, i.lg.a { background: var(--amber); }
+  .week .day.on .dots i { background: #fff; }
+  .navbtn { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center;
+    background: #F4F6F2; color: var(--g); }
+
+  /* الحقول */
+  .field input, .field select { width: 100%; }
+  .field input[type="date"], .field input[type="time"] { color-scheme: light; min-height: 22px; }
+  .field .ph { color: var(--dim2); }
+
+  .vdots { color: #A9B6AE; display: grid; place-items: center; width: 22px; flex: none; }
+  .att { display: flex; align-items: center; gap: 6px; color: #0B6540; font-size: 12px; font-weight: 700; }
+  .att span { display: block; text-align: center; }
+  .att span span { font-size: 10px; color: var(--dim2); font-weight: 400; }
+  .dotred { width: 8px; height: 8px; border-radius: 50%; background: #D0342C; flex: none; }
+
+  .admrow { background: #132833; border-radius: 14px; padding: 12px; }
+
+  /* لمسات نهائية */
+  .c { transition: transform .12s ease; }
+  button.c:active, .prow:active, .listitem:active { transform: scale(.985); }
+  .cta:active, .btn:active { transform: scale(.98); }
+  .lbl { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .lbl::after { order: -1; margin: 0; width: 100%; }
+  .lbl small { margin-top: 0; }
+</style>

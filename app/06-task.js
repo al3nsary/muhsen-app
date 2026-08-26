@@ -1,99 +1,173 @@
-/* ============================ تفاصيل المهمة (الليدر / المفوَّض) ============================ */
+/* ============================ قائمة المهام — موحّدة للدورين ============================ */
+function screenTasks() {
+  const seg = S.tab.tasks || 'current';
+  const all = myTasks();
+  const byBucket = b => all.filter(t => taskBucket(t, S.session.id) === b);
+  const list = seg === 'all' ? all : byBucket(seg);
+  const n = b => byBucket(b).length;
+  const L = isLeader();
+  const un = L ? unassignedTasks().length : 0;
+
+  return bar('المهام', { left:'<button data-a="go" data-n="calendar" aria-label="التقويم">' + icon('i-cal') + '</button>' }) +
+    '<div class="view">' + ground() +
+    (L && un ? '<button class="note a" data-a="seg" data-k="tasks" data-v="current" style="width:100%">' +
+      icon('i-assign','s18') + '<span class="sp" style="text-align:right"><b>' + AR(un) + ' مهمة تحتاج تسكينًا</b><br>' +
+      'التسكين مطلوب فور استلام التطبيق — ولو كانت المهمة بعد أسابيع.</span></button>' : '') +
+
+    '<div class="seg">' +
+      [['current','الحالية',n('current')],['done','المنجزة',n('done')],
+       ['undone','غير المنجزة',n('undone')],['all','الكل',all.length]].map(x =>
+        '<button class="' + (seg === x[0] ? 'on' : '') + '" data-a="seg" data-k="tasks" data-v="' + x[0] + '">' +
+        x[1] + (x[2] ? '<i>' + AR(x[2]) + '</i>' : '') + '</button>').join('') + '</div>' +
+
+    (list.length ? list.map(t => taskRow(t)).join('')
+      : '<div class="c center" style="padding:28px"><b>لا توجد مهام هنا</b>' +
+        '<div class="sm dim" style="margin-top:6px">' +
+        (seg === 'undone' ? 'كل مهامك منجزة — أحسنت.' : 'ستظهر المهام هنا فور إسنادها.') + '</div></div>') +
+    '</div>' + tabs();
+}
+
+/* ============================ تفاصيل المهمة ============================ */
 function screenTask() {
   const t = taskById(S.route.id); if (!t) return screenTasks();
   recomputeStatus(t);
   const u = me(), lead = actsAsLeader(t, u.id), deleg = isDelegate(t, u.id);
-  const org = orgOf(t), isCo = org.type === 'شركة';
-  const ok = t.groups.filter(g => g.req === 'accepted').length;
-  const att = t.groups.filter(g => g.attendedAt).length;
+  const bucket = taskBucket(t, u.id);
+  const isCo = orgOf(t).type === 'شركة';
+  const acc = acceptedSlots(t), att = acc.filter(a => a.attendedAt).length;
   const doneSubs = t.subs.filter(s => s.done).length;
-  const canStart = t.status === 'ready';
-  const started = t.status === 'running';
   const closed = ['done','cancelled'].includes(t.status);
+  const running = t.status === 'running';
+  const locked = lockedForAssign(t);
+
+  /* المحسن في مهمة غير منجزة: السبب فقط بلا تفاصيل تشغيلية */
+  if (!lead && bucket === 'undone') {
+    return bar('تفاصيل المهمة', { back: 1 }) + '<div class="view">' + ground() +
+      svcCard(t) + metaCard(t) +
+      '<div class="note r">' + icon('i-info','s16') +
+        '<span><b>هذه المهمة غير منجزة بالنسبة لك</b><br>' + E(undoneReason(t, u.id)) + '</span></div>' +
+      '<div class="c center dim sm" style="padding:22px">لا يُعرض سجل المهمة ولا المحسنون المسكَّنون عليها.</div>' +
+      '</div>' + tabs();
+  }
 
   let cta = '';
-  if (closed) cta = '';
-  else if (started) cta = '<button class="cta" data-a="end" data-id="' + t.id + '">' + icon('i-stop','s26') +
-      '<span class="t"><b>إنهاء المهمة</b><span>' + AR(doneSubs) + ' من ' + AR(t.subs.length) + ' مهمة فرعية منجزة</span></span></button>';
-  else cta = '<button class="cta ' + (canStart ? '' : 'off') + '" ' + (canStart ? 'data-a="start" data-id="' + t.id + '"' : 'disabled') + '>' +
+  if (running) {
+    cta = lead
+      ? '<button class="cta" data-a="end" data-id="' + t.id + '">' + icon('i-stop','s26') +
+        '<span class="t"><b>إنهاء المهمة</b><span>' + AR(doneSubs) + ' من ' + AR(t.subs.length) + ' مهمة فرعية منجزة</span></span></button>'
+      : '<div class="note g">' + icon('i-play','s16') + '<span>المهمة جارية — نفّذ المهام الفرعية.</span></div>';
+  } else if (!closed && lead) {
+    const can = canStart(t, u.id);
+    cta = '<button class="cta ' + (can ? '' : 'off') + '" ' + (can ? 'data-a="start" data-id="' + t.id + '"' : 'disabled') + '>' +
       icon('i-play','s26 f') + '<span class="t"><b>بدء المهمة</b><span>' +
-      (t.status === 'pending_assign' ? 'يكتمل التسكين أولًا — ' + AR(ok) + ' من ' + AR(t.groups.length)
-        : t.status === 'assigned' ? 'بانتظار إثبات حضور الجميع — ' + AR(att + (t.leaderAttendedAt?1:0)) + ' من ' + AR(t.groups.length + 1)
-        : 'يمكن بدء المهمة الآن') + '</span></span></button>';
+      (can ? 'يمكنك بدؤها الآن — وتبدأ تلقائيًا ' + t12(t.start) + ' على كل حال'
+           : 'يُفتح البدء قبل الموعد بساعتين — ' + untilTxt(earlyStartFrom(t))) + '</span></span></button>';
+  }
 
-  return bar('تفاصيل المهمة', { back: 1, right: '<button data-a="hist" data-id="' + t.id + '">' + icon('i-hist') + '</button>' }) +
+  return bar('تفاصيل المهمة', { back: 1,
+    right: lead ? '<button data-a="go" data-n="timeline" data-id="' + t.id + '" aria-label="سجل الإجراءات">' + icon('i-hist') + '</button>'
+                : '<button data-a="go" data-n="profile" class="avbtn">' + avat(u, 'sm') + '</button>' }) +
     '<div class="view">' + ground() +
     svcCard(t) + metaCard(t) +
 
-    (deleg ? '<div class="note b">' + icon('i-shield','s16') + '<span>تعمل بصلاحية قائد لهذه المهمة فقط. الإسناد والاستبدال غير متاحين لك.</span></div>' : '') +
-    (t.status === 'cancelled' ? '<div class="note r">' + icon('i-xc','s16') + '<span>أُلغيت المهمة — ' + E(t.cancelReason) + '</span></div>' : '') +
+    (t.autoStarted && lead ? '<div class="note r">' + icon('i-warn','s16') +
+      '<span><b>بدأها النظام تلقائيًا</b><br>حان وقتها ولم تبدأها. التسكين لم يعد متاحًا — يمكنك إغلاقها فقط، ويُحتسب ذلك في تقييمك.</span></div>' : '') +
+    (deleg ? '<div class="note b">' + icon('i-shield','s16') +
+      '<span>تعمل بصلاحية قائد لهذه المهمة فقط. التسكين والإسناد غير متاحين لك.</span></div>' : '') +
+    (t.status === 'cancelled' ? '<div class="note r">' + icon('i-xc','s16') +
+      '<span>أُلغيت المهمة — ' + E(t.cancelReason || '') + '</span></div>' : '') +
 
-    /* حضور القائد */
     (!closed ? attendCard(t, u, lead) : '') +
     cta +
 
-    /* التسكين */
-    '<div class="lbl">المجموعات<small>' + AR(ok) + ' من ' + AR(t.groups.length) + ' مكتملة · ' + AR(att) + ' أثبتوا حضورهم</small></div>' +
-    t.groups.map(g => groupRow(t, g, lead && !deleg, closed)).join('') +
+    (t.rating ? '<button class="c gold" data-a="go" data-n="taskrating" data-id="' + t.id + '" style="width:100%;text-align:right">' +
+      '<div class="row"><b class="sm">تقييم المهمة</b>' + pill('التفاصيل', 'gold') + '</div>' +
+      '<div class="grid3" style="margin-top:10px">' +
+        '<div class="center"><div class="tiny dim2">النظام</div>' + stars(t.rating.system) + '</div>' +
+        '<div class="center"><div class="tiny dim2">المشرف</div>' + stars(t.rating.supervisor) + '</div>' +
+        '<div class="center"><div class="tiny dim2">الحجاج</div>' + stars(t.rating.pilgrims) + '</div>' +
+      '</div></button>' : '') +
 
-    '<button class="btn l" data-a="go" data-n="timeline" data-id="' + t.id + '">' + icon('i-hist','s16') + 'تسلسل الإجراءات لكل مجموعة</button>' +
-    (lead && !deleg && !closed ? '<button class="btn l" data-a="go" data-n="assign" data-id="' + t.id + '">' +
-      icon('i-swap','s16') + 'إدارة التسكين والاستبدال</button>' : '') +
+    (lead ? '<div class="lbl">المحسنون المسكَّنون<small>' + AR(acc.length) + ' من الحد الأدنى ' + AR(MIN_ASSIGN) +
+        ' · ' + AR(att) + ' أثبتوا حضورهم</small></div>' +
+      (activeSlots(t).length ? activeSlots(t).map(a => slotRow(t, a, lead && !deleg && !locked)).join('')
+        : '<div class="c center dim sm" style="padding:20px">لم يُسكَّن أحد بعد</div>') +
+      (locked ? '<div class="note a">' + icon('i-info','s16') +
+        '<span>' + (running || closed ? 'المهمة بدأت — التسكين مقفل.' : 'حان وقت المهمة — التسكين مقفل.') + '</span></div>'
+        : '<button class="btn l" data-a="go" data-n="assign" data-id="' + t.id + '">' +
+          icon('i-assign','s16') + 'إدارة التسكين</button>') : '') +
 
-    /* المهام الفرعية */
     '<div class="lbl">المهام الفرعية<small>' + AR(doneSubs) + ' من ' + AR(t.subs.length) + '</small></div>' +
-    '<div class="c">' + t.subs.map((s, i) => subRow(t, s, i, lead && started)).join('') + '</div>' +
+    '<div class="c">' + t.subs.map((s, i) => subRow(t, s, i, running)).join('') + '</div>' +
 
-    /* التفويض */
-    (!closed ? delegCard(t, isCo, lead && !deleg) : '') +
+    (running && !lead ? (function () {
+      const nx = t.subs.find(s => !s.done);
+      return nx ? '<button class="cta" data-a="sub" data-id="' + t.id + '" data-s="' + nx.id + '">' + icon('i-checkc','s26') +
+        '<span class="t"><b>تسجيل إنجاز «' + E(nx.name) + '»</b><span>الفرعية ' + AR(t.subs.indexOf(nx) + 1) + ' من ' + AR(t.subs.length) + '</span></span></button>'
+        : '<div class="note g">' + icon('i-checkc','s16') + '<span>أنجزت كل المهام الفرعية. الإغلاق من صلاحية القائد.</span></div>';
+    })() : '') +
 
-    /* الملاحظات */
-    (t.notes.length ? '<div class="lbl">ملاحظات المهمة</div>' + t.notes.map(n =>
-      '<div class="note ' + (n.kind === 'auto' ? 'a' : 'b') + '">' + icon(n.kind === 'auto' ? 'i-info' : 'i-edit','s16') +
-      '<span>' + E(n.text) + '<br><span class="tiny dim2">' + t12(n.at) + '</span></span></div>').join('') : '') +
+    (lead && !deleg && !closed ? delegCard(t, isCo, !locked) : '') +
 
-    (!closed ? '<button class="btn l" data-a="note" data-id="' + t.id + '">' + icon('i-edit','s16') + 'إضافة ملاحظة</button>' : '') +
-    (lead && !closed ? '<button class="btn d" data-a="cancel" data-id="' + t.id + '">' + icon('i-cancel','s16') + 'إلغاء المهمة</button>' : '') +
+    (t.notes.length && lead ? '<div class="lbl">ملاحظات المهمة<small>تُحتسب في التقييم</small></div>' +
+      t.notes.map(n => '<div class="note ' + (n.kind === 'auto' ? 'a' : 'b') + '">' +
+        icon(n.kind === 'auto' ? 'i-info' : 'i-edit','s16') +
+        '<span>' + E(n.text) + '<br><span class="tiny dim2">' + t12(n.at) + '</span></span></div>').join('') : '') +
+
+    (!closed ? '<div class="grid2">' +
+      '<button class="btn l sm" data-a="note" data-id="' + t.id + '">' + icon('i-edit','s16') + 'ملاحظة</button>' +
+      '<button class="btn l sm" data-a="newticket" data-id="' + t.id + '">' + icon('i-ticket','s16') + 'تذكرة</button></div>' : '') +
+    (lead && !closed && !running ? '<button class="btn d" data-a="cancel" data-id="' + t.id + '">' +
+      icon('i-cancel','s16') + 'إلغاء المهمة</button>' : '') +
     '</div>' + tabs();
 }
 
+/* بطاقة الحضور */
 function attendCard(t, u, lead) {
-  const mine = t.groups.find(g => g.muhsenId === u.id);
-  const already = (u.role === 'leader' && t.leaderAttendedAt) || (mine && mine.attendedAt);
-  const open = inPrep(t) || now() >= t.start;
-  const rem = hms(prepDeadline(t) - now());
-  if (already) return '<div class="note g">' + icon('i-checkc','s16') +
-    '<span>حضورك مُثبَت ' + t12(u.role === 'leader' ? t.leaderAttendedAt : mine.attendedAt) + '</span></div>';
-  if (!open) return '<div class="note a">' + icon('i-clock','s16') +
-    '<span>تُفتح نافذة التحضير قبل الموعد بساعتين — ' + untilTxt(prepOpen(t)) + '</span></div>';
-  return '<div class="c gold"><div class="center"><div class="tiny dim2" style="margin-bottom:5px">وقت التحضير المتبقي</div>' +
-    '<div class="timer" data-deadline="' + prepDeadline(t) + '"><b>' + AR(rem.h) + '</b><i>:</i><b>' + AR(rem.m) + '</b><i>:</i><b>' + AR(rem.s) + '</b></div>' +
+  const a = slotOf(t, u.id);
+  const mine = lead ? t.leaderAttendedAt : (a ? a.attendedAt : null);
+  const involved = lead || (a && a.req === 'accepted');
+  if (!involved) return '';
+  if (mine) return '<div class="note g">' + icon('i-checkc','s16') +
+    '<span>حضورك مُثبَت ' + t12(mine) + '</span></div>';
+  if (now() < prepOpen(t)) return '<div class="note a">' + icon('i-clock','s16') +
+    '<span>يفتح التحضير من بداية يوم المهمة — ' + hijri(t.start) + '</span></div>';
+  const late = now() >= t.start;
+  const r = hms(Math.abs(t.start - now()));
+  return '<div class="c gold"><div class="center">' +
+    '<div class="tiny dim2" style="margin-bottom:5px">' + (late ? 'تأخرت عن بداية المهمة' : 'المتبقي على بداية المهمة') + '</div>' +
+    '<div class="timer" data-deadline="' + t.start + '"><b' + (late ? ' style="color:var(--red)"' : '') + '>' + AR(r.h) +
+      '</b><i>:</i><b' + (late ? ' style="color:var(--red)"' : '') + '>' + AR(r.m) +
+      '</b><i>:</i><b' + (late ? ' style="color:var(--red)"' : '') + '>' + AR(r.s) + '</b></div>' +
     '<div class="tunits"><span>ساعة</span><span>دقيقة</span><span>ثانية</span></div>' +
-    '<div class="tiny dim" style="margin-top:9px">آخر وقت لإثبات الحضور ' + t12(prepDeadline(t)) + '</div></div>' +
+    '<div class="tiny ' + (late ? '' : 'dim') + '" style="margin-top:9px' + (late ? ';color:var(--red);font-weight:700' : '') + '">' +
+      (late ? 'يُسجَّل تأخرك في ملاحظات المهمة ويؤثر في تقييمك' : 'تبدأ المهمة ' + t12(t.start)) + '</div></div>' +
     mapBox(t, true) +
     '<div class="grid2" style="margin-top:11px">' +
       '<button class="btn g sm" data-a="place">' + icon('i-pin','s16') + 'تغيير موقعي</button>' +
-      '<button class="btn p sm" data-a="attend" data-id="' + t.id + '">' + icon('i-target','s16') + 'إثبات الحضور</button>' +
-    '</div><div class="tiny dim2 center" style="margin-top:7px">وضع التجربة: الحضور متاح من أي موقع</div></div>';
+      '<button class="btn p sm" data-a="attend" data-id="' + t.id + '">' + icon('i-target','s16') + 'إثبات الحضور</button></div>' +
+    '<div class="tiny dim2 center" style="margin-top:7px">وضع التجربة: الحضور متاح من أي موقع — والبُعد يُسجَّل ملاحظةً</div></div>';
 }
 
-function groupRow(t, g, canManage, closed) {
-  const u = g.muhsenId ? userById(g.muhsenId) : null;
-  let right = '', sub = 'مجموعة ' + AR(g.no) + ' · ' + AR(g.pilgrims) + ' حاجًا';
-  if (!u) right = pill('بلا محسن', 'wait');
-  else if (g.req === 'pending') { right = pill('بانتظار الرد', 'wait'); sub = 'مجموعة ' + AR(g.no) + ' · أُرسل ' + ago(g.reqAt); }
-  else if (g.attendedAt) { right = '<span class="fl" style="gap:5px;color:#0B6540;font-weight:700;font-size:12px">' + icon('i-checkc','s16') + 'حاضر</span>'; sub = 'مجموعة ' + AR(g.no) + ' · ' + t12(g.attendedAt); }
-  else right = pill('قبِل', 'live');
-  if (g.swap && g.swap.state === 'pending') right = pill('استبدال معلّق', 'blue');
-  return '<div class="prow">' + (u ? avat(u) : '<span class="eav">' + icon('i-user','s16') + '</span>') +
-    '<span class="nm sp"><b>' + (u ? E(u.name) : 'مجموعة ' + AR(g.no)) + '</b><span>' + E(sub) + '</span></span>' +
-    right + (canManage && !closed ? '<button data-a="gmenu" data-id="' + t.id + '" data-g="' + g.id + '" style="color:#B4BEB7">' + icon('i-vdots','s16') + '</button>' : '') + '</div>';
+function slotRow(t, a, canManage) {
+  const u = userById(a.muhsenId);
+  let right = '', sub = E(u.code) + ' · ' + E(u.specialty);
+  if (a.req === 'pending') { right = pill('بانتظار الرد', 'wait'); sub = 'أُرسل ' + ago(a.reqAt); }
+  else if (a.attendedAt) {
+    right = '<span class="att">' + icon('i-checkc','s16') + '<span>حاضر<span>' + t12(a.attendedAt) + '</span></span></span>';
+    if (a.farKm > RADIUS_KM) sub = 'حضّر من ' + a.farKm + ' كم — خارج النطاق';
+  } else right = pill('قبِل', 'live');
+  return '<div class="prow">' + avat(u) +
+    '<span class="nm sp"><b>' + E(u.name) + '</b><span>' + sub + '</span></span>' + right +
+    (canManage ? '<button data-a="smenu" data-id="' + t.id + '" data-u="' + a.muhsenId + '" class="vdots">' +
+      icon('i-vdots','s16') + '</button>' : '') + '</div>';
 }
 
-function subRow(t, s, i, canToggle) {
+function subRow(t, s, i, running) {
   const nextIdx = t.subs.findIndex(x => !x.done);
-  const isNext = i === nextIdx && t.status === 'running';
-  return '<button class="sub ' + (isNext ? 'next' : '') + '" ' + (canToggle ? 'data-a="sub" data-id="' + t.id + '" data-s="' + s.id + '"' : 'disabled') + '>' +
+  const isNext = i === nextIdx && running;
+  return '<button class="sub ' + (isNext ? 'next' : '') + '" ' +
+    (running ? 'data-a="sub" data-id="' + t.id + '" data-s="' + s.id + '"' : 'disabled') + '>' +
     '<span class="tick ' + (s.done ? 'on' : '') + '">' + (s.done ? icon('i-check','s14') : '') + '</span>' +
     '<span class="t ' + (s.done ? '' : isNext ? 'b' : 'dim') + '">' + E(s.name) + '</span>' +
     (s.done ? '<span class="tiny dim2">' + t12(s.at) + '</span>' : isNext ? pill('التالية','wait') : '') + '</button>';
@@ -101,20 +175,19 @@ function subRow(t, s, i, canToggle) {
 
 function delegCard(t, isCo, canManage) {
   if (!isCo) return '<div class="note a">' + icon('i-shield','s16') +
-    '<span>إسناد صلاحية الليدر غير متاح — هذه المهمة تتبع <b>بعثة</b>، والإسناد للشركات فقط.</span></div>';
+    '<span>إسناد صلاحية القيادة غير متاح — هذه المهمة تتبع <b>بعثة</b>، والإسناد للشركات فقط.</span></div>';
   if (!t.delegate) return canManage
-    ? '<div><div class="lbl">إسناد صلاحية الليدر<small>للشركات فقط · لمهمة واحدة · لمحسن واحد</small></div>' +
+    ? '<div><div class="lbl">إسناد صلاحية القيادة<small>للشركات فقط · لهذه المهمة وحدها</small></div>' +
       '<button class="field" data-a="deleg" data-id="' + t.id + '">' + icon('i-assign','s16') +
-      '<span class="sp ph">اختر محسنًا لإسناد صلاحية القيادة</span>' + icon('i-down','s16') + '</button></div>'
-    : '';
+      '<span class="sp ph">اختر محسنًا لإسناد القيادة</span>' + icon('i-down','s16') + '</button></div>' : '';
   const d = t.delegate, u = userById(d.muhsenId);
-  return '<div><div class="lbl">إسناد صلاحية الليدر</div><div class="c gold">' +
+  return '<div><div class="lbl">إسناد صلاحية القيادة</div><div class="c gold">' +
     '<div class="tiny dim2" style="margin-bottom:9px">' +
-      (d.state === 'pending' ? 'بانتظار رد المحسن' : 'أُسندت صلاحية القيادة إلى') + '</div>' +
+      (d.state === 'pending' ? 'بانتظار رد المحسن' : d.state === 'accepted' ? 'القائد المؤقت لهذه المهمة' : 'رُفض الإسناد') + '</div>' +
     '<div class="fl">' + avat(u, 'lg') + '<span class="sp"><b style="font-size:15px;display:block">' + E(u.name) +
-      '</b><span class="tiny dim2">' + E(u.code) + ' · ' + (d.keepGroup ? 'مع بقائه على مجموعته' : 'ليدر لهذه المهمة فقط') + '</span></span></div>' +
+      '</b><span class="tiny dim2">' + E(u.code) + ' · ' + (d.keepGroup ? 'مع بقائه محسنًا في المهمة' : 'قائد لهذه المهمة فقط') + '</span></span></div>' +
     '<div class="row" style="margin-top:11px">' +
-      pill(d.state === 'pending' ? 'بانتظار القبول' : 'يملك صلاحية بدء وإغلاق المهمة', d.state === 'pending' ? 'wait' : 'live') +
+      pill(d.state === 'pending' ? 'بانتظار القبول' : 'يملك صلاحية البدء والإغلاق', d.state === 'pending' ? 'wait' : 'live') +
       (canManage ? '<button data-a="undeleg" data-id="' + t.id + '" style="color:var(--red);font-size:12.5px;font-weight:700">إلغاء الإسناد</button>' : '') +
     '</div></div></div>';
 }
@@ -123,77 +196,88 @@ function delegCard(t, isCo, canManage) {
 function screenAssign() {
   const t = taskById(S.route.id); if (!t) return screenTasks();
   recomputeStatus(t);
-  const ok = t.groups.filter(g => g.req === 'accepted').length;
-  return bar('تسكين المجموعات', { back: 1, right: '<button data-a="hist" data-id="' + t.id + '">' + icon('i-hist') + '</button>' }) +
-    '<div class="view">' + ground() +
-    '<div class="c gold"><div class="row"><b style="font-size:14.5px">' + E(t.title) + '</b>' +
-      pill(untilTxt(t.start), 'wait') + '</div>' +
-      '<div class="meter" style="margin:11px 0 7px"><i style="width:' + Math.round(ok / t.groups.length * 100) + '%"></i></div>' +
-      '<div class="row tiny dim"><span>' + AR(ok) + ' من ' + AR(t.groups.length) + ' مجموعة مكتملة</span>' +
-      '<span>' + AR(t.groups[0].pilgrims) + ' حاجًا للمجموعة</span></div></div>' +
+  const acc = acceptedSlots(t).length;
+  const locked = lockedForAssign(t);
+  const team = teamOf(t.leaderId);
+  const busy = {};
+  team.forEach(m => { const b = busyIn(m.id, t); if (b) busy[m.id] = b.title; });
 
-    '<div class="note b">' + icon('i-info','s16') +
-      '<span>محسن واحد لكل مجموعة · لا مجموعة فارغة · التسكين لهذه المهمة فقط.</span></div>' +
+  return bar('التسكين', { back: 1 }) + '<div class="view">' + ground() +
+    '<div class="c gold"><div class="row"><b style="font-size:14.5px" class="sp">' + E(t.title) + '</b>' +
+      pill(untilTxt(t.start), locked ? 'no' : 'wait') + '</div>' +
+      '<div class="meter" style="margin:11px 0 7px"><i style="width:' +
+        Math.min(100, Math.round(acc / MIN_ASSIGN * 100)) + '%"></i></div>' +
+      '<div class="row tiny dim"><span>' + AR(acc) + ' من الحد الأدنى ' + AR(MIN_ASSIGN) + '</span>' +
+      '<span>' + AR(ktCount(t.kt)) + ' حاجًا في ' + E(t.kt) + '</span></div></div>' +
 
-    '<div class="lbl">المجموعات</div>' +
-    t.groups.map(g => {
-      const u = g.muhsenId ? userById(g.muhsenId) : null;
-      let state = '', act = '';
-      if (!u) { state = pill('بلا محسن', 'wait'); act = '<button class="btn p sm" data-a="pick" data-id="' + t.id + '" data-g="' + g.id + '">اختر محسنًا</button>'; }
-      else if (g.req === 'pending') { state = pill('بانتظار الرد · ' + ago(g.reqAt), 'wait');
-        act = '<div class="grid2"><button class="btn d sm" data-a="withdraw" data-id="' + t.id + '" data-g="' + g.id + '">سحب الطلب</button>' +
-              '<button class="btn g sm" data-a="pick" data-id="' + t.id + '" data-g="' + g.id + '">تغيير الشخص</button></div>'; }
-      else { state = g.attendedAt ? pill('حاضر ' + t12(g.attendedAt), 'live') : pill('قبِل', 'live');
-        act = g.swap && g.swap.state === 'pending'
-          ? '<div class="note a" style="margin-top:2px">' + icon('i-swap','s16') + '<span>طلب استبدال معلّق — بانتظار رد المحسن</span></div>'
-          : '<button class="btn l sm" data-a="swap" data-id="' + t.id + '" data-g="' + g.id + '">' + icon('i-swap','s16') + 'طلب استبدال</button>'; }
-      return '<div class="c"><div class="fl">' + (u ? avat(u) : '<span class="eav">' + icon('i-user','s16') + '</span>') +
-        '<span class="nm sp"><b style="font-size:13.5px">' + (u ? E(u.name) : 'مجموعة ' + AR(g.no)) + '</b>' +
-        '<span class="tiny dim2">مجموعة ' + AR(g.no) + ' · ' + AR(g.pilgrims) + ' حاجًا' + (u ? ' · ' + E(u.code) : '') + '</span></span>' +
-        state + '</div>' + (g.respNote ? '<div class="note r" style="margin-top:9px">' + icon('i-info','s16') + '<span>' + E(g.respNote) + '</span></div>' : '') +
-        '<div style="margin-top:10px">' + act + '</div></div>';
+    (locked
+      ? '<div class="note r">' + icon('i-warn','s16') + '<span><b>التسكين مقفل</b><br>' +
+        (t.status === 'running' ? 'المهمة بدأت — لا تسكين بعد البدء.' : 'حان وقت المهمة.') + '</span></div>'
+      : '<div class="note b">' + icon('i-info','s16') +
+        '<span>الحد الأدنى ' + AR(MIN_ASSIGN) + ' محسنين. المهمة تبدأ في وقتها على كل حال، والتسكين الناقص يُسجَّل ملاحظةً ويؤثر في التقييم.</span></div>') +
+
+    '<div class="lbl">فريقك<small>' + AR(team.length) + ' محسن · جميعهم يخدمون ' + AR(ktCount(t.kt)) + ' حاجًا</small></div>' +
+    team.map(m => {
+      const a = slotOf(t, m.id);
+      const st = a ? a.req : null;
+      const blocked = !!busy[m.id] && !a;
+      let right, act = '';
+      if (st === 'accepted') { right = pill('مُسكَّن', 'live');
+        act = locked ? '' : '<button class="btn d sm" data-a="removeasg" data-id="' + t.id + '" data-u="' + m.id + '">' + icon('i-x','s16') + 'إزالة من المهمة</button>'; }
+      else if (st === 'pending') { right = pill('بانتظار الرد · ' + ago(a.reqAt), 'wait');
+        act = locked ? '' : '<div class="grid2">' +
+          '<a class="btn l sm" href="tel:' + m.phone.replace(/[^0-9]/g,'') + '">' + icon('i-phone','s16') + 'اتصال</a>' +
+          '<button class="btn d sm" data-a="withdraw" data-id="' + t.id + '" data-u="' + m.id + '">' + icon('i-x','s16') + 'سحب الطلب</button></div>'; }
+      else if (st === 'rejected') { right = pill('رفض', 'no');
+        act = locked ? '' : '<button class="btn l sm" data-a="send" data-id="' + t.id + '" data-u="' + m.id + '">' + icon('i-swap','s16') + 'إعادة الإرسال</button>'; }
+      else { right = blocked ? pill('مرتبط بمهمة أخرى', 'grey') : pill('متاح', 'grey');
+        act = locked ? '' : (blocked
+          ? '<div class="tiny dim2">مرتبط بـ«' + E(busy[m.id]) + '» في وقت متداخل</div>'
+          : '<button class="btn p sm" data-a="send" data-id="' + t.id + '" data-u="' + m.id + '">' + icon('i-assign','s16') + 'إرسال طلب</button>'); }
+      return '<div class="c"><div class="fl">' + avat(m) +
+        '<span class="nm sp"><b>' + E(m.name) + '</b><span>' + E(m.code) + ' · ' + E(m.specialty) + '</span></span>' + right + '</div>' +
+        (a && a.respNote ? '<div class="note r" style="margin-top:9px">' + icon('i-info','s16') + '<span>' + E(a.respNote) + '</span></div>' : '') +
+        (act ? '<div style="margin-top:10px">' + act + '</div>' : '') + '</div>';
     }).join('') +
-
-    (ok < t.groups.length
-      ? '<div class="note a">' + icon('i-warn','s16') + '<span>' + AR(t.groups.length - ok) + ' مجموعة بلا محسن مقبول — لا يمكن بدء المهمة.</span></div>'
-      : '<div class="note g">' + icon('i-checkc','s16') + '<span>اكتمل التسكين. المتبقي إثبات الحضور.</span></div>') +
     '</div>' + tabs();
 }
 
-/* اختيار محسن — ورقة منبثقة */
-function pickSheet(t, g) {
-  const team = teamOf(t.leaderId);
-  const used = new Set(t.groups.filter(x => x.id !== g.id && x.muhsenId).map(x => x.muhsenId));
-  return '<div class="grip"></div><h3>اختر محسنًا لمجموعة ' + AR(g.no) + '</h3>' +
-    '<div class="tiny dim2" style="margin-bottom:12px">' + AR(g.pilgrims) + ' حاجًا · ' + E(t.title) + '</div>' +
-    '<div class="col">' + team.map(u => {
-      const inTask = used.has(u.id);
-      const busy = !inTask && busyIn(u.id, t);
-      const blocked = inTask || busy;
-      const why = inTask ? 'مسكَّن على مجموعة أخرى في هذه المهمة' : busy ? 'مرتبط بـ«' + busy.title + '» في وقت متداخل' : u.specialty;
-      return '<button class="prow" ' + (blocked ? 'disabled style="opacity:.5"' : 'data-a="send" data-id="' + t.id + '" data-g="' + g.id + '" data-u="' + u.id + '"') + '>' +
-        avat(u) + '<span class="nm sp"><b>' + E(u.name) + '</b><span>' + E(why) + '</span></span>' +
-        (blocked ? pill('غير متاح','no') : pill('إرسال طلب','live')) + '</button>';
-    }).join('') + '</div>' +
-    '<button class="btn g" style="margin-top:14px" data-a="close">إغلاق</button>';
-}
+/* ============================ تسلسل الإجراءات — للقائد فقط ============================ */
+function screenTimeline() {
+  const t = taskById(S.route.id); if (!t) return screenTasks();
+  if (!actsAsLeader(t, S.session.id)) return screenTasks();
+  const evs = [];
+  t.assigned.forEach(a => {
+    const nm = userById(a.muhsenId).name;
+    if (a.reqAt) evs.push({ at:a.reqAt, ic:'i-assign', c:'wait', txt:'أُرسل طلب تسكين إلى ' + nm });
+    if (a.respAt) evs.push({ at:a.respAt, ic:a.req === 'accepted' ? 'i-checkc' : 'i-xc',
+      c:a.req === 'accepted' ? 'live' : 'no',
+      txt:nm + (a.req === 'accepted' ? ' قبل التسكين' : ' رفض التسكين') + (a.respNote ? ' — «' + a.respNote + '»' : '') });
+    if (a.attendedAt) evs.push({ at:a.attendedAt, ic:'i-target', c:a.farKm > RADIUS_KM ? 'wait' : 'live',
+      txt:nm + ' أثبت حضوره' + (a.farKm > RADIUS_KM ? ' من ' + a.farKm + ' كم' : '') });
+    if (a.removed) evs.push({ at:a.respAt || a.reqAt, ic:'i-x', c:'no', txt:'أُزيل ' + nm + ' — ' + (a.removedWhy || '') });
+  });
+  if (t.leaderAttendedAt) evs.push({ at:t.leaderAttendedAt, ic:'i-target', c:'live', txt:'القائد أثبت حضوره' });
+  if (t.delegate) evs.push({ at:t.delegate.at, ic:'i-shield', c:'gold',
+    txt:'إسناد القيادة إلى ' + userById(t.delegate.muhsenId).name + ' — ' +
+      (t.delegate.state === 'accepted' ? 'قُبل' : t.delegate.state === 'pending' ? 'بانتظار الرد' : 'رُفض') });
+  if (t.startedAt) evs.push({ at:t.startedAt, ic:'i-play', c:t.autoStarted ? 'no' : 'live',
+    txt:t.autoStarted ? 'بدأها النظام تلقائيًا' : 'بدأ ' + (userById(t.startedBy) || {name:'النظام'}).name + ' المهمة' });
+  t.subs.filter(s => s.done).forEach(s => evs.push({ at:s.at, ic:'i-check', c:'grey',
+    txt:'أُنجزت «' + s.name + '»' + (s.by && userById(s.by) ? ' — ' + userById(s.by).name : '') }));
+  if (t.endedAt) evs.push({ at:t.endedAt, ic:'i-stop', c:'grey',
+    txt:'أُغلقت المهمة' + (userById(t.endedBy) ? ' — ' + userById(t.endedBy).name : '') });
+  evs.sort((a, b) => b.at - a.at);
 
-function delegSheet(t) {
-  const team = teamOf(t.leaderId);
-  const keep = S.delegKeep !== false;
-  return '<div class="grip"></div><h3>إسناد صلاحية الليدر</h3>' +
-    '<div class="tiny dim2" style="margin-bottom:12px">لمهمة «' + E(t.title) + '» فقط · المفوَّض لا يملك الإسناد ولا الاستبدال</div>' +
-    '<div class="seg" style="margin-bottom:12px">' +
-      '<button class="' + (keep ? 'on' : '') + '" data-a="dkeep" data-v="1">مع الإبقاء على مهامه كمحسن</button>' +
-      '<button class="' + (!keep ? 'on' : '') + '" data-a="dkeep" data-v="0">ليدر لهذه المهمة فقط</button></div>' +
-    (!keep ? '<div class="note a" style="margin-bottom:12px">' + icon('i-warn','s16') +
-      '<span>سيُزال من مجموعته إن كان مسكَّنًا، وعليك تسكين بديل قبل البدء.</span></div>' : '') +
-    '<div class="col">' + team.map(u => {
-      const g = t.groups.find(x => x.muhsenId === u.id && x.req === 'accepted');
-      const sub = g ? 'مسكَّن على مجموعة ' + AR(g.no) : 'غير مسكَّن في هذه المهمة';
-      const blocked = !keep && !g ? false : false;
-      return '<button class="prow" data-a="dsend" data-id="' + t.id + '" data-u="' + u.id + '">' + avat(u) +
-        '<span class="nm sp"><b>' + E(u.name) + '</b><span>' + E(sub) + '</span></span>' + pill('إسناد','gold') + '</button>';
-    }).join('') + '</div>' +
-    '<button class="btn g" style="margin-top:14px" data-a="close">إغلاق</button>';
+  const clr = { no:'background:#FBE9E7;color:#93261C', wait:'background:#FBF1DE;color:#7F5310',
+    gold:'background:#F5EDDF;color:#6E5729', grey:'background:#EFF1ED;color:#5A6C63',
+    live:'background:#E4F2E9;color:#0B6540' };
+  return bar('تسلسل الإجراءات', { back: 1 }) + '<div class="view">' + ground() + svcCard(t) +
+    (evs.length ? evs.map(e => '<div class="c"><div class="fl" style="align-items:flex-start;gap:11px">' +
+      '<span class="ico" style="width:36px;height:36px;border-radius:12px;display:grid;place-items:center;' + clr[e.c] + '">' +
+        icon(e.ic,'s18') + '</span>' +
+      '<span class="sp"><b class="sm" style="display:block">' + E(e.txt) + '</b>' +
+      '<span class="tiny dim2">' + t12(e.at) + ' · ' + hijri(e.at) + '</span></span></div></div>').join('')
+      : '<div class="c center dim sm">لا توجد إجراءات بعد</div>') +
+    '</div>' + tabs();
 }
