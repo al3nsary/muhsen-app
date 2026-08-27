@@ -11,10 +11,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="مُحسن">
 <style>
-  /* احترام حواف الشاشة في وضع التطبيق المثبَّت */
+  /* وضع التطبيق المثبَّت: الهامش الآمن يُطبَّق مرة واحدة فقط — على الشريط العلوي.
+     تطبيقه على #screen أيضًا كان يضاعف الفراغ الأخضر أعلى الشاشة. */
+  html, body { overscroll-behavior:none; background:#14593F }
   @media (max-width:520px){
     body{ padding:0 }
-    #screen{ padding-top:env(safe-area-inset-top) }
-    .tabs{ padding-bottom:calc(14px + env(safe-area-inset-bottom)) }
+    #screen{ padding-top:0 }
   }
 </style>

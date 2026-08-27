@@ -1,6 +1,6 @@
 /* ============================ الحالة ============================ */
 const KEY = 'muhsen_app_v1';
-const SCHEMA = 10;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
+const SCHEMA = 12;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
 const uid = (p) => p + Math.random().toString(36).slice(2, 8);
@@ -91,7 +91,7 @@ function seed() {
   const st = {
     v: SCHEMA, clockOffset: 0, myPlace: 'site', session: null, route: { n: 'login' },
     tab: {}, orgs: ORGS, users: USERS, tasks: [], tickets: [], notifs: [],
-    requests: [], reminders: [], pilgrims: {}, toast: null
+    requests: [], reminders: [], pilgrims: {}, photos: [], toast: null
   };
   S = st;   /* لتعمل الدوال المعتمِدة على S أثناء التهيئة */
 
@@ -150,7 +150,7 @@ function seed() {
     st.tickets.push({
       id: uid('K'), no: 'TK-' + (4100 + i), title: k.t, body: k.body, cat: k.cat, src: k.src, pri: k.pri,
       leaderId: lead.id, taskId: tk.id, pilgrimId: k.src === 'حاج' ? pl.id : null,
-      from: k.src === 'حاج' ? pl.name : k.src === 'محسن' ? fromMuhsen.name : 'غرفة العمليات — الكونترول',
+      from: k.src === 'حاج' ? pl.name : k.src === 'محسن' ? fromMuhsen.name : 'غرفة العمليات — الكنترول',
       fromId: k.src === 'محسن' ? fromMuhsen.id : null,
       fromAv: k.src === 'حاج' ? pl.av : (fromMuhsen ? fromMuhsen.av : null),
       fromG: k.src === 'حاج' ? pl.g : (fromMuhsen ? fromMuhsen.g : null),
@@ -158,6 +158,7 @@ function seed() {
     });
   });
 
+  seedPhotos(st);
   return st;
 }
 
@@ -167,8 +168,23 @@ function load() {
     if (!S || S.v !== SCHEMA) S = seed();
   } catch (e) { S = seed(); }
   S.reminders = S.reminders || []; S.requests = S.requests || []; S.pilgrims = S.pilgrims || {};
+  S.photos = S.photos || [];
 }
-function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+/* الحفظ: عند امتلاء المساحة نُسقط أقدم الصور الملتقطة ونعيد المحاولة
+   — وإلا ضاعت كل البيانات بصمت عند أول صورة تتجاوز الحد. */
+function save() {
+  for (let i = 0; i < 8; i++) {
+    try { localStorage.setItem(KEY, JSON.stringify(S)); return true; }
+    catch (e) {
+      const shot = (S.photos || []).map((p, k) => ({ p, k }))
+        .filter(o => o.p.src.indexOf("IMG:") !== 0);
+      if (!shot.length) return false;
+      S.photos.splice(shot[shot.length - 1].k, 1);
+      if (i === 0) toast("المساحة ممتلئة — حُذفت أقدم صورة ملتقطة", "r");
+    }
+  }
+  return false;
+}
 function reset() { localStorage.removeItem(KEY); S = seed(); go('login'); toast('أُعيد ضبط كل البيانات إلى حالتها الأولى', 'g'); }
 
 /* ============================ الأدوار ============================ */
@@ -311,10 +327,10 @@ function addReq(kind, from, to, taskId, note_) {
     at: now(), state: 'pending', respAt: null, respNote: '' };
   S.requests.unshift(r); return r;
 }
-function closeReq(taskId, toId, kind, state, note_) {
+function closeReq(taskId, toId, kind, state, note_, photoId) {
   const r = S.requests.find(x => x.taskId === taskId && x.kind === kind && x.state === 'pending' &&
     (toId ? x.to === toId : true));
-  if (r) { r.state = state; r.respAt = now(); r.respNote = note_ || ''; }
+  if (r) { r.state = state; r.respAt = now(); r.respNote = note_ || ''; if (photoId) r.respPhoto = photoId; }
   return r;
 }
 const reqTask = r => taskById(r.taskId);
@@ -335,25 +351,27 @@ function sendRequest(t, muhsenId, note_) {
 }
 function withdrawRequest(t, muhsenId) {
   const a = slotOf(t, muhsenId); if (!a) return;
-  a.removed = true; a.removedWhy = 'سحب القائد الطلب';
-  closeReq(t.id, muhsenId, 'تسكين', 'withdrawn', 'سحبه القائد');
-  hist(t, 'سحب القائد طلب التسكين المرسل إلى ' + userById(muhsenId).name);
-  notify(muhsenId, 'i-x', 'سُحب طلب التسكين', 'سحب القائد طلب تسكينك في «' + t.title + '».', { n: 'requests' });
+  a.removed = true; a.removedWhy = 'سحب الليدر الطلب';
+  closeReq(t.id, muhsenId, 'تسكين', 'withdrawn', 'سحبه الليدر');
+  hist(t, 'سحب الليدر طلب التسكين المرسل إلى ' + userById(muhsenId).name);
+  notify(muhsenId, 'i-x', 'سُحب طلب التسكين', 'سحب الليدر طلب تسكينك في «' + t.title + '».', { n: 'requests' });
   recomputeStatus(t);
 }
-function removeAssignee(t, muhsenId, why) {
+function removeAssignee(t, muhsenId, why, excuse) {
   const a = slotOf(t, muhsenId); if (!a) return;
-  a.removed = true; a.removedWhy = why || 'أزاله القائد';
+  a.removed = true; a.removedWhy = why || 'أزاله الليدر';
+  if (excuse) a.removePhoto = attachExcuse(t.id, excuse, 'مرفق قرار الإزالة', S.session.id);
   hist(t, 'أُزيل ' + userById(muhsenId).name + ' من المهمة — ' + a.removedWhy);
   note(t, 'أُزيل ' + userById(muhsenId).name + ' من التسكين — ' + a.removedWhy);
   notify(muhsenId, 'i-xc', 'أُزلت من المهمة', '«' + t.title + '» — ' + a.removedWhy, { n: 'tasks' });
   recomputeStatus(t);
 }
-function respondRequest(t, muhsenId, ok, note_) {
+function respondRequest(t, muhsenId, ok, note_, excuse) {
   const a = t.assigned.find(x => x.muhsenId === muhsenId && x.req === 'pending' && !x.removed);
   if (!a) return;
   a.req = ok ? 'accepted' : 'rejected'; a.respAt = now(); a.respNote = note_ || '';
-  closeReq(t.id, muhsenId, 'تسكين', ok ? 'accepted' : 'rejected', note_);
+  if (excuse) a.respPhoto = attachExcuse(t.id, excuse, 'مرفق عذر — ' + userById(muhsenId).name, muhsenId);
+  closeReq(t.id, muhsenId, 'تسكين', ok ? 'accepted' : 'rejected', note_, a.respPhoto);
   const nm = userById(muhsenId).name;
   hist(t, (ok ? 'قبِل ' : 'رفض ') + nm + ' التسكين' + (note_ ? ' — «' + note_ + '»' : ''));
   notify(t.leaderId, ok ? 'i-checkc' : 'i-xc', ok ? 'قبول طلب تسكين' : 'رفض طلب تسكين',
@@ -367,15 +385,16 @@ function respondRequest(t, muhsenId, ok, note_) {
 /* ============================ التفويض — للشركات فقط ============================ */
 function sendDelegate(t, muhsenId, keepDuties) {
   t.delegate = { muhsenId, keepGroup: keepDuties, state: 'pending', at: now() };
-  addReq('تفويض', t.leaderId, muhsenId, t.id, keepDuties ? 'مع الإبقاء على مهامه كمحسن' : 'قائد لهذه المهمة فقط');
+  addReq('تفويض', t.leaderId, muhsenId, t.id, keepDuties ? 'مع الإبقاء على مهامه كمحسن' : 'ليدر لهذه المهمة فقط');
   hist(t, 'أُرسل طلب إسناد صلاحية القيادة إلى ' + userById(muhsenId).name);
   notify(muhsenId, 'i-shield', 'إسناد صلاحية القيادة',
     'أُسندت إليك قيادة «' + t.title + '».', { n: 'requests' });
 }
-function respondDelegate(t, ok, note_) {
+function respondDelegate(t, ok, note_, excuse) {
   if (!t.delegate) return;
   const nm = userById(t.delegate.muhsenId).name;
-  closeReq(t.id, t.delegate.muhsenId, 'تفويض', ok ? 'accepted' : 'rejected', note_);
+  const ph = excuse ? attachExcuse(t.id, excuse, 'مرفق عذر — ' + nm, t.delegate.muhsenId) : null;
+  closeReq(t.id, t.delegate.muhsenId, 'تفويض', ok ? 'accepted' : 'rejected', note_, ph);
   if (ok) {
     t.delegate.state = 'accepted'; t.delegate.respAt = now();
     if (!t.delegate.keepGroup) {
@@ -431,8 +450,9 @@ function endTask(t, by) {
   notify(t.leaderId, 'i-star', 'تقييم مهمة',
     '«' + t.title + '» — النظام ' + t.rating.system + ' · المشرف ' + t.rating.supervisor + ' · الحجاج ' + t.rating.pilgrims, { n: 'rating' });
 }
-function cancelTask(t, by, reason) {
+function cancelTask(t, by, reason, excuse) {
   t.status = 'cancelled'; t.cancelReason = reason;
+  if (excuse) t.cancelPhoto = attachExcuse(t.id, excuse, 'مرفق مبرر الإلغاء', by);
   hist(t, 'ألغى ' + userById(by).name + ' المهمة — «' + reason + '»');
   acceptedSlots(t).forEach(a => notify(a.muhsenId, 'i-xc', 'أُلغيت المهمة',
     '«' + t.title + '» أُلغيت — ' + reason, { n: 'tasks' }));
@@ -450,7 +470,7 @@ function addTicket(fromId, title, body, cat, pri, taskId, pilgrimId) {
   const leaderId = u.role === 'leader' ? u.id : u.leaderId;
   const k = {
     id: uid('K'), no: 'TK-' + (4200 + S.tickets.length), title, body, cat, pri: pri || 'متوسطة',
-    src: u.role === 'leader' ? 'قائد' : 'محسن', leaderId, taskId: taskId || null, pilgrimId: pilgrimId || null,
+    src: u.role === 'leader' ? 'ليدر' : 'محسن', leaderId, taskId: taskId || null, pilgrimId: pilgrimId || null,
     from: u.name, fromId, fromAv: u.av, fromG: u.g,
     at: now(), status: 'مفتوحة', assignedTo: null, replies: [], escalated: false
   };
@@ -515,7 +535,7 @@ function undoneReason(t, uid_) {
     const rej = t.assigned.find(a => a.muhsenId === uid_ && a.req === 'rejected');
     if (rej) return 'رفضتَ الإسناد' + (rej.respNote ? ' — «' + rej.respNote + '»' : '');
     const rem = t.assigned.find(a => a.muhsenId === uid_ && a.removed);
-    if (rem) return 'أُزيل إسنادك — ' + (rem.removedWhy || 'بقرار من القائد');
+    if (rem) return 'أُزيل إسنادك — ' + (rem.removedWhy || 'بقرار من الليدر');
     return 'غير منجزة';
   }
   if (!t.leaderAttendedAt) return 'لم تثبت حضورك في المهمة';

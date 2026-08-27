@@ -16,7 +16,7 @@ function stars(v, size) {
     const on = i <= full, hf = !on && i === full + 1 && half;
     out += '<svg class="ic ' + (size === 'lg' ? 's18' : 's14') + ' ' + (on ? 'on' : hf ? 'half' : 'off') + '"><use href="#i-star"/></svg>';
   }
-  return out + '<b>' + E(String(v).replace(/\.0$/, '')) + '</b></span>';
+  return out + '<b>' + AR(String(v).replace(/\.0$/, '')) + '</b></span>';
 }
 
 /* شريط علوي — كل زر له وجهة صحيحة */
@@ -142,12 +142,14 @@ function taskRow(t) {
           pill(AR(t.subs.length) + ' مهمة فرعية', 'grey') +
           pill(AR(acc) + ' محسن', acc >= MIN_ASSIGN ? 'live' : 'wait') +
           (t.status === 'running' ? pill(AR(doneSubs) + ' من ' + AR(t.subs.length) + ' منجزة', 'live') : '') +
-          (t.rating ? pill('★ ' + avgRating(t.rating), 'gold') : '') + '</div>') +
+          (t.rating ? pill('★ ' + AR(avgRating(t.rating)), 'gold') : '') +
+          photoBadge(t) + '</div>') +
       '</div></div>' +
     (hideDetail
       ? '<div class="strip r" style="margin-top:10px">' + icon('i-info','s16') + '<span>' + E(undoneReason(t, S.session.id)) + '</span></div>'
       : (u ? '<div class="strip ' + u.c + '">' + icon(u.i,'s16') + '<span>' + E(u.txt) + '</span></div>' : '')) +
-    '</button>';
+    '</button>' +
+    (hideDetail ? '' : docButtons(t));
 }
 
 /* ============================ تسجيل الدخول ============================ */
@@ -162,7 +164,7 @@ function screenLogin() {
         '<div class="lbl plain" style="margin-bottom:8px">اختر دورك</div>' +
         '<div class="rolebtns">' +
           '<button class="rolebtn ' + (role === 'leader' ? 'on' : '') + '" data-a="role" data-r="leader">' +
-            '<span class="ci">' + icon('i-users','s26') + '</span><b>محسن ليدر</b><span>قائد فريق KT</span></button>' +
+            '<span class="ci">' + icon('i-users','s26') + '</span><b>محسن ليدر</b><span>ليدر فريق KT</span></button>' +
           '<button class="rolebtn ' + (role === 'muhsen' ? 'on' : '') + '" data-a="role" data-r="muhsen">' +
             '<span class="ci">' + icon('i-user','s26') + '</span><b>مُحسن</b><span>عضو ميداني</span></button>' +
         '</div>' +
@@ -226,7 +228,15 @@ function alertsHTML() {
       '«' + notAtt[0].title + '» — التحضير مفتوح منذ بداية اليوم.',
       'data-a="go" data-n="task" data-id="' + notAtt[0].id + '"'));
   }
-  return out.length ? '<div class="alerts">' + out.join('') + '</div>' : '';
+  if (!out.length) return '';
+  const atHome = ['home', 'mhome'].includes(S.route.n);
+  if (atHome) return '<div class="alerts">' + out.join('') + '</div>';
+  /* خارج الرئيسية: سطر واحد لا يزاحم محتوى الشاشة */
+  const worst = out.some(x => x.indexOf('alert bad') >= 0);
+  return '<button class="alerts one ' + (worst ? 'bad' : 'warn') + '" data-a="go" data-n="' +
+    (u.role === 'leader' ? 'home' : 'mhome') + '">' + icon(worst ? 'i-warn' : 'i-bell', 's18') +
+    '<span class="sp">' + AR(out.length) + (out.length === 1 ? ' تنبيه يحتاج إجراءً' : ' تنبيهات تحتاج إجراءً') + '</span>' +
+    icon('i-back', 's16') + '</button>';
 }
 
 function pendingCountFor(uid_) {

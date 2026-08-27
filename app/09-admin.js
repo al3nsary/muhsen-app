@@ -98,7 +98,7 @@ function delegSheet(t) {
     '<div class="tiny dim2" style="margin-bottom:12px">لمهمة «' + E(t.title) + '» فقط · المفوَّض لا يملك التسكين</div>' +
     '<div class="seg" style="margin-bottom:12px">' +
       '<button class="' + (keep ? 'on' : '') + '" data-a="dkeep" data-v="1">يبقى محسنًا</button>' +
-      '<button class="' + (!keep ? 'on' : '') + '" data-a="dkeep" data-v="0">قائد فقط</button></div>' +
+      '<button class="' + (!keep ? 'on' : '') + '" data-a="dkeep" data-v="0">ليدر فقط</button></div>' +
     (!keep ? '<div class="note a" style="margin-bottom:12px">' + icon('i-warn','s16') +
       '<span>سيُزال من التسكين إن كان مسكَّنًا — وعليك تسكين بديل.</span></div>' : '') +
     '<div class="col">' + team.map(u => {
@@ -113,7 +113,7 @@ function ticketSheet(taskId) {
   const L = isLeader();
   const tasks = myTasks();
   return '<div class="grip"></div><h3>رفع تذكرة</h3>' +
-    '<div class="tiny dim2" style="margin-bottom:12px">' + (L ? 'تصل إلى غرفة العمليات — الكونترول' : 'تصل إلى قائد فريقك') + '</div>' +
+    '<div class="tiny dim2" style="margin-bottom:12px">' + (L ? 'تصل إلى غرفة العمليات — الكنترول' : 'تصل إلى ليدر فريقك') + '</div>' +
     '<div class="lbl plain">التصنيف</div>' +
     '<div class="field" style="margin:8px 0"><select id="kc">' + TCATS.map(c => '<option>' + c + '</option>').join('') + '</select></div>' +
     '<div class="lbl plain">الأولوية</div>' +
@@ -156,7 +156,7 @@ function flagSheet(kt, p) {
       '<span class="sp b">' + o + '</span>' + (p.flag === o ? icon('i-checkc','s16') : icon('i-back','s16')) + '</button>').join('') + '</div>' +
     '<button class="btn l" style="margin-top:10px" data-a="pnote" data-kt="' + kt + '" data-p="' + p.id + '">' +
       icon('i-edit','s16') + 'كتابة ملاحظة أخرى</button>' +
-    '<div class="tiny dim2" style="margin-top:10px">يُسجَّل البلاغ كتذكرة تصل القائد.</div>' +
+    '<div class="tiny dim2" style="margin-top:10px">يُسجَّل البلاغ كتذكرة تصل الليدر.</div>' +
     '<button class="btn g" style="margin-top:10px" data-a="close">إغلاق</button>';
 }
 function assignToSheet(uid_) {
@@ -211,7 +211,7 @@ function addTaskSheet() {
     '<div class="lbl plain">النشاط</div>' +
     '<div class="field" style="margin:8px 0"><select id="ak">' +
       Object.entries(CAT).map(([k, c]) => '<option value="' + k + '">' + c.ar + '</option>').join('') + '</select></div>' +
-    '<div class="lbl plain">القائد</div>' +
+    '<div class="lbl plain">الليدر</div>' +
     '<div class="field" style="margin:8px 0"><select id="al">' +
       leaders.map(l => '<option value="' + l.id + '">' + l.name + ' — ' + l.kt + ' (' + ORGS.find(o => o.id === l.orgId).type + ')</option>').join('') + '</select></div>' +
     '<div class="lbl plain">التاريخ</div>' +

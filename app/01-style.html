@@ -360,20 +360,46 @@
   /* الجهاز يتكيّف مع أي شاشة — بلا فراغ أسفل الشريط */
   html, body { height: 100%; height: 100dvh; }
   #device { height: 868px; max-height: calc(100dvh - 40px); }
+
   @media (max-width: 520px) {
     #device { width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; padding: 0; }
     #screen { border-radius: 0; }
-    .top { padding-top: env(safe-area-inset-top); }
-    .tabs { padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
+
+    /* شريط الحالة الوهمي يُخفى على الجوال — شريط النظام الحقيقي فوقه مباشرة،
+       وإبقاؤه كان يكرّر الساعة ويضيف فراغًا أخضر بلا معنى. */
+    .sbar { display: none; }
+    .top { padding-top: max(env(safe-area-inset-top), 10px); padding-bottom: 12px;
+      border-radius: 0 0 22px 22px; }
+    .nav { padding: 2px 14px; min-height: 40px; }
+    .nav .t { font-size: 16.5px; }
+
+    .tabs { padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
     .sheet { padding-bottom: calc(22px + env(safe-area-inset-bottom)); }
-    .toast { bottom: calc(96px + env(safe-area-inset-bottom)); }
+    .toast { bottom: calc(92px + env(safe-area-inset-bottom)); }
   }
+
   /* شاشات قصيرة: نضغط الفراغات بدل أن يتمدد الفراغ */
   @media (max-height: 720px) {
     .view { padding: 11px 12px 18px; gap: 10px; }
     .c { padding: 12px; } .banner { height: 104px; } .map { height: 140px; }
     .timer b { font-size: 28px; } .phead { padding: 16px; }
   }
+
+  /* الشريط السفلي: عناصر أضيق تُظهر عددًا أكبر */
+  .tabs { gap: 2px; padding-inline: 6px; scroll-padding-inline: 40px; }
+  .tabs button { width: 58px; font-size: 10px; gap: 3px; }
+  .tabs button .ic { width: 21px; height: 21px; }
+  @media (max-width: 400px) { .tabs button { width: 54px; font-size: 9.5px; } }
+
+  /* التنبيهات: مضغوطة وسطران على الأكثر — لا تبتلع الشاشة الأولى */
+  .alerts { display: flex; flex-direction: column; gap: 7px; }
+  .alert { padding: 10px 12px; gap: 9px; border-radius: 15px; align-items: center; }
+  .alert b { font-size: 12.5px; line-height: 1.5; }
+  .alert .sp > span { font-size: 11px; line-height: 1.55; display: -webkit-box;
+    -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .alert .ic.s26 { width: 22px; height: 22px; }
+  .alerts .more { align-self: center; font-size: 11px; font-weight: 700; color: var(--g);
+    background: rgba(20,89,63,.08); border-radius: 99px; padding: 5px 14px; }
 
   /* أزرار الشريط العلوي */
   .nav .avbtn { width: 34px; height: 34px; padding: 0; }
@@ -444,4 +470,85 @@
   .lbl { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
   .lbl::after { order: -1; margin: 0; width: 100%; }
   .lbl small { margin-top: 0; }
+
+  /* ===================== الصور والمستندات ===================== */
+  .pstrip { margin-top: 4px; }
+  .pscroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 3px;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .pscroll::-webkit-scrollbar { display: none; }
+  .padd { width: 78px; height: 78px; flex: none; border-radius: 16px; display: flex;
+    flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+    background: #F3F6F1; color: var(--g); font-size: 10.5px; font-weight: 700;
+    box-shadow: inset 0 0 0 1.5px rgba(20,89,63,.16); }
+  .padd .ic { width: 24px; height: 24px; }
+  .pthumb { width: 78px; height: 78px; flex: none; border-radius: 16px; background-size: cover;
+    background-position: center; position: relative; overflow: hidden; display: block;
+    box-shadow: 0 2px 8px -3px rgba(11,53,39,.4), inset 0 0 0 1px rgba(198,168,111,.5); }
+  .pthumb span { position: absolute; inset-inline: 0; bottom: 0; padding: 14px 6px 5px; color: #fff;
+    font-size: 9px; font-weight: 700; line-height: 1.35; text-align: center;
+    background: linear-gradient(to top, rgba(6,26,18,.88), transparent);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .ppreview { width: 100%; border-radius: 16px; display: block; max-height: 240px; object-fit: cover; }
+  .pfull { width: 100%; border-radius: 20px; display: block;
+    box-shadow: 0 12px 30px -16px rgba(11,53,39,.7), inset 0 0 0 1px rgba(198,168,111,.45); }
+  .pgrid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+  .pcard { display: block; border-radius: 18px; overflow: hidden; background: #fff; text-align: right;
+    box-shadow: var(--card); }
+  .pcard .ph { display: block; height: 108px; background-size: cover; background-position: center; }
+  .pcard .meta { display: block; padding: 9px 10px 11px; }
+  .pcard .meta b { display: block; font-size: 11.5px; line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .pcard .meta span { display: block; font-size: 9.5px; color: var(--dim2); margin-top: 3px; }
+  .pcount { position: absolute; top: 6px; inset-inline-end: 6px; background: rgba(6,26,18,.72);
+    color: #fff; font-size: 9.5px; font-weight: 700; border-radius: 99px; padding: 2px 7px; }
+
+  /* أزرار العقود على المهمة */
+  .docs { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 9px; }
+  .docbtn { display: flex; align-items: center; gap: 9px; background: #fff; border-radius: 15px;
+    padding: 11px; box-shadow: var(--card); text-align: right; }
+  .docbtn .fi { width: 34px; height: 42px; flex: none; border-radius: 6px; position: relative;
+    background: linear-gradient(160deg,#FBF9F4,#F0EADC); box-shadow: inset 0 0 0 1px rgba(198,168,111,.6);
+    display: grid; place-items: end center; padding-bottom: 5px; }
+  .docbtn .fi::before { content: ""; position: absolute; top: 0; inset-inline-end: 0; width: 12px; height: 12px;
+    background: linear-gradient(225deg,#E6DEC9 50%, transparent 50%); }
+  .docbtn .fi b { font-size: 7.5px; font-weight: 800; color: #A8351F; letter-spacing: .5px; }
+  .docbtn .sp b { display: block; font-size: 12px; line-height: 1.5; }
+  .docbtn .sp span { display: block; font-size: 9.5px; color: var(--dim2); }
+  .docbtn .eye { width: 30px; height: 30px; border-radius: 10px; flex: none; display: grid;
+    place-items: center; background: #EFF4F0; color: var(--g); }
+
+  /* عارض المستند */
+  .docbar { display: flex; align-items: center; gap: 8px; background: #17211C; color: #fff;
+    border-radius: 14px; padding: 9px 12px; font-size: 11px; font-weight: 700; }
+  .docbar .sp { text-align: right; }
+  .docbar .pg { background: rgba(255,255,255,.12); border-radius: 99px; padding: 3px 9px;
+    font-size: 10px; font-variant-numeric: tabular-nums; }
+  .page { background: #fff; border-radius: 6px; padding: 24px 20px 28px; color: #1B2620;
+    box-shadow: 0 10px 26px -14px rgba(11,53,39,.55), inset 0 0 0 1px rgba(0,0,0,.06);
+    font-size: 11.5px; line-height: 2; }
+  .page h4 { text-align: center; font-size: 14px; font-weight: 800; margin-bottom: 3px; }
+  .page .sub { text-align: center; font-size: 10px; color: var(--dim2); margin-bottom: 14px; }
+  .page .rule { height: 1px; background: linear-gradient(90deg,transparent,rgba(198,168,111,.85),transparent);
+    margin: 14px 0; }
+  .page h5 { font-size: 12px; font-weight: 800; color: var(--g); margin: 14px 0 4px; }
+  .page ol, .page ul { padding-inline-start: 18px; }
+  .page li { margin-bottom: 5px; }
+  .page .kv { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px dotted #E3E7DD;
+    padding: 5px 0; }
+  .page .kv span { color: var(--dim2); font-size: 10.5px; }
+  .page .kv b { font-size: 11px; }
+  .page .sign { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+  .page .sign div { text-align: center; font-size: 10px; color: var(--dim2); }
+  .page .sign i { display: block; height: 1px; background: #C9D2CB; margin: 26px 0 5px; }
+  .page .stamp { margin-top: 16px; text-align: center; font-size: 9.5px; color: #9AA79F; }
+  @media print { .top, .tabs, .docbar, .btn, .lbl { display: none !important; }
+    .page { box-shadow: none; page-break-after: always; } }
+</style>
+<style>
+  /* تنبيه مضغوط خارج الرئيسية */
+  .alerts.one { display: flex; flex-direction: row; align-items: center; gap: 9px; width: 100%; border-radius: 14px;
+    padding: 9px 12px; font-size: 12px; font-weight: 700; text-align: right; }
+  .alerts.one.warn { background: #FCF3E3; color: #7A5512; box-shadow: inset 0 0 0 1px rgba(184,121,26,.28); }
+  .alerts.one.bad { background: #FBEBE8; color: #93261C; box-shadow: inset 0 0 0 1px rgba(192,57,43,.28); }
+  .alerts.one .sp { flex: 1; }
 </style>

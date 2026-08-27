@@ -1,7 +1,7 @@
 /* ============================ التذاكر (تشمل ما كان يُسمّى تقارير) ============================ */
 const PRI_C = { 'عاجلة':'no', 'متوسطة':'wait', 'عادية':'grey' };
 const ST_C  = { 'مفتوحة':'wait', 'مُسندة':'blue', 'قيد المعالجة':'blue', 'مُصعّدة':'no', 'مغلقة':'live' };
-const SRC_LBL = { 'حاج':'من حاج', 'كونترول':'من الكونترول', 'محسن':'من محسن', 'قائد':'من القائد' };
+const SRC_LBL = { 'حاج':'من حاج', 'كنترول':'من الكنترول', 'محسن':'من محسن', 'ليدر':'من الليدر' };
 
 function screenTickets() {
   const L = isLeader();
@@ -11,17 +11,17 @@ function screenTickets() {
   else if (f === 'closed') list = list.filter(k => k.status === 'مغلقة');
   else if (f === 'mine') list = list.filter(k => k.assignedTo === S.session.id);
   else if (f === 'hajj') list = list.filter(k => k.src === 'حاج');
-  else if (f === 'ctrl') list = list.filter(k => k.src === 'كونترول');
+  else if (f === 'ctrl') list = list.filter(k => k.src === 'كنترول');
   else if (f === 'muh') list = list.filter(k => k.src === 'محسن');
 
-  const segs = L ? [['open','المفتوحة'],['hajj','الحجاج'],['ctrl','الكونترول'],['muh','المحسنون'],['closed','المغلقة']]
+  const segs = L ? [['open','المفتوحة'],['hajj','الحجاج'],['ctrl','الكنترول'],['muh','المحسنون'],['closed','المغلقة']]
                  : [['open','المفتوحة'],['mine','المسندة إليّ'],['closed','المغلقة']];
 
   return bar('التذاكر') + '<div class="view">' + ground() +
     '<button class="btn p" data-a="newticket">' + icon('i-plus','s16') +
-      (L ? 'رفع تذكرة إلى الكونترول' : 'رفع تذكرة إلى القائد') + '</button>' +
+      (L ? 'رفع تذكرة إلى الكنترول' : 'رفع تذكرة إلى الليدر') + '</button>' +
     (L ? '<div class="note b">' + icon('i-info','s16') +
-      '<span>كل التذاكر تصل إليك — من الحجاج والكونترول والمحسنين. أسند ما تريد لمحسن بعينه.</span></div>' : '') +
+      '<span>كل التذاكر تصل إليك — من الحجاج والكنترول والمحسنين. أسند ما تريد لمحسن بعينه.</span></div>' : '') +
     '<div class="seg">' + segs.map(x =>
       '<button class="' + (f === x[0] ? 'on' : '') + '" data-a="seg" data-k="tk" data-v="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>' +
     (list.length ? list.map(k => ticketRow(k)).join('')
@@ -65,6 +65,9 @@ function screenTicket() {
       (t ? '<button class="btn l sm" style="margin-top:10px" data-a="go" data-n="task" data-id="' + t.id + '">' +
         icon('i-tasks','s16') + 'فتح المهمة</button>' : '') + '</div>' +
 
+    ((isLeader() || photosFor(null, null, k.id).length) ?
+      '<div class="lbl">صور التذكرة</div><div class="c">' +
+        photoStrip({ taskId: k.taskId || null, subId: null, ticketId: k.id }, '') + '</div>' : '') +
     (k.assignedTo ? '<div class="prow">' + avat(userById(k.assignedTo)) +
       '<span class="nm sp"><b>' + E(userById(k.assignedTo).name) + '</b><span>المسؤول عن التذكرة</span></span>' +
       pill('مُسندة','blue') + '</div>' : '') +
@@ -83,7 +86,7 @@ function screenTicket() {
             '<button class="btn l sm" data-a="kassign" data-id="' + k.id + '">' + icon('i-assign','s16') + 'إسناد لمحسن</button>' +
             '<button class="btn l sm" data-a="kstate" data-id="' + k.id + '">' + icon('i-list','s16') + 'تغيير الحالة</button></div>'
         : '<div class="grid2">' +
-            '<button class="btn l sm" data-a="kesc" data-id="' + k.id + '">' + icon('i-warn','s16') + 'تصعيد للقائد</button>' +
+            '<button class="btn l sm" data-a="kesc" data-id="' + k.id + '">' + icon('i-warn','s16') + 'تصعيد للّيدر</button>' +
             '<button class="btn l sm" data-a="kstate" data-id="' + k.id + '">' + icon('i-list','s16') + 'تغيير الحالة</button></div>') +
       '<button class="btn g" data-a="kclose" data-id="' + k.id + '">' + icon('i-checkc','s16') + 'إغلاق التذكرة</button>'
       : '<div class="note g">' + icon('i-checkc','s16') + '<span>التذكرة مغلقة.</span></div>' +
@@ -291,7 +294,7 @@ function screenProfile() {
     '<div class="lbl">البيانات</div><div class="c">' +
       kv('الاسم', u.name) + kv('الرقم الوظيفي', u.code) + kv('الدور', L ? 'محسن ليدر' : 'مُحسن') +
       (L ? kv('المجموعة', u.kt) + kv('عدد الحجاج', AR(u.pilgrims)) + kv('عدد المحسنين', AR(teamOf(u.id).length))
-         : kv('التخصص', u.specialty) + kv('القائد', userById(u.leaderId).name) + kv('المجموعة', userById(u.leaderId).kt)) +
+         : kv('التخصص', u.specialty) + kv('الليدر', userById(u.leaderId).name) + kv('المجموعة', userById(u.leaderId).kt)) +
       kv('الجهة', org.ar) + kv('النوع', org.type) + kv('الدولة', org.country) + kv('الجوال', u.phone) +
     '</div>' +
 
@@ -311,8 +314,9 @@ function screenMore() {
        ['lreq','i-swap','الطلبات','المرسلة والمستقبلة والمنتهية'],
        ['muhsens','i-users','المحسنون','فريقك وتقييماتهم'],
        ['rating','i-star','التقييم','تقييمك وتقييم الفريق'],
-       ['tickets','i-ticket','التذاكر','من الحجاج والكونترول والمحسنين'],
+       ['tickets','i-ticket','التذاكر','من الحجاج والكنترول والمحسنين'],
        ['pilgrims','i-user','الحجاج','حجاج الـKT والبلاغات'],
+       ['album','i-album','ألبوم الصور','توثيق المهام بالصور'],
        ['calendar','i-cal','التقويم','أسبوعي مع التذكيرات'],
        ['notifs','i-bell','الإشعارات','كل التحديثات'],
        ['profile','i-user','الملف الشخصي','بياناتك وتقييمك'],
@@ -322,6 +326,7 @@ function screenMore() {
        ['rating','i-star','التقييم','تقييمك وتقييم الزملاء'],
        ['tickets','i-ticket','التذاكر','المسندة إليك وما رفعته'],
        ['pilgrims','i-user','الحجاج','حجاج الـKT والبلاغات'],
+       ['album','i-album','ألبوم الصور','صور المهام التي تشارك فيها'],
        ['calendar','i-cal','التقويم','أسبوعي مع التذكيرات'],
        ['notifs','i-bell','الإشعارات','كل التحديثات'],
        ['profile','i-user','الملف الشخصي','بياناتك وتقييمك'],

@@ -73,7 +73,7 @@ function screenTask() {
     (t.autoStarted && lead ? '<div class="note r">' + icon('i-warn','s16') +
       '<span><b>بدأها النظام تلقائيًا</b><br>حان وقتها ولم تبدأها. التسكين لم يعد متاحًا — يمكنك إغلاقها فقط، ويُحتسب ذلك في تقييمك.</span></div>' : '') +
     (deleg ? '<div class="note b">' + icon('i-shield','s16') +
-      '<span>تعمل بصلاحية قائد لهذه المهمة فقط. التسكين والإسناد غير متاحين لك.</span></div>' : '') +
+      '<span>تعمل بصلاحية ليدر لهذه المهمة فقط. التسكين والإسناد غير متاحين لك.</span></div>' : '') +
     (t.status === 'cancelled' ? '<div class="note r">' + icon('i-xc','s16') +
       '<span>أُلغيت المهمة — ' + E(t.cancelReason || '') + '</span></div>' : '') +
 
@@ -97,6 +97,8 @@ function screenTask() {
         : '<button class="btn l" data-a="go" data-n="assign" data-id="' + t.id + '">' +
           icon('i-assign','s16') + 'إدارة التسكين</button>') : '') +
 
+    (hasDocs(t) ? '<div class="lbl">مستندات المهمة<small>عقود الاستقبال</small></div>' + docButtons(t) : '') +
+    taskPhotoSection(t, lead) +
     '<div class="lbl">المهام الفرعية<small>' + AR(doneSubs) + ' من ' + AR(t.subs.length) + '</small></div>' +
     '<div class="c">' + t.subs.map((s, i) => subRow(t, s, i, running)).join('') + '</div>' +
 
@@ -104,7 +106,7 @@ function screenTask() {
       const nx = t.subs.find(s => !s.done);
       return nx ? '<button class="cta" data-a="sub" data-id="' + t.id + '" data-s="' + nx.id + '">' + icon('i-checkc','s26') +
         '<span class="t"><b>تسجيل إنجاز «' + E(nx.name) + '»</b><span>الفرعية ' + AR(t.subs.indexOf(nx) + 1) + ' من ' + AR(t.subs.length) + '</span></span></button>'
-        : '<div class="note g">' + icon('i-checkc','s16') + '<span>أنجزت كل المهام الفرعية. الإغلاق من صلاحية القائد.</span></div>';
+        : '<div class="note g">' + icon('i-checkc','s16') + '<span>أنجزت كل المهام الفرعية. الإغلاق من صلاحية الليدر.</span></div>';
     })() : '') +
 
     (lead && !deleg && !closed ? delegCard(t, isCo, !locked) : '') +
@@ -183,9 +185,9 @@ function delegCard(t, isCo, canManage) {
   const d = t.delegate, u = userById(d.muhsenId);
   return '<div><div class="lbl">إسناد صلاحية القيادة</div><div class="c gold">' +
     '<div class="tiny dim2" style="margin-bottom:9px">' +
-      (d.state === 'pending' ? 'بانتظار رد المحسن' : d.state === 'accepted' ? 'القائد المؤقت لهذه المهمة' : 'رُفض الإسناد') + '</div>' +
+      (d.state === 'pending' ? 'بانتظار رد المحسن' : d.state === 'accepted' ? 'الليدر المؤقت لهذه المهمة' : 'رُفض الإسناد') + '</div>' +
     '<div class="fl">' + avat(u, 'lg') + '<span class="sp"><b style="font-size:15px;display:block">' + E(u.name) +
-      '</b><span class="tiny dim2">' + E(u.code) + ' · ' + (d.keepGroup ? 'مع بقائه محسنًا في المهمة' : 'قائد لهذه المهمة فقط') + '</span></span></div>' +
+      '</b><span class="tiny dim2">' + E(u.code) + ' · ' + (d.keepGroup ? 'مع بقائه محسنًا في المهمة' : 'ليدر لهذه المهمة فقط') + '</span></span></div>' +
     '<div class="row" style="margin-top:11px">' +
       pill(d.state === 'pending' ? 'بانتظار القبول' : 'يملك صلاحية البدء والإغلاق', d.state === 'pending' ? 'wait' : 'live') +
       (canManage ? '<button data-a="undeleg" data-id="' + t.id + '" style="color:var(--red);font-size:12.5px;font-weight:700">إلغاء الإسناد</button>' : '') +
@@ -242,7 +244,7 @@ function screenAssign() {
     '</div>' + tabs();
 }
 
-/* ============================ تسلسل الإجراءات — للقائد فقط ============================ */
+/* ============================ تسلسل الإجراءات — للّيدر فقط ============================ */
 function screenTimeline() {
   const t = taskById(S.route.id); if (!t) return screenTasks();
   if (!actsAsLeader(t, S.session.id)) return screenTasks();
@@ -257,7 +259,7 @@ function screenTimeline() {
       txt:nm + ' أثبت حضوره' + (a.farKm > RADIUS_KM ? ' من ' + a.farKm + ' كم' : '') });
     if (a.removed) evs.push({ at:a.respAt || a.reqAt, ic:'i-x', c:'no', txt:'أُزيل ' + nm + ' — ' + (a.removedWhy || '') });
   });
-  if (t.leaderAttendedAt) evs.push({ at:t.leaderAttendedAt, ic:'i-target', c:'live', txt:'القائد أثبت حضوره' });
+  if (t.leaderAttendedAt) evs.push({ at:t.leaderAttendedAt, ic:'i-target', c:'live', txt:'الليدر أثبت حضوره' });
   if (t.delegate) evs.push({ at:t.delegate.at, ic:'i-shield', c:'gold',
     txt:'إسناد القيادة إلى ' + userById(t.delegate.muhsenId).name + ' — ' +
       (t.delegate.state === 'accepted' ? 'قُبل' : t.delegate.state === 'pending' ? 'بانتظار الرد' : 'رُفض') });

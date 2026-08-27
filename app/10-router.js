@@ -7,7 +7,8 @@ const SCREENS = {
   tickets: screenTickets, ticket: screenTicket,
   rating: screenRating, taskrating: screenTaskRating,
   notifs: screenNotifs, pilgrims: screenPilgrims, muhsens: screenMuhsens,
-  profile: screenProfile, more: screenMore, calendar: screenCalendar, admin: screenAdmin
+  profile: screenProfile, more: screenMore, calendar: screenCalendar, admin: screenAdmin,
+  album: screenAlbum, photo: screenPhoto, doc: screenDoc
 };
 
 function render() {
@@ -145,19 +146,25 @@ document.addEventListener('click', ev => {
     case 'withdraw': { const t = T(); if (!t || lockedForAssign(t)) { toast('التسكين مقفل', 'r'); break; }
       withdrawRequest(t, uid_); S.sheet = null; toast('سُحب الطلب'); break; }
     case 'removeasg': { const t = T(); if (!t || lockedForAssign(t)) { toast('التسكين مقفل', 'r'); break; }
-      S.sheet = textSheet('إزالة من المهمة', userById(uid_).name,
-        'data-a="doremove" data-id="' + id + '" data-u="' + uid_ + '"', '', 'سبب الإزالة'); break; }
-    case 'doremove': { removeAssignee(T(), uid_, val('txt') || 'بقرار من القائد');
+      S.pendingExcuse = null;
+      S.sheet = reasonSheet('سبب الإزالة من التسكين', userById(uid_).name,
+        'data-a="doremove" data-id="' + id + '" data-u="' + uid_ + '"', 'سبب الإزالة', 'remove', id, uid_); break; }
+    case 'doremove': { const rr = val('txt');
+      if (!rr) { toast('سبب الإزالة إلزامي', 'r'); break; }
+      removeAssignee(T(), uid_, rr, S.pendingExcuse); S.pendingExcuse = null;
       S.sheet = null; toast('أُزيل من المهمة'); break; }
     case 'smenu': S.sheet = slotMenuSheet(T(), uid_); break;
 
     case 'resp': { const t = T(); if (!t) break;
       if (v === '1') { respondRequest(t, S.session.id, true); buzz(); toast('قبلت التسكين'); }
-      else S.sheet = textSheet('سبب الرفض', 'يصل السبب للقائد',
-        'data-a="doresp" data-id="' + id + '"', '', 'مثال: مرتبط بمهمة أخرى');
+      else { S.pendingExcuse = null;
+        S.sheet = reasonSheet('سبب رفض التسكين', t.title, 'data-a="doresp" data-id="' + id + '"',
+          'مثال: مرتبط بمهمة أخرى', 'resp', id); }
       break; }
-    case 'doresp': respondRequest(T(), S.session.id, false, val('txt') || 'بلا سبب');
-      S.sheet = null; toast('رُفض الطلب وأُبلغ القائد', 'r'); break;
+    case 'doresp': { const rr = val('txt');
+      if (!rr) { toast('سبب الرفض إلزامي — يصل الليدر', 'r'); break; }
+      respondRequest(T(), S.session.id, false, rr, S.pendingExcuse); S.pendingExcuse = null;
+      S.sheet = null; toast('رُفض الطلب وأُبلغ الليدر', 'r'); break; }
 
     case 'deleg': S.delegKeep = true; S.sheet = delegSheet(T()); break;
     case 'dkeep': S.delegKeep = v === '1'; S.sheet = delegSheet(taskById(S.route.id) || T()); break;
@@ -167,12 +174,17 @@ document.addEventListener('click', ev => {
       toast('أُرسل الإسناد إلى ' + userById(uid_).name); break; }
     case 'undeleg': { const t = T(); if (!t || !t.delegate) break;
       notify(t.delegate.muhsenId, 'i-xc', 'أُلغي التفويض', 'سُحبت منك قيادة «' + t.title + '».', { n:'requests' });
-      hist(t, 'سحب القائد إسناد القيادة'); t.delegate = null; toast('أُلغي الإسناد'); break; }
+      hist(t, 'سحب الليدر إسناد القيادة'); t.delegate = null; toast('أُلغي الإسناد'); break; }
     case 'rdeleg': { const t = T(); if (!t) break;
       if (v === '1') { respondDelegate(t, true); buzz(); toast('قبلت قيادة المهمة'); }
-      else S.sheet = textSheet('سبب الرفض', '', 'data-a="dordeleg" data-id="' + id + '"', '', 'اكتب سببك');
+      else { S.pendingExcuse = null;
+        S.sheet = reasonSheet('سبب رفض التفويض', t.title, 'data-a="dordeleg" data-id="' + id + '"',
+          'اكتب سببك', 'rdeleg', id); }
       break; }
-    case 'dordeleg': respondDelegate(T(), false, val('txt')); S.sheet = null; toast('رُفض التفويض', 'r'); break;
+    case 'dordeleg': { const rr = val('txt');
+      if (!rr) { toast('سبب الرفض إلزامي', 'r'); break; }
+      respondDelegate(T(), false, rr, S.pendingExcuse); S.pendingExcuse = null;
+      S.sheet = null; toast('رُفض التفويض', 'r'); break; }
 
     case 'start': { const t = T(); if (!canStart(t, S.session.id)) { toast('لا يمكن البدء الآن', 'r'); break; }
       startTask(t, S.session.id); buzz(); toast('بدأت المهمة'); break; }
@@ -180,10 +192,12 @@ document.addEventListener('click', ev => {
       'ستُسجَّل الملاحظات التلقائية ويُحتسب تقييم النظام.', 'data-a="doend" data-id="' + id + '"'); break;
     case 'doend': { const t = T(); endTask(t, S.session.id); S.sheet = null; buzz();
       toast('أُغلقت المهمة — التقييم ' + t.rating.system + ' من ٥'); break; }
-    case 'cancel': S.sheet = textSheet('إلغاء المهمة', 'المبرر إلزامي',
-      'data-a="docancel" data-id="' + id + '"', '', 'سبب الإلغاء'); break;
+    case 'cancel': S.pendingExcuse = null;
+      S.sheet = reasonSheet('إلغاء المهمة', 'المبرر إلزامي ويصل كل المسكَّنين',
+        'data-a="docancel" data-id="' + id + '"', 'سبب الإلغاء', 'cancel', id); break;
     case 'docancel': { const r = val('txt'); if (!r) { toast('المبرر إلزامي', 'r'); break; }
-      cancelTask(T(), S.session.id, r); S.sheet = null; toast('أُلغيت المهمة', 'r'); break; }
+      cancelTask(T(), S.session.id, r, S.pendingExcuse); S.pendingExcuse = null;
+      S.sheet = null; toast('أُلغيت المهمة', 'r'); break; }
     case 'sub': { const t = T(); if (t.status !== 'running') { toast('المهمة لم تبدأ بعد', 'r'); break; }
       const s = t.subs.find(x => x.id === b.dataset.s); toggleSub(t, s, S.session.id); buzz(); break; }
     case 'note': S.sheet = textSheet('إضافة ملاحظة', 'تُسجَّل على المهمة',
@@ -211,7 +225,7 @@ document.addEventListener('click', ev => {
       toast('أُسندت إلى ' + userById(uid_).name); break;
     case 'kstate': S.sheet = ticketStateSheet(K()); break;
     case 'dostate': ticketState(K(), S.session.id, v); S.sheet = null; toast('صارت الحالة: ' + v); break;
-    case 'kesc': S.sheet = textSheet('تصعيد للقائد', K().title, 'data-a="dokesc" data-id="' + id + '"', '', 'سبب التصعيد'); break;
+    case 'kesc': S.sheet = textSheet('تصعيد للّيدر', K().title, 'data-a="dokesc" data-id="' + id + '"', '', 'سبب التصعيد'); break;
     case 'dokesc': ticketEscalate(K(), S.session.id, val('txt')); S.sheet = null; toast('صُعّدت التذكرة'); break;
     case 'kclose': ticketState(K(), S.session.id, 'مغلقة'); toast('أُغلقت التذكرة'); break;
     case 'kreopen': ticketState(K(), S.session.id, 'مفتوحة'); toast('أُعيد فتح التذكرة'); break;
@@ -276,6 +290,42 @@ document.addEventListener('click', ev => {
       notify(L.id, 'i-tasks', 'مهمة جديدة', '«' + nt.title + '» — ' + hijri(nt.start) + '. سكّن محسنيك.', { n:'assign', id: nt.id });
       S.sheet = null; toast('أُضيفت المهمة'); break;
     }
+    /* ===== الصور — التصوير من داخل التطبيق ===== */
+    case 'shoot': {
+      if (!canShoot()) { toast('التصوير من صلاحية الليدر', 'r'); break; }
+      const tid = b.dataset.tid || '', sid = b.dataset.sid || '', kid = b.dataset.kid || '';
+      if (tid) { const t = taskById(tid); if (!t) { toast('المهمة غير موجودة', 'r'); break; } }
+      S.pendingPhoto = null;
+      openCamera({ taskId: tid || null, subId: sid || null, ticketId: kid || null });
+      return; }
+    case 'shootexcuse': {
+      S.camCtx = { mode: 'excuse', kind: b.dataset.k, taskId: id || null, extraId: uid_ || null };
+      S.sheetDraft = val('txt');
+      openCamera(S.camCtx); return; }
+    case 'dropexcuse': { S.pendingExcuse = null; const sh = reopenReason(); if (sh) S.sheet = sh; break; }
+    case 'savephoto': {
+      const ti = val('ftitle'), de = val('fdesc');
+      if (!S.pendingPhoto) { toast('لا توجد صورة', 'r'); break; }
+      if (ti.length < 4) { toast('اكتب عنوانًا لائقًا يصف الحدث', 'r'); break; }
+      if (/^[0-9٠-٩s.-_]+$/.test(ti)) { toast('العنوان يجب أن يصف حدثًا لا رقمًا', 'r'); break; }
+      if (de && de.length < 8) { toast('الوصف قصير — اشرح ما توثّقه الصورة', 'r'); break; }
+      addPhoto(S.pendingPhoto, ti, de, S.camCtx || {});
+      S.pendingPhoto = null; S.camCtx = null; S.sheet = null; buzz();
+      toast('حُفظت الصورة وارتبطت بالمهمة'); break; }
+    case 'cancelshot': S.pendingPhoto = null; S.camCtx = null; S.sheet = null; break;
+    case 'viewphoto': S.sheet = null; S.route = { n: 'photo', id }; break;
+    case 'delphoto': {
+      const p = photoById(id);
+      if (!p) break;
+      if (!(isLeader() && p.by === S.session.id)) { toast('الحذف لمن التقط الصورة فقط', 'r'); break; }
+      const back = p.taskId;
+      deletePhoto(id); toast('حُذفت الصورة', 'r');
+      S.route = back ? { n: 'task', id: back } : { n: 'album' }; break; }
+    case 'picksub': { const t = T(); if (!t) break;
+      if (!canShoot()) { toast('التصوير من صلاحية الليدر', 'r'); break; }
+      S.sheet = subPickSheet(t); break; }
+    case 'printdoc': try { window.print(); } catch (e) { toast('الطباعة غير متاحة', 'r'); } return;
+
     case 'askreset': S.sheet = confirmSheet('إعادة ضبط كل شيء',
       'ستُحذف كل التسكينات والردود والتنبيهات والتذاكر والتقييمات.', 'data-a="doreset"', true); break;
     case 'doreset': S.sheet = null; reset(); return;
@@ -292,6 +342,32 @@ document.addEventListener('input', ev => {
     const el = document.getElementById('pq');
     if (el) { el.focus(); try { el.setSelectionRange(v.length, v.length); } catch (e) {} }
   }
+});
+
+/* ============================ الكاميرا ============================ */
+document.addEventListener('change', ev => {
+  if (!ev.target || ev.target.id !== 'cam') return;
+  const file = ev.target.files && ev.target.files[0];
+  ev.target.value = '';
+  if (!file) return;
+  if (file.size > 12 * 1024 * 1024) { toast('الصورة كبيرة جدًّا', 'r'); render(); return; }
+  toast('جارٍ معالجة الصورة…');
+  render();
+  readShot(file, src => {
+    if (!src) { toast('تعذّرت قراءة الصورة', 'r'); render(); return; }
+    S.toast = null;
+    if (S.camCtx && S.camCtx.mode === 'excuse') {
+      S.pendingExcuse = src;
+      const sh = reopenReason();
+      if (sh) S.sheet = sh;
+    } else {
+      S.pendingPhoto = src;
+      S.sheet = photoMetaSheet();
+    }
+    render();
+    const d = S.sheetDraft; S.sheetDraft = null;
+    if (d) { const el = document.getElementById('txt'); if (el) el.value = d; }
+  });
 });
 
 /* ============================ إقلاع ============================ */

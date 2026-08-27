@@ -31,7 +31,7 @@ function statusBoxes() {
   if (soon.length)    { any = 1; out += box('soon','i-clock',soon.length,'مهمة خلال ١٢ ساعة',
     soon.map(t => t.title + ' ' + t12(t.start)).slice(0,2).join(' · '),'data-a="go" data-n="tasks"'); }
   if (inbox)          { any = 1; out += box('soon','i-bell',inbox,'طلب بانتظار ردك','تسكين أو تفويض','data-a="go" data-n="requests"'); }
-  if (tks)            { any = 1; out += box('','i-ticket',tks,'تذكرة مفتوحة','من الحجاج والكونترول والمحسنين','data-a="go" data-n="tickets"'); }
+  if (tks)            { any = 1; out += box('','i-ticket',tks,'تذكرة مفتوحة','من الحجاج والكنترول والمحسنين','data-a="go" data-n="tickets"'); }
   if (!any) out += '<div class="note g">' + icon('i-checkc','s16') + '<span>لا يوجد ما يستدعي انتباهك الآن.</span></div>';
   return out;
 }

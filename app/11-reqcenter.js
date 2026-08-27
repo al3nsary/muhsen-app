@@ -15,10 +15,10 @@ function reqCardFull(r, actionable) {
 
     '<div class="flow2">' +
       '<span class="who">' + avat(from, 'sm') + '<span class="tiny"><b>' + E(from.name) + '</b>' +
-        '<span class="dim2">من · ' + (from.role === 'leader' ? 'قائد' : 'مُحسن') + '</span></span></span>' +
+        '<span class="dim2">من · ' + (from.role === 'leader' ? 'ليدر' : 'مُحسن') + '</span></span></span>' +
       '<span class="arrow">' + icon('i-back','s16') + '</span>' +
       '<span class="who">' + avat(to, 'sm') + '<span class="tiny"><b>' + E(to.name) + '</b>' +
-        '<span class="dim2">إلى · ' + (to.role === 'leader' ? 'قائد' : 'مُحسن') + '</span></span></span>' +
+        '<span class="dim2">إلى · ' + (to.role === 'leader' ? 'ليدر' : 'مُحسن') + '</span></span></span>' +
     '</div>' +
 
     (t ? '<button class="fl reqtask" data-a="go" data-n="task" data-id="' + t.id + '">' +
@@ -34,6 +34,7 @@ function reqCardFull(r, actionable) {
       '<span>ملاحظة المرسِل: ' + E(r.note) + '</span></div>' : '') +
     (r.respNote ? '<div class="note ' + (r.state === 'rejected' ? 'r' : 'g') + '" style="margin-top:8px">' +
       icon('i-info','s16') + '<span>رد المستقبِل: ' + E(r.respNote) + '</span></div>' : '') +
+    (r.respPhoto ? excuseChip(r.respPhoto) : '') +
     (urgent ? '<div class="strip r">' + icon('i-warn','s16') + '<span>بقي أقل من ٣ ساعات على المهمة</span></div>' : '') +
 
     (actionable && r.state === 'pending' && t ? (
@@ -80,7 +81,7 @@ function screenReqCenter() {
     (list.length ? list.map(r => reqCardFull(r, r.to === uid_ && r.state === 'pending')).join('')
       : '<div class="c center" style="padding:26px"><b>لا توجد طلبات في هذا التصنيف</b>' +
         '<div class="sm dim" style="margin-top:6px">' +
-          (isLeader() ? 'ابدأ التسكين من شاشة المهام.' : 'ستصلك طلبات القائد هنا.') + '</div>' +
+          (isLeader() ? 'ابدأ التسكين من شاشة المهام.' : 'ستصلك طلبات الليدر هنا.') + '</div>' +
         (isLeader() ? '<button class="btn l sm" style="margin-top:12px" data-a="go" data-n="tasks">' +
           icon('i-tasks','s16') + 'فتح المهام</button>' : '') + '</div>') +
     '</div>' + tabs();
