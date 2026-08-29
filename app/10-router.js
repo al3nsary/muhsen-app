@@ -174,7 +174,9 @@ document.addEventListener('click', ev => {
     case 'seg': S.tab[b.dataset.k] = v; break;
     case 'tabpage': goTabPage(Number(v)); return;
     /* اختيار التصنيف يغلق القائمة فورًا ولا يعيد فتحها */
-    case 'pickbucket': S.tab.tasks = v; S.sheet = null; buzz(); break;
+    case 'pickbucket': S.tab.tasks = v; S.sheet = null;
+      if (S.route.n !== 'tasks') S.route = { n: 'tasks' };
+      buzz(); break;
     case 'psearch': return;
 
     case 'role': S.loginRole = b.dataset.r; break;

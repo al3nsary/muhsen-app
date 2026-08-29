@@ -39,7 +39,7 @@ function statusBoxes() {
 /* ============================ رئيسية الليدر ============================ */
 function screenLeaderHome() {
   const u = me(), org = ORGS.find(o => o.id === u.orgId), ts = myTasks();
-  const upcoming = ts.filter(t => taskBucket(t, u.id) === 'current').slice(0, 3);
+  const live = activeTasks(u.id), upcoming = live.slice(0, 3);
   const rt = personRating(u.id);
   return bar('مُحسن ليدر') + '<div class="view">' + ground() +
     '<div class="c gold"><div class="fl">' + avat(u, 'lg') +
@@ -57,9 +57,15 @@ function screenLeaderHome() {
       '<div class="kpi"><b>' + AR(ts.length) + '</b><span>مهمة</span></div></div>' +
 
     statusBoxes() +
-    '<div class="lbl">المهام القادمة</div>' +
-    (upcoming.length ? upcoming.map(t => taskRow(t)).join('')
-      : '<div class="c center dim sm" style="padding:22px">لا توجد مهام قادمة</div>') +
+    '<div class="lbl">المهام القادمة<small>' + AR(live.length) + ' مهمة قائمة</small></div>' +
+    (upcoming.length ? upcoming.map(t => taskRow(t)).join('') +
+      (live.length > upcoming.length
+        ? '<button class="btn l sm" data-a="pickbucket" data-v="all">' + icon('i-tasks','s16') +
+          'عرض بقية المهام (' + AR(live.length - upcoming.length) + ')</button>' : '')
+      : '<div class="c center" style="padding:24px"><b>لا توجد مهام قائمة</b>' +
+        '<div class="sm dim" style="margin-top:6px">كل ما لديك مُغلق — راجع «المنجزة» في المهام.</div>' +
+        '<button class="btn l sm" style="margin-top:12px" data-a="pickbucket" data-v="done">' +
+          icon('i-checkc','s16') + 'المهام المنجزة</button></div>') +
     '</div>' + tabs();
 }
 
@@ -79,6 +85,15 @@ function screenMuhsenHome() {
         '<div style="color:var(--dim2);margin-bottom:8px;display:flex;justify-content:center">' + icon('i-tasks','s26') + '</div>' +
         '<b>لا توجد مهمة حالية</b><div class="sm dim" style="margin-top:4px">ستظهر مهمتك هنا فور قبولك طلب تسكين.</div></div>'
       : muhsenTaskCard(t, u)) +
+
+    (function () {
+      const live = activeTasks(u.id).filter(x => !t || x.id !== t.id);
+      if (!live.length) return '';
+      return '<div class="lbl">مهامك القادمة<small>' + AR(live.length) + '</small></div>' +
+        live.slice(0, 3).map(x => taskRow(x)).join('') +
+        (live.length > 3 ? '<button class="btn l sm" data-a="pickbucket" data-v="all">' +
+          icon('i-tasks','s16') + 'عرض الكل (' + AR(live.length) + ')</button>' : '');
+    })() +
     '</div>' + tabs();
 }
 

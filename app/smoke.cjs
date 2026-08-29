@@ -67,7 +67,8 @@ click({ a: 'login', id: 'L1' });
 console.log('\nقواعد التسكين');
 let TID;
 step('فتح مهمة قادمة', () => {
-  TID = run('S.tasks.filter(t=>t.leaderId==="L1"&&t.start>now()).sort((a,b)=>a.start-b.start)[0].id');
+  /* مهمة قادمة بلا تسكين — هي محلّ اختبار دورة التسكين */
+  TID = run('S.tasks.filter(t=>t.leaderId==="L1"&&t.start>now()&&!t.assigned.length).sort((a,b)=>a.start-b.start)[0].id');
   click({ a: 'go', n: 'assign', id: TID });
   if (!el.innerHTML) throw new Error('فارغة');
 });
@@ -346,7 +347,8 @@ step('لا حضور من خارج نطاق ٢ كم', () => {
             run('S.tasks.filter(x=>x.leaderId==="L1"&&x.start>now())[0]');
   const tid = run('(S.tasks.find(x=>x.leaderId==="L1"&&x.start>now())||{}).id');
   run('S.myPlace="away"');
-  run('S.clockOffset=0');
+  /* نثبّت ساعة التطبيق على منتصف النهار حتى لا يتعلّق الاختبار بوقت التشغيل */
+  run('S.clockOffset = 12*60 - (new Date().getHours()*60 + new Date().getMinutes())');
   run('var _T=taskById("' + tid + '"); _T.start = now()+30*MIN; _T.end=_T.start+3*HR; 1');
   if (run('canAttend(taskById("' + tid + '"))')) throw new Error('سُمح بالتحضير من خارج النطاق');
   click({ a: 'attend', id: tid });

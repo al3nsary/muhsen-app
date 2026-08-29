@@ -1,7 +1,7 @@
 /* ============================ الحالة ============================ */
 const KEY = 'muhsen_app_v1';
-const APP_VER = 'نسخة ١٫٩';
-const SCHEMA = 15;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
+const APP_VER = 'نسخة ٢٫٠';
+const SCHEMA = 16;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
 const uid = (p) => p + Math.random().toString(36).slice(2, 8);
@@ -138,6 +138,26 @@ function seed() {
     autoNote(t);
     rateTask(t, i);
     t.history.unshift({ at: t.endedAt, text: 'أُغلقت المهمة' });
+  });
+
+  /* مهام قادمة مسكَّنة فعلًا — ليكون لكل محسن عمل قائم،
+     مع إبقاء الباقي بلا تسكين ليتدرّب الليدر عليه */
+  USERS.filter(u => u.role === 'leader').forEach(L => {
+    const team = st.users.filter(u => u.role === 'muhsen' && u.leaderId === L.id);
+    const future = st.tasks.filter(t => t.leaderId === L.id && t.start > Date.now())
+      .sort((a, b) => a.start - b.start);
+    [0, 2].forEach((idx, k) => {
+      const t = future[idx]; if (!t) return;
+      team.slice(k, k + 3).forEach(m => {
+        t.assigned.push({
+          muhsenId: m.id, req: 'accepted', reqAt: Date.now() - 20 * HR, reqNote: '',
+          respAt: Date.now() - 19 * HR, respNote: '', attendedAt: null,
+          farKm: 0, removed: false, removedWhy: null
+        });
+      });
+      recomputeStatus(t);
+      t.history.unshift({ at: Date.now() - 19 * HR, text: 'اكتمل التسكين — ' + AR(acceptedSlots(t).length) + ' محسنين' });
+    });
   });
 
   /* التذاكر — كلها تصل الليدر */
@@ -593,10 +613,17 @@ function undoneReason(t, uid_) {
   return 'غير منجزة';
 }
 
-function currentTask() {
-  return myTasks().filter(t => ['running', 'assigned', 'pending_assign'].includes(t.status))
-    .filter(t => taskBucket(t, S.session.id) === 'current')[0] || null;
+/* المهام القائمة: جارية ثم اليوم ثم القادمة — مرتّبة بأولوية العمل */
+const LIVE_BUCKETS = ['running', 'soon', 'next'];
+function activeTasks(uid_) {
+  const id = uid_ || S.session.id;
+  return myTasks()
+    .map(t => ({ t, b: taskBucket(t, id) }))
+    .filter(x => LIVE_BUCKETS.indexOf(x.b) >= 0)
+    .sort((a, b) => (LIVE_BUCKETS.indexOf(a.b) - LIVE_BUCKETS.indexOf(b.b)) || (a.t.start - b.t.start))
+    .map(x => x.t);
 }
+function currentTask() { return activeTasks()[0] || null; }
 function myRequests() {
   const u = me(); if (!u || u.role === 'leader') return [];
   const out = [];
