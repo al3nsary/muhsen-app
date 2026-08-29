@@ -12,6 +12,10 @@ const out =
   /* مُدخل الكاميرا — التصوير من داخل التطبيق مباشرة */
   '<input id="cam" type="file" accept="image/*" capture="environment" aria-hidden="true" ' +
   'style="position:fixed;inset-inline-start:-9999px;width:1px;height:1px;opacity:0">\n' +
+  '<input id="vid" type="file" accept="video/*" aria-hidden="true" ' +
+  'style="position:fixed;inset-inline-start:-9999px;width:1px;height:1px;opacity:0">\n' +
+  '<input id="pdf" type="file" accept="application/pdf" aria-hidden="true" ' +
+  'style="position:fixed;inset-inline-start:-9999px;width:1px;height:1px;opacity:0">\n' +
   '<script>window.IMG=' + JSON.stringify(imgs) + ';</scr' + 'ipt>\n' +
   '<script>\n' +
   read('03-data.js') + '\n' +
@@ -24,6 +28,7 @@ const out =
   read('11-reqcenter.js') + '\n' +
   read('12-photos.js') + '\n' +
   read('13-docs.js') + '\n' +
+  read('14-guide.js') + '\n' +
   read('10-router.js') + '\n' +
   '</scr' + 'ipt>\n';
 
@@ -41,7 +46,7 @@ fs.writeFileSync(path.join(deploy, 'index.html'), pwa);
 console.log('docs/index.html:', Math.round(fs.statSync(path.join(deploy, 'index.html')).size / 1024) + 'KB');
 
 // فحص سريع للأخطاء النحوية في جزء الجافاسكربت
-const js = [ '03-data.js','04-core.js','05-ui.js','06-task.js','07-muhsen.js','08-more.js','09-admin.js','11-reqcenter.js','12-photos.js','13-docs.js','10-router.js' ]
+const js = [ '03-data.js','04-core.js','05-ui.js','06-task.js','07-muhsen.js','08-more.js','09-admin.js','11-reqcenter.js','12-photos.js','13-docs.js','14-guide.js','10-router.js' ]
   .map(read).join('\n');
 try { new Function(js); console.log('syntax: OK'); }
 catch (e) { console.log('SYNTAX ERROR:', e.message); process.exitCode = 1; }

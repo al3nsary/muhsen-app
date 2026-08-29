@@ -35,7 +35,7 @@ function bar(title, opt) {
     '<div class="nav">' + left + '<span class="t">' + E(title) + '</span>' + right + '</div></div>';
 }
 
-/* شريط سفلي — شريط واحد قابل للسحب */
+/* شريط سفلي — زر الرئيسية ثابت في المنتصف، والجانبان يتحرّكان معًا */
 function tabs() {
   const L = isLeader(), r = S.route.n;
   const inbox = S.requests.filter(x => x.to === S.session.id && x.state === 'pending').length;
@@ -44,34 +44,44 @@ function tabs() {
     ? [{ k:'tasks', i:'i-tasks', l:'المهام', on:['tasks','task','assign','timeline'] },
        { k:'lreq', i:'i-swap', l:'الطلبات', b:inbox, on:['lreq'] },
        { k:'muhsens', i:'i-users', l:'المحسنون', on:['muhsens'] },
-       { home:1 },
        { k:'rating', i:'i-star', l:'التقييم', on:['rating','taskrating'] },
+       { k:'guide', i:'i-guide', l:'الدليل', on:['guide'] },
        { k:'tickets', i:'i-ticket', l:'التذاكر', b:openTk, on:['tickets','ticket'] },
        { k:'notifs', i:'i-bell', l:'الإشعارات', b:unread(), on:['notifs'] },
        { k:'calendar', i:'i-cal', l:'التقويم', on:['calendar'] },
        { k:'pilgrims', i:'i-user', l:'الحجاج', on:['pilgrims'] },
-       { k:'more', i:'i-dots', l:'المزيد', on:['more','profile','admin'] }]
-    : [{ k:'tasks', i:'i-tasks', l:'المهام', on:['tasks','mytask','task'] },
+       { k:'more', i:'i-dots', l:'المزيد', on:['more','profile','admin','album','photo','doc'] }]
+    : [{ k:'tasks', i:'i-tasks', l:'المهام', on:['tasks','task'] },
        { k:'requests', i:'i-swap', l:'الطلبات', b:inbox, on:['requests'] },
-       { k:'pilgrims', i:'i-user', l:'الحجاج', on:['pilgrims'] },
-       { home:1 },
+       { k:'guide', i:'i-guide', l:'الدليل', on:['guide'] },
        { k:'rating', i:'i-star', l:'التقييم', on:['rating','taskrating'] },
        { k:'tickets', i:'i-ticket', l:'التذاكر', b:openTk, on:['tickets','ticket'] },
        { k:'notifs', i:'i-bell', l:'الإشعارات', b:unread(), on:['notifs'] },
        { k:'calendar', i:'i-cal', l:'التقويم', on:['calendar'] },
-       { k:'more', i:'i-dots', l:'المزيد', on:['more','profile','admin'] }];
+       { k:'pilgrims', i:'i-user', l:'الحجاج', on:['pilgrims'] },
+       { k:'more', i:'i-dots', l:'المزيد', on:['more','profile','admin','album','photo'] }];
 
-  const homeOn = ['home','mhome'].includes(r);
-  return '<nav class="tabs" role="tablist" aria-label="التنقّل">' + items.map(it => {
-    if (it.home) return '<button class="home' + (homeOn ? ' on' : '') + '" role="tab"' +
-      (homeOn ? ' aria-selected="true"' : '') + ' data-a="go" data-n="' + (L ? 'home' : 'mhome') + '">' +
-      '<span class="wi hb"><img src="' + IMG.logo_white + '" alt="" style="width:24px"></span>الرئيسية</button>';
+  const btn = it => {
     const on = it.on.includes(r);
     return '<button class="' + (on ? 'on' : '') + '" role="tab"' + (on ? ' aria-selected="true"' : '') +
       ' data-a="go" data-n="' + it.k + '">' +
       '<span class="wi">' + icon(it.i) + (it.b ? '<span class="badge">' + AR(it.b) + '</span>' : '') +
       '</span>' + it.l + '</button>';
-  }).join('') + '</nav>';
+  };
+  /* نصفان متساويان في العدد فيتحرّكان بالمدى نفسه ويبقيان متزامنين */
+  const half = Math.ceil(items.length / 2);
+  const right = items.slice(0, half), left = items.slice(half);
+  const pad = n => n > 0 ? '<span class="tpad" style="width:' + (n * 60) + 'px"></span>' : '';
+  const homeOn = ['home','mhome'].includes(r);
+
+  return '<nav class="tabs" role="tablist" aria-label="التنقّل">' +
+    '<div class="tside" data-side="r">' + right.map(btn).join('') + pad(left.length - right.length) + '</div>' +
+    '<button class="home' + (homeOn ? ' on' : '') + '" role="tab"' + (homeOn ? ' aria-selected="true"' : '') +
+      ' data-a="go" data-n="' + (L ? 'home' : 'mhome') + '">' +
+      '<span class="wi hb"><img src="' + IMG.logo_white + '" alt=""></span>' +
+      '<span class="hl">الرئيسية</span></button>' +
+    '<div class="tside" data-side="l">' + left.map(btn).join('') + pad(right.length - left.length) + '</div>' +
+    '</nav>';
 }
 
 const ground = () => '<div class="ground"><img src="' + IMG.logo_pattern + '" alt=""></div>';
@@ -125,31 +135,42 @@ function urgency(t) {
 
 function taskRow(t) {
   recomputeStatus(t);
-  const acc = acceptedSlots(t).length, st = STATUS[t.status], u = urgency(t);
-  const bucket = taskBucket(t, S.session.id);
+  const uid_ = S.session.id;
+  const acc = acceptedSlots(t).length;
+  const ug = urgency(t);
+  const bucket = taskBucket(t, uid_), bk = bucketOf(bucket);
+  const ui = kindUI(t);
   const doneSubs = t.subs.filter(s => s.done).length;
   const hideDetail = !isLeader() && bucket === 'undone';
-  return '<button class="c ' + (u ? u.k : '') + '" data-a="go" data-n="task" data-id="' + t.id + '" style="width:100%;text-align:right">' +
+  const deleg = t.delegate && t.delegate.state === 'accepted';
+  const watchOnly = isLeader() && deleg;
+
+  return '<div class="c task b-' + bucket + (ug ? ' ' + ug.k : '') + '" role="button" tabindex="0" style="--kc:' + ui.c + '" ' +
+    'data-a="go" data-n="task" data-id="' + t.id + '">' +
     '<div class="fl" style="align-items:flex-start;gap:11px">' +
-      '<span class="thumb" style="width:70px;height:70px;background-image:url(' + IMG[t.photo + '_t'] + ')"></span>' +
+      '<span class="tthumb" style="background-image:url(' + IMG[t.photo + '_t'] + ')">' +
+        '<span class="kb">' + icon(ui.i, 's14') + '</span></span>' +
       '<div class="sp">' +
-        '<div class="fl" style="align-items:flex-start;gap:8px"><b style="font-size:14.5px;line-height:1.5" class="sp">' + E(t.title) + '</b>' +
-          pill(bucket === 'undone' ? 'غير منجزة' : st.t, bucket === 'undone' ? 'no' : st.c) + '</div>' +
+        '<div class="fl" style="align-items:flex-start;gap:8px">' +
+          '<b style="font-size:14.5px;line-height:1.5" class="sp">' + E(t.title) + '</b>' +
+          '<span class="bpill ' + bk.c + '">' + icon(bk.i, 's14') + bk.l + '</span></div>' +
         '<div class="tiny dim" style="margin-top:4px">' + hijri(t.start) + ' · ' + t12(t.start) + '</div>' +
         '<div class="tiny dim2">' + E(t.place) + '</div>' +
         (hideDetail ? '' :
         '<div class="fl" style="gap:6px;margin-top:7px;flex-wrap:wrap">' +
-          pill(AR(t.subs.length) + ' مهمة فرعية', 'grey') +
+          pill(AR(t.subs.length) + ' فرعية', 'grey') +
           pill(AR(acc) + ' محسن', acc >= MIN_ASSIGN ? 'live' : 'wait') +
           (t.status === 'running' ? pill(AR(doneSubs) + ' من ' + AR(t.subs.length) + ' منجزة', 'live') : '') +
           (t.rating ? pill('★ ' + AR(avgRating(t.rating)), 'gold') : '') +
-          photoBadge(t) + '</div>') +
+          photoBadge(t) + guideChip(t) + '</div>') +
       '</div></div>' +
-    (hideDetail
-      ? '<div class="strip r" style="margin-top:10px">' + icon('i-info','s16') + '<span>' + E(undoneReason(t, S.session.id)) + '</span></div>'
-      : (u ? '<div class="strip ' + u.c + '">' + icon(u.i,'s16') + '<span>' + E(u.txt) + '</span></div>' : '')) +
-    '</button>' +
-    (hideDetail ? '' : docButtons(t));
+    (watchOnly ? '<div class="strip b">' + icon('i-shield', 's16') +
+      '<span>الليدر عليها: ' + E(userById(t.delegate.muhsenId).name) + ' — متابعة بلا قرارات</span></div>' : '') +
+    (bucket === 'undone'
+      ? '<div class="strip r">' + icon('i-warn', 's16') +
+        '<span>' + E(undoneReason(t, uid_)) + '</span></div>'
+      : (ug ? '<div class="strip ' + ug.c + '">' + icon(ug.i, 's16') + '<span>' + E(ug.txt) + '</span></div>' : '')) +
+    '</div>';
 }
 
 /* ============================ تسجيل الدخول ============================ */

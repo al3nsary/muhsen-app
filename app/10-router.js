@@ -8,7 +8,7 @@ const SCREENS = {
   rating: screenRating, taskrating: screenTaskRating,
   notifs: screenNotifs, pilgrims: screenPilgrims, muhsens: screenMuhsens,
   profile: screenProfile, more: screenMore, calendar: screenCalendar, admin: screenAdmin,
-  album: screenAlbum, photo: screenPhoto, doc: screenDoc
+  album: screenAlbum, photo: screenPhoto, doc: screenDoc, guide: screenGuide
 };
 
 function render() {
@@ -52,42 +52,108 @@ function render() {
   if (S.toast) { const t = S.toast; setTimeout(() => { if (S.toast === t) { S.toast = null; render(); } }, 2600); }
 }
 
-/* ===== شريط التابات ===== */
+/* ===== شريط التابات: نصفان يتحرّكان معًا حول زر رئيسية ثابت ===== */
+function tabSides() { return [].slice.call(document.querySelectorAll('.tabs .tside')); }
+
 function centerActiveTab() {
-  const bar_ = document.querySelector('.tabs'); if (!bar_) return;
-  const on = bar_.querySelector('button.on'); if (!on) return;
-  bar_.scrollLeft = on.offsetLeft - (bar_.clientWidth - on.offsetWidth) / 2;
+  const sides = tabSides(); if (!sides.length) return;
+  for (let i = 0; i < sides.length; i++) {
+    const on = sides[i].querySelector('button.on');
+    if (on) {
+      const to = Math.max(0, on.offsetLeft - (sides[i].clientWidth - on.offsetWidth) / 2);
+      sides.forEach(s => { s.scrollLeft = to; });
+      return;
+    }
+  }
+  sides.forEach(s => { s.scrollLeft = 0; });
 }
+/* الجانبان متساويان في المدى، فتحريكهما بالقيمة نفسها يبقيهما صفًّا واحدًا */
+function slideTabs(to) {
+  tabSides().forEach(s => {
+    s.scrollLeft = Math.max(0, Math.min(to, s.scrollWidth - s.clientWidth));
+  });
+}
+
 (function tabDrag() {
   let st = null;
+  function startOn(e) {
+    const t = e.target;
+    const nav = t && t.closest ? t.closest('.tabs') : null;
+    if (!nav) return null;
+    if (t.closest('.home')) return null;      /* زر الرئيسية لا يسحب */
+    return nav;
+  }
   document.addEventListener('pointerdown', function (e) {
-    if (e.pointerType !== 'mouse' || e.button !== 0) return;
-    const b = e.target.closest && e.target.closest('.tabs'); if (!b) return;
-    st = { bar: b, x: e.clientX, left: b.scrollLeft, moved: false, id: e.pointerId };
+    const nav = startOn(e); if (!nav) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    const side = tabSides()[0]; if (!side) return;
+    st = { nav, x: e.clientX, left: side.scrollLeft, moved: false, id: e.pointerId };
   });
   document.addEventListener('pointermove', function (e) {
     if (!st || e.pointerId !== st.id) return;
     const dx = e.clientX - st.x;
-    if (!st.moved && Math.abs(dx) < 5) return;
-    if (!st.moved) { st.moved = true; st.bar.classList.add('dragging');
-      try { st.bar.setPointerCapture(e.pointerId); } catch (err) {} }
-    st.bar.scrollLeft = st.left - dx; e.preventDefault();
+    if (!st.moved && Math.abs(dx) < 6) return;
+    if (!st.moved) {
+      st.moved = true; st.nav.classList.add('dragging');
+      try { st.nav.setPointerCapture(e.pointerId); } catch (err) {}
+    }
+    slideTabs(st.left - dx);
+    if (e.cancelable) e.preventDefault();
   });
   function stop() {
     if (!st) return;
-    const b = st.bar;
-    if (st.moved) { b.classList.remove('dragging'); b.dataset.dragged = '1';
-      setTimeout(function () { delete b.dataset.dragged; }, 220); }
-    try { b.releasePointerCapture(st.id); } catch (err) {}
+    const nav = st.nav;
+    if (st.moved) {
+      nav.classList.remove('dragging');
+      nav.dataset.dragged = '1';
+      setTimeout(function () { delete nav.dataset.dragged; }, 220);
+    }
+    try { nav.releasePointerCapture(st.id); } catch (err) {}
     st = null;
   }
   document.addEventListener('pointerup', stop);
   document.addEventListener('pointercancel', stop);
   document.addEventListener('wheel', function (e) {
-    const b = e.target.closest && e.target.closest('.tabs'); if (!b) return;
+    const nav = e.target.closest && e.target.closest('.tabs'); if (!nav) return;
     const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-    if (!d) return; b.scrollLeft += d; e.preventDefault();
+    if (!d) return;
+    const side = tabSides()[0]; if (!side) return;
+    slideTabs(side.scrollLeft + d);
+    if (e.cancelable) e.preventDefault();
   }, { passive: false });
+  /* لمس: نمرّر السحب بأنفسنا لضمان تزامن الجانبين */
+  document.addEventListener('touchstart', function (e) {
+    const nav = e.target.closest && e.target.closest('.tabs'); if (!nav) return;
+    if (e.target.closest('.home')) return;
+    const side = tabSides()[0]; if (!side) return;
+    st = { nav, x: e.touches[0].clientX, left: side.scrollLeft, moved: false, id: 'touch' };
+  }, { passive: true });
+  document.addEventListener('touchmove', function (e) {
+    if (!st || st.id !== 'touch') return;
+    const dx = e.touches[0].clientX - st.x;
+    if (!st.moved && Math.abs(dx) < 6) return;
+    st.moved = true; st.nav.classList.add('dragging');
+    slideTabs(st.left - dx);
+    if (e.cancelable) e.preventDefault();
+  }, { passive: false });
+  document.addEventListener('touchend', stop);
+  document.addEventListener('touchcancel', stop);
+})();
+
+/* ===== ملاءمة الشاشة لأي جوال ===== */
+(function fitScreen() {
+  const root = document.documentElement;
+  const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+    window.navigator.standalone === true;
+  root.classList.add(standalone ? 'app-standalone' : 'app-browser');
+  function fit() {
+    /* innerHeight أدق من dvh في متصفحات الجوال القديمة وشريط سفاري */
+    root.style.setProperty('--appH', window.innerHeight + 'px');
+  }
+  fit();
+  window.addEventListener('resize', fit);
+  window.addEventListener('orientationchange', function () { setTimeout(fit, 220); });
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', fit);
 })();
 
 /* عدّاد حي */
@@ -134,10 +200,12 @@ document.addEventListener('click', ev => {
     case 'setplace': S.myPlace = v; S.sheet = null;
       toast(v === 'site' ? 'موقعك داخل موقع المهمة' : 'موقعك خارج النطاق — يُسجَّل ملاحظةً'); break;
     case 'attend': { const t = T(); if (!t) break;
-      if (now() < prepOpen(t)) { toast('يفتح التحضير من بداية يوم المهمة', 'r'); break; }
-      attend(t, S.session.id); buzz(); toast('أُثبت حضورك ' + t12(now())); break; }
+      if (!canAttend(t)) { toast(attendBlockReason(t), 'r'); break; }
+      if (!attend(t, S.session.id)) { toast('تعذّر إثبات الحضور', 'r'); break; }
+      buzz(); toast('أُثبت حضورك ' + t12(now())); break; }
 
     case 'send': { const t = T(); if (!t) break;
+      if (!canDecide(t, S.session.id)) { toast('التسكين للمفوَّض على هذه المهمة', 'r'); break; }
       if (lockedForAssign(t)) { toast('التسكين مقفل — بدأت المهمة', 'r'); break; }
       if (busyIn(uid_, t)) { toast('المحسن مرتبط بمهمة متداخلة', 'r'); break; }
       if (sendRequest(t, uid_)) { S.sheet = null; toast('أُرسل الطلب إلى ' + userById(uid_).name); }
@@ -186,16 +254,21 @@ document.addEventListener('click', ev => {
       respondDelegate(T(), false, rr, S.pendingExcuse); S.pendingExcuse = null;
       S.sheet = null; toast('رُفض التفويض', 'r'); break; }
 
-    case 'start': { const t = T(); if (!canStart(t, S.session.id)) { toast('لا يمكن البدء الآن', 'r'); break; }
+    case 'start': { const t = T();
+      if (!canDecide(t, S.session.id)) { toast('القرار للمفوَّض على هذه المهمة', 'r'); break; }
+      if (!canStart(t, S.session.id)) { toast('لا يمكن البدء الآن', 'r'); break; }
       startTask(t, S.session.id); buzz(); toast('بدأت المهمة'); break; }
     case 'end': S.sheet = confirmSheet('إنهاء المهمة',
       'ستُسجَّل الملاحظات التلقائية ويُحتسب تقييم النظام.', 'data-a="doend" data-id="' + id + '"'); break;
-    case 'doend': { const t = T(); endTask(t, S.session.id); S.sheet = null; buzz();
-      toast('أُغلقت المهمة — التقييم ' + t.rating.system + ' من ٥'); break; }
+    case 'doend': { const t = T();
+      if (!canDecide(t, S.session.id)) { toast('القرار للمفوَّض على هذه المهمة', 'r'); break; }
+      endTask(t, S.session.id); S.sheet = null; buzz();
+      toast('أُغلقت المهمة — التقييم ' + AR(avgRating(t.rating)) + ' من ٥'); break; }
     case 'cancel': S.pendingExcuse = null;
       S.sheet = reasonSheet('إلغاء المهمة', 'المبرر إلزامي ويصل كل المسكَّنين',
         'data-a="docancel" data-id="' + id + '"', 'سبب الإلغاء', 'cancel', id); break;
     case 'docancel': { const r = val('txt'); if (!r) { toast('المبرر إلزامي', 'r'); break; }
+      if (!canDecide(T(), S.session.id)) { toast('القرار للمفوَّض على هذه المهمة', 'r'); break; }
       cancelTask(T(), S.session.id, r, S.pendingExcuse); S.pendingExcuse = null;
       S.sheet = null; toast('أُلغيت المهمة', 'r'); break; }
     case 'sub': { const t = T(); if (t.status !== 'running') { toast('المهمة لم تبدأ بعد', 'r'); break; }
@@ -206,12 +279,12 @@ document.addEventListener('click', ev => {
       if (x) { note(t, x + ' — ' + me().name, 'user'); hist(t, 'أضاف ' + me().name + ' ملاحظة'); toast('أُضيفت الملاحظة'); }
       S.sheet = null; break; }
 
-    case 'rerate': { const t = T(); rateTask(t); toast('أُعيد الاحتساب — ' + t.rating.system + ' من ٥'); break; }
+    case 'rerate': { const t = T(); rateTask(t); toast('أُعيد الاحتساب — ' + AR(avgRating(t.rating)) + ' من ٥'); break; }
     case 'rateall': { let n2 = 0; S.tasks.filter(t => t.status === 'done').forEach(t => { rateTask(t); n2++; });
       toast('أُعيد تقييم ' + AR(n2) + ' مهمة'); break; }
     case 'finishsome': { const t = S.tasks.find(x => x.status === 'running');
       if (!t) { toast('لا توجد مهمة جارية', 'r'); break; }
-      endTask(t, ownerOf(t)); toast('أُنهيت «' + t.title + '» — التقييم ' + t.rating.system); break; }
+      endTask(t, ownerOf(t)); toast('أُنهيت «' + t.title + '» — التقييم ' + AR(avgRating(t.rating))); break; }
 
     case 'newticket': S.sheet = ticketSheet(id); break;
     case 'sendticket': { const ti = val('kti'); if (!ti) { toast('العنوان مطلوب', 'r'); break; }
@@ -324,6 +397,42 @@ document.addEventListener('click', ev => {
     case 'picksub': { const t = T(); if (!t) break;
       if (!canShoot()) { toast('التصوير من صلاحية الليدر', 'r'); break; }
       S.sheet = subPickSheet(t); break; }
+    /* ===== تصنيف المهام ===== */
+    case 'bucketmenu': S.sheet = bucketSheet(); break;
+
+    /* ===== دليل المهام ===== */
+    case 'guidedit': {
+      if (!canEditGuide()) { toast('التحرير من صلاحية الليدر', 'r'); break; }
+      S.guideEdit = !S.guideEdit;
+      toast(S.guideEdit ? 'وضع التحرير مفتوح' : 'أُغلق وضع التحرير'); break; }
+    case 'addstep': {
+      if (!canEditGuide()) { toast('التحرير من صلاحية الليدر', 'r'); break; }
+      const k = b.dataset.k, mk = v;
+      S.pendingMedia = null; S.pendingMediaName = null; S.pendingMediaSize = null;
+      S.sheet = mk === 'text' ? stepTextSheet(k) : stepMediaSheet(k, mk); break; }
+    case 'pickmedia': {
+      S.mediaCtx = { kind: b.dataset.k, mk: v };
+      S.sheetDraft = val('gt'); S.sheetDraft2 = val('gb');
+      const el2 = document.getElementById(v === 'pdf' ? 'pdf' : v === 'video' ? 'vid' : 'cam');
+      if (!el2) { toast('غير متاح على هذا الجهاز', 'r'); break; }
+      el2.value = ''; el2.click(); return; }
+    case 'cancelstep': S.pendingMedia = null; S.mediaCtx = null; S.sheet = null; break;
+    case 'savestep': {
+      if (!canEditGuide()) { toast('التحرير من صلاحية الليدر', 'r'); break; }
+      const k = b.dataset.k, mk = v, ti = val('gt'), bo = val('gb');
+      if (ti.length < 3) { toast('اكتب عنوانًا واضحًا للخطوة', 'r'); break; }
+      if (mk === 'text' && bo.length < 10) { toast('نص التعليمة قصير — اشرحها بوضوح', 'r'); break; }
+      if (mk !== 'text' && !S.pendingMedia) { toast('اختر الملف أولًا', 'r'); break; }
+      addStep(k, { kind: mk, title: ti, body: bo, src: S.pendingMedia || null,
+        file: S.pendingMediaName || null, size: S.pendingMediaSize || null });
+      S.pendingMedia = null; S.pendingMediaName = null; S.pendingMediaSize = null; S.mediaCtx = null;
+      S.sheet = null; buzz(); toast('أُضيفت الخطوة إلى الدليل'); break; }
+    case 'stepup': moveStep(b.dataset.k, id, -1); break;
+    case 'stepdn': moveStep(b.dataset.k, id, 1); break;
+    case 'stepdel': {
+      if (!canEditGuide()) { toast('الحذف من صلاحية الليدر', 'r'); break; }
+      delStep(b.dataset.k, id); toast('حُذفت الخطوة', 'r'); break; }
+
     case 'printdoc': try { window.print(); } catch (e) { toast('الطباعة غير متاحة', 'r'); } return;
 
     case 'askreset': S.sheet = confirmSheet('إعادة ضبط كل شيء',
@@ -344,9 +453,20 @@ document.addEventListener('input', ev => {
   }
 });
 
+/* لوحة المفاتيح: العناصر ذات role=button تعمل بالمسافة والإدخال */
+document.addEventListener('keydown', ev => {
+  if (ev.key !== 'Enter' && ev.key !== ' ') return;
+  const b = ev.target && ev.target.closest ? ev.target.closest('[role="button"][data-a]') : null;
+  if (!b) return;
+  ev.preventDefault(); b.click();
+});
+
 /* ============================ الكاميرا ============================ */
 document.addEventListener('change', ev => {
-  if (!ev.target || ev.target.id !== 'cam') return;
+  const id2 = ev.target && ev.target.id;
+  if (id2 === 'vid' || id2 === 'pdf') return onGuideMedia(ev, id2 === 'vid' ? 'video' : 'pdf');
+  if (id2 === 'cam' && S.mediaCtx) return onGuideMedia(ev, 'photo');
+  if (id2 !== 'cam') return;
   const file = ev.target.files && ev.target.files[0];
   ev.target.value = '';
   if (!file) return;
@@ -369,6 +489,28 @@ document.addEventListener('change', ev => {
     if (d) { const el = document.getElementById('txt'); if (el) el.value = d; }
   });
 });
+
+/* وسائط الدليل: صورة أو فيديو أو PDF */
+function onGuideMedia(ev, mk) {
+  const file = ev.target.files && ev.target.files[0];
+  ev.target.value = '';
+  const ctx = S.mediaCtx;
+  if (!file || !ctx) return;
+  const nm = file.name, sz = fileSize(file.size);
+  toast('جارٍ تجهيز الملف…'); render();
+  readMedia(file, mk, src => {
+    if (src === 'TOOBIG') { S.toast = null; toast('الملف أكبر من ١٫٦ ميغابايت', 'r'); render(); return; }
+    if (!src) { S.toast = null; toast('تعذّرت قراءة الملف', 'r'); render(); return; }
+    S.toast = null;
+    S.pendingMedia = src; S.pendingMediaName = nm; S.pendingMediaSize = sz;
+    S.sheet = stepMediaSheet(ctx.kind, ctx.mk);
+    render();
+    const a1 = document.getElementById('gt'), a2 = document.getElementById('gb');
+    if (a1 && S.sheetDraft) a1.value = S.sheetDraft;
+    if (a2 && S.sheetDraft2) a2.value = S.sheetDraft2;
+    S.sheetDraft = null; S.sheetDraft2 = null;
+  });
+}
 
 /* ============================ إقلاع ============================ */
 load();

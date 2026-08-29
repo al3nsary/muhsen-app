@@ -7,8 +7,9 @@ const store = {};
 const el = { className: '', innerHTML: '', querySelector: () => null, querySelectorAll: () => [] };
 const handlers = [];
 const sandbox = {
-  window: { addEventListener() {}, matchMedia: () => ({ matches: false }) },
+  window: { addEventListener() {}, matchMedia: () => ({ matches: false }), navigator: { standalone: false }, innerHeight: 900 },
   document: {
+    documentElement: { classList: { add() {} }, style: { setProperty() {} } },
     getElementById: () => el,
     addEventListener: (t, fn) => { if (t === 'click') handlers.push(fn); },
     querySelector: () => null, querySelectorAll: () => []
@@ -21,7 +22,7 @@ const sandbox = {
 sandbox.window.IMG = JSON.parse(fs.readFileSync(IMGP, 'utf8'));
 sandbox.globalThis = sandbox;
 
-const FILES = ['03-data.js','04-core.js','05-ui.js','06-task.js','07-muhsen.js','08-more.js','09-admin.js','11-reqcenter.js','12-photos.js','13-docs.js','10-router.js'];
+const FILES = ['03-data.js','04-core.js','05-ui.js','06-task.js','07-muhsen.js','08-more.js','09-admin.js','11-reqcenter.js','12-photos.js','13-docs.js','14-guide.js','10-router.js'];
 const js = FILES.map(read).join('\n');
 const ctx = vm.createContext(sandbox);
 
@@ -327,12 +328,7 @@ step('زر العين يفتح العارض', () => {
   if (html.indexOf('i-eye') < 0) throw new Error('لا يوجد زر عين');
   if (html.indexOf('data-n="doc"') < 0) throw new Error('لا يوجّه للعارض');
 });
-step('العقود تظهر في القائمة وداخل المهمة', () => {
-  if (run('taskRow(S.tasks.find(x=>x.kind==="airport"&&x.leaderId==="L1")).indexOf("عقد النقل")') < 0)
-    throw new Error('غائبة من بطاقة القائمة');
-  run('S.route={n:"task",id:S.tasks.find(x=>x.kind==="airport"&&x.leaderId==="L1").id}');
-  if (run('screenTask().indexOf("عقد السكن")') < 0) throw new Error('غائبة من التفاصيل');
-});
+
 
 console.log('\nالمصطلحات');
 step('الكنترول لا الكونترول', () => {
@@ -341,6 +337,213 @@ step('الكنترول لا الكونترول', () => {
 step('لا كلمة «قائد» في الواجهة', () => {
   const src = FILES.map(read).join('\n');
   if (/[^ل]قائد/.test(src.replace(/القائد/g, ''))) throw new Error('ما زالت «قائد»');
+});
+
+console.log('\nنطاق التحضير');
+click({ a: 'login', id: 'L1' });
+step('لا حضور من خارج نطاق ٢ كم', () => {
+  const t = run('S.tasks.find(x=>x.leaderId==="L1"&&dayStart(x.start)===dayStart(now()))') ||
+            run('S.tasks.filter(x=>x.leaderId==="L1"&&x.start>now())[0]');
+  const tid = run('(S.tasks.find(x=>x.leaderId==="L1"&&x.start>now())||{}).id');
+  run('S.myPlace="away"');
+  run('S.clockOffset=0');
+  run('var _T=taskById("' + tid + '"); _T.start = now()+30*MIN; _T.end=_T.start+3*HR; 1');
+  if (run('canAttend(taskById("' + tid + '"))')) throw new Error('سُمح بالتحضير من خارج النطاق');
+  click({ a: 'attend', id: tid });
+  if (run('taskById("' + tid + '").leaderAttendedAt')) throw new Error('سُجِّل حضور من خارج النطاق');
+  if (run('attendBlockReason(taskById("' + tid + '")).indexOf("خارج النطاق")') < 0) throw new Error('لا يبيّن السبب');
+  sandbox.TT_ = tid;
+});
+step('الحضور يُقبل داخل النطاق', () => {
+  run('S.myPlace="site"');
+  click({ a: 'attend', id: sandbox.TT_ });
+  if (!run('taskById("' + sandbox.TT_ + '").leaderAttendedAt')) throw new Error('لم يُسجَّل');
+  if (run('taskById("' + sandbox.TT_ + '").leaderFarKm') > run('RADIUS_KM')) throw new Error('سُجِّل بمسافة خارج النطاق');
+});
+step('لا حضور مسجَّل من خارج النطاق في كل البيانات', () => {
+  if (run('S.tasks.some(t=>t.assigned.some(a=>a.attendedAt && a.farKm>RADIUS_KM))'))
+    throw new Error('يوجد حضور خارج النطاق');
+});
+
+console.log('\nالتقييم — بلا تفصيل المصادر');
+step('التقييم التراكمي رقم واحد', () => {
+  const html = run('S.route={n:"rating"}; S.tab.rt="mine"; screenRating()').split('<nav class="tabs"')[0];
+  ['>النظام<', '>المشرف<', '>الحجاج</div>', 'تقييم النظام', 'مشرف السكن'].forEach(k => {
+    if (html.indexOf(k) >= 0) throw new Error('ما زال يُظهر: ' + k);
+  });
+  if (html.indexOf('تقييمك التراكمي') < 0) throw new Error('لا يوجد تراكمي');
+});
+step('تقييم المهمة رقم واحد', () => {
+  const tid = run('S.tasks.find(t=>t.rating&&t.leaderId==="L1").id');
+  const html = run('S.route={n:"taskrating",id:"' + tid + '"}; screenTaskRating()').split('<nav class="tabs"')[0];
+  ['تقييم النظام', 'مشرف السكن', 'تقييم الحجاج', 'وزنه'].forEach(k => {
+    if (html.indexOf(k) >= 0) throw new Error('ما زال يُظهر: ' + k);
+  });
+  if (html.indexOf('تقييم هذه المهمة') < 0) throw new Error('لا يوجد متوسط المهمة');
+});
+step('بروفايل المحسن بلا تفصيل', () => {
+  const m = run('teamOf("L1")[0].id');
+  const html = run('S.route={n:"profile",id:"' + m + '"}; screenProfile()').split('<nav class="tabs"')[0];
+  if (html.indexOf('>المشرف<') >= 0 || html.indexOf('>النظام<') >= 0) throw new Error('ما زال يفصّل');
+});
+
+console.log('\nتصنيف المهام بالدروب داون');
+step('كل مهمة لها تصنيف واحد صالح', () => {
+  const ok = run('myTasks().every(t=>TBUCKETS.some(b=>b.k===taskBucket(t,S.session.id)))');
+  if (!ok) throw new Error('تصنيف غير معروف');
+});
+step('لا أزرار تصنيف ثابتة في الشاشة', () => {
+  const html = run('S.route={n:"tasks"}; S.tab.tasks="all"; screenTasks()').split('<nav class="tabs"')[0];
+  if (html.indexOf('data-a="bucketmenu"') < 0) throw new Error('لا يوجد دروب داون');
+  if ((html.match(/data-k="tasks"/g) || []).length > 2) throw new Error('ما زالت التصنيفات أزرارًا');
+});
+step('القائمة تعرض كل التصنيفات بعدّادها', () => {
+  const sh = run('bucketSheet()');
+  run('TBUCKETS').forEach(b => { if (sh.indexOf(b.l) < 0) throw new Error('ينقص: ' + b.l); });
+});
+step('غير المنجزة للمُدان وحده', () => {
+  const bad = run('myTasks().filter(t=>taskBucket(t,S.session.id)==="undone").some(t=>!isBlamed(t,S.session.id)&&t.status!=="cancelled")');
+  if (bad) throw new Error('صُنّفت مهمة بلا إدانة');
+});
+step('المحسن يرى مهامه فقط', () => {
+  const m = run('teamOf("L1")[0].id');
+  run('S.session={id:"' + m + '",at:Date.now()}');
+  const bad = run('myTasks().some(t=>!t.assigned.some(a=>a.muhsenId==="' + m + '")&&!isDelegate(t,"' + m + '"))');
+  if (bad) throw new Error('يرى مهامّ ليست له');
+  run('S.session={id:"L1",at:Date.now()}');
+});
+step('لكل نوع مهمة أيقونة ولون', () => {
+  const miss = run('Object.keys(CAT).filter(k=>!KIND_UI[k])');
+  if (miss.length) throw new Error('ينقص: ' + miss.join(', '));
+});
+
+console.log('\nالعقود داخل المهمة وللّيدر');
+step('لا عقود في بطاقة القائمة', () => {
+  const t = run('S.tasks.find(x=>x.kind==="airport"&&x.leaderId==="L1")');
+  if (run('taskRow(S.tasks.find(x=>x.kind==="airport"&&x.leaderId==="L1")).indexOf("عقد النقل")') >= 0)
+    throw new Error('ما زالت تظهر خارج المهمة');
+});
+step('العقود داخل المهمة للّيدر', () => {
+  run('S.route={n:"task",id:S.tasks.find(x=>x.kind==="airport"&&x.leaderId==="L1").id}');
+  if (run('screenTask().indexOf("عقد السكن")') < 0) throw new Error('غائبة عن الليدر');
+});
+step('العقود محجوبة عن المحسن', () => {
+  const tid = run('S.tasks.find(x=>x.kind==="airport"&&x.leaderId==="L1"&&x.assigned.length).id');
+  const m = run('(acceptedSlots(taskById("' + tid + '"))[0]||{}).muhsenId');
+  if (!m) throw new Error('لا يوجد محسن مسكَّن للاختبار');
+  run('S.session={id:"' + m + '",at:Date.now()}');
+  run('S.route={n:"task",id:"' + tid + '"}');
+  if (run('screenTask().indexOf("عقد النقل")') >= 0) throw new Error('المحسن يرى العقود');
+  run('S.session={id:"L1",at:Date.now()}');
+});
+
+console.log('\nدليل المهام');
+step('دليل مبذور لكل نوع', () => {
+  const miss = run('Object.keys(CAT).filter(k=>!guideSteps(k).length)');
+  if (miss.length) throw new Error('بلا دليل: ' + miss.join(', '));
+});
+step('شاشة الدليل تفتح لكل نوع', () => {
+  run('Object.keys(CAT)').forEach(k => {
+    run('S.route={n:"guide",id:"' + '' + k + '"}');
+    const h = run('screenGuide()');
+    if (!h || h.indexOf('خطوات التنفيذ') < 0) throw new Error('لا تفتح: ' + k);
+  });
+});
+step('زر الدليل داخل المهمة وخارجها', () => {
+  const t = run('myTasks()[0]');
+  if (run('guideChip(myTasks()[0]).indexOf("data-n=\\"guide\\"")') < 0) throw new Error('لا زر في البطاقة');
+  run('S.route={n:"task",id:myTasks()[0].id}');
+  if (run('screenTask().indexOf("دليل تنفيذ المهمة")') < 0) throw new Error('لا زر داخل المهمة');
+});
+step('التحرير من صلاحية الليدر', () => {
+  if (!run('canEditGuide()')) throw new Error('الليدر لا يحرّر');
+  const m = run('teamOf("L1")[0].id');
+  run('S.session={id:"' + m + '",at:Date.now()}');
+  if (run('canEditGuide()')) throw new Error('المحسن يحرّر');
+  run('S.route={n:"guide",id:"airport"}');
+  if (run('screenGuide().indexOf("data-a=\\"addstep\\"")') >= 0) throw new Error('أزرار التحرير ظاهرة للمحسن');
+  run('S.session={id:"L1",at:Date.now()}');
+});
+step('إضافة خطوة نصية وترتيبها وحذفها', () => {
+  const before = run('guideSteps("airport").length');
+  const vals = { gt: 'خطوة اختبار', gb: 'نص تعليمة كافٍ للاختبار الآلي' };
+  sandbox.document.getElementById = idv => (vals[idv] !== undefined ? Object.assign({}, el, { value: vals[idv] }) : el);
+  click({ a: 'savestep', k: 'airport', v: 'text' });
+  sandbox.document.getElementById = () => el;
+  if (run('guideSteps("airport").length') !== before + 1) throw new Error('لم تُضف');
+  const sid = run('guideSteps("airport")[guideSteps("airport").length-1].id');
+  click({ a: 'stepup', k: 'airport', id: sid });
+  if (run('guideSteps("airport")[guideSteps("airport").length-1].id') === sid) throw new Error('لم تتحرك');
+  click({ a: 'stepdel', k: 'airport', id: sid });
+  if (run('guideSteps("airport").length') !== before) throw new Error('لم تُحذف');
+});
+step('رفض خطوة بلا عنوان أو بنص قصير', () => {
+  const before = run('guideSteps("umrah").length');
+  const vals = { gt: 'x', gb: 'نص كافٍ جدًّا للاختبار' };
+  sandbox.document.getElementById = idv => (vals[idv] !== undefined ? Object.assign({}, el, { value: vals[idv] }) : el);
+  click({ a: 'savestep', k: 'umrah', v: 'text' });
+  const vals2 = { gt: 'عنوان صالح', gb: 'قصير' };
+  sandbox.document.getElementById = idv => (vals2[idv] !== undefined ? Object.assign({}, el, { value: vals2[idv] }) : el);
+  click({ a: 'savestep', k: 'umrah', v: 'text' });
+  sandbox.document.getElementById = () => el;
+  if (run('guideSteps("umrah").length') !== before) throw new Error('قُبلت خطوة ناقصة');
+});
+
+console.log('\nالشريط السفلي');
+step('زر الرئيسية واحد وخارج الجانبين', () => {
+  const h = run('tabs()');
+  if ((h.match(/class="home/g) || []).length !== 1) throw new Error('عدد أزرار الرئيسية خاطئ');
+  const sides = h.split('class="home')[0];
+  if (sides.indexOf('data-side="r"') < 0) throw new Error('لا يوجد الجانب الأيمن قبل الرئيسية');
+  if (h.split('class="home')[1].indexOf('data-side="l"') < 0) throw new Error('لا يوجد الجانب الأيسر بعدها');
+});
+step('الجانبان متساويان في المدى', () => {
+  const h = run('tabs()');
+  const parts = h.split('data-side=');
+  const rCount = (parts[1] || '').split('data-a="go"').length - 1;
+  const lCount = (parts[2] || '').split('data-a="go"').length - 1;
+  if (Math.abs(rCount - lCount) > 1) throw new Error('غير متوازنين: ' + rCount + ' و' + lCount);
+});
+step('تاب الدليل موجود للدورين', () => {
+  if (run('tabs().indexOf("data-n=\\"guide\\"")') < 0) throw new Error('غائب عن الليدر');
+  const m = run('teamOf("L1")[0].id');
+  run('S.session={id:"' + m + '",at:Date.now()}');
+  if (run('tabs().indexOf("data-n=\\"guide\\"")') < 0) throw new Error('غائب عن المحسن');
+  run('S.session={id:"L1",at:Date.now()}');
+});
+
+console.log('\nالتفويض: متابعة بلا قرارات');
+run('S.session={id:"L1",at:Date.now()}');
+step('الليدر المفوِّض يتابع ولا يقرّر', () => {
+  const tid = run('S.tasks.filter(t=>t.leaderId==="L1"&&t.start>now()&&t.status!=="done")[0].id');
+  const m = run('teamOf("L1")[1].id');
+  run('taskById("' + tid + '").orgId = S.orgs.find(o=>o.type==="شركة").id');
+  run('sendDelegate(taskById("' + tid + '"),"' + m + '",true)');
+  run('respondDelegate(taskById("' + tid + '"),true)');
+  if (!run('actsAsLeader(taskById("' + tid + '"),"L1")')) throw new Error('فقد الرؤية');
+  if (run('canDecide(taskById("' + tid + '"),"L1")')) throw new Error('ما زال يقرّر');
+  if (!run('watching(taskById("' + tid + '"),"L1")')) throw new Error('لا يظهر كمتابع');
+  if (!run('canDecide(taskById("' + tid + '"),"' + m + '")')) throw new Error('المفوَّض لا يقرّر');
+  sandbox.DT_ = tid; sandbox.DM_ = m;
+});
+step('اسم الليدر الفعلي يظهر للمفوِّض', () => {
+  run('S.route={n:"task",id:"' + sandbox.DT_ + '"}');
+  const h = run('screenTask()');
+  if (h.indexOf('الليدر على هذه المهمة') < 0) throw new Error('لا يظهر');
+  if (h.indexOf(run('userById("' + sandbox.DM_ + '").name')) < 0) throw new Error('لا يظهر الاسم');
+});
+step('قرارات المفوِّض محجوبة فعليًّا', () => {
+  const before = run('taskById("' + sandbox.DT_ + '").assigned.length');
+  click({ a: 'send', id: sandbox.DT_, u: run('teamOf("L1")[3].id') });
+  if (run('taskById("' + sandbox.DT_ + '").assigned.length') !== before) throw new Error('سكّن رغم الإسناد');
+  const st = run('taskById("' + sandbox.DT_ + '").status');
+  click({ a: 'start', id: sandbox.DT_ });
+  if (run('taskById("' + sandbox.DT_ + '").status') !== st) throw new Error('بدأ رغم الإسناد');
+});
+step('العقود تبقى مرئية للمفوِّض والمفوَّض', () => {
+  const tid = run('S.tasks.find(x=>x.kind==="airport"&&x.leaderId==="L1").id');
+  run('S.route={n:"task",id:"' + tid + '"}');
+  if (run('screenTask().indexOf("عقد النقل")') < 0) throw new Error('غائبة عن الليدر');
 });
 
 console.log('\n' + (fail ? '✗ فشل ' + fail : '✓ نجحت كل الاختبارات'));

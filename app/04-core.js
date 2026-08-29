@@ -1,6 +1,6 @@
 /* ============================ الحالة ============================ */
 const KEY = 'muhsen_app_v1';
-const SCHEMA = 12;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
+const SCHEMA = 13;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
 const uid = (p) => p + Math.random().toString(36).slice(2, 8);
@@ -91,7 +91,7 @@ function seed() {
   const st = {
     v: SCHEMA, clockOffset: 0, myPlace: 'site', session: null, route: { n: 'login' },
     tab: {}, orgs: ORGS, users: USERS, tasks: [], tickets: [], notifs: [],
-    requests: [], reminders: [], pilgrims: {}, photos: [], toast: null
+    requests: [], reminders: [], pilgrims: {}, photos: [], guides: {}, toast: null
   };
   S = st;   /* لتعمل الدوال المعتمِدة على S أثناء التهيئة */
 
@@ -112,7 +112,7 @@ function seed() {
         muhsenId: m.id, req: 'accepted', reqAt: t.start - 30 * HR, reqNote: '',
         respAt: t.start - 28 * HR, respNote: '',
         attendedAt: (i + k) % 7 === 0 ? null : t.start + (late ? 20 : -90) * MIN,
-        farKm: (i + k) % 5 === 0 ? 3.4 : 0.4, removed: false, removedWhy: null
+        farKm: 0.4, removed: false, removedWhy: null
       });
     });
     if (i % 3 === 1 && team[4]) t.assigned.push({
@@ -159,6 +159,7 @@ function seed() {
   });
 
   seedPhotos(st);
+  seedGuides(st);
   return st;
 }
 
@@ -169,6 +170,7 @@ function load() {
   } catch (e) { S = seed(); }
   S.reminders = S.reminders || []; S.requests = S.requests || []; S.pilgrims = S.pilgrims || {};
   S.photos = S.photos || [];
+  S.guides = S.guides || {};
 }
 /* الحفظ: عند امتلاء المساحة نُسقط أقدم الصور الملتقطة ونعيد المحاولة
    — وإلا ضاعت كل البيانات بصمت عند أول صورة تتجاوز الحد. */
@@ -206,6 +208,13 @@ function actsAsLeader(t, id) {
   if (t.leaderId === id) return true;
   return !!(t.delegate && t.delegate.muhsenId === id && t.delegate.state === 'accepted');
 }
+/* الليدر الذي أسند صفته يتابع ولا يقرّر — القرار للمفوَّض وحده */
+function canDecide(t, id) {
+  if (!actsAsLeader(t, id)) return false;
+  if (t.delegate && t.delegate.state === 'accepted') return t.delegate.muhsenId === id;
+  return true;
+}
+const watching = (t, id) => actsAsLeader(t, id) && !canDecide(t, id);
 const isDelegate = (t, id) => !!(t.delegate && t.delegate.muhsenId === id && t.delegate.state === 'accepted');
 const ownerOf = t => (t.delegate && t.delegate.state === 'accepted') ? t.delegate.muhsenId : t.leaderId;
 
@@ -249,7 +258,6 @@ function autoNote(t) {
     const nm = userById(a.muhsenId).name;
     if (!a.attendedAt) note(t, 'لم يثبت ' + nm + ' حضوره');
     else if (a.attendedAt > t.start) note(t, 'تأخر ' + nm + ' في التحضير — أثبت حضوره بعد بداية المهمة');
-    if (a.farKm > RADIUS_KM) note(t, 'حضّر ' + nm + ' من مكان أبعد من ' + AR(RADIUS_KM) + ' كم (' + a.farKm + ' كم)');
   });
   const own = userById(ownerOf(t));
   if (!t.leaderAttendedAt && own) note(t, 'لم يثبت ' + own.name + ' حضوره');
@@ -262,8 +270,8 @@ function systemScore(t) {
   const acc = acceptedSlots(t);
   let prep = 0;
   if (acc.length) {
-    const good = acc.filter(a => a.attendedAt && a.attendedAt <= t.start && a.farKm <= RADIUS_KM).length;
-    const half = acc.filter(a => a.attendedAt && (a.attendedAt > t.start || a.farKm > RADIUS_KM)).length;
+    const good = acc.filter(a => a.attendedAt && a.attendedAt <= t.start).length;
+    const half = acc.filter(a => a.attendedAt && a.attendedAt > t.start).length;
     prep = (good + half * 0.5) / acc.length;
   }
   if (acc.length < MIN_ASSIGN) prep *= 0.5;
@@ -410,17 +418,26 @@ function respondDelegate(t, ok, note_, excuse) {
 }
 
 /* ============================ الحضور والتنفيذ ============================ */
+const myFarKm = () => (S.myPlace === 'site' ? 0.4 : 3.4);
+/* التحضير لا يُقبل إلا من داخل نطاق ٢ كم من حدود الموقع */
+const canAttend = t => now() >= prepOpen(t) && myFarKm() <= RADIUS_KM;
+function attendBlockReason(t) {
+  if (now() < prepOpen(t)) return 'يفتح التحضير من بداية يوم المهمة';
+  if (myFarKm() > RADIUS_KM) return 'أنت خارج النطاق — ' + AR(myFarKm()) + ' كم، والمسموح ' + AR(RADIUS_KM) + ' كم';
+  return '';
+}
 function attend(t, who) {
-  const u = userById(who); if (!u) return;
-  const far = S.myPlace === 'site' ? 0.4 : 3.4;
+  const u = userById(who); if (!u) return false;
+  const far = myFarKm();
+  if (far > RADIUS_KM) return false;   /* حارس أخير: لا يُسجَّل حضور من خارج النطاق */
   if (actsAsLeader(t, who)) { t.leaderAttendedAt = now(); t.leaderFarKm = far; }
   const a = slotOf(t, who);
   if (a) { a.attendedAt = now(); a.farKm = far; }
-  hist(t, 'أثبت ' + u.name + ' حضوره' + (far > RADIUS_KM ? ' (خارج النطاق — ' + far + ' كم)' : ''));
-  if (far > RADIUS_KM) note(t, 'حضّر ' + u.name + ' من مكان أبعد من ' + AR(RADIUS_KM) + ' كم (' + far + ' كم)');
+  hist(t, 'أثبت ' + u.name + ' حضوره داخل النطاق (' + AR(far) + ' كم)');
   if (now() > t.start) note(t, 'تأخر ' + u.name + ' في التحضير — أثبت حضوره بعد بداية المهمة');
   if (!actsAsLeader(t, who)) notify(ownerOf(t), 'i-checkc', 'إثبات حضور',
     u.name + ' أثبت حضوره في «' + t.title + '».', { n: 'task', id: t.id });
+  return true;
 }
 function startTask(t, by) {
   t.status = 'running'; t.startedAt = now(); t.startedBy = by; t.autoStarted = by === 'SYSTEM';
@@ -511,37 +528,64 @@ function myTasks() {
     .sort((a, b) => a.start - b.start);
 }
 /* تصنيف المهمة بالنسبة للمستخدم الحالي */
-function taskBucket(t, uid_) {
-  const u = userById(uid_);
-  if (t.status === 'cancelled') return 'undone';
+/* ============ تصنيف المهام — دروب داون موحّد، وحالة واحدة لكل مهمة ============ */
+const TBUCKETS = [
+  { k:'all',       l:'كل المهام',    i:'i-list',   c:'grey' },
+  { k:'running',   l:'الجارية الآن', i:'i-play',   c:'live' },
+  { k:'soon',      l:'ستبدأ اليوم',  i:'i-clock',  c:'wait' },
+  { k:'next',      l:'القادمة',      i:'i-cal',    c:'blue' },
+  { k:'done',      l:'المنجزة',      i:'i-checkc', c:'live' },
+  { k:'undone',    l:'غير المنجزة',  i:'i-warn',   c:'no'   },
+  { k:'cancelled', l:'الملغاة',      i:'i-cancel', c:'grey' }
+];
+const bucketOf = k => TBUCKETS.find(b => b.k === k) || TBUCKETS[0];
+
+/* «غير المنجزة» = ما يُدان فيه الشخص وحده، لا كل ما لم يكتمل */
+function isBlamed(t, uid_) {
+  const u = userById(uid_); if (!u) return false;
   if (u.role === 'muhsen') {
-    const rej = t.assigned.find(a => a.muhsenId === uid_ && a.req === 'rejected');
-    const rem = t.assigned.find(a => a.muhsenId === uid_ && a.removed);
-    const acc = acceptedSlots(t).some(a => a.muhsenId === uid_);
-    if (!acc && (rej || rem)) return 'undone';
-    if (t.status === 'done') return 'done';
-    return 'current';
+    const s = t.assigned.find(a => a.muhsenId === uid_);
+    if (!s) return false;
+    if (s.req === 'rejected') return true;
+    if (s.removed) return true;
+    if (t.status === 'done' && s.req === 'accepted' && !s.attendedAt) return true;
+    if (t.status === 'done' && s.attendedAt && s.attendedAt > t.start) return true;
+    return false;
   }
-  if (t.status === 'done') {
-    if (!t.leaderAttendedAt || t.autoStarted) return 'undone';
-    return 'done';
-  }
-  return 'current';
+  if (t.status !== 'done') return false;
+  if (!t.leaderAttendedAt) return true;
+  if (t.autoStarted) return true;
+  if (t.endedAt && t.endedAt > t.end + 30 * MIN) return true;
+  return false;
 }
+
+function taskBucket(t, uid_) {
+  if (t.status === 'cancelled') return 'cancelled';
+  if (isBlamed(t, uid_)) return 'undone';
+  if (t.status === 'running') return 'running';
+  if (t.status === 'done') return 'done';
+  if (dayStart(t.start) === dayStart(now())) return 'soon';
+  return 'next';
+}
+
 function undoneReason(t, uid_) {
   const u = userById(uid_);
   if (t.status === 'cancelled') return 'أُلغيت المهمة — ' + (t.cancelReason || '');
   if (u.role === 'muhsen') {
-    const rej = t.assigned.find(a => a.muhsenId === uid_ && a.req === 'rejected');
-    if (rej) return 'رفضتَ الإسناد' + (rej.respNote ? ' — «' + rej.respNote + '»' : '');
-    const rem = t.assigned.find(a => a.muhsenId === uid_ && a.removed);
-    if (rem) return 'أُزيل إسنادك — ' + (rem.removedWhy || 'بقرار من الليدر');
+    const s = t.assigned.find(a => a.muhsenId === uid_) || {};
+    if (s.req === 'rejected') return 'رفضتَ الإسناد' + (s.respNote ? ' — «' + s.respNote + '»' : '');
+    if (s.removed) return 'أُزيل إسنادك — ' + (s.removedWhy || 'بقرار من الليدر');
+    if (!s.attendedAt) return 'لم تثبت حضورك في المهمة';
+    if (s.attendedAt > t.start) return 'تأخرت عن التحضير — أثبت حضورك بعد بدايتها';
     return 'غير منجزة';
   }
   if (!t.leaderAttendedAt) return 'لم تثبت حضورك في المهمة';
   if (t.autoStarted) return 'بدأها النظام — لم تبدأها في وقتها';
+  if (t.endedAt && t.endedAt > t.end + 30 * MIN)
+    return 'تأخر الإغلاق ' + AR(Math.round((t.endedAt - t.end) / MIN)) + ' دقيقة عن وقت الانتهاء';
   return 'غير منجزة';
 }
+
 function currentTask() {
   return myTasks().filter(t => ['running', 'assigned', 'pending_assign'].includes(t.status))
     .filter(t => taskBucket(t, S.session.id) === 'current')[0] || null;

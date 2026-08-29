@@ -101,20 +101,14 @@ function screenRating() {
   const rt = personRating(u.id);
   const rated = myTasks().filter(t => t.rating).sort((a, b) => b.rating.at - a.rating.at);
 
-  const bigStars = v => '<div class="bigstars">' + stars(v, 'lg') + '</div>';
-  const col = (label, v) => '<div class="kpi"><div class="tiny dim2">' + label + '</div>' +
-    '<b style="font-size:20px">' + E(String(v).replace(/\.0$/, '')) + '</b>' +
-    '<span style="color:var(--gold)">★</span></div>';
-
   let body = '';
   if (seg === 'mine') {
-    body = '<div class="c gold center"><div class="tiny dim2">تقييمك التراكمي</div>' +
-      '<div style="font-size:38px;font-weight:800;color:var(--g);line-height:1.3">' +
-        E(String(rt.avg || 0).replace(/\.0$/, '')) + '</div>' + bigStars(rt.avg || 0) +
-      '<div class="tiny dim" style="margin-top:6px">' + AR(rt.n) + ' مهمة مقيَّمة</div></div>' +
-      '<div class="grid3">' + col('النظام', rt.sys) + col('المشرف', rt.sup) + col('الحجاج', rt.pil) + '</div>' +
+    body = '<div class="score"><span class="tiny dim2">تقييمك التراكمي</span>' +
+      '<b>' + AR(String(rt.avg || 0).replace(/\.0$/, '')) + '</b>' +
+      '<div class="bigstars">' + stars(rt.avg || 0, 'lg') + '</div>' +
+      '<span class="tiny dim">من ' + AR(rt.n) + ' مهمة مقيَّمة</span></div>' +
       '<div class="note b">' + icon('i-info','s16') +
-        '<span>تقييم النظام يُحتسب آليًا: التحضير ٤٠٪ · بدء المهمة ٢٠٪ · المهام الفرعية ٢٥٪ · الإغلاق ١٥٪.</span></div>' +
+        '<span>التقييم متوسط عام لكل مهمة — يُحتسب من الالتزام بالأوقات وإنجاز المهام ورضا المستفيدين.</span></div>' +
       '<div class="lbl">تقييم كل مهمة</div>' +
       (rated.length ? rated.map(t => ratingRow(t)).join('')
         : '<div class="c center dim sm" style="padding:24px">لا توجد مهام مقيَّمة بعد</div>');
@@ -124,7 +118,7 @@ function screenRating() {
     body = '<div class="lbl">' + (L ? 'ترتيب فريقك' : 'زملاؤك في الفريق') + '<small>حسب المتوسط التراكمي</small></div>' +
       rows.map((x, i) => '<button class="c" data-a="go" data-n="profile" data-id="' + x.p.id + '" style="width:100%;text-align:right">' +
         '<div class="fl">' +
-          '<span class="rank">' + AR(i + 1) + '</span>' + avat(x.p) +
+          '<span class="rank' + (i === 0 ? ' top' : '') + '">' + AR(i + 1) + '</span>' + avat(x.p) +
           '<span class="nm sp"><b>' + E(x.p.name) + '</b><span>' + E(x.p.specialty) + ' · ' + AR(x.r.n) + ' مهمة</span></span>' +
           (x.r.n ? stars(x.r.avg) : pill('بلا تقييم', 'grey')) + '</div></button>').join('');
   }
@@ -137,53 +131,31 @@ function screenRating() {
 }
 
 function ratingRow(t) {
-  const r = t.rating;
-  return '<button class="c" data-a="go" data-n="taskrating" data-id="' + t.id + '" style="width:100%;text-align:right">' +
-    '<div class="fl" style="align-items:flex-start;gap:10px">' +
-      '<span class="thumb" style="width:56px;height:56px;background-image:url(' + IMG[t.photo + '_t'] + ')"></span>' +
+  const v = avgRating(t.rating), ui = kindUI(t);
+  return '<button class="c" data-a="go" data-n="taskrating" data-id="' + t.id +
+    '" style="width:100%;text-align:right;--kc:' + ui.c + '">' +
+    '<div class="fl" style="align-items:center;gap:10px">' +
+      '<span class="tthumb" style="width:52px;height:52px;border-radius:15px;background-image:url(' +
+        IMG[t.photo + '_t'] + ')"><span class="kb">' + icon(ui.i, 's14') + '</span></span>' +
       '<span class="sp"><b class="sm" style="display:block;line-height:1.5">' + E(t.title) + '</b>' +
-      '<span class="tiny dim2">' + hijri(t.start) + ' · ' + t12(t.start) + '</span></span>' +
-      '<span class="center"><div style="font-size:19px;font-weight:800;color:var(--g)">' +
-        E(String(avgRating(r)).replace(/\.0$/, '')) + '</div><span class="tiny dim2">المتوسط</span></span></div>' +
-    '<div class="grid3" style="margin-top:10px">' +
-      '<div class="center"><div class="tiny dim2">النظام</div>' + stars(r.system) + '</div>' +
-      '<div class="center"><div class="tiny dim2">المشرف</div>' + stars(r.supervisor) + '</div>' +
-      '<div class="center"><div class="tiny dim2">الحجاج</div>' + stars(r.pilgrims) + '</div></div></button>';
+      '<span class="tiny dim2">' + hijri(t.start) + '</span>' +
+      '<span class="fl" style="margin-top:5px">' + stars(v, 'lg') + '</span></span>' +
+      icon('i-back', 's16') + '</div></button>';
 }
+
 
 function screenTaskRating() {
   const t = taskById(S.route.id); if (!t || !t.rating) return screenRating();
-  const r = t.rating, b = r.breakdown;
-  const barRow = (l, v, w) => '<div style="margin-bottom:11px"><div class="row tiny">' +
-    '<span class="dim">' + l + '<span class="dim2"> · وزنه ' + AR(w) + '٪</span></span><b>' + AR(v) + '٪</b></div>' +
-    '<div class="meter" style="margin-top:5px"><i style="width:' + v + '%"></i></div></div>';
+  const v = avgRating(t.rating);
   return bar('تقييم المهمة', { back: 1 }) + '<div class="view">' + ground() + svcCard(t) +
-    '<div class="c gold center"><div class="tiny dim2">المتوسط العام</div>' +
-      '<div style="font-size:36px;font-weight:800;color:var(--g);line-height:1.3">' +
-        E(String(avgRating(r)).replace(/\.0$/, '')) + '</div>' +
-      '<div class="bigstars">' + stars(avgRating(r), 'lg') + '</div></div>' +
-
-    '<div class="lbl">تقييم النظام<small>آلي — مبناه الالتزام بالأوقات</small></div>' +
-    '<div class="c"><div class="row" style="margin-bottom:12px"><b class="sm">النتيجة</b>' + stars(r.system, 'lg') + '</div>' +
-      barRow('التحضير وإثبات الحضور', b.prep, 40) +
-      barRow('بدء المهمة في وقتها', b.start, 20) +
-      barRow('إنجاز المهام الفرعية', b.subs, 25) +
-      barRow('الإغلاق في وقته', b.close, 15) +
-      '<div class="row" style="margin-top:4px"><b class="sm">الإجمالي</b><b>' + AR(b.total) + '٪</b></div></div>' +
-
-    '<div class="lbl">تقييم مشرف السكن</div>' +
-    '<div class="c"><div class="row"><b class="sm">التقييم</b>' + stars(r.supervisor, 'lg') + '</div>' +
-      '<div class="note b" style="margin-top:10px">' + icon('i-user','s16') + '<span>' + E(r.supNote) + '</span></div></div>' +
-
-    '<div class="lbl">تقييم الحجاج</div>' +
-    '<div class="c"><div class="row"><b class="sm">التقييم</b>' + stars(r.pilgrims, 'lg') + '</div>' +
-      '<div class="note b" style="margin-top:10px">' + icon('i-users','s16') + '<span>' + E(r.pilNote) + '</span></div></div>' +
-
-    (t.notes.length ? '<div class="lbl">ملاحظات أثّرت في التقييم</div>' +
+    '<div class="score"><span class="tiny dim2">تقييم هذه المهمة</span>' +
+      '<b>' + AR(String(v).replace(/\.0$/, '')) + '</b>' +
+      '<div class="bigstars">' + stars(v, 'lg') + '</div>' +
+      '<span class="tiny dim">متوسط عام · ' + hijri(t.rating.at) + '</span></div>' +
+    (t.notes.length && isLeader() ? '<div class="lbl">ملاحظات أثّرت في التقييم</div>' +
       t.notes.map(n => '<div class="note a">' + icon('i-info','s16') + '<span>' + E(n.text) + '</span></div>').join('') : '') +
-
-    (isLeader() ? '<button class="btn l" data-a="rerate" data-id="' + t.id + '">' +
-      icon('i-reset','s16') + 'إعادة احتساب تقييم النظام</button>' : '') +
+    '<button class="btn g" data-a="go" data-n="task" data-id="' + t.id + '">' +
+      icon('i-tasks','s16') + 'العودة إلى المهمة</button>' +
     '</div>' + tabs();
 }
 
@@ -280,10 +252,9 @@ function screenProfile() {
       '<div class="kpi"><b style="color:' + (undoneN ? 'var(--red)' : 'var(--g)') + '">' + AR(undoneN) + '</b><span>غير منجزة</span></div></div>' +
 
     (r.n ? '<div class="lbl">التقييم التراكمي<small>' + AR(r.n) + ' مهمة مقيَّمة</small></div>' +
-      '<div class="c"><div class="grid3">' +
-        '<div class="center"><div class="tiny dim2">النظام</div>' + stars(r.sys) + '</div>' +
-        '<div class="center"><div class="tiny dim2">المشرف</div>' + stars(r.sup) + '</div>' +
-        '<div class="center"><div class="tiny dim2">الحجاج</div>' + stars(r.pil) + '</div></div></div>' : '') +
+      '<div class="score sm"><b>' + AR(String(r.avg).replace(/\.0$/, '')) + '</b>' +
+        '<div class="bigstars">' + stars(r.avg, 'lg') + '</div>' +
+        '<span class="tiny dim">المتوسط العام لكل مهامه</span></div>' : '') +
 
     '<div class="lbl">الملاحظات المسجّلة<small>' + AR(notes.length) + ' ملاحظة</small></div>' +
     (notes.length ? notes.slice(0, 15).map(n =>
@@ -316,6 +287,7 @@ function screenMore() {
        ['rating','i-star','التقييم','تقييمك وتقييم الفريق'],
        ['tickets','i-ticket','التذاكر','من الحجاج والكنترول والمحسنين'],
        ['pilgrims','i-user','الحجاج','حجاج الـKT والبلاغات'],
+       ['guide','i-guide','دليل المهام','تعليمات كل نوع مهمة — وتحريرها'],
        ['album','i-album','ألبوم الصور','توثيق المهام بالصور'],
        ['calendar','i-cal','التقويم','أسبوعي مع التذكيرات'],
        ['notifs','i-bell','الإشعارات','كل التحديثات'],
@@ -326,6 +298,7 @@ function screenMore() {
        ['rating','i-star','التقييم','تقييمك وتقييم الزملاء'],
        ['tickets','i-ticket','التذاكر','المسندة إليك وما رفعته'],
        ['pilgrims','i-user','الحجاج','حجاج الـKT والبلاغات'],
+       ['guide','i-guide','دليل المهام','تعليمات تنفيذ كل نوع مهمة'],
        ['album','i-album','ألبوم الصور','صور المهام التي تشارك فيها'],
        ['calendar','i-cal','التقويم','أسبوعي مع التذكيرات'],
        ['notifs','i-bell','الإشعارات','كل التحديثات'],

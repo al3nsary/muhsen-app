@@ -36,6 +36,10 @@ function screenAdmin() {
         '<button class="btn l sm" data-a="finishsome">' + icon('i-checkc','s16') + 'أنهِ مهمة جارية</button></div>' +
       '<div class="tiny" style="margin-top:9px;opacity:.75">«أعد تقييم الكل» يعيد احتساب تقييم النظام بمعادلة الالتزام لكل مهمة منتهية.</div></div>' +
 
+    '<div class="admcard"><div class="lbl">دليل المهام</div>' +
+      '<div class="tiny" style="margin:8px 0;opacity:.75">تعليمات كل نوع مهمة: نص · صور متتابعة · فيديو قصير · ملف PDF. يقرؤها كل الفريق على كل مهمة من النوع نفسه.</div>' +
+      '<button class="btn p sm" data-a="go" data-n="guide">' + icon('i-guide','s16') + 'تحرير التعليمات</button></div>' +
+
     '<div class="admcard"><div class="lbl">المهام</div>' +
       '<button class="btn p sm" style="margin:10px 0" data-a="addtask">' + icon('i-plus','s16') + 'إضافة مهمة جديدة</button>' +
       '<div class="col">' + tasks.map(t => {
