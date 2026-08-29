@@ -35,90 +35,48 @@ function bar(title, opt) {
     '<div class="nav">' + left + '<span class="t">' + E(title) + '</span>' + right + '</div></div>';
 }
 
-/* شريط سفلي — الرئيسية ثابتة في المنتصف، والبقية كتلة واحدة تنتقل صفحةً كاملة */
-const TABS_PER_SIDE = 3;
-
+/* شريط سفلي ثابت — ست وجهات وحدها، والبقية في «المزيد» */
 function tabItems() {
   const L = isLeader();
-  const inbox = S.requests.filter(x => x.to === S.session.id && x.state === 'pending').length;
+  const inbox = S.requests.filter(x => x.to === S.session.id && x.state === 'pending').length +
+    pendingSwaps().length;
   const openTk = myTickets().filter(k => k.status !== 'مغلقة').length;
-  const swaps = pendingSwaps().length;
-  return L
-    ? [{ k:'tasks', i:'i-tasks', l:'المهام', on:['tasks','task','assign','timeline'] },
-       { k:'daily', i:'i-check', l:'التحضير', b:swaps, on:['daily'] },
-       { k:'lreq', i:'i-swap', l:'الطلبات', b:inbox, on:['lreq'] },
-       { k:'muhsens', i:'i-users', l:'المحسنون', on:['muhsens'] },
-       { k:'rating', i:'i-star', l:'التقييم', on:['rating','taskrating'] },
-       { k:'guide', i:'i-guide', l:'الدليل', on:['guide'] },
-       { k:'tickets', i:'i-ticket', l:'التذاكر', b:openTk, on:['tickets','ticket'] },
-       { k:'notifs', i:'i-bell', l:'الإشعارات', b:unread(), on:['notifs'] },
-       { k:'calendar', i:'i-cal', l:'التقويم', on:['calendar'] },
-       { k:'pilgrims', i:'i-user', l:'الحجاج', on:['pilgrims'] },
-       { k:'album', i:'i-album', l:'الصور', on:['album','photo'] },
-       { k:'more', i:'i-dots', l:'المزيد', on:['more','profile','admin','doc'] }]
-    : [{ k:'tasks', i:'i-tasks', l:'المهام', on:['tasks','task'] },
-       { k:'daily', i:'i-check', l:'التحضير', on:['daily'] },
-       { k:'requests', i:'i-swap', l:'الطلبات', b:inbox, on:['requests'] },
-       { k:'guide', i:'i-guide', l:'الدليل', on:['guide'] },
-       { k:'rating', i:'i-star', l:'التقييم', on:['rating','taskrating'] },
-       { k:'tickets', i:'i-ticket', l:'التذاكر', b:openTk, on:['tickets','ticket'] },
-       { k:'notifs', i:'i-bell', l:'الإشعارات', b:unread(), on:['notifs'] },
-       { k:'calendar', i:'i-cal', l:'التقويم', on:['calendar'] },
-       { k:'pilgrims', i:'i-user', l:'الحجاج', on:['pilgrims'] },
-       { k:'album', i:'i-album', l:'الصور', on:['album','photo'] },
-       { k:'more', i:'i-dots', l:'المزيد', on:['more','profile','admin'] }];
-}
-const tabPageCount = () => Math.ceil(tabItems().length / (TABS_PER_SIDE * 2));
-
-/* الصفحة التي تحوي الشاشة الحالية — حتى لا يضيع المستخدم */
-function tabPageOf(route) {
-  const it = tabItems();
-  for (let i = 0; i < it.length; i++) if (it[i].on.indexOf(route) >= 0)
-    return Math.floor(i / (TABS_PER_SIDE * 2));
-  return null;
+  return [
+    { k:'tasks', i:'i-tasks', l:'المهام',
+      on:['tasks','task','assign','timeline','doc'] },
+    { k: L ? 'lreq' : 'requests', i:'i-swap', l:'الطلبات', b: inbox,
+      on:['lreq','requests'] },
+    { k:'daily', i:'i-check', l:'التحضير',
+      on:['daily'] },
+    { k:'tickets', i:'i-ticket', l:'التذاكر', b: openTk,
+      on:['tickets','ticket'] },
+    { k:'notifs', i:'i-bell', l:'الإشعارات', b: unread(),
+      on:['notifs'] },
+    { k:'more', i:'i-dots', l:'المزيد',
+      on:['more','profile','admin','album','photo','guide','rating','taskrating',
+          'calendar','pilgrims','muhsens'] }
+  ];
 }
 
 function tabs() {
   const L = isLeader(), r = S.route.n;
   const items = tabItems();
-  const per = TABS_PER_SIDE * 2, pages = tabPageCount();
-  const auto = tabPageOf(r);
-  if (auto !== null && S._tabAuto !== r) { S.tabPage = auto; S._tabAuto = r; }
-  let pg = Math.min(Math.max(S.tabPage || 0, 0), pages - 1);
-
+  const half = items.length / 2;
   const btn = it => {
-    if (!it) return '<span class="tspacer"></span>';
     const on = it.on.indexOf(r) >= 0;
     return '<button class="' + (on ? 'on' : '') + '" role="tab"' + (on ? ' aria-selected="true"' : '') +
       ' data-a="go" data-n="' + it.k + '">' +
       '<span class="wi">' + icon(it.i) + (it.b ? '<span class="badge">' + AR(it.b) + '</span>' : '') +
-      '</span>' + it.l + '</button>';
-  };
-  const page = (p, side) => {
-    const base = p * per + (side === 'r' ? 0 : TABS_PER_SIDE);
-    let out = '';
-    for (let i = 0; i < TABS_PER_SIDE; i++) out += btn(items[base + i]);
-    return '<div class="tpage">' + out + '</div>';
-  };
-  const rail = side => {
-    let out = '';
-    for (let p = 0; p < pages; p++) out += page(p, side);
-    /* الاتجاه RTL: الانتقال للصفحة التالية يزيح الشريط يمينًا */
-    return '<div class="tside"><div class="trail" data-pg="' + pg + '" ' +
-      'style="transform:translateX(' + (pg * 100) + '%)">' + out + '</div></div>';
+      '</span><span class="tl">' + it.l + '</span></button>';
   };
   const homeOn = ['home','mhome'].indexOf(r) >= 0;
-
-  return '<nav class="tabs" role="tablist" aria-label="التنقّل" data-pages="' + pages + '">' +
-    (pages > 1 ? '<span class="dots" aria-hidden="true">' +
-      Array.from({ length: pages }, (_, i) => '<i class="' + (i === pg ? 'on' : '') + '"></i>').join('') +
-      '</span>' : '') +
-    rail('r') +
+  return '<nav class="tabs" role="tablist" aria-label="التنقّل">' +
+    '<div class="tside">' + items.slice(0, half).map(btn).join('') + '</div>' +
     '<button class="home' + (homeOn ? ' on' : '') + '" role="tab"' + (homeOn ? ' aria-selected="true"' : '') +
       ' data-a="go" data-n="' + (L ? 'home' : 'mhome') + '">' +
       '<span class="wi hb"><i class="mlogo"></i></span>' +
       '<span class="hl">الرئيسية</span></button>' +
-    rail('l') +
+    '<div class="tside">' + items.slice(half).map(btn).join('') + '</div>' +
     '</nav>';
 }
 

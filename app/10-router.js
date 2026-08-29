@@ -28,11 +28,12 @@ function render() {
     const p = S.notifs.find(x => x.id === S.push);
     if (!p || p.read) S.push = null;
     else {
-      const kind = /تحذير|متأخر|رفض|تخلّف|بدأها النظام|تجاوزت/.test(p.title) ? 'bad'
-        : /بلا رد|تحتاج|تذكير|فُتحت|بقيت/.test(p.title) ? 'warn' : '';
+      const nk = nkind(p);
+      const kind = nk.k === 'bad' ? 'bad' : nk.k === 'ask' ? 'warn' : '';
       pushHTML = '<div class="push ' + kind + '" data-a="opennotif" data-id="' + p.id + '">' +
-        icon(p.icon, 's26') + '<span class="sp"><b>' + E(p.title) + '</b><span>' + E(p.body) + '</span></span>' +
-        '<button class="x" data-a="dismiss">' + icon('i-x','s16') + '</button></div>';
+        '<span class="pi">' + icon(p.icon || nk.i, 's18') + '</span>' +
+        '<span class="sp"><b>' + E(p.title) + '</b><span>' + E(p.body) + '</span></span>' +
+        '<button class="x" data-a="dismiss" aria-label="إخفاء">' + icon('i-x','s16') + '</button></div>';
     }
   }
   if (pushHTML) html = html.replace('<div class="view">', '<div class="view">' + pushHTML);
@@ -52,88 +53,8 @@ function render() {
   if (S.toast) { const t = S.toast; setTimeout(() => { if (S.toast === t) { S.toast = null; render(); } }, 2600); }
 }
 
-/* ===== شريط التابات: كتلة واحدة تنتقل صفحةً كاملة ===== */
-function centerActiveTab() { /* الصفحة تُحسب أثناء البناء — لا حاجة لتمرير */ }
-
-function goTabPage(next) {
-  const nav = document.querySelector('.tabs'); if (!nav) return;
-  const pages = Number(nav.dataset.pages || 1);
-  const cur = Math.min(Math.max(S.tabPage || 0, 0), pages - 1);
-  const to = Math.min(Math.max(next, 0), pages - 1);
-  if (to === cur) return;
-  S.tabPage = to; S._tabAuto = null;
-  nav.querySelectorAll('.trail').forEach(t => {
-    t.style.transform = 'translateX(' + (to * 100) + '%)';
-  });
-  nav.querySelectorAll('.dots i').forEach((d, i) => {
-    if (i === to) d.classList.add('on'); else d.classList.remove('on');
-  });
-  try { navigator.vibrate && navigator.vibrate(8); } catch (e) {}
-  save();
-}
-
-(function tabSwipe() {
-  let st = null;
-  const grab = e => {
-    const nav = e.target.closest && e.target.closest('.tabs');
-    if (!nav || e.target.closest('.home')) return null;
-    return nav;
-  };
-  function begin(nav, x) { st = { nav, x, moved: false }; }
-  function move(x) {
-    if (!st) return false;
-    const dx = x - st.x;
-    if (Math.abs(dx) < 42) return false;
-    st.moved = true;
-    /* RTL: السحب لليمين يعود للصفحة السابقة */
-    goTabPage((S.tabPage || 0) + (dx > 0 ? -1 : 1));
-    st = null;
-    return true;
-  }
-  function end() {
-    if (st && st.moved) {
-      const nav = st.nav;
-      nav.dataset.dragged = '1';
-      setTimeout(() => { delete nav.dataset.dragged; }, 200);
-    }
-    st = null;
-  }
-  document.addEventListener('pointerdown', e => {
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
-    const nav = grab(e); if (!nav) return;
-    begin(nav, e.clientX);
-  });
-  document.addEventListener('pointermove', e => { if (st) move(e.clientX); });
-  document.addEventListener('pointerup', end);
-  document.addEventListener('pointercancel', end);
-  document.addEventListener('touchstart', e => {
-    const nav = grab({ target: e.target }); if (!nav) return;
-    begin(nav, e.touches[0].clientX);
-  }, { passive: true });
-  document.addEventListener('touchmove', e => {
-    if (!st) return;
-    if (move(e.touches[0].clientX) && e.cancelable) e.preventDefault();
-  }, { passive: false });
-  document.addEventListener('touchend', end);
-  /* الماوس: عجلة التمرير أفقيًّا تنقل صفحة */
-  let wheelLock = 0;
-  document.addEventListener('wheel', e => {
-    const nav = e.target.closest && e.target.closest('.tabs'); if (!nav) return;
-    const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-    if (!d) return;
-    if (e.cancelable) e.preventDefault();
-    const t = Date.now();
-    if (t - wheelLock < 340) return;
-    wheelLock = t;
-    goTabPage((S.tabPage || 0) + (d > 0 ? 1 : -1));
-  }, { passive: false });
-  /* لوحة المفاتيح على المتصفح */
-  document.addEventListener('keydown', e => {
-    if (!document.querySelector('.tabs')) return;
-    if (e.key === 'ArrowLeft') goTabPage((S.tabPage || 0) + 1);
-    else if (e.key === 'ArrowRight') goTabPage((S.tabPage || 0) - 1);
-  });
-})();
+/* لا سحب ولا صفحات — الشريط ثابت */
+function centerActiveTab() {}
 
 /* ===== ملاءمة الشاشة لأي جوال ===== */
 (function fitScreen() {
@@ -487,6 +408,15 @@ document.addEventListener('click', ev => {
       if (!canEditGuide()) { toast('الحذف من صلاحية الليدر', 'r'); break; }
       delStep(b.dataset.k, id); toast('حُذفت الخطوة', 'r'); break; }
 
+    case 'appupdate': {
+      toast('جارٍ التحديث…');
+      try {
+        if (window.caches) caches.keys().then(function (ks) { ks.forEach(function (k) { caches.delete(k); }); });
+        if (navigator.serviceWorker) navigator.serviceWorker.getRegistrations()
+          .then(function (rs) { rs.forEach(function (x) { x.unregister(); }); });
+      } catch (e) {}
+      setTimeout(function () { location.reload(true); }, 700);
+      return; }
     case 'printdoc': try { window.print(); } catch (e) { toast('الطباعة غير متاحة', 'r'); } return;
 
     case 'askreset': S.sheet = confirmSheet('إعادة ضبط كل شيء',

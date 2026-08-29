@@ -160,23 +160,87 @@ function screenTaskRating() {
 }
 
 /* ============================ الإشعارات ============================ */
+/* تصنيف الإشعار: يحدّد لونه وأيقونته ووسمه */
+const NKIND = [
+  { k:'bad',   c:'#C0392B', i:'i-warn',   t:'يحتاج إجراءً',
+    re:/تأخر|تأخرت|تخلّف|رفض|رُفض|أُزلت|أُلغيت|بدأها النظام|تجاوزت|خارج النطاق/ },
+  { k:'ask',   c:'#B8791A', i:'i-assign', t:'بانتظار ردّك',
+    re:/طلب|تسكين|تفويض|إسناد|تبديل|بلا رد|تحتاج|راجع/ },
+  { k:'ok',    c:'#0B8A4B', i:'i-checkc', t:'تمّ',
+    re:/قبول|قبِل|اعتُمد|اكتمل|أثبت|حضّر|أُغلقت|أُنجزت|تحضير/ },
+  { k:'info',  c:'#1B6E9C', i:'i-info',   t:'معلومة',
+    re:/صورة|تذكرة|رُفع|الكنترول|تذكير|فُتحت|جديدة|بدأت/ }
+];
+function nkind(n) {
+  const s = (n.title || '') + ' ' + (n.body || '');
+  for (const k of NKIND) if (k.re.test(s)) return k;
+  return NKIND[3];
+}
+const dayLabel = ts => {
+  const d = dayStart(ts), t0 = dayStart(now());
+  if (d === t0) return 'اليوم';
+  if (d === t0 - DAY) return 'أمس';
+  if (d > t0 - 7 * DAY) return dayName(ts);
+  return hijri(ts);
+};
+
+function notifRow(n) {
+  const k = nkind(n);
+  return '<button class="nrow ' + (n.read ? 'read' : '') + '" style="--nc:' + k.c + '" ' +
+    'data-a="opennotif" data-id="' + n.id + '">' +
+    '<span class="ni">' + icon(n.icon || k.i, 's18') + '</span>' +
+    '<span class="nb"><b>' + E(n.title) + '</b>' +
+      '<p>' + E(n.body) + '</p>' +
+      '<span class="nm2"><span class="ntag">' + k.t + '</span>' +
+      '<span class="nt">' + t12(n.at) + ' · ' + ago(n.at) + '</span></span></span>' +
+    (n.read ? '' : '<span class="nd"></span>') + '</button>';
+}
+
 function screenNotifs() {
-  const list = myNotifs();
-  return bar('الإشعارات', { right: list.some(n => !n.read)
+  const all = myNotifs().slice().sort((a2, b2) => b2.at - a2.at);
+  const seg = S.tab.nf || 'all';
+  const unreadN = all.filter(n => !n.read).length;
+  const needs = all.filter(n => ['bad', 'ask'].indexOf(nkind(n).k) >= 0).length;
+  const list = seg === 'unread' ? all.filter(n => !n.read)
+    : seg === 'act' ? all.filter(n => ['bad', 'ask'].indexOf(nkind(n).k) >= 0)
+    : all;
+
+  /* تجميع بالأيام — القراءة تصير متسلسلة لا كومة */
+  let out = '', lastDay = null;
+  list.forEach(n => {
+    const d = dayStart(n.at);
+    if (d !== lastDay) {
+      lastDay = d;
+      out += '<div class="nday"><b>' + dayLabel(n.at) + '</b><i></i></div>';
+    }
+    out += notifRow(n);
+  });
+
+  return bar('الإشعارات', { right: unreadN
       ? '<button data-a="readall" aria-label="تعليم الكل كمقروء">' + icon('i-check') + '</button>'
       : '<button data-a="go" data-n="profile" class="avbtn">' + avat(me(), 'sm') + '</button>' }) +
-    '<div class="view">' + ground() + statusBoxes() +
-    '<div class="lbl">سجل الإشعارات<small>' + AR(list.length) + ' إشعارًا</small></div>' +
-    (list.length ? list.map(n =>
-      '<button class="listitem" data-a="opennotif" data-id="' + n.id + '" style="' + (n.read ? 'opacity:.62' : '') + '">' +
-        '<span class="ico" style="' + (n.read ? '' : 'background:#E4F2E9;color:#0B6540') + '">' + icon(n.icon, 's18') + '</span>' +
-        '<span class="sp"><b style="font-size:13.5px;display:block">' + E(n.title) + '</b>' +
-        '<span class="tiny dim" style="display:block;line-height:1.6">' + E(n.body) + '</span>' +
-        '<span class="tiny dim2">' + ago(n.at) + '</span></span>' +
-        (n.read ? '' : '<span class="dotred"></span>') + '</button>').join('')
-      : '<div class="c center" style="padding:30px 16px"><b>لا توجد إشعارات</b></div>') +
+    '<div class="view">' + ground() +
+
+    '<div class="nsum">' +
+      '<button class="' + (seg === 'all' ? 'on' : '') + '" data-a="seg" data-k="nf" data-v="all">' +
+        '<b>' + AR(all.length) + '</b><span>الكل</span></button>' +
+      '<button class="' + (seg === 'unread' ? 'on' : '') + '" data-a="seg" data-k="nf" data-v="unread">' +
+        '<b style="color:var(--g)">' + AR(unreadN) + '</b><span>غير مقروء</span></button>' +
+      '<button class="' + (seg === 'act' ? 'on' : '') + '" data-a="seg" data-k="nf" data-v="act">' +
+        '<b style="color:var(--red)">' + AR(needs) + '</b><span>يحتاج إجراءً</span></button>' +
+    '</div>' +
+
+    (unreadN ? '<button class="btn l sm" data-a="readall">' + icon('i-check','s16') +
+      'تعليم الكل كمقروء</button>' : '') +
+
+    (list.length ? out
+      : '<div class="c center" style="padding:34px 16px">' + icon('i-bell','s26') +
+        '<b style="display:block;margin-top:10px">' +
+        (seg === 'unread' ? 'قرأت كل شيء' : seg === 'act' ? 'لا شيء ينتظر إجراءً' : 'لا توجد إشعارات') +
+        '</b><div class="sm dim" style="margin-top:6px">ستصلك التحديثات هنا أولًا بأول.</div></div>') +
     '</div>' + tabs();
 }
+
 
 /* ============================ الحجاج — كلهم لكل المحسنين ============================ */
 function screenPilgrims() {
@@ -317,7 +381,8 @@ function screenMore() {
       '<span class="tiny dim2">' + x[3] + '</span></span>' +
       (x[0] === 'notifs' && unread() ? pill(AR(unread()), 'no') : '') + icon('i-back','s16') + '</button>').join('') +
     '<button class="btn d" data-a="logout">' + icon('i-out','s16') + 'تسجيل الخروج</button>' +
-    '<div class="tiny dim2 center" style="margin-top:6px;line-height:1.9">تطبيق مُحسن · نسخة تجريبية<br>' +
+    '<button class="btn l sm" data-a="appupdate">' + icon('i-reset','s16') + 'تحديث التطبيق إلى آخر نسخة</button>' +
+    '<div class="tiny dim2 center" style="margin-top:6px;line-height:1.9">تطبيق مُحسن · ' + APP_VER + ' · بنية ' + AR(SCHEMA) + '<br>' +
       'مصادر الصور: ويكيميديا كومنز — Adli Wahid · Basheer Olakara · Omar Chatriwala · Shah134pk</div>' +
     '<i class="mnozoly dark" role="img" aria-label="نُزلي"></i>' +
     '</div>' + tabs();

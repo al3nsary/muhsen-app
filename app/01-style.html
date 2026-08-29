@@ -875,3 +875,122 @@
   .tabs .trail { width: 100%; }
   .tabs .tpage { flex: 0 0 100%; width: 100%; }
 </style>
+
+<style>
+  /* ===================== النسخة ١٫٥ — الشريط والحدود ===================== */
+
+  /* ---------- حدود التطبيق: لا فراغ تحت الشريط على أي جهاز ---------- */
+  @media (max-width: 520px) {
+    html, body { height: 100%; overflow: hidden; background: var(--bg); }
+    body { padding: 0; align-items: stretch; }
+    #device {
+      position: fixed; inset: 0; width: auto; height: auto;
+      max-width: none; max-height: none; border-radius: 0; padding: 0;
+      box-shadow: none; background: var(--bg);
+    }
+    #screen { height: 100%; border-radius: 0; }
+  }
+
+  /* ---------- الشريط السفلي: ثابت، بلا سحب، بلا قصّ ---------- */
+  .tabs {
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 0;
+    padding: 9px 4px 8px; background: #fff; position: relative; z-index: 3; flex: none;
+    overflow: visible; touch-action: auto; cursor: default;
+    -webkit-user-select: none; user-select: none;
+    -webkit-mask-image: none; mask-image: none;
+    box-shadow: 0 -1px 0 rgba(20,89,63,.08), 0 -18px 36px -28px rgba(11,53,39,.55);
+  }
+  /* الحافة الآمنة: نصفها يكفي لتجاوز شريط الآيفون بلا فراغ مزعج */
+  .app-standalone .tabs { padding-bottom: calc(8px + env(safe-area-inset-bottom) * .55); }
+
+  .tabs .tside { flex: 1 1 0; min-width: 0; display: flex; justify-content: space-around; gap: 0; }
+  .tabs .tside > button { flex: 1 1 0; min-width: 0; }
+
+  .tabs button {
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+    gap: 3px; padding: 3px 1px 0; border-radius: 14px; color: #94A29A;
+    transition: color .16s ease;
+  }
+  .tabs button .ic { width: 22px; height: 22px; }
+  .tabs .tl {
+    font-size: 9.5px; line-height: 1.3; max-width: 100%;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;
+  }
+  .tabs button.on { color: var(--g); }
+  .tabs button.on .tl { font-weight: 800; }
+  .tabs button.on .wi::after {
+    content: ""; position: absolute; inset-inline: 4px; top: -7px; height: 3px;
+    border-radius: 99px; background: var(--gold);
+  }
+  .tabs .wi { position: relative; }
+  .tabs button:active { transform: scale(.94); }
+
+  .tabs .home {
+    flex: none; width: 72px; color: var(--g); gap: 4px; padding: 0; background: transparent;
+  }
+  .tabs .home .hb {
+    width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center;
+    background: linear-gradient(150deg, var(--g3), var(--g2));
+    box-shadow: 0 0 0 4px #fff, 0 0 0 5px rgba(198,168,111,.5), 0 10px 20px -7px rgba(11,53,39,.8);
+    margin-top: -20px;
+  }
+  .tabs .home .hl { font-size: 9.5px; font-weight: 800; }
+  .tabs .home.on .hb { box-shadow: 0 0 0 4px #fff, 0 0 0 5px var(--gold), 0 10px 22px -6px rgba(11,53,39,.85); }
+  .tabs .home.on .wi::after { display: none; }
+
+  @media (max-width: 360px) {
+    .tabs .tl { font-size: 8.5px; }
+    .tabs button .ic { width: 20px; height: 20px; }
+    .tabs .home { width: 64px; }
+    .tabs .home .hb { width: 46px; height: 46px; }
+  }
+
+  /* ---------- الإشعارات: قائمة مرتّبة بأيامها ---------- */
+  .nday { display: flex; align-items: center; gap: 9px; margin: 6px 2px 0; }
+  .nday b { font-size: 12px; font-weight: 800; color: var(--dim); white-space: nowrap; }
+  .nday i { flex: 1; height: 1px; background: linear-gradient(90deg, rgba(198,168,111,.55), transparent); }
+
+  .nrow {
+    display: flex; align-items: flex-start; gap: 11px; width: 100%; text-align: right;
+    background: #fff; border-radius: 17px; padding: 12px; box-shadow: var(--card);
+    position: relative; overflow: hidden;
+  }
+  .nrow::before {
+    content: ""; position: absolute; inset-inline-start: 0; top: 10px; bottom: 10px; width: 3px;
+    border-radius: 3px; background: var(--nc); opacity: .9;
+  }
+  .nrow.read { box-shadow: none; background: #FAFBF9; }
+  .nrow.read::before { opacity: .28; }
+  .nrow .ni {
+    width: 38px; height: 38px; border-radius: 13px; flex: none; display: grid; place-items: center;
+    background: color-mix(in srgb, var(--nc) 12%, #fff); color: var(--nc);
+  }
+  .nrow.read .ni { background: #F1F4F0; color: #9AA79F; }
+  .nrow .nb { flex: 1; min-width: 0; }
+  .nrow .nb b { display: block; font-size: 13px; line-height: 1.55; }
+  .nrow .nb p { margin: 3px 0 0; font-size: 11.5px; line-height: 1.7; color: var(--dim); }
+  .nrow .nm2 { display: flex; align-items: center; gap: 7px; margin-top: 7px; flex-wrap: wrap; }
+  .nrow .nt { font-size: 10px; color: var(--dim2); font-variant-numeric: tabular-nums; }
+  .nrow .ntag {
+    font-size: 9.5px; font-weight: 700; border-radius: 99px; padding: 2px 8px;
+    background: color-mix(in srgb, var(--nc) 12%, #fff); color: var(--nc);
+  }
+  .nrow .nd { width: 8px; height: 8px; border-radius: 50%; background: var(--nc); flex: none; margin-top: 4px; }
+
+  .nsum { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }
+  .nsum > button {
+    background: #fff; border-radius: 15px; padding: 11px 8px; box-shadow: var(--card); text-align: center;
+  }
+  .nsum b { display: block; font-size: 19px; font-weight: 800; line-height: 1.3; }
+  .nsum span { display: block; font-size: 10px; color: var(--dim2); }
+  .nsum > button.on { box-shadow: inset 0 0 0 2px var(--g), var(--card); }
+</style>
+<style>
+  /* لافتة الإشعار المنبثقة */
+  .push .pi { width: 34px; height: 34px; border-radius: 12px; flex: none; display: grid;
+    place-items: center; background: rgba(255,255,255,.16); }
+  .push { align-items: center; gap: 10px; }
+  .push b { font-size: 12.5px; line-height: 1.5; display: block; }
+  .push .sp > span { font-size: 11px; line-height: 1.6; display: -webkit-box;
+    -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+</style>

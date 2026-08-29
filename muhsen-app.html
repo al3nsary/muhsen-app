@@ -876,6 +876,125 @@
   .tabs .tpage { flex: 0 0 100%; width: 100%; }
 </style>
 
+<style>
+  /* ===================== النسخة ١٫٥ — الشريط والحدود ===================== */
+
+  /* ---------- حدود التطبيق: لا فراغ تحت الشريط على أي جهاز ---------- */
+  @media (max-width: 520px) {
+    html, body { height: 100%; overflow: hidden; background: var(--bg); }
+    body { padding: 0; align-items: stretch; }
+    #device {
+      position: fixed; inset: 0; width: auto; height: auto;
+      max-width: none; max-height: none; border-radius: 0; padding: 0;
+      box-shadow: none; background: var(--bg);
+    }
+    #screen { height: 100%; border-radius: 0; }
+  }
+
+  /* ---------- الشريط السفلي: ثابت، بلا سحب، بلا قصّ ---------- */
+  .tabs {
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 0;
+    padding: 9px 4px 8px; background: #fff; position: relative; z-index: 3; flex: none;
+    overflow: visible; touch-action: auto; cursor: default;
+    -webkit-user-select: none; user-select: none;
+    -webkit-mask-image: none; mask-image: none;
+    box-shadow: 0 -1px 0 rgba(20,89,63,.08), 0 -18px 36px -28px rgba(11,53,39,.55);
+  }
+  /* الحافة الآمنة: نصفها يكفي لتجاوز شريط الآيفون بلا فراغ مزعج */
+  .app-standalone .tabs { padding-bottom: calc(8px + env(safe-area-inset-bottom) * .55); }
+
+  .tabs .tside { flex: 1 1 0; min-width: 0; display: flex; justify-content: space-around; gap: 0; }
+  .tabs .tside > button { flex: 1 1 0; min-width: 0; }
+
+  .tabs button {
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+    gap: 3px; padding: 3px 1px 0; border-radius: 14px; color: #94A29A;
+    transition: color .16s ease;
+  }
+  .tabs button .ic { width: 22px; height: 22px; }
+  .tabs .tl {
+    font-size: 9.5px; line-height: 1.3; max-width: 100%;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;
+  }
+  .tabs button.on { color: var(--g); }
+  .tabs button.on .tl { font-weight: 800; }
+  .tabs button.on .wi::after {
+    content: ""; position: absolute; inset-inline: 4px; top: -7px; height: 3px;
+    border-radius: 99px; background: var(--gold);
+  }
+  .tabs .wi { position: relative; }
+  .tabs button:active { transform: scale(.94); }
+
+  .tabs .home {
+    flex: none; width: 72px; color: var(--g); gap: 4px; padding: 0; background: transparent;
+  }
+  .tabs .home .hb {
+    width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center;
+    background: linear-gradient(150deg, var(--g3), var(--g2));
+    box-shadow: 0 0 0 4px #fff, 0 0 0 5px rgba(198,168,111,.5), 0 10px 20px -7px rgba(11,53,39,.8);
+    margin-top: -20px;
+  }
+  .tabs .home .hl { font-size: 9.5px; font-weight: 800; }
+  .tabs .home.on .hb { box-shadow: 0 0 0 4px #fff, 0 0 0 5px var(--gold), 0 10px 22px -6px rgba(11,53,39,.85); }
+  .tabs .home.on .wi::after { display: none; }
+
+  @media (max-width: 360px) {
+    .tabs .tl { font-size: 8.5px; }
+    .tabs button .ic { width: 20px; height: 20px; }
+    .tabs .home { width: 64px; }
+    .tabs .home .hb { width: 46px; height: 46px; }
+  }
+
+  /* ---------- الإشعارات: قائمة مرتّبة بأيامها ---------- */
+  .nday { display: flex; align-items: center; gap: 9px; margin: 6px 2px 0; }
+  .nday b { font-size: 12px; font-weight: 800; color: var(--dim); white-space: nowrap; }
+  .nday i { flex: 1; height: 1px; background: linear-gradient(90deg, rgba(198,168,111,.55), transparent); }
+
+  .nrow {
+    display: flex; align-items: flex-start; gap: 11px; width: 100%; text-align: right;
+    background: #fff; border-radius: 17px; padding: 12px; box-shadow: var(--card);
+    position: relative; overflow: hidden;
+  }
+  .nrow::before {
+    content: ""; position: absolute; inset-inline-start: 0; top: 10px; bottom: 10px; width: 3px;
+    border-radius: 3px; background: var(--nc); opacity: .9;
+  }
+  .nrow.read { box-shadow: none; background: #FAFBF9; }
+  .nrow.read::before { opacity: .28; }
+  .nrow .ni {
+    width: 38px; height: 38px; border-radius: 13px; flex: none; display: grid; place-items: center;
+    background: color-mix(in srgb, var(--nc) 12%, #fff); color: var(--nc);
+  }
+  .nrow.read .ni { background: #F1F4F0; color: #9AA79F; }
+  .nrow .nb { flex: 1; min-width: 0; }
+  .nrow .nb b { display: block; font-size: 13px; line-height: 1.55; }
+  .nrow .nb p { margin: 3px 0 0; font-size: 11.5px; line-height: 1.7; color: var(--dim); }
+  .nrow .nm2 { display: flex; align-items: center; gap: 7px; margin-top: 7px; flex-wrap: wrap; }
+  .nrow .nt { font-size: 10px; color: var(--dim2); font-variant-numeric: tabular-nums; }
+  .nrow .ntag {
+    font-size: 9.5px; font-weight: 700; border-radius: 99px; padding: 2px 8px;
+    background: color-mix(in srgb, var(--nc) 12%, #fff); color: var(--nc);
+  }
+  .nrow .nd { width: 8px; height: 8px; border-radius: 50%; background: var(--nc); flex: none; margin-top: 4px; }
+
+  .nsum { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }
+  .nsum > button {
+    background: #fff; border-radius: 15px; padding: 11px 8px; box-shadow: var(--card); text-align: center;
+  }
+  .nsum b { display: block; font-size: 19px; font-weight: 800; line-height: 1.3; }
+  .nsum span { display: block; font-size: 10px; color: var(--dim2); }
+  .nsum > button.on { box-shadow: inset 0 0 0 2px var(--g), var(--card); }
+</style>
+<style>
+  /* لافتة الإشعار المنبثقة */
+  .push .pi { width: 34px; height: 34px; border-radius: 12px; flex: none; display: grid;
+    place-items: center; background: rgba(255,255,255,.16); }
+  .push { align-items: center; gap: 10px; }
+  .push b { font-size: 12.5px; line-height: 1.5; display: block; }
+  .push .sp > span { font-size: 11px; line-height: 1.6; display: -webkit-box;
+    -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+</style>
+
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <symbol id="av-m" viewBox="0 0 44 44">
     <rect width="44" height="44" fill="var(--avbg,#E9F1EB)"/>
@@ -1114,7 +1233,8 @@ const kindUI = t => KIND_UI[t.kind] || { i:'i-tasks', c:'#5A6C63', n:'مهمة' 
 
 /* ============================ الحالة ============================ */
 const KEY = 'muhsen_app_v1';
-const SCHEMA = 14;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
+const APP_VER = 'نسخة ١٫٥';
+const SCHEMA = 15;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
 const uid = (p) => p + Math.random().toString(36).slice(2, 8);
@@ -1823,90 +1943,48 @@ function bar(title, opt) {
     '<div class="nav">' + left + '<span class="t">' + E(title) + '</span>' + right + '</div></div>';
 }
 
-/* شريط سفلي — الرئيسية ثابتة في المنتصف، والبقية كتلة واحدة تنتقل صفحةً كاملة */
-const TABS_PER_SIDE = 3;
-
+/* شريط سفلي ثابت — ست وجهات وحدها، والبقية في «المزيد» */
 function tabItems() {
   const L = isLeader();
-  const inbox = S.requests.filter(x => x.to === S.session.id && x.state === 'pending').length;
+  const inbox = S.requests.filter(x => x.to === S.session.id && x.state === 'pending').length +
+    pendingSwaps().length;
   const openTk = myTickets().filter(k => k.status !== 'مغلقة').length;
-  const swaps = pendingSwaps().length;
-  return L
-    ? [{ k:'tasks', i:'i-tasks', l:'المهام', on:['tasks','task','assign','timeline'] },
-       { k:'daily', i:'i-check', l:'التحضير', b:swaps, on:['daily'] },
-       { k:'lreq', i:'i-swap', l:'الطلبات', b:inbox, on:['lreq'] },
-       { k:'muhsens', i:'i-users', l:'المحسنون', on:['muhsens'] },
-       { k:'rating', i:'i-star', l:'التقييم', on:['rating','taskrating'] },
-       { k:'guide', i:'i-guide', l:'الدليل', on:['guide'] },
-       { k:'tickets', i:'i-ticket', l:'التذاكر', b:openTk, on:['tickets','ticket'] },
-       { k:'notifs', i:'i-bell', l:'الإشعارات', b:unread(), on:['notifs'] },
-       { k:'calendar', i:'i-cal', l:'التقويم', on:['calendar'] },
-       { k:'pilgrims', i:'i-user', l:'الحجاج', on:['pilgrims'] },
-       { k:'album', i:'i-album', l:'الصور', on:['album','photo'] },
-       { k:'more', i:'i-dots', l:'المزيد', on:['more','profile','admin','doc'] }]
-    : [{ k:'tasks', i:'i-tasks', l:'المهام', on:['tasks','task'] },
-       { k:'daily', i:'i-check', l:'التحضير', on:['daily'] },
-       { k:'requests', i:'i-swap', l:'الطلبات', b:inbox, on:['requests'] },
-       { k:'guide', i:'i-guide', l:'الدليل', on:['guide'] },
-       { k:'rating', i:'i-star', l:'التقييم', on:['rating','taskrating'] },
-       { k:'tickets', i:'i-ticket', l:'التذاكر', b:openTk, on:['tickets','ticket'] },
-       { k:'notifs', i:'i-bell', l:'الإشعارات', b:unread(), on:['notifs'] },
-       { k:'calendar', i:'i-cal', l:'التقويم', on:['calendar'] },
-       { k:'pilgrims', i:'i-user', l:'الحجاج', on:['pilgrims'] },
-       { k:'album', i:'i-album', l:'الصور', on:['album','photo'] },
-       { k:'more', i:'i-dots', l:'المزيد', on:['more','profile','admin'] }];
-}
-const tabPageCount = () => Math.ceil(tabItems().length / (TABS_PER_SIDE * 2));
-
-/* الصفحة التي تحوي الشاشة الحالية — حتى لا يضيع المستخدم */
-function tabPageOf(route) {
-  const it = tabItems();
-  for (let i = 0; i < it.length; i++) if (it[i].on.indexOf(route) >= 0)
-    return Math.floor(i / (TABS_PER_SIDE * 2));
-  return null;
+  return [
+    { k:'tasks', i:'i-tasks', l:'المهام',
+      on:['tasks','task','assign','timeline','doc'] },
+    { k: L ? 'lreq' : 'requests', i:'i-swap', l:'الطلبات', b: inbox,
+      on:['lreq','requests'] },
+    { k:'daily', i:'i-check', l:'التحضير',
+      on:['daily'] },
+    { k:'tickets', i:'i-ticket', l:'التذاكر', b: openTk,
+      on:['tickets','ticket'] },
+    { k:'notifs', i:'i-bell', l:'الإشعارات', b: unread(),
+      on:['notifs'] },
+    { k:'more', i:'i-dots', l:'المزيد',
+      on:['more','profile','admin','album','photo','guide','rating','taskrating',
+          'calendar','pilgrims','muhsens'] }
+  ];
 }
 
 function tabs() {
   const L = isLeader(), r = S.route.n;
   const items = tabItems();
-  const per = TABS_PER_SIDE * 2, pages = tabPageCount();
-  const auto = tabPageOf(r);
-  if (auto !== null && S._tabAuto !== r) { S.tabPage = auto; S._tabAuto = r; }
-  let pg = Math.min(Math.max(S.tabPage || 0, 0), pages - 1);
-
+  const half = items.length / 2;
   const btn = it => {
-    if (!it) return '<span class="tspacer"></span>';
     const on = it.on.indexOf(r) >= 0;
     return '<button class="' + (on ? 'on' : '') + '" role="tab"' + (on ? ' aria-selected="true"' : '') +
       ' data-a="go" data-n="' + it.k + '">' +
       '<span class="wi">' + icon(it.i) + (it.b ? '<span class="badge">' + AR(it.b) + '</span>' : '') +
-      '</span>' + it.l + '</button>';
-  };
-  const page = (p, side) => {
-    const base = p * per + (side === 'r' ? 0 : TABS_PER_SIDE);
-    let out = '';
-    for (let i = 0; i < TABS_PER_SIDE; i++) out += btn(items[base + i]);
-    return '<div class="tpage">' + out + '</div>';
-  };
-  const rail = side => {
-    let out = '';
-    for (let p = 0; p < pages; p++) out += page(p, side);
-    /* الاتجاه RTL: الانتقال للصفحة التالية يزيح الشريط يمينًا */
-    return '<div class="tside"><div class="trail" data-pg="' + pg + '" ' +
-      'style="transform:translateX(' + (pg * 100) + '%)">' + out + '</div></div>';
+      '</span><span class="tl">' + it.l + '</span></button>';
   };
   const homeOn = ['home','mhome'].indexOf(r) >= 0;
-
-  return '<nav class="tabs" role="tablist" aria-label="التنقّل" data-pages="' + pages + '">' +
-    (pages > 1 ? '<span class="dots" aria-hidden="true">' +
-      Array.from({ length: pages }, (_, i) => '<i class="' + (i === pg ? 'on' : '') + '"></i>').join('') +
-      '</span>' : '') +
-    rail('r') +
+  return '<nav class="tabs" role="tablist" aria-label="التنقّل">' +
+    '<div class="tside">' + items.slice(0, half).map(btn).join('') + '</div>' +
     '<button class="home' + (homeOn ? ' on' : '') + '" role="tab"' + (homeOn ? ' aria-selected="true"' : '') +
       ' data-a="go" data-n="' + (L ? 'home' : 'mhome') + '">' +
       '<span class="wi hb"><i class="mlogo"></i></span>' +
       '<span class="hl">الرئيسية</span></button>' +
-    rail('l') +
+    '<div class="tside">' + items.slice(half).map(btn).join('') + '</div>' +
     '</nav>';
 }
 
@@ -2735,23 +2813,87 @@ function screenTaskRating() {
 }
 
 /* ============================ الإشعارات ============================ */
+/* تصنيف الإشعار: يحدّد لونه وأيقونته ووسمه */
+const NKIND = [
+  { k:'bad',   c:'#C0392B', i:'i-warn',   t:'يحتاج إجراءً',
+    re:/تأخر|تأخرت|تخلّف|رفض|رُفض|أُزلت|أُلغيت|بدأها النظام|تجاوزت|خارج النطاق/ },
+  { k:'ask',   c:'#B8791A', i:'i-assign', t:'بانتظار ردّك',
+    re:/طلب|تسكين|تفويض|إسناد|تبديل|بلا رد|تحتاج|راجع/ },
+  { k:'ok',    c:'#0B8A4B', i:'i-checkc', t:'تمّ',
+    re:/قبول|قبِل|اعتُمد|اكتمل|أثبت|حضّر|أُغلقت|أُنجزت|تحضير/ },
+  { k:'info',  c:'#1B6E9C', i:'i-info',   t:'معلومة',
+    re:/صورة|تذكرة|رُفع|الكنترول|تذكير|فُتحت|جديدة|بدأت/ }
+];
+function nkind(n) {
+  const s = (n.title || '') + ' ' + (n.body || '');
+  for (const k of NKIND) if (k.re.test(s)) return k;
+  return NKIND[3];
+}
+const dayLabel = ts => {
+  const d = dayStart(ts), t0 = dayStart(now());
+  if (d === t0) return 'اليوم';
+  if (d === t0 - DAY) return 'أمس';
+  if (d > t0 - 7 * DAY) return dayName(ts);
+  return hijri(ts);
+};
+
+function notifRow(n) {
+  const k = nkind(n);
+  return '<button class="nrow ' + (n.read ? 'read' : '') + '" style="--nc:' + k.c + '" ' +
+    'data-a="opennotif" data-id="' + n.id + '">' +
+    '<span class="ni">' + icon(n.icon || k.i, 's18') + '</span>' +
+    '<span class="nb"><b>' + E(n.title) + '</b>' +
+      '<p>' + E(n.body) + '</p>' +
+      '<span class="nm2"><span class="ntag">' + k.t + '</span>' +
+      '<span class="nt">' + t12(n.at) + ' · ' + ago(n.at) + '</span></span></span>' +
+    (n.read ? '' : '<span class="nd"></span>') + '</button>';
+}
+
 function screenNotifs() {
-  const list = myNotifs();
-  return bar('الإشعارات', { right: list.some(n => !n.read)
+  const all = myNotifs().slice().sort((a2, b2) => b2.at - a2.at);
+  const seg = S.tab.nf || 'all';
+  const unreadN = all.filter(n => !n.read).length;
+  const needs = all.filter(n => ['bad', 'ask'].indexOf(nkind(n).k) >= 0).length;
+  const list = seg === 'unread' ? all.filter(n => !n.read)
+    : seg === 'act' ? all.filter(n => ['bad', 'ask'].indexOf(nkind(n).k) >= 0)
+    : all;
+
+  /* تجميع بالأيام — القراءة تصير متسلسلة لا كومة */
+  let out = '', lastDay = null;
+  list.forEach(n => {
+    const d = dayStart(n.at);
+    if (d !== lastDay) {
+      lastDay = d;
+      out += '<div class="nday"><b>' + dayLabel(n.at) + '</b><i></i></div>';
+    }
+    out += notifRow(n);
+  });
+
+  return bar('الإشعارات', { right: unreadN
       ? '<button data-a="readall" aria-label="تعليم الكل كمقروء">' + icon('i-check') + '</button>'
       : '<button data-a="go" data-n="profile" class="avbtn">' + avat(me(), 'sm') + '</button>' }) +
-    '<div class="view">' + ground() + statusBoxes() +
-    '<div class="lbl">سجل الإشعارات<small>' + AR(list.length) + ' إشعارًا</small></div>' +
-    (list.length ? list.map(n =>
-      '<button class="listitem" data-a="opennotif" data-id="' + n.id + '" style="' + (n.read ? 'opacity:.62' : '') + '">' +
-        '<span class="ico" style="' + (n.read ? '' : 'background:#E4F2E9;color:#0B6540') + '">' + icon(n.icon, 's18') + '</span>' +
-        '<span class="sp"><b style="font-size:13.5px;display:block">' + E(n.title) + '</b>' +
-        '<span class="tiny dim" style="display:block;line-height:1.6">' + E(n.body) + '</span>' +
-        '<span class="tiny dim2">' + ago(n.at) + '</span></span>' +
-        (n.read ? '' : '<span class="dotred"></span>') + '</button>').join('')
-      : '<div class="c center" style="padding:30px 16px"><b>لا توجد إشعارات</b></div>') +
+    '<div class="view">' + ground() +
+
+    '<div class="nsum">' +
+      '<button class="' + (seg === 'all' ? 'on' : '') + '" data-a="seg" data-k="nf" data-v="all">' +
+        '<b>' + AR(all.length) + '</b><span>الكل</span></button>' +
+      '<button class="' + (seg === 'unread' ? 'on' : '') + '" data-a="seg" data-k="nf" data-v="unread">' +
+        '<b style="color:var(--g)">' + AR(unreadN) + '</b><span>غير مقروء</span></button>' +
+      '<button class="' + (seg === 'act' ? 'on' : '') + '" data-a="seg" data-k="nf" data-v="act">' +
+        '<b style="color:var(--red)">' + AR(needs) + '</b><span>يحتاج إجراءً</span></button>' +
+    '</div>' +
+
+    (unreadN ? '<button class="btn l sm" data-a="readall">' + icon('i-check','s16') +
+      'تعليم الكل كمقروء</button>' : '') +
+
+    (list.length ? out
+      : '<div class="c center" style="padding:34px 16px">' + icon('i-bell','s26') +
+        '<b style="display:block;margin-top:10px">' +
+        (seg === 'unread' ? 'قرأت كل شيء' : seg === 'act' ? 'لا شيء ينتظر إجراءً' : 'لا توجد إشعارات') +
+        '</b><div class="sm dim" style="margin-top:6px">ستصلك التحديثات هنا أولًا بأول.</div></div>') +
     '</div>' + tabs();
 }
+
 
 /* ============================ الحجاج — كلهم لكل المحسنين ============================ */
 function screenPilgrims() {
@@ -2892,7 +3034,8 @@ function screenMore() {
       '<span class="tiny dim2">' + x[3] + '</span></span>' +
       (x[0] === 'notifs' && unread() ? pill(AR(unread()), 'no') : '') + icon('i-back','s16') + '</button>').join('') +
     '<button class="btn d" data-a="logout">' + icon('i-out','s16') + 'تسجيل الخروج</button>' +
-    '<div class="tiny dim2 center" style="margin-top:6px;line-height:1.9">تطبيق مُحسن · نسخة تجريبية<br>' +
+    '<button class="btn l sm" data-a="appupdate">' + icon('i-reset','s16') + 'تحديث التطبيق إلى آخر نسخة</button>' +
+    '<div class="tiny dim2 center" style="margin-top:6px;line-height:1.9">تطبيق مُحسن · ' + APP_VER + ' · بنية ' + AR(SCHEMA) + '<br>' +
       'مصادر الصور: ويكيميديا كومنز — Adli Wahid · Basheer Olakara · Omar Chatriwala · Shah134pk</div>' +
     '<i class="mnozoly dark" role="img" aria-label="نُزلي"></i>' +
     '</div>' + tabs();
@@ -4503,11 +4646,12 @@ function render() {
     const p = S.notifs.find(x => x.id === S.push);
     if (!p || p.read) S.push = null;
     else {
-      const kind = /تحذير|متأخر|رفض|تخلّف|بدأها النظام|تجاوزت/.test(p.title) ? 'bad'
-        : /بلا رد|تحتاج|تذكير|فُتحت|بقيت/.test(p.title) ? 'warn' : '';
+      const nk = nkind(p);
+      const kind = nk.k === 'bad' ? 'bad' : nk.k === 'ask' ? 'warn' : '';
       pushHTML = '<div class="push ' + kind + '" data-a="opennotif" data-id="' + p.id + '">' +
-        icon(p.icon, 's26') + '<span class="sp"><b>' + E(p.title) + '</b><span>' + E(p.body) + '</span></span>' +
-        '<button class="x" data-a="dismiss">' + icon('i-x','s16') + '</button></div>';
+        '<span class="pi">' + icon(p.icon || nk.i, 's18') + '</span>' +
+        '<span class="sp"><b>' + E(p.title) + '</b><span>' + E(p.body) + '</span></span>' +
+        '<button class="x" data-a="dismiss" aria-label="إخفاء">' + icon('i-x','s16') + '</button></div>';
     }
   }
   if (pushHTML) html = html.replace('<div class="view">', '<div class="view">' + pushHTML);
@@ -4527,88 +4671,8 @@ function render() {
   if (S.toast) { const t = S.toast; setTimeout(() => { if (S.toast === t) { S.toast = null; render(); } }, 2600); }
 }
 
-/* ===== شريط التابات: كتلة واحدة تنتقل صفحةً كاملة ===== */
-function centerActiveTab() { /* الصفحة تُحسب أثناء البناء — لا حاجة لتمرير */ }
-
-function goTabPage(next) {
-  const nav = document.querySelector('.tabs'); if (!nav) return;
-  const pages = Number(nav.dataset.pages || 1);
-  const cur = Math.min(Math.max(S.tabPage || 0, 0), pages - 1);
-  const to = Math.min(Math.max(next, 0), pages - 1);
-  if (to === cur) return;
-  S.tabPage = to; S._tabAuto = null;
-  nav.querySelectorAll('.trail').forEach(t => {
-    t.style.transform = 'translateX(' + (to * 100) + '%)';
-  });
-  nav.querySelectorAll('.dots i').forEach((d, i) => {
-    if (i === to) d.classList.add('on'); else d.classList.remove('on');
-  });
-  try { navigator.vibrate && navigator.vibrate(8); } catch (e) {}
-  save();
-}
-
-(function tabSwipe() {
-  let st = null;
-  const grab = e => {
-    const nav = e.target.closest && e.target.closest('.tabs');
-    if (!nav || e.target.closest('.home')) return null;
-    return nav;
-  };
-  function begin(nav, x) { st = { nav, x, moved: false }; }
-  function move(x) {
-    if (!st) return false;
-    const dx = x - st.x;
-    if (Math.abs(dx) < 42) return false;
-    st.moved = true;
-    /* RTL: السحب لليمين يعود للصفحة السابقة */
-    goTabPage((S.tabPage || 0) + (dx > 0 ? -1 : 1));
-    st = null;
-    return true;
-  }
-  function end() {
-    if (st && st.moved) {
-      const nav = st.nav;
-      nav.dataset.dragged = '1';
-      setTimeout(() => { delete nav.dataset.dragged; }, 200);
-    }
-    st = null;
-  }
-  document.addEventListener('pointerdown', e => {
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
-    const nav = grab(e); if (!nav) return;
-    begin(nav, e.clientX);
-  });
-  document.addEventListener('pointermove', e => { if (st) move(e.clientX); });
-  document.addEventListener('pointerup', end);
-  document.addEventListener('pointercancel', end);
-  document.addEventListener('touchstart', e => {
-    const nav = grab({ target: e.target }); if (!nav) return;
-    begin(nav, e.touches[0].clientX);
-  }, { passive: true });
-  document.addEventListener('touchmove', e => {
-    if (!st) return;
-    if (move(e.touches[0].clientX) && e.cancelable) e.preventDefault();
-  }, { passive: false });
-  document.addEventListener('touchend', end);
-  /* الماوس: عجلة التمرير أفقيًّا تنقل صفحة */
-  let wheelLock = 0;
-  document.addEventListener('wheel', e => {
-    const nav = e.target.closest && e.target.closest('.tabs'); if (!nav) return;
-    const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-    if (!d) return;
-    if (e.cancelable) e.preventDefault();
-    const t = Date.now();
-    if (t - wheelLock < 340) return;
-    wheelLock = t;
-    goTabPage((S.tabPage || 0) + (d > 0 ? 1 : -1));
-  }, { passive: false });
-  /* لوحة المفاتيح على المتصفح */
-  document.addEventListener('keydown', e => {
-    if (!document.querySelector('.tabs')) return;
-    if (e.key === 'ArrowLeft') goTabPage((S.tabPage || 0) + 1);
-    else if (e.key === 'ArrowRight') goTabPage((S.tabPage || 0) - 1);
-  });
-})();
+/* لا سحب ولا صفحات — الشريط ثابت */
+function centerActiveTab() {}
 
 /* ===== ملاءمة الشاشة لأي جوال ===== */
 (function fitScreen() {
@@ -4962,6 +5026,15 @@ document.addEventListener('click', ev => {
       if (!canEditGuide()) { toast('الحذف من صلاحية الليدر', 'r'); break; }
       delStep(b.dataset.k, id); toast('حُذفت الخطوة', 'r'); break; }
 
+    case 'appupdate': {
+      toast('جارٍ التحديث…');
+      try {
+        if (window.caches) caches.keys().then(function (ks) { ks.forEach(function (k) { caches.delete(k); }); });
+        if (navigator.serviceWorker) navigator.serviceWorker.getRegistrations()
+          .then(function (rs) { rs.forEach(function (x) { x.unregister(); }); });
+      } catch (e) {}
+      setTimeout(function () { location.reload(true); }, 700);
+      return; }
     case 'printdoc': try { window.print(); } catch (e) { toast('الطباعة غير متاحة', 'r'); } return;
 
     case 'askreset': S.sheet = confirmSheet('إعادة ضبط كل شيء',

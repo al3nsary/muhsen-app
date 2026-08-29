@@ -497,26 +497,58 @@ step('زر الرئيسية واحد وثابت في المنتصف', () => {
   if (before.indexOf('class="tside"') < 0) throw new Error('لا يوجد جانب قبل الرئيسية');
   if (after.indexOf('class="tside"') < 0) throw new Error('لا يوجد جانب بعدها');
 });
-step('الشريط صفحات كاملة متساوية', () => {
-  const pages = run('tabPageCount()');
-  if (pages < 2) throw new Error('صفحة واحدة فقط');
+step('ستّ وجهات ثابتة بلا سحب', () => {
+  const it = run('tabItems()');
+  if (it.length !== 6) throw new Error('العدد ' + it.length);
   const h = run('tabs()');
-  const rails = h.split('class="trail"').length - 1;
-  if (rails !== 2) throw new Error('عدد الشرائط ' + rails);
-  const pgs = h.split('class="tpage"').length - 1;
-  if (pgs !== pages * 2) throw new Error('صفحات غير متوازنة: ' + pgs);
+  if (h.indexOf('trail') >= 0 || h.indexOf('tpage') >= 0) throw new Error('ما زال فيه صفحات');
+  if ((h.match(/class="tside"/g) || []).length !== 2) throw new Error('الجانبان غير متوازنين');
 });
-step('الصفحة تتبع الشاشة الحالية', () => {
-  const p = run('tabPageOf("calendar")');
-  if (p === null) throw new Error('التقويم بلا صفحة');
-  if (run('tabPageOf("daily")') === null) throw new Error('التحضير بلا صفحة');
+step('كل وجهة في الشريط لها شاشة', () => {
+  const bad = run('tabItems().filter(x=>!SCREENS[x.k]).map(x=>x.k)');
+  if (bad.length) throw new Error('بلا شاشة: ' + bad.join(', '));
 });
-step('تاب الدليل موجود للدورين', () => {
-  if (run('tabs().indexOf("data-n=\\"guide\\"")') < 0) throw new Error('غائب عن الليدر');
-  const m = run('teamOf("L1")[0].id');
-  run('S.session={id:"' + m + '",at:Date.now()}');
-  if (run('tabs().indexOf("data-n=\\"guide\\"")') < 0) throw new Error('غائب عن المحسن');
-  run('S.session={id:"L1",at:Date.now()}');
+step('كل شاشة يصلها المستخدم من الشريط أو من المزيد', () => {
+  const covered = run('tabItems().reduce(function(a,x){return a.concat(x.on)},[])');
+  const skip = ['login','home','mhome','notifs'];
+  const miss = run('Object.keys(SCREENS)').filter(k =>
+    skip.indexOf(k) < 0 && covered.indexOf(k) < 0);
+  if (miss.length) throw new Error('غير مغطّاة: ' + miss.join(', '));
+});
+step('«المزيد» يضم ما خرج من الشريط', () => {
+  run('S.route={n:"more"}');
+  const h = run('screenMore()');
+  ['guide','rating','calendar','pilgrims','album','muhsens','daily'].forEach(k => {
+    if (h.indexOf('data-n="' + k + '"') < 0) throw new Error('ينقص: ' + k);
+  });
+});
+
+console.log('\nترتيب الإشعارات');
+step('لكل إشعار تصنيف ولون ووسم', () => {
+  const bad = run('myNotifs().filter(function(n){var k=nkind(n);return !k||!k.c||!k.t}).length');
+  if (bad) throw new Error(bad + ' بلا تصنيف');
+});
+step('التحذيرات تُصنَّف «يحتاج إجراءً»', () => {
+  run('notify(S.session.id,"i-warn","تأخرت عن إثبات الحضور","نص")');
+  const n = run('myNotifs().find(function(x){return x.title.indexOf("تأخرت")>=0})');
+  if (run('nkind(myNotifs().find(function(x){return x.title.indexOf("تأخرت")>=0})).k') !== 'bad')
+    throw new Error('صُنّف خطأ');
+});
+step('القائمة مجمّعة بالأيام', () => {
+  run('S.route={n:"notifs"}; S.tab.nf="all"');
+  const h = run('screenNotifs()').split('<nav class="tabs"')[0];
+  if (h.indexOf('class="nday"') < 0) throw new Error('بلا فواصل أيام');
+  if (h.indexOf('اليوم') < 0) throw new Error('بلا عنوان يوم');
+});
+step('التصفية بغير المقروء وبما يحتاج إجراءً', () => {
+  run('S.tab.nf="unread"');
+  const u1 = (run('screenNotifs()').match(/class="nrow /g) || []).length;
+  run('S.tab.nf="all"');
+  const a1 = (run('screenNotifs()').match(/class="nrow /g) || []).length;
+  if (u1 > a1) throw new Error('غير المقروء أكثر من الكل');
+  run('S.tab.nf="act"');
+  if (!run('screenNotifs()')) throw new Error('تصفية الإجراء فارغة');
+  run('S.tab.nf="all"');
 });
 
 console.log('\nالتفويض: متابعة بلا قرارات');
