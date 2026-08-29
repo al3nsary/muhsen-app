@@ -6,10 +6,17 @@ const MAX_PHOTO_W = 900;     /* أقصى عرض بعد الضغط */
 const PHOTO_Q = 0.62;        /* جودة JPEG */
 const PHOTO_CAP = 60;        /* أقصى عدد صور محفوظة محليًا */
 
-const photoSrc = p => (p.src.indexOf('IMG:') === 0 ? IMG[p.src.slice(4)] : p.src);
+/* المبذورة تُرسم بصنف CSS (لا تُحمَّل مرتين)، والملتقطة برابطها */
+const fullTag = (p, cls) => (String(p.src).indexOf('IMG:') === 0
+  ? '<div class="' + cls + ' bgw-' + String(p.src).slice(4).replace(/_w$/, '') + '" role="img"></div>'
+  : '<img class="' + cls + '" src="' + p.src + '" alt="">');
 /* المصغّرة: نسخة أصغر للصور المبذورة حتى لا يثقُل الألبوم */
-const photoThumb = p => (p.src.indexOf('IMG:') === 0
-  ? (IMG[p.src.slice(4).replace(/_w$/, '_t')] || IMG[p.src.slice(4)]) : p.src);
+const seeded = p => String(p.src).indexOf('IMG:') === 0;
+const thumbKey = p => String(p.src).slice(4).replace(/_w$/, '');
+/* المبذورة تُعرض بصنف CSS، والملتقطة برابطها المباشر */
+const thumbAttr = p => seeded(p)
+  ? 'class="__C__ bg-' + thumbKey(p) + '"'
+  : 'class="__C__" style="background-image:url(' + p.src + ')"';
 const canShoot = () => isLeader();
 /* اسم مختصر نظيف: نقطع عند أول فاصل ثم نقصّ إن طال */
 function shortTitle(s) {
@@ -71,8 +78,8 @@ function photoStrip(ctx, label) {
     '<div class="pscroll">' +
       (can ? '<button class="padd" data-a="shoot" ' + ctxAttr + '>' + icon('i-camera','s26') +
         '<span>تصوير</span></button>' : '') +
-      list.map(p => '<button class="pthumb" data-a="viewphoto" data-id="' + p.id + '" ' +
-        'style="background-image:url(' + photoThumb(p) + ')"><span>' + E(p.title) + '</span></button>').join('') +
+      list.map(p => '<button ' + thumbAttr(p).replace('__C__', 'pthumb') + ' data-a="viewphoto" data-id="' + p.id + '">' +
+        '<span>' + E(p.title) + '</span></button>').join('') +
     '</div></div>';
 }
 
@@ -111,7 +118,7 @@ function screenPhoto() {
   const mine = p.by === S.session.id && isLeader();
   return bar('الصورة', { back: 1, right:'<span style="width:30px"></span>' }) +
     '<div class="view">' + ground() +
-    '<img class="pfull" src="' + photoSrc(p) + '" alt="' + E(p.title) + '">' +
+    fullTag(p, 'pfull') +
     '<div class="c gold"><b style="font-size:15.5px;line-height:1.5">' + E(p.title) + '</b>' +
       (p.desc ? '<div class="sm dim" style="margin-top:6px">' + E(p.desc) + '</div>' : '') +
       '<div class="fl" style="margin-top:11px;gap:9px">' + (by ? avat(by, 'sm') : '') +
@@ -121,7 +128,7 @@ function screenPhoto() {
     (t ? '<div class="lbl">مرتبطة بـ</div>' +
       '<button class="c" data-a="go" data-n="task" data-id="' + t.id + '" style="width:100%;text-align:right">' +
         '<div class="fl" style="gap:10px">' +
-          '<span class="thumb" style="width:48px;height:48px;background-image:url(' + IMG[t.photo + '_t'] + ')"></span>' +
+          '<span class="thumb bg-' + t.photo + '" style="width:48px;height:48px"></span>' +
           '<span class="sp"><b class="sm" style="display:block">' + E(t.title) + '</b>' +
           '<span class="tiny dim2">' + hijri(t.start) + ' · ' + t12(t.start) + '</span></span>' +
           icon('i-back','s16') + '</div>' +
@@ -171,7 +178,7 @@ function screenAlbum() {
     (shown.length ? '<div class="pgrid">' + shown.map(p => {
         const t = p.taskId ? taskById(p.taskId) : null;
         return '<button class="pcard" data-a="viewphoto" data-id="' + p.id + '">' +
-          '<span class="ph" style="background-image:url(' + photoThumb(p) + ')"></span>' +
+          '<span ' + thumbAttr(p).replace('__C__', 'ph') + '></span>' +
           '<span class="meta"><b>' + E(p.title) + '</b>' +
           '<span>' + (t ? E(t.title) : 'بلا مهمة') + ' · ' + hijri(p.at) + '</span></span></button>';
       }).join('') + '</div>'
@@ -288,7 +295,7 @@ function reopenReason() {
 function excuseChip(photoId) {
   const p = photoById(photoId); if (!p) return '';
   return '<button class="fl reqtask" style="margin-top:8px" data-a="viewphoto" data-id="' + p.id + '">' +
-    '<span class="thumb" style="width:40px;height:40px;background-image:url(' + photoThumb(p) + ')"></span>' +
+    '<span ' + thumbAttr(p).replace('__C__', 'thumb') + ' style="width:40px;height:40px"></span>' +
     '<span class="sp" style="text-align:right"><b class="tiny" style="display:block">مرفق العذر</b>' +
     '<span class="tiny dim2">صورة مرفقة مع الرفض · ' + t12(p.at) + '</span></span>' + icon('i-eye','s16') + '</button>';
 }

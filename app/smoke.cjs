@@ -22,7 +22,7 @@ const sandbox = {
 sandbox.window.IMG = JSON.parse(fs.readFileSync(IMGP, 'utf8'));
 sandbox.globalThis = sandbox;
 
-const FILES = ['03-data.js','04-core.js','05-ui.js','06-task.js','07-muhsen.js','08-more.js','09-admin.js','11-reqcenter.js','12-photos.js','13-docs.js','14-guide.js','10-router.js'];
+const FILES = ['03-data.js','04-core.js','05-ui.js','06-task.js','07-muhsen.js','08-more.js','09-admin.js','11-reqcenter.js','12-photos.js','13-docs.js','14-guide.js','15-daily.js','16-push.js','10-router.js'];
 const js = FILES.map(read).join('\n');
 const ctx = vm.createContext(sandbox);
 
@@ -490,19 +490,26 @@ step('رفض خطوة بلا عنوان أو بنص قصير', () => {
 });
 
 console.log('\nالشريط السفلي');
-step('زر الرئيسية واحد وخارج الجانبين', () => {
+step('زر الرئيسية واحد وثابت في المنتصف', () => {
   const h = run('tabs()');
   if ((h.match(/class="home/g) || []).length !== 1) throw new Error('عدد أزرار الرئيسية خاطئ');
-  const sides = h.split('class="home')[0];
-  if (sides.indexOf('data-side="r"') < 0) throw new Error('لا يوجد الجانب الأيمن قبل الرئيسية');
-  if (h.split('class="home')[1].indexOf('data-side="l"') < 0) throw new Error('لا يوجد الجانب الأيسر بعدها');
+  const before = h.split('class="home')[0], after = h.split('class="home')[1];
+  if (before.indexOf('class="tside"') < 0) throw new Error('لا يوجد جانب قبل الرئيسية');
+  if (after.indexOf('class="tside"') < 0) throw new Error('لا يوجد جانب بعدها');
 });
-step('الجانبان متساويان في المدى', () => {
+step('الشريط صفحات كاملة متساوية', () => {
+  const pages = run('tabPageCount()');
+  if (pages < 2) throw new Error('صفحة واحدة فقط');
   const h = run('tabs()');
-  const parts = h.split('data-side=');
-  const rCount = (parts[1] || '').split('data-a="go"').length - 1;
-  const lCount = (parts[2] || '').split('data-a="go"').length - 1;
-  if (Math.abs(rCount - lCount) > 1) throw new Error('غير متوازنين: ' + rCount + ' و' + lCount);
+  const rails = h.split('class="trail"').length - 1;
+  if (rails !== 2) throw new Error('عدد الشرائط ' + rails);
+  const pgs = h.split('class="tpage"').length - 1;
+  if (pgs !== pages * 2) throw new Error('صفحات غير متوازنة: ' + pgs);
+});
+step('الصفحة تتبع الشاشة الحالية', () => {
+  const p = run('tabPageOf("calendar")');
+  if (p === null) throw new Error('التقويم بلا صفحة');
+  if (run('tabPageOf("daily")') === null) throw new Error('التحضير بلا صفحة');
 });
 step('تاب الدليل موجود للدورين', () => {
   if (run('tabs().indexOf("data-n=\\"guide\\"")') < 0) throw new Error('غائب عن الليدر');
@@ -544,6 +551,170 @@ step('العقود تبقى مرئية للمفوِّض والمفوَّض', () 
   const tid = run('S.tasks.find(x=>x.kind==="airport"&&x.leaderId==="L1").id');
   run('S.route={n:"task",id:"' + tid + '"}');
   if (run('screenTask().indexOf("عقد النقل")') < 0) throw new Error('غائبة عن الليدر');
+});
+
+console.log('\nالتحضير اليومي');
+run('S.session={id:"L1",at:Date.now()}');
+step('لكل موظف شِفت وأربعة أسابيع حضور', () => {
+  const noShift = run('S.users.filter(u=>!S.shifts[u.id]).length');
+  if (noShift) throw new Error(noShift + ' بلا شِفت');
+  const days = run('new Set(S.attend.map(a=>a.day)).size');
+  if (days < 25) throw new Error('أيام قليلة: ' + days);
+  const per = run('S.attend.filter(a=>a.userId==="L1").length');
+  if (per < 24) throw new Error('سجل ناقص: ' + per);
+});
+step('الأسابيع الثلاثة الماضية مكتملة', () => {
+  [1, 2, 3].forEach(w => {
+    const st = run('weekStats("L1",' + w + ')');
+    if (st.pct < 70) throw new Error('الأسبوع ' + w + ' = ' + st.pct + '٪');
+  });
+});
+step('التحضير مرفوض خارج المقر', () => {
+  run('S.attend = S.attend.filter(a=>!(a.userId==="L1"&&a.day===dayStart(now())))');
+  run('S.myPlace="site"');
+  if (run('canCheckIn("L1")')) throw new Error('قُبل من موقع مهمة');
+  run('S.myPlace="away"');
+  if (run('canCheckIn("L1")')) throw new Error('قُبل من خارج النطاق');
+  if (run('checkInReason().indexOf("المقر")') < 0) throw new Error('لا يبيّن السبب');
+  click({ a: 'checkin' });
+  if (run('attendedToday("L1")')) throw new Error('سُجّل رغم المنع');
+});
+step('التحضير يُقبل داخل المقر مرة واحدة', () => {
+  run('S.myPlace="hq"');
+  if (!run('canCheckIn("L1")')) throw new Error('مُنع داخل المقر');
+  click({ a: 'checkin' });
+  if (!run('attendedToday("L1")')) throw new Error('لم يُسجَّل');
+  const n = run('S.attend.filter(a=>a.userId==="L1"&&a.day===dayStart(now())).length');
+  click({ a: 'checkin' });
+  if (run('S.attend.filter(a=>a.userId==="L1"&&a.day===dayStart(now())).length') !== n)
+    throw new Error('سُجّل مرتين');
+});
+step('شاشة التحضير تفتح للدورين', () => {
+  ['me', 'team', 'swap'].forEach(sg => {
+    run('S.tab.dl="' + sg + '"; S.route={n:"daily"}');
+    if (!run('screenDaily()')) throw new Error('فارغة: ' + sg);
+  });
+  const m = run('teamOf("L1")[0].id');
+  run('S.session={id:"' + m + '",at:Date.now()}; S.tab.dl="me"');
+  if (!run('screenDaily()')) throw new Error('فارغة للمحسن');
+  run('S.session={id:"L1",at:Date.now()}');
+});
+
+console.log('\nتبديل الشِفت');
+step('طلب بلا سبب أو بشِفت مطابق مرفوض', () => {
+  const m = run('teamOf("L1")[2].id');
+  run('S.session={id:"' + m + '",at:Date.now()}');
+  const before = run('S.swaps.length');
+  run('S.swapTo=Object.keys(SHIFTS).find(k=>k!==shiftOf(S.session.id))');
+  let vals = { swr: 'قصير', swd: run('isoDate(now()+DAY)') };
+  sandbox.document.getElementById = i2 => (vals[i2] !== undefined ? Object.assign({}, el, { value: vals[i2] }) : el);
+  click({ a: 'dosendswap' });
+  vals = { swr: 'سبب كافٍ وواضح للتبديل', swd: '' };
+  click({ a: 'dosendswap' });
+  sandbox.document.getElementById = () => el;
+  if (run('S.swaps.length') !== before) throw new Error('قُبل طلب ناقص');
+});
+step('الطلب يصل الليدر', () => {
+  const m = run('S.session.id');
+  const vals = { swr: 'ارتباط عائلي في ذلك اليوم', swd: run('isoDate(now()+2*DAY)') };
+  sandbox.document.getElementById = i2 => (vals[i2] !== undefined ? Object.assign({}, el, { value: vals[i2] }) : el);
+  click({ a: 'dosendswap' });
+  sandbox.document.getElementById = () => el;
+  const s = run('S.swaps.find(x=>x.from==="' + m + '")');
+  if (!s) throw new Error('لم يُنشأ');
+  if (s.state !== 'pending') throw new Error('الحالة ' + s.state);
+  if (s.leaderId !== 'L1') throw new Error('لم يصل الليدر');
+  if (!run('S.notifs.some(n=>n.to==="L1"&&n.title.indexOf("تبديل")>=0)')) throw new Error('بلا إشعار');
+  sandbox.SW_ = s.id;
+});
+step('طلب ثانٍ معلّق مرفوض', () => {
+  const before = run('S.swaps.length');
+  const vals = { swr: 'سبب آخر مكتمل', swd: run('isoDate(now()+3*DAY)') };
+  sandbox.document.getElementById = i2 => (vals[i2] !== undefined ? Object.assign({}, el, { value: vals[i2] }) : el);
+  click({ a: 'dosendswap' });
+  sandbox.document.getElementById = () => el;
+  if (run('S.swaps.length') !== before) throw new Error('قُبل طلبان معًا');
+  run('S.session={id:"L1",at:Date.now()}');
+});
+step('المحسن لا يبتّ في الطلبات', () => {
+  const m = run('S.swaps.find(x=>x.id==="' + sandbox.SW_ + '").from');
+  run('S.session={id:"' + m + '",at:Date.now()}');
+  click({ a: 'swapok', id: sandbox.SW_ });
+  if (run('S.swaps.find(x=>x.id==="' + sandbox.SW_ + '").state') !== 'pending') throw new Error('بتّ فيه');
+  run('S.session={id:"L1",at:Date.now()}');
+});
+step('الليدر يرفع الطلب للكنترول', () => {
+  sandbox.document.getElementById = () => Object.assign({}, el, { value: 'يتعارض مع جدول الفوج' });
+  click({ a: 'doswapesc', id: sandbox.SW_ });
+  sandbox.document.getElementById = () => el;
+  const s = run('S.swaps.find(x=>x.id==="' + sandbox.SW_ + '")');
+  if (s.state !== 'escalated') throw new Error('الحالة ' + s.state);
+  if (s.log.length < 2) throw new Error('المسار ناقص');
+  if (!run('S.notifs.some(n=>n.to==="' + s.from + '"&&n.title.indexOf("كنترول")>=0)')) throw new Error('لم يُبلَّغ');
+});
+step('الاعتماد يبدّل الشِفت فعليًّا', () => {
+  const s2 = run('S.swaps.find(x=>x.state==="pending"&&x.leaderId==="L1")');
+  if (!s2) throw new Error('لا يوجد طلب معلّق');
+  const to = s2.toShift;
+  click({ a: 'swapok', id: s2.id });
+  if (run('shiftOf("' + s2.from + '")') !== to) throw new Error('لم يتبدّل الشِفت');
+  if (run('S.swaps.find(x=>x.id==="' + s2.id + '").state') !== 'approved') throw new Error('لم تُعتمد');
+});
+
+console.log('\nالإشعارات الخارجية');
+step('حالة الإذن تُقرأ بلا انهيار', () => {
+  if (typeof run('pushState()') !== 'string') throw new Error('حالة غير معروفة');
+  if (run('pushOn()') !== false) throw new Error('مفعّلة بلا إذن');
+});
+step('الفئات محسوبة صحيحًا', () => {
+  if (run('audienceUsers("leaders").length') !== 3) throw new Error('الليدرز');
+  if (run('audienceUsers("muhsens").length') !== 15) throw new Error('المحسنون');
+  if (run('audienceUsers("myteam").length') !== 5) throw new Error('فريقي');
+  if (run('audienceUsers("all").length') !== 18) throw new Error('الجميع');
+});
+step('البثّ يصل كل الفئة', () => {
+  run('S.bcAud="muhsens"');
+  const vals = { bct: 'اجتماع الفريق', bcb: 'اجتماع في المقر الساعة الثامنة مساءً.' };
+  sandbox.document.getElementById = i2 => (vals[i2] !== undefined ? Object.assign({}, el, { value: vals[i2] }) : el);
+  click({ a: 'dobroadcast' });
+  sandbox.document.getElementById = () => el;
+  const got = run('S.users.filter(u=>u.role==="muhsen"&&S.notifs.some(n=>n.to===u.id&&n.title==="اجتماع الفريق")).length');
+  if (got !== 15) throw new Error('وصل ' + got + ' فقط');
+  if (!run('S.broadcasts.length')) throw new Error('بلا سجل');
+});
+step('بثّ بلا عنوان أو نص مرفوض', () => {
+  const before = run('S.broadcasts.length');
+  const vals = { bct: 'ااا', bcb: 'نص كافٍ للاختبار' };
+  sandbox.document.getElementById = i2 => (vals[i2] !== undefined ? Object.assign({}, el, { value: vals[i2] }) : el);
+  click({ a: 'dobroadcast' });
+  const v2 = { bct: 'عنوان صالح', bcb: 'قصير' };
+  sandbox.document.getElementById = i2 => (v2[i2] !== undefined ? Object.assign({}, el, { value: v2[i2] }) : el);
+  click({ a: 'dobroadcast' });
+  sandbox.document.getElementById = () => el;
+  if (run('S.broadcasts.length') !== before) throw new Error('قُبل بثّ ناقص');
+});
+
+console.log('\nالإشعارات الداخلية');
+step('النقر على إشعار ينقل لوجهته', () => {
+  const n2 = run('S.notifs.filter(n=>n.to==="L1"&&n.route)[0]');
+  if (!n2) throw new Error('لا يوجد إشعار موجَّه');
+  run('S.route={n:"notifs"}');
+  click({ a: 'opennotif', id: n2.id });
+  if (run('S.route.n') === 'notifs') throw new Error('بقي في القائمة');
+  if (!run('S.notifs.find(n=>n.id==="' + n2.id + '").read')) throw new Error('لم يُعلَّم مقروءًا');
+});
+step('إشعار بلا وجهة ينقل للرئيسية', () => {
+  run('notify("L1","i-bell","بلا وجهة","نص",null)');
+  const n3 = run('S.notifs.find(n=>n.title==="بلا وجهة")');
+  run('S.route={n:"notifs"}');
+  click({ a: 'opennotif', id: n3.id });
+  if (run('S.route.n') !== 'home') throw new Error('الوجهة ' + run('S.route.n'));
+});
+step('إشعار لمهمة محذوفة لا يعلّق', () => {
+  run('notify("L1","i-bell","مهمة ذاهبة","نص",{n:"task",id:"XX-none"})');
+  const n4 = run('S.notifs.find(n=>n.title==="مهمة ذاهبة")');
+  click({ a: 'opennotif', id: n4.id });
+  if (run('S.route.id')) throw new Error('انتقل لمعرّف غير موجود');
 });
 
 console.log('\n' + (fail ? '✗ فشل ' + fail : '✓ نجحت كل الاختبارات'));

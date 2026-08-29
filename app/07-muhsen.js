@@ -47,7 +47,7 @@ function screenLeaderHome() {
       '<div class="sm dim">' + E(org.ar) + ' · ' + E(org.country) + '</div>' +
       (rt.n ? '<div style="margin-top:6px">' + stars(rt.avg) + '</div>' : '') + '</div></div></div>' +
 
-    '<div class="banner" style="background-image:url(' + IMG.haram_w + ')"><span class="bt">' +
+    '<div class="banner bgw-haram"><span class="bt">' +
       '<b>' + E(dayName(now())) + ' · ' + hijri(now()) + '</b><span>' +
       AR(ts.filter(t => dayStart(t.start) === dayStart(now())).length) + ' مهمة اليوم</span></span></div>' +
 
@@ -127,7 +127,7 @@ function reqActionCard(r) {
     const a = t.assigned.find(x => x.muhsenId === S.session.id && x.req === 'pending');
     return '<div class="c gold"><div class="row"><b style="font-size:14.5px">طلب تسكين</b>' + pill('يحتاج ردًا', 'wait') + '</div>' +
       '<div class="fl" style="gap:10px;background:#F8F6F0;border-radius:14px;padding:12px;margin:11px 0">' +
-        '<span class="thumb" style="width:52px;height:52px;background-image:url(' + IMG[t.photo + '_t'] + ')"></span>' +
+        '<span class="thumb bg-' + t.photo + '" style="width:52px;height:52px"></span>' +
         '<span class="sp"><b class="sm" style="display:block">' + E(t.title) + '</b>' +
         '<span class="tiny dim">' + hijri(t.start) + ' · ' + t12(t.start) + ' إلى ' + t12(t.end) + '</span>' +
         '<span class="tiny dim2">' + E(t.place) + ' · ' + AR(t.subs.length) + ' مهمة فرعية</span></span></div>' +

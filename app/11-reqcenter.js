@@ -22,7 +22,7 @@ function reqCardFull(r, actionable) {
     '</div>' +
 
     (t ? '<button class="fl reqtask" data-a="go" data-n="task" data-id="' + t.id + '">' +
-        '<span class="thumb" style="width:40px;height:40px;background-image:url(' + IMG[t.photo + '_t'] + ')"></span>' +
+        '<span class="thumb bg-' + t.photo + '" style="width:40px;height:40px"></span>' +
         '<span class="sp" style="text-align:right"><b class="tiny" style="display:block">' + E(t.title) + '</b>' +
         '<span class="tiny dim2">' + hijri(t.start) + ' · ' + t12(t.start) + '</span></span>' + icon('i-back','s16') + '</button>' : '') +
 

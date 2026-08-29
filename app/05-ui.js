@@ -35,13 +35,17 @@ function bar(title, opt) {
     '<div class="nav">' + left + '<span class="t">' + E(title) + '</span>' + right + '</div></div>';
 }
 
-/* شريط سفلي — زر الرئيسية ثابت في المنتصف، والجانبان يتحرّكان معًا */
-function tabs() {
-  const L = isLeader(), r = S.route.n;
+/* شريط سفلي — الرئيسية ثابتة في المنتصف، والبقية كتلة واحدة تنتقل صفحةً كاملة */
+const TABS_PER_SIDE = 3;
+
+function tabItems() {
+  const L = isLeader();
   const inbox = S.requests.filter(x => x.to === S.session.id && x.state === 'pending').length;
   const openTk = myTickets().filter(k => k.status !== 'مغلقة').length;
-  const items = L
+  const swaps = pendingSwaps().length;
+  return L
     ? [{ k:'tasks', i:'i-tasks', l:'المهام', on:['tasks','task','assign','timeline'] },
+       { k:'daily', i:'i-check', l:'التحضير', b:swaps, on:['daily'] },
        { k:'lreq', i:'i-swap', l:'الطلبات', b:inbox, on:['lreq'] },
        { k:'muhsens', i:'i-users', l:'المحسنون', on:['muhsens'] },
        { k:'rating', i:'i-star', l:'التقييم', on:['rating','taskrating'] },
@@ -50,8 +54,10 @@ function tabs() {
        { k:'notifs', i:'i-bell', l:'الإشعارات', b:unread(), on:['notifs'] },
        { k:'calendar', i:'i-cal', l:'التقويم', on:['calendar'] },
        { k:'pilgrims', i:'i-user', l:'الحجاج', on:['pilgrims'] },
-       { k:'more', i:'i-dots', l:'المزيد', on:['more','profile','admin','album','photo','doc'] }]
+       { k:'album', i:'i-album', l:'الصور', on:['album','photo'] },
+       { k:'more', i:'i-dots', l:'المزيد', on:['more','profile','admin','doc'] }]
     : [{ k:'tasks', i:'i-tasks', l:'المهام', on:['tasks','task'] },
+       { k:'daily', i:'i-check', l:'التحضير', on:['daily'] },
        { k:'requests', i:'i-swap', l:'الطلبات', b:inbox, on:['requests'] },
        { k:'guide', i:'i-guide', l:'الدليل', on:['guide'] },
        { k:'rating', i:'i-star', l:'التقييم', on:['rating','taskrating'] },
@@ -59,32 +65,64 @@ function tabs() {
        { k:'notifs', i:'i-bell', l:'الإشعارات', b:unread(), on:['notifs'] },
        { k:'calendar', i:'i-cal', l:'التقويم', on:['calendar'] },
        { k:'pilgrims', i:'i-user', l:'الحجاج', on:['pilgrims'] },
-       { k:'more', i:'i-dots', l:'المزيد', on:['more','profile','admin','album','photo'] }];
+       { k:'album', i:'i-album', l:'الصور', on:['album','photo'] },
+       { k:'more', i:'i-dots', l:'المزيد', on:['more','profile','admin'] }];
+}
+const tabPageCount = () => Math.ceil(tabItems().length / (TABS_PER_SIDE * 2));
+
+/* الصفحة التي تحوي الشاشة الحالية — حتى لا يضيع المستخدم */
+function tabPageOf(route) {
+  const it = tabItems();
+  for (let i = 0; i < it.length; i++) if (it[i].on.indexOf(route) >= 0)
+    return Math.floor(i / (TABS_PER_SIDE * 2));
+  return null;
+}
+
+function tabs() {
+  const L = isLeader(), r = S.route.n;
+  const items = tabItems();
+  const per = TABS_PER_SIDE * 2, pages = tabPageCount();
+  const auto = tabPageOf(r);
+  if (auto !== null && S._tabAuto !== r) { S.tabPage = auto; S._tabAuto = r; }
+  let pg = Math.min(Math.max(S.tabPage || 0, 0), pages - 1);
 
   const btn = it => {
-    const on = it.on.includes(r);
+    if (!it) return '<span class="tspacer"></span>';
+    const on = it.on.indexOf(r) >= 0;
     return '<button class="' + (on ? 'on' : '') + '" role="tab"' + (on ? ' aria-selected="true"' : '') +
       ' data-a="go" data-n="' + it.k + '">' +
       '<span class="wi">' + icon(it.i) + (it.b ? '<span class="badge">' + AR(it.b) + '</span>' : '') +
       '</span>' + it.l + '</button>';
   };
-  /* نصفان متساويان في العدد فيتحرّكان بالمدى نفسه ويبقيان متزامنين */
-  const half = Math.ceil(items.length / 2);
-  const right = items.slice(0, half), left = items.slice(half);
-  const pad = n => n > 0 ? '<span class="tpad" style="width:' + (n * 60) + 'px"></span>' : '';
-  const homeOn = ['home','mhome'].includes(r);
+  const page = (p, side) => {
+    const base = p * per + (side === 'r' ? 0 : TABS_PER_SIDE);
+    let out = '';
+    for (let i = 0; i < TABS_PER_SIDE; i++) out += btn(items[base + i]);
+    return '<div class="tpage">' + out + '</div>';
+  };
+  const rail = side => {
+    let out = '';
+    for (let p = 0; p < pages; p++) out += page(p, side);
+    /* الاتجاه RTL: الانتقال للصفحة التالية يزيح الشريط يمينًا */
+    return '<div class="tside"><div class="trail" data-pg="' + pg + '" ' +
+      'style="transform:translateX(' + (pg * 100) + '%)">' + out + '</div></div>';
+  };
+  const homeOn = ['home','mhome'].indexOf(r) >= 0;
 
-  return '<nav class="tabs" role="tablist" aria-label="التنقّل">' +
-    '<div class="tside" data-side="r">' + right.map(btn).join('') + pad(left.length - right.length) + '</div>' +
+  return '<nav class="tabs" role="tablist" aria-label="التنقّل" data-pages="' + pages + '">' +
+    (pages > 1 ? '<span class="dots" aria-hidden="true">' +
+      Array.from({ length: pages }, (_, i) => '<i class="' + (i === pg ? 'on' : '') + '"></i>').join('') +
+      '</span>' : '') +
+    rail('r') +
     '<button class="home' + (homeOn ? ' on' : '') + '" role="tab"' + (homeOn ? ' aria-selected="true"' : '') +
       ' data-a="go" data-n="' + (L ? 'home' : 'mhome') + '">' +
-      '<span class="wi hb"><img src="' + IMG.logo_white + '" alt=""></span>' +
+      '<span class="wi hb"><i class="mlogo"></i></span>' +
       '<span class="hl">الرئيسية</span></button>' +
-    '<div class="tside" data-side="l">' + left.map(btn).join('') + pad(right.length - left.length) + '</div>' +
+    rail('l') +
     '</nav>';
 }
 
-const ground = () => '<div class="ground"><img src="' + IMG.logo_pattern + '" alt=""></div>';
+const ground = () => '<div class="ground"></div>';
 
 /* ============================ مكوّنات مشتركة ============================ */
 function svcCard(t) {
@@ -94,7 +132,7 @@ function svcCard(t) {
       '<div class="sm dim" style="margin-top:3px">' + E(t.desc) + '</div>' +
       '<div class="fl sm dim" style="gap:5px;margin-top:3px">' + icon('i-pin','s14') + '<span>' + E(t.place) + '</span></div>' +
       '<div class="sm dim2">' + E(t.city) + '</div></div>' +
-    '<span class="thumb" style="background-image:url(' + IMG[t.photo + '_t'] + ')"></span></div>' +
+    '<span class="thumb bg-' + t.photo + '"></span></div>' +
     '<div class="fl" style="margin-top:11px;justify-content:space-between;flex-wrap:wrap;gap:6px">' +
       pill(st.t, st.c) +
       '<span class="tiny dim2">' + E(orgOf(t).ar) + ' · ' + E(t.kt) + '</span></div></div>';
@@ -148,7 +186,7 @@ function taskRow(t) {
   return '<div class="c task b-' + bucket + (ug ? ' ' + ug.k : '') + '" role="button" tabindex="0" style="--kc:' + ui.c + '" ' +
     'data-a="go" data-n="task" data-id="' + t.id + '">' +
     '<div class="fl" style="align-items:flex-start;gap:11px">' +
-      '<span class="tthumb" style="background-image:url(' + IMG[t.photo + '_t'] + ')">' +
+      '<span class="tthumb bg-' + t.photo + '">' +
         '<span class="kb">' + icon(ui.i, 's14') + '</span></span>' +
       '<div class="sp">' +
         '<div class="fl" style="align-items:flex-start;gap:8px">' +
@@ -177,9 +215,9 @@ function taskRow(t) {
 function screenLogin() {
   const role = S.loginRole || 'leader';
   const list = S.users.filter(u => u.role === role);
-  return '<div class="login"><img class="pat" src="' + IMG.logo_pattern + '" alt="">' +
+  return '<div class="login"><i class="pat"></i>' +
     '<div class="inner">' +
-      '<img class="logo" src="' + IMG.logo_lockup + '" alt="مُحسن">' +
+      '<i class="logo mlockup" role="img" aria-label="مُحسن"></i>' +
       '<div class="cap">تطبيق الميدان — موسم الحج ١٤٤٨ هـ</div>' +
       '<div class="panel">' +
         '<div class="lbl plain" style="margin-bottom:8px">اختر دورك</div>' +
@@ -203,7 +241,7 @@ function screenLogin() {
         '<div class="otp">' + ['٤','٨','١','٦'].map(d => '<div>' + d + '</div>').join('') + '</div>' +
         '<div class="tiny dim2 center" style="margin-top:7px">رمز تجريبي — الدخول بالضغط على الحساب</div>' +
       '</div>' +
-      '<div class="foot"><img src="' + IMG.nozoly + '" alt="نُزلي"><div>تطوير نُزلي · نسخة تجريبية</div></div>' +
+      '<div class="foot"><i class="mnozoly" role="img" aria-label="نُزلي"></i><div>تطوير نُزلي · نسخة تجريبية</div></div>' +
     '</div></div>';
 }
 

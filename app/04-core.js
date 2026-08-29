@@ -1,6 +1,6 @@
 /* ============================ الحالة ============================ */
 const KEY = 'muhsen_app_v1';
-const SCHEMA = 13;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
+const SCHEMA = 14;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
 const uid = (p) => p + Math.random().toString(36).slice(2, 8);
@@ -91,7 +91,8 @@ function seed() {
   const st = {
     v: SCHEMA, clockOffset: 0, myPlace: 'site', session: null, route: { n: 'login' },
     tab: {}, orgs: ORGS, users: USERS, tasks: [], tickets: [], notifs: [],
-    requests: [], reminders: [], pilgrims: {}, photos: [], guides: {}, toast: null
+    requests: [], reminders: [], pilgrims: {}, photos: [], guides: {},
+    shifts: {}, attend: [], swaps: [], broadcasts: [], tabPage: 0, toast: null
   };
   S = st;   /* لتعمل الدوال المعتمِدة على S أثناء التهيئة */
 
@@ -160,6 +161,7 @@ function seed() {
 
   seedPhotos(st);
   seedGuides(st);
+  seedDaily(st);
   return st;
 }
 
@@ -171,6 +173,8 @@ function load() {
   S.reminders = S.reminders || []; S.requests = S.requests || []; S.pilgrims = S.pilgrims || {};
   S.photos = S.photos || [];
   S.guides = S.guides || {};
+  S.attend = S.attend || []; S.swaps = S.swaps || [];
+  S.shifts = S.shifts || {}; S.broadcasts = S.broadcasts || [];
 }
 /* الحفظ: عند امتلاء المساحة نُسقط أقدم الصور الملتقطة ونعيد المحاولة
    — وإلا ضاعت كل البيانات بصمت عند أول صورة تتجاوز الحد. */
@@ -241,6 +245,7 @@ const lockedForAssign = t => now() >= t.start || ['running', 'done', 'cancelled'
 
 /* ============================ التنبيهات ============================ */
 function notify(toId, icon, title, body, route) {
+  if (typeof pushBridge === 'function') setTimeout(function () { pushBridge(toId, title, body); }, 0);
   S.notifs.unshift({ id: uid('N'), to: toId, icon, title, body, at: now(), read: false, route: route || null });
 }
 const unread = () => S.notifs.filter(n => n.to === (S.session && S.session.id) && !n.read).length;
@@ -418,7 +423,7 @@ function respondDelegate(t, ok, note_, excuse) {
 }
 
 /* ============================ الحضور والتنفيذ ============================ */
-const myFarKm = () => (S.myPlace === 'site' ? 0.4 : 3.4);
+const myFarKm = () => (S.myPlace === 'site' ? 0.4 : S.myPlace === 'hq' ? 1.4 : 3.4);
 /* التحضير لا يُقبل إلا من داخل نطاق ٢ كم من حدود الموقع */
 const canAttend = t => now() >= prepOpen(t) && myFarKm() <= RADIUS_KM;
 function attendBlockReason(t) {
@@ -530,13 +535,13 @@ function myTasks() {
 /* تصنيف المهمة بالنسبة للمستخدم الحالي */
 /* ============ تصنيف المهام — دروب داون موحّد، وحالة واحدة لكل مهمة ============ */
 const TBUCKETS = [
-  { k:'all',       l:'كل المهام',    i:'i-list',   c:'grey' },
-  { k:'running',   l:'الجارية الآن', i:'i-play',   c:'live' },
-  { k:'soon',      l:'ستبدأ اليوم',  i:'i-clock',  c:'wait' },
-  { k:'next',      l:'القادمة',      i:'i-cal',    c:'blue' },
-  { k:'done',      l:'المنجزة',      i:'i-checkc', c:'live' },
-  { k:'undone',    l:'غير المنجزة',  i:'i-warn',   c:'no'   },
-  { k:'cancelled', l:'الملغاة',      i:'i-cancel', c:'grey' }
+  { k:'all',       l:'كل المهام', i:'i-list',   c:'grey' },
+  { k:'running',   l:'جارية',     i:'i-play',   c:'live' },
+  { k:'soon',      l:'اليوم',     i:'i-clock',  c:'wait' },
+  { k:'next',      l:'قادمة',     i:'i-cal',    c:'blue' },
+  { k:'done',      l:'منجزة',     i:'i-checkc', c:'live' },
+  { k:'undone',    l:'غير منجزة', i:'i-warn',   c:'no'   },
+  { k:'cancelled', l:'ملغاة',     i:'i-cancel', c:'grey' }
 ];
 const bucketOf = k => TBUCKETS.find(b => b.k === k) || TBUCKETS[0];
 

@@ -761,3 +761,117 @@
     min-width: 14px; height: 14px; display: grid; place-items: center; border: 1.5px solid #fff;
   }
 </style>
+
+<style>
+  /* ===================== النسخة ١٫٤ ===================== */
+
+  /* --- حدود التطبيق: ملء الشاشة تمامًا بلا اعتماد على وحدات متغيّرة --- */
+  @media (max-width: 520px) {
+    html, body { height: 100%; overflow: hidden; }
+    #device {
+      position: fixed; inset: 0; width: auto; height: auto;
+      max-height: none; max-width: none; border-radius: 0; padding: 0;
+      box-shadow: none; background: var(--bg);
+    }
+    #screen { height: 100%; border-radius: 0; }
+    /* الحافة الآمنة السفلية داخل الشريط نفسه، بحدٍّ أعلى حتى لا تصير فراغًا */
+    .tabs { padding-bottom: min(var(--sab), 20px); }
+  }
+
+  /* --- صور معرَّفة مرة واحدة --- */
+  .thumb, .tthumb, .banner, .pthumb, .pcard .ph { background-size: cover; background-position: center; }
+  .ground { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+  .ground::after {
+    content: ""; position: absolute; inset-inline-start: 0; top: 16%; width: 100%; height: 70%;
+    background-size: 100% auto; background-repeat: no-repeat; background-position: top center; opacity: .05;
+  }
+  .pat { background-size: 100% auto; background-repeat: no-repeat; background-position: top center; }
+  .mlogo { display: block; width: 27px; height: 27px; background-size: contain;
+    background-repeat: no-repeat; background-position: center; }
+  .mlockup { display: block; width: 168px; height: 54px; background-size: contain;
+    background-repeat: no-repeat; background-position: center; margin: 0 auto; }
+  .mnozoly { display: block; width: 96px; height: 26px; background-size: contain;
+    background-repeat: no-repeat; background-position: center; margin: 0 auto; }
+  .mnozoly.dark { width: 82px; margin: 4px auto 10px; opacity: .6; }
+
+  /* --- الشريط السفلي: كتلة واحدة تنتقل صفحةً كاملة --- */
+  .tabs { display: flex; align-items: stretch; gap: 0; padding: 8px 0;
+    background: #fff; position: relative; z-index: 3; flex: none; overflow: hidden;
+    touch-action: pan-y; -webkit-user-select: none; user-select: none;
+    box-shadow: 0 -1px 0 rgba(20,89,63,.07), 0 -16px 34px -26px rgba(11,53,39,.55); }
+  .tabs .tside { flex: 1 1 0; min-width: 0; overflow: hidden; }
+  .tabs .trail {
+    display: flex; gap: 2px; justify-content: space-evenly;
+    transition: transform .26s cubic-bezier(.32,.72,0,1), opacity .18s ease;
+    will-change: transform;
+  }
+  .tabs.sliding .trail { opacity: .35; }
+  .tabs .tpage { display: flex; gap: 2px; flex: none; justify-content: space-evenly; }
+  .tabs button { display: flex; flex-direction: column; align-items: center; gap: 3px;
+    font-size: 10px; color: #8C9B92; width: 62px; flex: none; text-align: center;
+    padding: 2px 0 0; border-radius: 14px; }
+  .tabs button .ic { width: 21px; height: 21px; }
+  .tabs button.on { color: var(--g); font-weight: 700; }
+  .tabs .wi { position: relative; }
+  .tabs .home { flex: none; width: 78px; position: relative; z-index: 2;
+    color: var(--g); font-weight: 700; gap: 4px; padding: 0; background: #fff; }
+  .tabs .home .hb { width: 50px; height: 50px; border-radius: 50%; display: grid; place-items: center;
+    background: linear-gradient(150deg, var(--g3), var(--g2));
+    box-shadow: 0 0 0 4px #fff, 0 0 0 5px rgba(198,168,111,.55), 0 8px 18px -6px rgba(11,53,39,.75);
+    margin-top: -16px; }
+  .tabs .home .hl { font-size: 10px; }
+  .tabs .home.on .hb { box-shadow: 0 0 0 4px #fff, 0 0 0 5px var(--gold), 0 8px 20px -5px rgba(11,53,39,.8); }
+  /* مؤشّر الصفحات */
+  .tabs .dots { position: absolute; inset-inline-start: 14px; top: 4px; display: flex; gap: 4px; z-index: 4; }
+  .tabs .dots i { width: 4px; height: 4px; border-radius: 50%; background: #D5DCD7; display: block; }
+  .tabs .dots i.on { background: var(--g); width: 12px; border-radius: 99px; }
+  @media (prefers-reduced-motion: reduce) { .tabs .trail { transition: none; } }
+  .gimg, .pfull { background-size: cover; background-position: center; }
+  div.pfull { aspect-ratio: 4 / 3; }
+  div.gimg { aspect-ratio: 16 / 10; }
+</style>
+<style>
+  /* ===== التحضير اليومي ===== */
+  .shift { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 20px;
+    color: #fff; background: linear-gradient(150deg, var(--sc), color-mix(in srgb, var(--sc) 55%, #0B2018));
+    box-shadow: 0 10px 26px -16px rgba(11,53,39,.7); }
+  .shift .si { width: 46px; height: 46px; border-radius: 15px; display: grid; place-items: center;
+    background: rgba(255,255,255,.18); flex: none; }
+  .shift b { display: block; font-size: 15px; line-height: 1.5; }
+  .shift .sp span { font-size: 11px; opacity: .85; }
+  .shift .ok { color: #fff; opacity: .9; }
+
+  .wkrow { display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 4px; }
+  .wk { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 7px 2px;
+    border-radius: 12px; background: #F3F6F2; color: #8C9B92; }
+  .wk i { font-style: normal; font-size: 9px; }
+  .wk b { font-size: 13px; font-weight: 800; }
+  .wk.ok { background: #E4F2E9; color: #0B6540; }
+  .wk.late { background: #FCF3E3; color: #7A5512; }
+  .wk.no { background: #FBEBE8; color: #93261C; }
+
+  .swapflow { display: flex; align-items: center; gap: 9px; }
+  .swapflow .sb { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 700;
+    color: var(--sc); background: color-mix(in srgb, var(--sc) 10%, #fff); border-radius: 12px;
+    padding: 7px 11px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--sc) 28%, #fff); }
+  .swapflow .arrow { color: var(--gold); display: flex; }
+
+  .tline { border-inline-start: 2px solid #E7ECE6; padding-inline-start: 12px; margin-inline-start: 4px; }
+  .tline .ti { position: relative; padding: 5px 0; }
+  .tline .d { position: absolute; inset-inline-start: -18px; top: 10px; width: 8px; height: 8px;
+    border-radius: 50%; background: var(--g); box-shadow: 0 0 0 3px #fff; }
+  .lbl.plain::after { display: none; }
+
+  .admrow.on { box-shadow: inset 0 0 0 1.5px var(--gold); }
+  .field.dark input { background: #17262F; color: #EAF2EC; }
+  .tspacer { width: 62px; flex: none; }
+</style>
+<style>
+  .wk u { text-decoration: none; font-size: 8.5px; opacity: .8; }
+  .wk.today { box-shadow: inset 0 0 0 2px currentColor; }
+</style>
+<style>
+  /* كل صفحة بعرض جانبها بالضبط، فالانزلاق يساوي صفحة واحدة لا الشريط كله */
+  .tabs .trail { width: 100%; }
+  .tabs .tpage { flex: 0 0 100%; width: 100%; }
+</style>

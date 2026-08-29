@@ -16,7 +16,7 @@ function screenTasks() {
 
     '<button class="drop" data-a="bucketmenu">' + icon('i-filter','s18') +
       '<span class="sp"><span class="tiny dim2">عرض</span><b>' + cur.l + '</b></span>' +
-      '<span class="cnt">' + AR(seg === 'all' ? all.length : count(seg)) + '</span>' +
+      '<span class="cnt">' + AR(seg === 'all' ? all.length : count(seg)) + ' مهمة</span>' +
       icon('i-down','s16') + '</button>' +
 
     (list.length ? list.map(t2 => taskRow(t2)).join('')

@@ -36,6 +36,8 @@ function screenAdmin() {
         '<button class="btn l sm" data-a="finishsome">' + icon('i-checkc','s16') + 'أنهِ مهمة جارية</button></div>' +
       '<div class="tiny" style="margin-top:9px;opacity:.75">«أعد تقييم الكل» يعيد احتساب تقييم النظام بمعادلة الالتزام لكل مهمة منتهية.</div></div>' +
 
+    pushBox() +
+
     '<div class="admcard"><div class="lbl">دليل المهام</div>' +
       '<div class="tiny" style="margin:8px 0;opacity:.75">تعليمات كل نوع مهمة: نص · صور متتابعة · فيديو قصير · ملف PDF. يقرؤها كل الفريق على كل مهمة من النوع نفسه.</div>' +
       '<button class="btn p sm" data-a="go" data-n="guide">' + icon('i-guide','s16') + 'تحرير التعليمات</button></div>' +
@@ -87,12 +89,16 @@ function confirmSheet(title, body, action, danger) {
 }
 function placeSheet() {
   return '<div class="grip"></div><h3>تحديد موقعي</h3>' +
-    '<div class="tiny dim2" style="margin-bottom:12px">وضع التجربة — اختر أي موقع، والحضور متاح دائمًا.</div>' +
+    '<div class="tiny dim2" style="margin-bottom:12px">وضع التجربة — التحضير اليومي من المقر، وحضور المهمة من موقعها.</div>' +
+    '<div class="col">' +
+      '<button class="prow" data-a="setplace" data-v="hq"><span class="ico" style="width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:#EAF0FA;color:#1B5876">' + icon('i-home','s18') + '</span>' +
+        '<span class="nm sp"><b>داخل المقر</b><span>مقر البعثة — للتحضير اليومي</span></span>' + (S.myPlace === 'hq' ? icon('i-checkc','s16') : '') + '</button>' +
+    '</div>' +
     '<div class="col">' +
       '<button class="prow" data-a="setplace" data-v="site"><span class="ico" style="width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:#E4F2E9;color:#0B6540">' + icon('i-target','s18') + '</span>' +
         '<span class="nm sp"><b>داخل موقع المهمة</b><span>٠٫٤ كم</span></span>' + (S.myPlace === 'site' ? icon('i-checkc','s16') : '') + '</button>' +
       '<button class="prow" data-a="setplace" data-v="away"><span class="ico" style="width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:#FBE9E7;color:#93261C">' + icon('i-pin','s18') + '</span>' +
-        '<span class="nm sp"><b>خارج النطاق</b><span>٣٫٤ كم — تُسجَّل ملاحظة</span></span>' + (S.myPlace !== 'site' ? icon('i-checkc','s16') : '') + '</button>' +
+        '<span class="nm sp"><b>خارج النطاق</b><span>٣٫٤ كم — لا يُقبل تحضير</span></span>' + (S.myPlace === 'away' ? icon('i-checkc','s16') : '') + '</button>' +
     '</div><button class="btn g" style="margin-top:12px" data-a="close">إغلاق</button>';
 }
 function delegSheet(t) {
@@ -171,7 +177,7 @@ function assignToSheet(uid_) {
     (rows.length ? '<div class="col">' + rows.map(t => {
       const b = busyIn(uid_, t);
       return '<button class="prow" ' + (b ? 'disabled style="opacity:.5"' : 'data-a="send" data-id="' + t.id + '" data-u="' + uid_ + '"') + '>' +
-        '<span class="thumb" style="width:42px;height:42px;background-image:url(' + IMG[t.photo + '_t'] + ')"></span>' +
+        '<span class="thumb bg-' + t.photo + '" style="width:42px;height:42px"></span>' +
         '<span class="nm sp"><b>' + E(t.title) + '</b><span>' + hijri(t.start) + ' ' + t12(t.start) +
         (b ? ' · مرتبط بـ«' + E(b.title) + '»' : '') + '</span></span>' +
         (b ? pill('غير متاح','no') : pill('إرسال طلب','live')) + '</button>';

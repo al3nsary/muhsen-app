@@ -135,8 +135,8 @@ function ratingRow(t) {
   return '<button class="c" data-a="go" data-n="taskrating" data-id="' + t.id +
     '" style="width:100%;text-align:right;--kc:' + ui.c + '">' +
     '<div class="fl" style="align-items:center;gap:10px">' +
-      '<span class="tthumb" style="width:52px;height:52px;border-radius:15px;background-image:url(' +
-        IMG[t.photo + '_t'] + ')"><span class="kb">' + icon(ui.i, 's14') + '</span></span>' +
+      '<span class="tthumb bg-' + t.photo + '" style="width:52px;height:52px;border-radius:15px">' +
+        '<span class="kb">' + icon(ui.i, 's14') + '</span></span>' +
       '<span class="sp"><b class="sm" style="display:block;line-height:1.5">' + E(t.title) + '</b>' +
       '<span class="tiny dim2">' + hijri(t.start) + '</span>' +
       '<span class="fl" style="margin-top:5px">' + stars(v, 'lg') + '</span></span>' +
@@ -239,7 +239,7 @@ function screenProfile() {
       ? '<button data-a="logout" aria-label="خروج">' + icon('i-out') + '</button>'
       : '<span style="width:30px"></span>' }) +
     '<div class="view">' + ground() +
-    '<div class="phead"><img class="pat" src="' + IMG.logo_pattern + '" alt=""><div class="in">' +
+    '<div class="phead"><i class="pat"></i><div class="in">' +
       avat(u, 'xl') + '<h3>' + E(u.name) + '</h3>' +
       '<div class="r">' + (L ? 'محسن ليدر · ' + u.kt : 'مُحسن · ' + u.specialty) + '</div>' +
       (r.n ? '<div class="bigstars" style="margin-top:10px">' + stars(r.avg, 'lg') + '</div>' : '') +
@@ -287,6 +287,7 @@ function screenMore() {
        ['rating','i-star','التقييم','تقييمك وتقييم الفريق'],
        ['tickets','i-ticket','التذاكر','من الحجاج والكنترول والمحسنين'],
        ['pilgrims','i-user','الحجاج','حجاج الـKT والبلاغات'],
+       ['daily','i-check','التحضير اليومي','حضورك وشِفتك وطلبات التبديل'],
        ['guide','i-guide','دليل المهام','تعليمات كل نوع مهمة — وتحريرها'],
        ['album','i-album','ألبوم الصور','توثيق المهام بالصور'],
        ['calendar','i-cal','التقويم','أسبوعي مع التذكيرات'],
@@ -298,6 +299,7 @@ function screenMore() {
        ['rating','i-star','التقييم','تقييمك وتقييم الزملاء'],
        ['tickets','i-ticket','التذاكر','المسندة إليك وما رفعته'],
        ['pilgrims','i-user','الحجاج','حجاج الـKT والبلاغات'],
+       ['daily','i-check','التحضير اليومي','حضورك وشِفتك وطلب التبديل'],
        ['guide','i-guide','دليل المهام','تعليمات تنفيذ كل نوع مهمة'],
        ['album','i-album','ألبوم الصور','صور المهام التي تشارك فيها'],
        ['calendar','i-cal','التقويم','أسبوعي مع التذكيرات'],
@@ -317,7 +319,7 @@ function screenMore() {
     '<button class="btn d" data-a="logout">' + icon('i-out','s16') + 'تسجيل الخروج</button>' +
     '<div class="tiny dim2 center" style="margin-top:6px;line-height:1.9">تطبيق مُحسن · نسخة تجريبية<br>' +
       'مصادر الصور: ويكيميديا كومنز — Adli Wahid · Basheer Olakara · Omar Chatriwala · Shah134pk</div>' +
-    '<img src="' + IMG.nozoly_dark + '" alt="نُزلي" style="width:82px;margin:4px auto 10px;display:block;opacity:.6">' +
+    '<i class="mnozoly dark" role="img" aria-label="نُزلي"></i>' +
     '</div>' + tabs();
 }
 

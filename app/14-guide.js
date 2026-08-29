@@ -10,7 +10,9 @@ const STEP_KIND = {
   pdf:   { l:'ملف PDF',       i:'i-file' }
 };
 
-const mediaSrc = s => (String(s.src).indexOf('IMG:') === 0 ? IMG[String(s.src).slice(4)] : s.src);
+const seededMedia = s => String(s.src).indexOf('IMG:') === 0;
+const mediaKey = s => String(s.src).slice(4).replace(/_w$/, '');
+const mediaSrc = s => s.src;
 const guideOf = kind => (S.guides && S.guides[kind]) || null;
 const guideSteps = kind => { const g = guideOf(kind); return g ? g.steps : []; };
 const hasGuide = t => guideSteps(t.kind).length > 0;
@@ -63,7 +65,8 @@ function stepCard(s, i, editing, kind) {
   let body = '';
   if (s.kind === 'text') body = '<div class="sm" style="line-height:2">' + E(s.body) + '</div>';
   else if (s.kind === 'photo') body =
-    '<img class="gimg" src="' + mediaSrc(s) + '" alt="' + E(s.title || '') + '">' +
+    (seededMedia(s) ? '<div class="gimg bgw-' + mediaKey(s) + '" role="img"></div>'
+      : '<img class="gimg" src="' + mediaSrc(s) + '" alt="' + E(s.title || '') + '">') +
     (s.body ? '<div class="tiny dim" style="margin-top:8px">' + E(s.body) + '</div>' : '');
   else if (s.kind === 'video') body =
     '<video class="gimg" src="' + mediaSrc(s) + '" controls playsinline preload="metadata"></video>' +

@@ -8,7 +8,7 @@ const SCREENS = {
   rating: screenRating, taskrating: screenTaskRating,
   notifs: screenNotifs, pilgrims: screenPilgrims, muhsens: screenMuhsens,
   profile: screenProfile, more: screenMore, calendar: screenCalendar, admin: screenAdmin,
-  album: screenAlbum, photo: screenPhoto, doc: screenDoc, guide: screenGuide
+  album: screenAlbum, photo: screenPhoto, doc: screenDoc, guide: screenGuide, daily: screenDaily
 };
 
 function render() {
@@ -52,92 +52,87 @@ function render() {
   if (S.toast) { const t = S.toast; setTimeout(() => { if (S.toast === t) { S.toast = null; render(); } }, 2600); }
 }
 
-/* ===== شريط التابات: نصفان يتحرّكان معًا حول زر رئيسية ثابت ===== */
-function tabSides() { return [].slice.call(document.querySelectorAll('.tabs .tside')); }
+/* ===== شريط التابات: كتلة واحدة تنتقل صفحةً كاملة ===== */
+function centerActiveTab() { /* الصفحة تُحسب أثناء البناء — لا حاجة لتمرير */ }
 
-function centerActiveTab() {
-  const sides = tabSides(); if (!sides.length) return;
-  for (let i = 0; i < sides.length; i++) {
-    const on = sides[i].querySelector('button.on');
-    if (on) {
-      const to = Math.max(0, on.offsetLeft - (sides[i].clientWidth - on.offsetWidth) / 2);
-      sides.forEach(s => { s.scrollLeft = to; });
-      return;
-    }
-  }
-  sides.forEach(s => { s.scrollLeft = 0; });
-}
-/* الجانبان متساويان في المدى، فتحريكهما بالقيمة نفسها يبقيهما صفًّا واحدًا */
-function slideTabs(to) {
-  tabSides().forEach(s => {
-    s.scrollLeft = Math.max(0, Math.min(to, s.scrollWidth - s.clientWidth));
+function goTabPage(next) {
+  const nav = document.querySelector('.tabs'); if (!nav) return;
+  const pages = Number(nav.dataset.pages || 1);
+  const cur = Math.min(Math.max(S.tabPage || 0, 0), pages - 1);
+  const to = Math.min(Math.max(next, 0), pages - 1);
+  if (to === cur) return;
+  S.tabPage = to; S._tabAuto = null;
+  nav.querySelectorAll('.trail').forEach(t => {
+    t.style.transform = 'translateX(' + (to * 100) + '%)';
   });
+  nav.querySelectorAll('.dots i').forEach((d, i) => {
+    if (i === to) d.classList.add('on'); else d.classList.remove('on');
+  });
+  try { navigator.vibrate && navigator.vibrate(8); } catch (e) {}
+  save();
 }
 
-(function tabDrag() {
+(function tabSwipe() {
   let st = null;
-  function startOn(e) {
-    const t = e.target;
-    const nav = t && t.closest ? t.closest('.tabs') : null;
-    if (!nav) return null;
-    if (t.closest('.home')) return null;      /* زر الرئيسية لا يسحب */
+  const grab = e => {
+    const nav = e.target.closest && e.target.closest('.tabs');
+    if (!nav || e.target.closest('.home')) return null;
     return nav;
+  };
+  function begin(nav, x) { st = { nav, x, moved: false }; }
+  function move(x) {
+    if (!st) return false;
+    const dx = x - st.x;
+    if (Math.abs(dx) < 42) return false;
+    st.moved = true;
+    /* RTL: السحب لليمين يعود للصفحة السابقة */
+    goTabPage((S.tabPage || 0) + (dx > 0 ? -1 : 1));
+    st = null;
+    return true;
   }
-  document.addEventListener('pointerdown', function (e) {
-    const nav = startOn(e); if (!nav) return;
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
-    const side = tabSides()[0]; if (!side) return;
-    st = { nav, x: e.clientX, left: side.scrollLeft, moved: false, id: e.pointerId };
-  });
-  document.addEventListener('pointermove', function (e) {
-    if (!st || e.pointerId !== st.id) return;
-    const dx = e.clientX - st.x;
-    if (!st.moved && Math.abs(dx) < 6) return;
-    if (!st.moved) {
-      st.moved = true; st.nav.classList.add('dragging');
-      try { st.nav.setPointerCapture(e.pointerId); } catch (err) {}
-    }
-    slideTabs(st.left - dx);
-    if (e.cancelable) e.preventDefault();
-  });
-  function stop() {
-    if (!st) return;
-    const nav = st.nav;
-    if (st.moved) {
-      nav.classList.remove('dragging');
+  function end() {
+    if (st && st.moved) {
+      const nav = st.nav;
       nav.dataset.dragged = '1';
-      setTimeout(function () { delete nav.dataset.dragged; }, 220);
+      setTimeout(() => { delete nav.dataset.dragged; }, 200);
     }
-    try { nav.releasePointerCapture(st.id); } catch (err) {}
     st = null;
   }
-  document.addEventListener('pointerup', stop);
-  document.addEventListener('pointercancel', stop);
-  document.addEventListener('wheel', function (e) {
+  document.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    const nav = grab(e); if (!nav) return;
+    begin(nav, e.clientX);
+  });
+  document.addEventListener('pointermove', e => { if (st) move(e.clientX); });
+  document.addEventListener('pointerup', end);
+  document.addEventListener('pointercancel', end);
+  document.addEventListener('touchstart', e => {
+    const nav = grab({ target: e.target }); if (!nav) return;
+    begin(nav, e.touches[0].clientX);
+  }, { passive: true });
+  document.addEventListener('touchmove', e => {
+    if (!st) return;
+    if (move(e.touches[0].clientX) && e.cancelable) e.preventDefault();
+  }, { passive: false });
+  document.addEventListener('touchend', end);
+  /* الماوس: عجلة التمرير أفقيًّا تنقل صفحة */
+  let wheelLock = 0;
+  document.addEventListener('wheel', e => {
     const nav = e.target.closest && e.target.closest('.tabs'); if (!nav) return;
     const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
     if (!d) return;
-    const side = tabSides()[0]; if (!side) return;
-    slideTabs(side.scrollLeft + d);
     if (e.cancelable) e.preventDefault();
+    const t = Date.now();
+    if (t - wheelLock < 340) return;
+    wheelLock = t;
+    goTabPage((S.tabPage || 0) + (d > 0 ? 1 : -1));
   }, { passive: false });
-  /* لمس: نمرّر السحب بأنفسنا لضمان تزامن الجانبين */
-  document.addEventListener('touchstart', function (e) {
-    const nav = e.target.closest && e.target.closest('.tabs'); if (!nav) return;
-    if (e.target.closest('.home')) return;
-    const side = tabSides()[0]; if (!side) return;
-    st = { nav, x: e.touches[0].clientX, left: side.scrollLeft, moved: false, id: 'touch' };
-  }, { passive: true });
-  document.addEventListener('touchmove', function (e) {
-    if (!st || st.id !== 'touch') return;
-    const dx = e.touches[0].clientX - st.x;
-    if (!st.moved && Math.abs(dx) < 6) return;
-    st.moved = true; st.nav.classList.add('dragging');
-    slideTabs(st.left - dx);
-    if (e.cancelable) e.preventDefault();
-  }, { passive: false });
-  document.addEventListener('touchend', stop);
-  document.addEventListener('touchcancel', stop);
+  /* لوحة المفاتيح على المتصفح */
+  document.addEventListener('keydown', e => {
+    if (!document.querySelector('.tabs')) return;
+    if (e.key === 'ArrowLeft') goTabPage((S.tabPage || 0) + 1);
+    else if (e.key === 'ArrowRight') goTabPage((S.tabPage || 0) - 1);
+  });
 })();
 
 /* ===== ملاءمة الشاشة لأي جوال ===== */
@@ -146,10 +141,7 @@ function slideTabs(to) {
   const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
     window.navigator.standalone === true;
   root.classList.add(standalone ? 'app-standalone' : 'app-browser');
-  function fit() {
-    /* innerHeight أدق من dvh في متصفحات الجوال القديمة وشريط سفاري */
-    root.style.setProperty('--appH', window.innerHeight + 'px');
-  }
+  function fit() { root.style.setProperty('--appH', window.innerHeight + 'px'); }
   fit();
   window.addEventListener('resize', fit);
   window.addEventListener('orientationchange', function () { setTimeout(fit, 220); });
@@ -198,7 +190,9 @@ document.addEventListener('click', ev => {
 
     case 'place': S.sheet = placeSheet(); break;
     case 'setplace': S.myPlace = v; S.sheet = null;
-      toast(v === 'site' ? 'موقعك داخل موقع المهمة' : 'موقعك خارج النطاق — يُسجَّل ملاحظةً'); break;
+      toast(v === 'site' ? 'موقعك داخل موقع المهمة'
+        : v === 'hq' ? 'موقعك داخل المقر — التحضير اليومي متاح'
+        : 'موقعك خارج النطاق — لا يُقبل تحضير', v === 'away' ? 'r' : 'g'); break;
     case 'attend': { const t = T(); if (!t) break;
       if (!canAttend(t)) { toast(attendBlockReason(t), 'r'); break; }
       if (!attend(t, S.session.id)) { toast('تعذّر إثبات الحضور', 'r'); break; }
@@ -318,8 +312,17 @@ document.addEventListener('click', ev => {
         toast('سُجّلت الملاحظة كتذكرة'); }
       S.sheet = null; break; }
 
-    case 'opennotif': { const n2 = S.notifs.find(x => x.id === id); if (n2) { n2.read = true; S.push = null;
-      if (n2.route) S.route = { n: n2.route.n, id: n2.route.id }; } break; }
+    case 'opennotif': {
+      const n2 = S.notifs.find(x => x.id === id);
+      if (!n2) break;
+      n2.read = true; S.push = null; S.sheet = null;
+      const rt = n2.route && SCREENS[n2.route.n] ? n2.route : null;
+      /* وجهة صالحة أو الرئيسية — ولا يبقى المستخدم عالقًا في القائمة */
+      const okId = !rt || !rt.id || taskById(rt.id) || S.tickets.some(k => k.id === rt.id) ||
+        (S.photos || []).some(p => p.id === rt.id) || CAT[rt.id];
+      S.route = rt && okId ? { n: rt.n, id: rt.id }
+        : rt ? { n: rt.n } : { n: isLeader() ? 'home' : 'mhome' };
+      buzz(); break; }
     case 'readall': myNotifs().forEach(n2 => n2.read = true); S.push = null; toast('عُلّمت كمقروءة'); break;
 
     case 'week': S.calWeek = v === '0' ? 0 : (S.calWeek || 0) + Number(v); break;
@@ -399,6 +402,57 @@ document.addEventListener('click', ev => {
       S.sheet = subPickSheet(t); break; }
     /* ===== تصنيف المهام ===== */
     case 'bucketmenu': S.sheet = bucketSheet(); break;
+
+    /* ===== التحضير اليومي ===== */
+    case 'checkin': {
+      if (!canCheckIn(S.session.id)) { toast(checkInReason(), 'r'); break; }
+      checkIn(S.session.id); buzz(); toast('سُجّل تحضيرك ' + t12(now())); break; }
+    case 'swapreq': S.swapTo = null; S.sheet = swapSheet(); break;
+    case 'swapto': S.swapTo = v; S.sheet = swapSheet(); break;
+    case 'dosendswap': {
+      const to = S.swapTo || Object.keys(SHIFTS).find(k => k !== shiftOf(S.session.id));
+      const rsn = val('swr'), dy = val('swd');
+      if (!rsn || rsn.length < 6) { toast('اذكر سببًا واضحًا للتبديل', 'r'); break; }
+      if (!dy) { toast('اختر اليوم المطلوب', 'r'); break; }
+      const dts = new Date(dy + 'T00:00:00').getTime();
+      if (isNaN(dts)) { toast('تاريخ غير صالح', 'r'); break; }
+      if (to === shiftOf(S.session.id)) { toast('اختر شِفتًا مختلفًا', 'r'); break; }
+      if ((S.swaps || []).some(x => x.from === S.session.id && x.state === 'pending'))
+        { toast('لديك طلب قائم بانتظار الرد', 'r'); break; }
+      addSwap(S.session.id, to, dts, rsn);
+      S.sheet = null; S.tab.dl = 'swap'; buzz(); toast('أُرسل الطلب إلى ليدرك'); break; }
+    case 'swapok': { const s = S.swaps.find(x => x.id === id);
+      if (!s || s.leaderId !== S.session.id) { toast('ليست من صلاحيتك', 'r'); break; }
+      swapAct(s, 'approve'); buzz(); toast('اعتُمد التبديل'); break; }
+    case 'swapno': { const s = S.swaps.find(x => x.id === id);
+      if (!s || s.leaderId !== S.session.id) { toast('ليست من صلاحيتك', 'r'); break; }
+      S.sheet = textSheet('رفض طلب التبديل', 'السبب إلزامي ويصل مقدّم الطلب',
+        'data-a="doswapno" data-id="' + id + '"', '', 'سبب الرفض'); break; }
+    case 'doswapno': { const s = S.swaps.find(x => x.id === id), rr = val('txt');
+      if (!rr) { toast('السبب إلزامي', 'r'); break; }
+      swapAct(s, 'reject', rr); S.sheet = null; toast('رُفض الطلب', 'r'); break; }
+    case 'swapesc': { const s = S.swaps.find(x => x.id === id);
+      if (!s || s.leaderId !== S.session.id) { toast('ليست من صلاحيتك', 'r'); break; }
+      S.sheet = textSheet('رفع الطلب للكنترول', 'يصل غرفة العمليات مع ملاحظتك',
+        'data-a="doswapesc" data-id="' + id + '"', '', 'ملاحظة للكنترول (اختياري)'); break; }
+    case 'doswapesc': { const s = S.swaps.find(x => x.id === id);
+      swapAct(s, 'escalate', val('txt')); S.sheet = null; toast('رُفع الطلب للكنترول'); break; }
+
+    /* ===== الإشعارات الخارجية ===== */
+    case 'pushask': askPush(); return;
+    case 'pushtoggle': S.pushEnabled = !pushOn();
+      toast(S.pushEnabled ? 'شُغّلت الإشعارات الخارجية' : 'أُوقفت الإشعارات الخارجية'); break;
+    case 'pushtest': {
+      if (!pushOn()) { toast('فعّل الإذن أولًا', 'r'); break; }
+      firePush('تطبيق مُحسن', 'هذا إشعار تجريبي — وصلك بنجاح.', 'test');
+      toast('أُرسل إشعار تجريبي'); break; }
+    case 'bcaud': S.bcAud = v; break;
+    case 'dobroadcast': {
+      const ti = val('bct'), bo = val('bcb');
+      if (ti.length < 4) { toast('اكتب عنوانًا واضحًا', 'r'); break; }
+      if (bo.length < 6) { toast('اكتب نص الإشعار', 'r'); break; }
+      const n3 = broadcast(S.bcAud || 'muhsens', ti, bo);
+      buzz(); toast('أُرسل إلى ' + AR(n3) + ' شخصًا'); break; }
 
     /* ===== دليل المهام ===== */
     case 'guidedit': {
@@ -514,5 +568,6 @@ function onGuideMedia(ev, mk) {
 
 /* ============================ إقلاع ============================ */
 load();
+if (typeof flushPending === 'function') setTimeout(flushPending, 900);
 if (!S.session) S.route = { n: 'login' };
 render();
