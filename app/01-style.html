@@ -1052,3 +1052,24 @@
     background: linear-gradient(150deg, var(--g3), var(--g2)); color: #fff;
     box-shadow: 0 12px 26px -12px rgba(11,53,39,.8); }
 </style>
+<style>
+  /* ===================== النسخة ١٫٨ — الشريط ملتصق بحافة الشاشة ===================== */
+  @media (max-width: 520px) {
+    /* الشريط يُثبَّت على حافة الشاشة نفسها، لا داخل الحاوية —
+       فلا يمكن أن يبقى تحته شيء مهما فعلت الحاوية أو الحافة الآمنة */
+    .tabs {
+      position: fixed; inset-inline: 0; bottom: 0; z-index: 20;
+      padding: 6px 4px 0;
+    }
+    .tabs::after {
+      content: ""; position: absolute; inset-inline: 0; top: 100%;
+      height: env(safe-area-inset-bottom); background: #fff; pointer-events: none;
+    }
+    .app-standalone .tabs { padding-bottom: 0; }
+    /* المحتوى يترك مكانًا للشريط الثابت */
+    .view { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+    .toast { bottom: calc(96px + env(safe-area-inset-bottom)); }
+    /* الأوراق المنبثقة فوق الشريط دائمًا */
+    .scrim { z-index: 50; } .sheet { z-index: 51; }
+  }
+</style>

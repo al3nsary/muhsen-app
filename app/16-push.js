@@ -25,8 +25,12 @@ function askPush() {
   if (!pushSupported()) { toast('جهازك لا يدعم الإشعارات الخارجية', 'r'); return; }
   Notification.requestPermission().then(p => {
     S.pushEnabled = p === 'granted';
-    toast(p === 'granted' ? 'فُعِّلت الإشعارات الخارجية'
-      : p === 'denied' ? 'رُفض الإذن — فعّله من إعدادات المتصفح' : 'لم يُمنح الإذن', p === 'granted' ? 'g' : 'r');
+    if (p === 'granted') {
+      const n = deliverBacklog(true);
+      toast(n ? 'فُعِّلت التنبيهات — وصلك ' + AR(n) + ' إشعارًا قائمًا' : 'فُعِّلت التنبيهات الخارجية', 'g');
+    } else {
+      toast(p === 'denied' ? 'رُفض الإذن — فعّله من إعدادات المتصفح' : 'لم يُمنح الإذن', 'r');
+    }
     render();
   }).catch(() => { toast('تعذّر طلب الإذن', 'r'); render(); });
 }
@@ -48,21 +52,53 @@ function firePush(title, body, tag) {
 }
 
 /* كل إشعار داخلي يصل المستخدم الحالي يخرج إلى نظام الجهاز أيضًا */
-function pushBridge(toId, title, body) {
+function pushBridge(toId, title, body, nid) {
   if (!S.session || toId !== S.session.id) return;
-  firePush(title, body, 'n-' + toId);
+  firePush(title, body, 'n-' + (nid || uid('x')));
 }
 
-/* أول فتح بعد التفعيل: ما فات المستخدم يخرج مرة واحدة */
-function flushPending() {
-  if (!pushOn() || !S.session) return;
-  const fresh = S.notifs.filter(n => n.to === S.session.id && !n.read && !n.pushed);
-  if (!fresh.length) return;
-  if (fresh.length === 1) firePush(fresh[0].title, fresh[0].body, 'n-flush');
-  else firePush('لديك ' + AR(fresh.length) + ' إشعارات جديدة',
-    fresh[0].title + ' — وغيرها في تطبيق مُحسن', 'n-flush');
-  fresh.forEach(n => { n.pushed = true; });
+/* ---------- المتراكم: ما لم يصل سابقًا وما زالت حالته قائمة ---------- */
+/* إشعار «قائم» = لم يُقرأ، ومرجعه ما زال يستدعي إجراءً:
+   مهمة لم تُغلق · تذكرة مفتوحة · طلب معلّق · أو إشعار عام بلا مرجع */
+function stillRelevant(n) {
+  if (n.read) return false;
+  const r = n.route || {};
+  if (r.n === 'task' || r.n === 'assign' || r.n === 'timeline') {
+    const t = taskById(r.id);
+    if (!t) return false;
+    return ['done', 'cancelled'].indexOf(t.status) < 0;
+  }
+  if (r.n === 'ticket') {
+    const k = S.tickets.find(x => x.id === r.id);
+    return !!k && k.status !== 'مغلقة';
+  }
+  if (r.n === 'photo') return (S.photos || []).some(x => x.id === r.id);
+  return true;
 }
+
+const BACKLOG_MAX = 6;   /* أكثر من ذلك يُجمَع في إشعار واحد */
+
+function deliverBacklog(force) {
+  if (!pushOn() || !S.session) return 0;
+  const list = S.notifs
+    .filter(n => n.to === S.session.id && (force || !n.pushed) && stillRelevant(n))
+    .sort((a, b) => a.at - b.at);
+  if (!list.length) return 0;
+
+  const head = list.slice(0, BACKLOG_MAX), rest = list.length - head.length;
+  head.forEach((n, i) => {
+    setTimeout(function () { firePush(n.title, n.body, 'n-' + n.id); }, i * 420);
+  });
+  if (rest > 0) setTimeout(function () {
+    firePush('و' + AR(rest) + ' إشعارات أخرى تنتظرك',
+      'افتح تطبيق مُحسن لمراجعتها كلها.', 'n-more');
+  }, head.length * 420);
+  list.forEach(n => { n.pushed = true; });
+  return list.length;
+}
+
+/* عند الإقلاع: ما فات ولم يصل */
+function flushPending() { deliverBacklog(false); }
 
 /* ---------- بثّ إشعار لفئة ---------- */
 function broadcast(aud, title, body) {
@@ -90,7 +126,10 @@ function pushBox() {
       ? '<div class="grid2">' +
           '<button class="btn ' + (on ? 'd' : 'p') + ' sm" data-a="pushtoggle">' +
             icon('i-bell','s16') + (on ? 'إيقافها' : 'تشغيلها') + '</button>' +
-          '<button class="btn l sm" data-a="pushtest">' + icon('i-send','s16') + 'إشعار تجريبي</button></div>'
+          '<button class="btn l sm" data-a="pushtest">' + icon('i-send','s16') + 'إشعار تجريبي</button></div>' +
+          '<button class="btn l sm" style="margin-top:8px" data-a="pushbacklog">' + icon('i-bell','s16') +
+            'إرسال ما ينتظر إجراءً الآن (' + AR(S.notifs.filter(function (n) {
+              return n.to === S.session.id && stillRelevant(n); }).length) + ')</button>'
       : st === 'denied'
       ? '<div class="tiny" style="opacity:.75;line-height:1.9">رُفض الإذن على هذا الجهاز. فعّله من إعدادات الموقع في المتصفح ثم أعد المحاولة.</div>'
       : st === 'unsupported'

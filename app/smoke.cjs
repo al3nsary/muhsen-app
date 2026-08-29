@@ -803,5 +803,40 @@ step('إشعار لمهمة محذوفة لا يعلّق', () => {
   if (run('S.route.id')) throw new Error('انتقل لمعرّف غير موجود');
 });
 
+console.log('\nتسليم الإشعارات المتراكمة');
+run('S.session={id:"L1",at:Date.now()}');
+step('«ما زال قائمًا» يستبعد ما انتهى', () => {
+  const done = run('S.tasks.find(function(t){return t.status==="done"&&t.leaderId==="L1"})');
+  run('notify("L1","i-bell","على مهمة منتهية","نص",{n:"task",id:"' + done.id + '"})');
+  const n1 = run('S.notifs.find(function(x){return x.title==="على مهمة منتهية"})');
+  if (run('stillRelevant(S.notifs.find(function(x){return x.title==="على مهمة منتهية"}))'))
+    throw new Error('عُدّ قائمًا رغم انتهاء المهمة');
+});
+step('يستبعد المقروء ويشمل العام', () => {
+  run('notify("L1","i-bell","إشعار عام","نص",null)');
+  if (!run('stillRelevant(S.notifs.find(function(x){return x.title==="إشعار عام"}))'))
+    throw new Error('العام استُبعد');
+  run('S.notifs.find(function(x){return x.title==="إشعار عام"}).read=true');
+  if (run('stillRelevant(S.notifs.find(function(x){return x.title==="إشعار عام"}))'))
+    throw new Error('المقروء عُدّ قائمًا');
+});
+step('يستبعد التذكرة المغلقة ويشمل المفتوحة', () => {
+  const k = run('S.tickets.find(function(x){return x.status!=="مغلقة"})');
+  run('notify("L1","i-ticket","تذكرة مفتوحة","نص",{n:"ticket",id:"' + k.id + '"})');
+  if (!run('stillRelevant(S.notifs.find(function(x){return x.title==="تذكرة مفتوحة"}))'))
+    throw new Error('المفتوحة استُبعدت');
+  run('S.tickets.find(function(x){return x.id==="' + k.id + '"}).status="مغلقة"');
+  if (run('stillRelevant(S.notifs.find(function(x){return x.title==="تذكرة مفتوحة"}))'))
+    throw new Error('المغلقة عُدّت قائمة');
+});
+step('لا يُسلَّم شيء بلا إذن', () => {
+  if (run('deliverBacklog(true)') !== 0) throw new Error('سُلِّم بلا إذن');
+});
+step('الجديد يحمل معرّفه للجسر', () => {
+  run('notify("L1","i-bell","وافق المحسن","قبل التسكين",{n:"tasks"})');
+  const n = run('S.notifs[0]');
+  if (!n.id || n.title !== 'وافق المحسن') throw new Error('لم يُنشأ بمعرّف');
+});
+
 console.log('\n' + (fail ? '✗ فشل ' + fail : '✓ نجحت كل الاختبارات'));
 process.exitCode = fail ? 1 : 0;

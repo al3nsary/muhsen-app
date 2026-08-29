@@ -1052,6 +1052,27 @@
     background: linear-gradient(150deg, var(--g3), var(--g2)); color: #fff;
     box-shadow: 0 12px 26px -12px rgba(11,53,39,.8); }
 </style>
+<style>
+  /* ===================== النسخة ١٫٨ — الشريط ملتصق بحافة الشاشة ===================== */
+  @media (max-width: 520px) {
+    /* الشريط يُثبَّت على حافة الشاشة نفسها، لا داخل الحاوية —
+       فلا يمكن أن يبقى تحته شيء مهما فعلت الحاوية أو الحافة الآمنة */
+    .tabs {
+      position: fixed; inset-inline: 0; bottom: 0; z-index: 20;
+      padding: 6px 4px 0;
+    }
+    .tabs::after {
+      content: ""; position: absolute; inset-inline: 0; top: 100%;
+      height: env(safe-area-inset-bottom); background: #fff; pointer-events: none;
+    }
+    .app-standalone .tabs { padding-bottom: 0; }
+    /* المحتوى يترك مكانًا للشريط الثابت */
+    .view { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+    .toast { bottom: calc(96px + env(safe-area-inset-bottom)); }
+    /* الأوراق المنبثقة فوق الشريط دائمًا */
+    .scrim { z-index: 50; } .sheet { z-index: 51; }
+  }
+</style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <symbol id="av-m" viewBox="0 0 44 44">
@@ -1291,7 +1312,7 @@ const kindUI = t => KIND_UI[t.kind] || { i:'i-tasks', c:'#5A6C63', n:'مهمة' 
 
 /* ============================ الحالة ============================ */
 const KEY = 'muhsen_app_v1';
-const APP_VER = 'نسخة ١٫٧';
+const APP_VER = 'نسخة ١٫٨';
 const SCHEMA = 15;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
@@ -1537,8 +1558,9 @@ const lockedForAssign = t => now() >= t.start || ['running', 'done', 'cancelled'
 
 /* ============================ التنبيهات ============================ */
 function notify(toId, icon, title, body, route) {
-  if (typeof pushBridge === 'function') setTimeout(function () { pushBridge(toId, title, body); }, 0);
   S.notifs.unshift({ id: uid('N'), to: toId, icon, title, body, at: now(), read: false, route: route || null });
+  if (typeof pushBridge === 'function') { const _n = S.notifs[0];
+    setTimeout(function () { pushBridge(toId, title, body, _n && _n.id); }, 0); }
 }
 const unread = () => S.notifs.filter(n => n.to === (S.session && S.session.id) && !n.read).length;
 const myNotifs = () => S.notifs.filter(n => n.to === (S.session && S.session.id));
@@ -4617,8 +4639,12 @@ function askPush() {
   if (!pushSupported()) { toast('جهازك لا يدعم الإشعارات الخارجية', 'r'); return; }
   Notification.requestPermission().then(p => {
     S.pushEnabled = p === 'granted';
-    toast(p === 'granted' ? 'فُعِّلت الإشعارات الخارجية'
-      : p === 'denied' ? 'رُفض الإذن — فعّله من إعدادات المتصفح' : 'لم يُمنح الإذن', p === 'granted' ? 'g' : 'r');
+    if (p === 'granted') {
+      const n = deliverBacklog(true);
+      toast(n ? 'فُعِّلت التنبيهات — وصلك ' + AR(n) + ' إشعارًا قائمًا' : 'فُعِّلت التنبيهات الخارجية', 'g');
+    } else {
+      toast(p === 'denied' ? 'رُفض الإذن — فعّله من إعدادات المتصفح' : 'لم يُمنح الإذن', 'r');
+    }
     render();
   }).catch(() => { toast('تعذّر طلب الإذن', 'r'); render(); });
 }
@@ -4640,21 +4666,53 @@ function firePush(title, body, tag) {
 }
 
 /* كل إشعار داخلي يصل المستخدم الحالي يخرج إلى نظام الجهاز أيضًا */
-function pushBridge(toId, title, body) {
+function pushBridge(toId, title, body, nid) {
   if (!S.session || toId !== S.session.id) return;
-  firePush(title, body, 'n-' + toId);
+  firePush(title, body, 'n-' + (nid || uid('x')));
 }
 
-/* أول فتح بعد التفعيل: ما فات المستخدم يخرج مرة واحدة */
-function flushPending() {
-  if (!pushOn() || !S.session) return;
-  const fresh = S.notifs.filter(n => n.to === S.session.id && !n.read && !n.pushed);
-  if (!fresh.length) return;
-  if (fresh.length === 1) firePush(fresh[0].title, fresh[0].body, 'n-flush');
-  else firePush('لديك ' + AR(fresh.length) + ' إشعارات جديدة',
-    fresh[0].title + ' — وغيرها في تطبيق مُحسن', 'n-flush');
-  fresh.forEach(n => { n.pushed = true; });
+/* ---------- المتراكم: ما لم يصل سابقًا وما زالت حالته قائمة ---------- */
+/* إشعار «قائم» = لم يُقرأ، ومرجعه ما زال يستدعي إجراءً:
+   مهمة لم تُغلق · تذكرة مفتوحة · طلب معلّق · أو إشعار عام بلا مرجع */
+function stillRelevant(n) {
+  if (n.read) return false;
+  const r = n.route || {};
+  if (r.n === 'task' || r.n === 'assign' || r.n === 'timeline') {
+    const t = taskById(r.id);
+    if (!t) return false;
+    return ['done', 'cancelled'].indexOf(t.status) < 0;
+  }
+  if (r.n === 'ticket') {
+    const k = S.tickets.find(x => x.id === r.id);
+    return !!k && k.status !== 'مغلقة';
+  }
+  if (r.n === 'photo') return (S.photos || []).some(x => x.id === r.id);
+  return true;
 }
+
+const BACKLOG_MAX = 6;   /* أكثر من ذلك يُجمَع في إشعار واحد */
+
+function deliverBacklog(force) {
+  if (!pushOn() || !S.session) return 0;
+  const list = S.notifs
+    .filter(n => n.to === S.session.id && (force || !n.pushed) && stillRelevant(n))
+    .sort((a, b) => a.at - b.at);
+  if (!list.length) return 0;
+
+  const head = list.slice(0, BACKLOG_MAX), rest = list.length - head.length;
+  head.forEach((n, i) => {
+    setTimeout(function () { firePush(n.title, n.body, 'n-' + n.id); }, i * 420);
+  });
+  if (rest > 0) setTimeout(function () {
+    firePush('و' + AR(rest) + ' إشعارات أخرى تنتظرك',
+      'افتح تطبيق مُحسن لمراجعتها كلها.', 'n-more');
+  }, head.length * 420);
+  list.forEach(n => { n.pushed = true; });
+  return list.length;
+}
+
+/* عند الإقلاع: ما فات ولم يصل */
+function flushPending() { deliverBacklog(false); }
 
 /* ---------- بثّ إشعار لفئة ---------- */
 function broadcast(aud, title, body) {
@@ -4682,7 +4740,10 @@ function pushBox() {
       ? '<div class="grid2">' +
           '<button class="btn ' + (on ? 'd' : 'p') + ' sm" data-a="pushtoggle">' +
             icon('i-bell','s16') + (on ? 'إيقافها' : 'تشغيلها') + '</button>' +
-          '<button class="btn l sm" data-a="pushtest">' + icon('i-send','s16') + 'إشعار تجريبي</button></div>'
+          '<button class="btn l sm" data-a="pushtest">' + icon('i-send','s16') + 'إشعار تجريبي</button></div>' +
+          '<button class="btn l sm" style="margin-top:8px" data-a="pushbacklog">' + icon('i-bell','s16') +
+            'إرسال ما ينتظر إجراءً الآن (' + AR(S.notifs.filter(function (n) {
+              return n.to === S.session.id && stillRelevant(n); }).length) + ')</button>'
       : st === 'denied'
       ? '<div class="tiny" style="opacity:.75;line-height:1.9">رُفض الإذن على هذا الجهاز. فعّله من إعدادات الموقع في المتصفح ثم أعد المحاولة.</div>'
       : st === 'unsupported'
@@ -4823,7 +4884,7 @@ function goTabPage(next) {
     const dx = x - st.x;
     if (Math.abs(dx) < 40) return false;
     st.moved = true;
-    goTabPage((S.tabPage || 0) + (dx > 0 ? -1 : 1));   /* RTL: لليمين = صفحة سابقة */
+    goTabPage((S.tabPage || 0) + (dx > 0 ? 1 : -1));   /* الكتلة تتبع الإصبع */
     const nav = st.nav; st = null;
     nav.dataset.dragged = '1';
     setTimeout(() => { delete nav.dataset.dragged; }, 220);
@@ -4853,12 +4914,12 @@ function goTabPage(next) {
     if (!d) return;
     if (e.cancelable) e.preventDefault();
     const t = Date.now(); if (t - wl < 320) return; wl = t;
-    goTabPage((S.tabPage || 0) + (d > 0 ? 1 : -1));
+    goTabPage((S.tabPage || 0) + (d > 0 ? -1 : 1));
   }, { passive: false });
   document.addEventListener('keydown', e => {
     if (!document.querySelector('.tabs')) return;
-    if (e.key === 'ArrowLeft') goTabPage((S.tabPage || 0) + 1);
-    else if (e.key === 'ArrowRight') goTabPage((S.tabPage || 0) - 1);
+    if (e.key === 'ArrowLeft') goTabPage((S.tabPage || 0) - 1);
+    else if (e.key === 'ArrowRight') goTabPage((S.tabPage || 0) + 1);
   });
 })();
 
@@ -5175,6 +5236,10 @@ document.addEventListener('click', ev => {
     case 'pushlater': S.sheet = null; toast('يمكنك تفعيلها لاحقًا من شاشة التحكم'); break;
     case 'pushtoggle': S.pushEnabled = !pushOn();
       toast(S.pushEnabled ? 'شُغّلت الإشعارات الخارجية' : 'أُوقفت الإشعارات الخارجية'); break;
+    case 'pushbacklog': {
+      if (!pushOn()) { toast('فعّل الإذن أولًا', 'r'); break; }
+      const n4 = deliverBacklog(true);
+      toast(n4 ? 'أُرسل ' + AR(n4) + ' إشعارًا' : 'لا يوجد ما ينتظر إجراءً'); break; }
     case 'pushtest': {
       if (!pushOn()) { toast('فعّل الإذن أولًا', 'r'); break; }
       firePush('تطبيق مُحسن', 'هذا إشعار تجريبي — وصلك بنجاح.', 'test');

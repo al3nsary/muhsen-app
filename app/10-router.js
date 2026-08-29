@@ -85,7 +85,7 @@ function goTabPage(next) {
     const dx = x - st.x;
     if (Math.abs(dx) < 40) return false;
     st.moved = true;
-    goTabPage((S.tabPage || 0) + (dx > 0 ? -1 : 1));   /* RTL: لليمين = صفحة سابقة */
+    goTabPage((S.tabPage || 0) + (dx > 0 ? 1 : -1));   /* الكتلة تتبع الإصبع */
     const nav = st.nav; st = null;
     nav.dataset.dragged = '1';
     setTimeout(() => { delete nav.dataset.dragged; }, 220);
@@ -115,12 +115,12 @@ function goTabPage(next) {
     if (!d) return;
     if (e.cancelable) e.preventDefault();
     const t = Date.now(); if (t - wl < 320) return; wl = t;
-    goTabPage((S.tabPage || 0) + (d > 0 ? 1 : -1));
+    goTabPage((S.tabPage || 0) + (d > 0 ? -1 : 1));
   }, { passive: false });
   document.addEventListener('keydown', e => {
     if (!document.querySelector('.tabs')) return;
-    if (e.key === 'ArrowLeft') goTabPage((S.tabPage || 0) + 1);
-    else if (e.key === 'ArrowRight') goTabPage((S.tabPage || 0) - 1);
+    if (e.key === 'ArrowLeft') goTabPage((S.tabPage || 0) - 1);
+    else if (e.key === 'ArrowRight') goTabPage((S.tabPage || 0) + 1);
   });
 })();
 
@@ -437,6 +437,10 @@ document.addEventListener('click', ev => {
     case 'pushlater': S.sheet = null; toast('يمكنك تفعيلها لاحقًا من شاشة التحكم'); break;
     case 'pushtoggle': S.pushEnabled = !pushOn();
       toast(S.pushEnabled ? 'شُغّلت الإشعارات الخارجية' : 'أُوقفت الإشعارات الخارجية'); break;
+    case 'pushbacklog': {
+      if (!pushOn()) { toast('فعّل الإذن أولًا', 'r'); break; }
+      const n4 = deliverBacklog(true);
+      toast(n4 ? 'أُرسل ' + AR(n4) + ' إشعارًا' : 'لا يوجد ما ينتظر إجراءً'); break; }
     case 'pushtest': {
       if (!pushOn()) { toast('فعّل الإذن أولًا', 'r'); break; }
       firePush('تطبيق مُحسن', 'هذا إشعار تجريبي — وصلك بنجاح.', 'test');

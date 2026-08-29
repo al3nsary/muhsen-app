@@ -1,6 +1,6 @@
 /* ============================ الحالة ============================ */
 const KEY = 'muhsen_app_v1';
-const APP_VER = 'نسخة ١٫٧';
+const APP_VER = 'نسخة ١٫٨';
 const SCHEMA = 15;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
@@ -246,8 +246,9 @@ const lockedForAssign = t => now() >= t.start || ['running', 'done', 'cancelled'
 
 /* ============================ التنبيهات ============================ */
 function notify(toId, icon, title, body, route) {
-  if (typeof pushBridge === 'function') setTimeout(function () { pushBridge(toId, title, body); }, 0);
   S.notifs.unshift({ id: uid('N'), to: toId, icon, title, body, at: now(), read: false, route: route || null });
+  if (typeof pushBridge === 'function') { const _n = S.notifs[0];
+    setTimeout(function () { pushBridge(toId, title, body, _n && _n.id); }, 0); }
 }
 const unread = () => S.notifs.filter(n => n.to === (S.session && S.session.id) && !n.read).length;
 const myNotifs = () => S.notifs.filter(n => n.to === (S.session && S.session.id));
