@@ -994,6 +994,64 @@
   .push .sp > span { font-size: 11px; line-height: 1.6; display: -webkit-box;
     -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 </style>
+<style>
+  /* ===================== النسخة ١٫٦ — إنهاء الفراغ السفلي ===================== */
+  @media (max-width: 520px) {
+    /* أرضية الجهاز والشاشة بيضاء كالشريط، فلا يظهر أي فرق لون أسفل الأزرار */
+    html, body { background: #fff; }
+    #device { background: #fff; }
+    #screen { background: #fff; }
+    .view { background: var(--bg); }
+
+    /* الأزرار تنزل قرب الحافة: ثلث الحافة الآمنة يكفي لتجاوز شريط الآيفون */
+    .tabs { padding: 6px 4px 4px; }
+    .app-standalone .tabs { padding-bottom: calc(4px + env(safe-area-inset-bottom) * .34); }
+
+    /* حارس أخير: طلاء أبيض ممتد من أسفل الشريط إلى حافة الشاشة مهما كان السبب */
+    .tabs::after {
+      content: ""; position: absolute; inset-inline: 0; top: 100%; height: 180px;
+      background: #fff; pointer-events: none;
+    }
+
+    /* شريط أنحف: أيقونة أصغر ومسافات أضيق */
+    .tabs button .ic { width: 21px; height: 21px; }
+    .tabs button { gap: 2px; padding-top: 2px; }
+    .tabs .home .hb { width: 48px; height: 48px; margin-top: -17px; }
+    .tabs .home { width: 68px; }
+  }
+</style>
+<style>
+  /* ===================== النسخة ١٫٧ — كتلة التابات ===================== */
+  .tabs .tside { flex: 1 1 0; min-width: 0; overflow: hidden; display: block; }
+  .tabs .trail {
+    display: flex; width: 100%;
+    transition: transform .28s cubic-bezier(.32,.72,0,1);
+    will-change: transform;
+  }
+  .tabs .tpage { flex: 0 0 100%; width: 100%; display: flex; }
+  .tabs .tpage > button, .tabs .tpage > .tspacer { flex: 1 1 0; min-width: 0; }
+  .tabs .tspacer { display: block; }
+  @media (prefers-reduced-motion: reduce) { .tabs .trail { transition: none; } }
+
+  /* نقاط الصفحات — قابلة للنقر */
+  .tabs .dots {
+    position: absolute; inset-inline-start: 12px; top: 3px;
+    display: flex; gap: 5px; z-index: 4;
+  }
+  .tabs .dots button {
+    width: 6px; height: 6px; min-width: 0; padding: 0; border-radius: 50%;
+    background: #D5DCD7; display: block; flex: none; transition: all .2s ease;
+  }
+  .tabs .dots button.on { background: var(--g); width: 16px; border-radius: 99px; }
+
+  /* حاجز يمنع تنفيذ نقرة بعد سحب */
+  .tabs[data-dragged] button { pointer-events: none; }
+</style>
+<style>
+  .askic { width: 62px; height: 62px; border-radius: 22px; display: inline-grid; place-items: center;
+    background: linear-gradient(150deg, var(--g3), var(--g2)); color: #fff;
+    box-shadow: 0 12px 26px -12px rgba(11,53,39,.8); }
+</style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <symbol id="av-m" viewBox="0 0 44 44">
@@ -1233,7 +1291,7 @@ const kindUI = t => KIND_UI[t.kind] || { i:'i-tasks', c:'#5A6C63', n:'مهمة' 
 
 /* ============================ الحالة ============================ */
 const KEY = 'muhsen_app_v1';
-const APP_VER = 'نسخة ١٫٥';
+const APP_VER = 'نسخة ١٫٧';
 const SCHEMA = 15;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
@@ -1943,51 +2001,90 @@ function bar(title, opt) {
     '<div class="nav">' + left + '<span class="t">' + E(title) + '</span>' + right + '</div></div>';
 }
 
-/* شريط سفلي ثابت — ست وجهات وحدها، والبقية في «المزيد» */
+/* شريط سفلي — كل الوجهات، ثلاث عن يمين الرئيسية وثلاث عن يسارها،
+   والكتلة كلها تتبدّل صفحةً واحدة بالسحب أو بنقر النقاط */
+const TABS_SIDE = 3;
+
 function tabItems() {
   const L = isLeader();
   const inbox = S.requests.filter(x => x.to === S.session.id && x.state === 'pending').length +
     pendingSwaps().length;
   const openTk = myTickets().filter(k => k.status !== 'مغلقة').length;
-  return [
-    { k:'tasks', i:'i-tasks', l:'المهام',
-      on:['tasks','task','assign','timeline','doc'] },
-    { k: L ? 'lreq' : 'requests', i:'i-swap', l:'الطلبات', b: inbox,
-      on:['lreq','requests'] },
-    { k:'daily', i:'i-check', l:'التحضير',
-      on:['daily'] },
-    { k:'tickets', i:'i-ticket', l:'التذاكر', b: openTk,
-      on:['tickets','ticket'] },
-    { k:'notifs', i:'i-bell', l:'الإشعارات', b: unread(),
-      on:['notifs'] },
-    { k:'more', i:'i-dots', l:'المزيد',
-      on:['more','profile','admin','album','photo','guide','rating','taskrating',
-          'calendar','pilgrims','muhsens'] }
+  const base = [
+    { k:'tasks',   i:'i-tasks',  l:'المهام',    on:['tasks','task','assign','timeline','doc'] },
+    { k: L ? 'lreq' : 'requests', i:'i-swap', l:'الطلبات', b:inbox, on:['lreq','requests'] },
+    { k:'daily',   i:'i-check',  l:'التحضير',   on:['daily'] },
+    { k:'tickets', i:'i-ticket', l:'التذاكر',   b:openTk, on:['tickets','ticket'] },
+    { k:'notifs',  i:'i-bell',   l:'الإشعارات', b:unread(), on:['notifs'] },
+    { k:'guide',   i:'i-guide',  l:'الدليل',    on:['guide'] },
+    { k:'rating',  i:'i-star',   l:'التقييم',   on:['rating','taskrating'] },
+    { k:'calendar',i:'i-cal',    l:'التقويم',   on:['calendar'] },
+    { k:'album',   i:'i-album',  l:'الصور',     on:['album','photo'] },
+    { k:'pilgrims',i:'i-user',   l:'الحجاج',    on:['pilgrims'] }
   ];
+  if (L) base.splice(3, 0, { k:'muhsens', i:'i-users', l:'المحسنون', on:['muhsens'] });
+  base.push({ k:'more', i:'i-dots', l:'المزيد', on:['more','profile','admin'] });
+  return base;
+}
+const tabPer = () => TABS_SIDE * 2;
+const tabPageCount = () => Math.ceil(tabItems().length / tabPer());
+function tabPageOf(route) {
+  const it = tabItems();
+  for (let i = 0; i < it.length; i++) if (it[i].on.indexOf(route) >= 0) return Math.floor(i / tabPer());
+  return null;
 }
 
 function tabs() {
   const L = isLeader(), r = S.route.n;
-  const items = tabItems();
-  const half = items.length / 2;
+  const items = tabItems(), per = tabPer(), pages = tabPageCount();
+  const auto = tabPageOf(r);
+  if (auto !== null && S._tabAuto !== r) { S.tabPage = auto; S._tabAuto = r; }
+  const pg = Math.min(Math.max(S.tabPage || 0, 0), pages - 1);
+
   const btn = it => {
+    if (!it) return '<span class="tspacer"></span>';
     const on = it.on.indexOf(r) >= 0;
     return '<button class="' + (on ? 'on' : '') + '" role="tab"' + (on ? ' aria-selected="true"' : '') +
       ' data-a="go" data-n="' + it.k + '">' +
       '<span class="wi">' + icon(it.i) + (it.b ? '<span class="badge">' + AR(it.b) + '</span>' : '') +
       '</span><span class="tl">' + it.l + '</span></button>';
   };
+  const rail = side => {
+    let out = '';
+    for (let p = 0; p < pages; p++) {
+      const base = p * per + (side === 'r' ? 0 : TABS_SIDE);
+      let cells = '';
+      for (let i = 0; i < TABS_SIDE; i++) cells += btn(items[base + i]);
+      out += '<div class="tpage">' + cells + '</div>';
+    }
+    return '<div class="tside"><div class="trail" style="transform:translateX(' + (pg * 100) + '%)">' +
+      out + '</div></div>';
+  };
   const homeOn = ['home','mhome'].indexOf(r) >= 0;
-  return '<nav class="tabs" role="tablist" aria-label="التنقّل">' +
-    '<div class="tside">' + items.slice(0, half).map(btn).join('') + '</div>' +
+
+  return '<nav class="tabs" role="tablist" aria-label="التنقّل" data-pages="' + pages + '">' +
+    (pages > 1 ? '<span class="dots">' + Array.from({ length: pages }, (_, i) =>
+      '<button class="' + (i === pg ? 'on' : '') + '" data-a="tabpage" data-v="' + i + '" ' +
+      'aria-label="الصفحة ' + AR(i + 1) + '"></button>').join('') + '</span>' : '') +
+    rail('r') +
     '<button class="home' + (homeOn ? ' on' : '') + '" role="tab"' + (homeOn ? ' aria-selected="true"' : '') +
       ' data-a="go" data-n="' + (L ? 'home' : 'mhome') + '">' +
       '<span class="wi hb"><i class="mlogo"></i></span>' +
       '<span class="hl">الرئيسية</span></button>' +
-    '<div class="tside">' + items.slice(half).map(btn).join('') + '</div>' +
+    rail('l') +
     '</nav>';
 }
 
+/* ختم بيئة الجهاز — يكشف سبب أي فراغ في الميدان بلا تخمين */
+function envStamp() { return '<span id="envst"></span>'; }
+function envStampNow() {
+  try {
+    const st = document.documentElement.classList.contains('app-standalone') ? 'مثبَّت' : 'متصفح';
+    const tb = document.querySelector('.tabs');
+    const gap = tb ? Math.round(window.innerHeight - tb.getBoundingClientRect().bottom) : '—';
+    return st + ' · ' + AR(window.innerWidth) + '×' + AR(window.innerHeight) + ' · فراغ ' + AR(gap);
+  } catch (e) { return ''; }
+}
 const ground = () => '<div class="ground"></div>';
 
 /* ============================ مكوّنات مشتركة ============================ */
@@ -2201,20 +2298,20 @@ function screenTasks() {
 
   return bar('المهام', { left:'<button data-a="go" data-n="calendar" aria-label="التقويم">' + icon('i-cal') + '</button>' }) +
     '<div class="view">' + ground() +
-    (L && un ? '<button class="note a" data-a="seg" data-k="tasks" data-v="next" style="width:100%">' +
+    (L && un ? '<button class="note a" data-a="pickbucket" data-v="next" style="width:100%">' +
       icon('i-assign','s18') + '<span class="sp" style="text-align:right"><b>' + AR(un) + ' مهمة تحتاج تسكينًا</b><br>' +
       'التسكين مطلوب فور استلام التطبيق — ولو كانت المهمة بعد أسابيع.</span></button>' : '') +
 
     '<button class="drop" data-a="bucketmenu">' + icon('i-filter','s18') +
-      '<span class="sp"><span class="tiny dim2">عرض</span><b>' + cur.l + '</b></span>' +
-      '<span class="cnt">' + AR(seg === 'all' ? all.length : count(seg)) + ' مهمة</span>' +
+      '<span class="sp"><span class="tiny dim2">التصنيف المعروض</span><b>' + cur.l + '</b></span>' +
+      '<span class="cnt">' + AR(list.length) + '</span>' +
       icon('i-down','s16') + '</button>' +
 
     (list.length ? list.map(t2 => taskRow(t2)).join('')
       : '<div class="c center" style="padding:28px"><b>لا توجد مهام في «' + cur.l + '»</b>' +
         '<div class="sm dim" style="margin-top:6px">' +
         (seg === 'undone' ? 'لا شيء مسجَّل عليك — أحسنت.' : 'جرّب تصنيفًا آخر من القائمة.') + '</div>' +
-        '<button class="btn l sm" style="margin-top:12px" data-a="seg" data-k="tasks" data-v="all">' +
+        '<button class="btn l sm" style="margin-top:12px" data-a="pickbucket" data-v="all">' +
           icon('i-list','s16') + 'عرض كل المهام</button></div>') +
     '</div>' + tabs();
 }
@@ -2227,7 +2324,7 @@ function bucketSheet() {
       (isLeader() ? 'مهام الـKT الذي تقوده' : 'المهام التي لك فيها دور') + '</div>' +
     '<div class="col" style="gap:7px">' + TBUCKETS.map(b => {
       const n = b.k === 'all' ? all.length : all.filter(x => taskBucket(x, uid_) === b.k).length;
-      return '<button class="listitem' + (b.k === seg ? ' on' : '') + '" data-a="seg" data-k="tasks" data-v="' + b.k + '">' +
+      return '<button class="listitem' + (b.k === seg ? ' on' : '') + '" data-a="pickbucket" data-v="' + b.k + '">' +
         '<span class="ico">' + icon(b.i, 's18') + '</span>' +
         '<span class="sp"><b style="font-size:13.5px;display:block">' + b.l + '</b>' +
         '<span class="tiny dim2">' + AR(n) + ' مهمة</span></span>' +
@@ -3035,7 +3132,7 @@ function screenMore() {
       (x[0] === 'notifs' && unread() ? pill(AR(unread()), 'no') : '') + icon('i-back','s16') + '</button>').join('') +
     '<button class="btn d" data-a="logout">' + icon('i-out','s16') + 'تسجيل الخروج</button>' +
     '<button class="btn l sm" data-a="appupdate">' + icon('i-reset','s16') + 'تحديث التطبيق إلى آخر نسخة</button>' +
-    '<div class="tiny dim2 center" style="margin-top:6px;line-height:1.9">تطبيق مُحسن · ' + APP_VER + ' · بنية ' + AR(SCHEMA) + '<br>' +
+    '<div class="tiny dim2 center" style="margin-top:6px;line-height:1.9">تطبيق مُحسن · ' + APP_VER + ' · ' + envStamp() + ' · بنية ' + AR(SCHEMA) + '<br>' +
       'مصادر الصور: ويكيميديا كومنز — Adli Wahid · Basheer Olakara · Omar Chatriwala · Shah134pk</div>' +
     '<i class="mnozoly dark" role="img" aria-label="نُزلي"></i>' +
     '</div>' + tabs();
@@ -4616,6 +4713,29 @@ function pushBox() {
     '</div>';
 }
 
+/* ---------- سؤال الإذن عند أول فتح ---------- */
+function pushAskSheet() {
+  return '<div class="grip"></div>' +
+    '<div class="center" style="padding:4px 0 2px">' +
+      '<span class="askic">' + icon('i-bell','s26') + '</span>' +
+      '<h3 style="margin:12px 0 4px">نُنبّهك بمهامك في وقتها</h3>' +
+      '<div class="sm dim" style="line-height:1.9">فعّل تنبيهات الجوال ليصلك خارج التطبيق:<br>' +
+      'اقتراب موعد مهمة · طلب تسكين ينتظر ردّك · تذكرة عاجلة · تذكير التحضير.</div></div>' +
+    '<div class="note a" style="margin:14px 0">' + icon('i-info','s16') +
+      '<span>يمكنك إيقافها متى شئت من شاشة التحكم.</span></div>' +
+    '<div class="grid2">' +
+      '<button class="btn g" data-a="pushlater">لاحقًا</button>' +
+      '<button class="btn p" data-a="pushask">' + icon('i-bell','s16') + 'تفعيل التنبيهات</button></div>';
+}
+/* تُعرض مرة واحدة بعد تسجيل الدخول */
+function maybeAskPush() {
+  if (!S.session) return false;
+  if (S.pushAsked) return false;
+  if (!pushSupported() || pushState() !== 'default') { S.pushAsked = true; return false; }
+  S.pushAsked = true;
+  S.sheet = pushAskSheet();
+  return true;
+}
 /* ============================ المُوجِّه ============================ */
 const SCREENS = {
   login: screenLogin,
@@ -4666,15 +4786,83 @@ function render() {
   const nv = el.querySelector('.view');
   if (nv && keep) nv.scrollTop = keep;
   S._viewKey = key;
+  const es = document.getElementById("envst");
+  if (es) es.textContent = envStampNow();
   centerActiveTab();
   save();
   if (S.toast) { const t = S.toast; setTimeout(() => { if (S.toast === t) { S.toast = null; render(); } }, 2600); }
 }
 
-/* لا سحب ولا صفحات — الشريط ثابت */
+/* ===== الشريط: الكتلة تتبدّل صفحةً واحدة ===== */
 function centerActiveTab() {}
 
-/* ===== ملاءمة الشاشة لأي جوال ===== */
+function goTabPage(next) {
+  const nav = document.querySelector('.tabs'); if (!nav) return;
+  const pages = Number(nav.dataset.pages || 1);
+  const cur = Math.min(Math.max(S.tabPage || 0, 0), pages - 1);
+  const to = Math.min(Math.max(next, 0), pages - 1);
+  if (to === cur) return;
+  S.tabPage = to; S._tabAuto = null;
+  nav.querySelectorAll('.trail').forEach(t => { t.style.transform = 'translateX(' + (to * 100) + '%)'; });
+  nav.querySelectorAll('.dots button').forEach((d, i) => {
+    if (i === to) d.classList.add('on'); else d.classList.remove('on');
+  });
+  try { navigator.vibrate && navigator.vibrate(8); } catch (e) {}
+  save();
+}
+
+(function tabSwipe() {
+  let st = null;
+  const grab = t => {
+    const nav = t && t.closest ? t.closest('.tabs') : null;
+    if (!nav || t.closest('.home') || t.closest('.dots')) return null;
+    return nav;
+  };
+  function move(x) {
+    if (!st) return false;
+    const dx = x - st.x;
+    if (Math.abs(dx) < 40) return false;
+    st.moved = true;
+    goTabPage((S.tabPage || 0) + (dx > 0 ? -1 : 1));   /* RTL: لليمين = صفحة سابقة */
+    const nav = st.nav; st = null;
+    nav.dataset.dragged = '1';
+    setTimeout(() => { delete nav.dataset.dragged; }, 220);
+    return true;
+  }
+  document.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    const nav = grab(e.target); if (!nav) return;
+    st = { nav, x: e.clientX, moved: false };
+  });
+  document.addEventListener('pointermove', e => { if (st) move(e.clientX); });
+  document.addEventListener('pointerup', () => { st = null; });
+  document.addEventListener('pointercancel', () => { st = null; });
+  document.addEventListener('touchstart', e => {
+    const nav = grab(e.target); if (!nav) return;
+    st = { nav, x: e.touches[0].clientX, moved: false };
+  }, { passive: true });
+  document.addEventListener('touchmove', e => {
+    if (!st) return;
+    if (move(e.touches[0].clientX) && e.cancelable) e.preventDefault();
+  }, { passive: false });
+  document.addEventListener('touchend', () => { st = null; });
+  let wl = 0;
+  document.addEventListener('wheel', e => {
+    const nav = e.target.closest && e.target.closest('.tabs'); if (!nav) return;
+    const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    if (!d) return;
+    if (e.cancelable) e.preventDefault();
+    const t = Date.now(); if (t - wl < 320) return; wl = t;
+    goTabPage((S.tabPage || 0) + (d > 0 ? 1 : -1));
+  }, { passive: false });
+  document.addEventListener('keydown', e => {
+    if (!document.querySelector('.tabs')) return;
+    if (e.key === 'ArrowLeft') goTabPage((S.tabPage || 0) + 1);
+    else if (e.key === 'ArrowRight') goTabPage((S.tabPage || 0) - 1);
+  });
+})();
+
+/* ===== ملاءمة الشاشة ===== */
 (function fitScreen() {
   const root = document.documentElement;
   const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
@@ -4719,12 +4907,17 @@ document.addEventListener('click', ev => {
     case 'close': S.sheet = null; break;
     case 'dismiss': S.push = null; break;
     case 'seg': S.tab[b.dataset.k] = v; break;
+    case 'tabpage': goTabPage(Number(v)); return;
+    /* اختيار التصنيف يغلق القائمة فورًا ولا يعيد فتحها */
+    case 'pickbucket': S.tab.tasks = v; S.sheet = null; buzz(); break;
     case 'psearch': return;
 
     case 'role': S.loginRole = b.dataset.r; break;
     case 'login': { const u = userById(id); S.session = { id: u.id, at: Date.now() };
       S.route = { n: u.role === 'leader' ? 'home' : 'mhome' };
-      toast('مرحبًا ' + u.name, 'g'); buzz(); break; }
+      toast('مرحبًا ' + u.name, 'g'); buzz();
+      setTimeout(function () { if (maybeAskPush()) render(); }, 1400);
+      break; }
     case 'logout': S.session = null; S.route = { n: 'login' }; S.sheet = null; break;
 
     case 'place': S.sheet = placeSheet(); break;
@@ -4978,7 +5171,8 @@ document.addEventListener('click', ev => {
       swapAct(s, 'escalate', val('txt')); S.sheet = null; toast('رُفع الطلب للكنترول'); break; }
 
     /* ===== الإشعارات الخارجية ===== */
-    case 'pushask': askPush(); return;
+    case 'pushask': S.sheet = null; askPush(); return;
+    case 'pushlater': S.sheet = null; toast('يمكنك تفعيلها لاحقًا من شاشة التحكم'); break;
     case 'pushtoggle': S.pushEnabled = !pushOn();
       toast(S.pushEnabled ? 'شُغّلت الإشعارات الخارجية' : 'أُوقفت الإشعارات الخارجية'); break;
     case 'pushtest': {
@@ -5117,6 +5311,7 @@ function onGuideMedia(ev, mk) {
 /* ============================ إقلاع ============================ */
 load();
 if (typeof flushPending === 'function') setTimeout(flushPending, 900);
+setTimeout(function () { if (typeof maybeAskPush === 'function' && maybeAskPush()) render(); }, 1800);
 if (!S.session) S.route = { n: 'login' };
 render();
 

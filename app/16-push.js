@@ -120,3 +120,27 @@ function pushBox() {
       E(S.broadcasts[0].title) + ' — ' + AR(S.broadcasts[0].n) + ' مستلمًا · ' + t12(S.broadcasts[0].at) + '</div>' : '') +
     '</div>';
 }
+
+/* ---------- سؤال الإذن عند أول فتح ---------- */
+function pushAskSheet() {
+  return '<div class="grip"></div>' +
+    '<div class="center" style="padding:4px 0 2px">' +
+      '<span class="askic">' + icon('i-bell','s26') + '</span>' +
+      '<h3 style="margin:12px 0 4px">نُنبّهك بمهامك في وقتها</h3>' +
+      '<div class="sm dim" style="line-height:1.9">فعّل تنبيهات الجوال ليصلك خارج التطبيق:<br>' +
+      'اقتراب موعد مهمة · طلب تسكين ينتظر ردّك · تذكرة عاجلة · تذكير التحضير.</div></div>' +
+    '<div class="note a" style="margin:14px 0">' + icon('i-info','s16') +
+      '<span>يمكنك إيقافها متى شئت من شاشة التحكم.</span></div>' +
+    '<div class="grid2">' +
+      '<button class="btn g" data-a="pushlater">لاحقًا</button>' +
+      '<button class="btn p" data-a="pushask">' + icon('i-bell','s16') + 'تفعيل التنبيهات</button></div>';
+}
+/* تُعرض مرة واحدة بعد تسجيل الدخول */
+function maybeAskPush() {
+  if (!S.session) return false;
+  if (S.pushAsked) return false;
+  if (!pushSupported() || pushState() !== 'default') { S.pushAsked = true; return false; }
+  S.pushAsked = true;
+  S.sheet = pushAskSheet();
+  return true;
+}

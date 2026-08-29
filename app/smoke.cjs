@@ -497,30 +497,84 @@ step('زر الرئيسية واحد وثابت في المنتصف', () => {
   if (before.indexOf('class="tside"') < 0) throw new Error('لا يوجد جانب قبل الرئيسية');
   if (after.indexOf('class="tside"') < 0) throw new Error('لا يوجد جانب بعدها');
 });
-step('ستّ وجهات ثابتة بلا سحب', () => {
+step('كل الوجهات في الشريط، ثلاث لكل جانب', () => {
   const it = run('tabItems()');
-  if (it.length !== 6) throw new Error('العدد ' + it.length);
+  if (it.length < 10) throw new Error('عدد قليل: ' + it.length);
+  if (run('TABS_SIDE') !== 3) throw new Error('عدد الجانب');
   const h = run('tabs()');
-  if (h.indexOf('trail') >= 0 || h.indexOf('tpage') >= 0) throw new Error('ما زال فيه صفحات');
-  if ((h.match(/class="tside"/g) || []).length !== 2) throw new Error('الجانبان غير متوازنين');
+  const rails = h.split('class="trail"').length - 1;
+  if (rails !== 2) throw new Error('الشرائط ' + rails);
+  const pages = run('tabPageCount()');
+  const pgs = h.split('class="tpage"').length - 1;
+  if (pgs !== pages * 2) throw new Error('الصفحات ' + pgs + ' من ' + pages);
+});
+step('نقاط الصفحات قابلة للنقر', () => {
+  const h = run('tabs()');
+  const dots = (h.match(/data-a="tabpage"/g) || []).length;
+  if (dots !== run('tabPageCount()')) throw new Error('النقاط ' + dots);
 });
 step('كل وجهة في الشريط لها شاشة', () => {
-  const bad = run('tabItems().filter(x=>!SCREENS[x.k]).map(x=>x.k)');
+  const bad = run('tabItems().filter(function(x){return !SCREENS[x.k]}).map(function(x){return x.k})');
   if (bad.length) throw new Error('بلا شاشة: ' + bad.join(', '));
 });
-step('كل شاشة يصلها المستخدم من الشريط أو من المزيد', () => {
+step('الصفحة تتبع الشاشة المفتوحة', () => {
+  if (run('tabPageOf("calendar")') === null) throw new Error('التقويم بلا صفحة');
+  if (run('tabPageOf("daily")') === null) throw new Error('التحضير بلا صفحة');
+  if (run('tabPageOf("more")') === null) throw new Error('المزيد بلا صفحة');
+});
+step('كل شاشة يصلها المستخدم', () => {
   const covered = run('tabItems().reduce(function(a,x){return a.concat(x.on)},[])');
-  const skip = ['login','home','mhome','notifs'];
+  const inMore = run('screenMore()');
+  const skip = ['login','home','mhome'];
   const miss = run('Object.keys(SCREENS)').filter(k =>
-    skip.indexOf(k) < 0 && covered.indexOf(k) < 0);
+    skip.indexOf(k) < 0 && covered.indexOf(k) < 0 && inMore.indexOf('data-n="' + k + '"') < 0);
   if (miss.length) throw new Error('غير مغطّاة: ' + miss.join(', '));
 });
-step('«المزيد» يضم ما خرج من الشريط', () => {
-  run('S.route={n:"more"}');
-  const h = run('screenMore()');
-  ['guide','rating','calendar','pilgrims','album','muhsens','daily'].forEach(k => {
-    if (h.indexOf('data-n="' + k + '"') < 0) throw new Error('ينقص: ' + k);
+
+console.log('\nقائمة تصنيف المهام');
+step('الاختيار يغلق القائمة ولا يعيد فتحها', () => {
+  run('S.route={n:"tasks"}; S.tab.tasks="all"');
+  click({ a: 'bucketmenu' });
+  if (!run('S.sheet')) throw new Error('لم تُفتح');
+  click({ a: 'pickbucket', v: 'done' });
+  if (run('S.sheet')) throw new Error('بقيت مفتوحة');
+  if (run('S.tab.tasks') !== 'done') throw new Error('لم يتغيّر التصنيف');
+});
+step('العدّاد يطابق المعروض فعلًا', () => {
+  run('TBUCKETS').forEach(bk => {
+    run('S.tab.tasks="' + bk.k + '"');
+    const shown = (run('screenTasks()').split('<nav class="tabs"')[0].match(/class="c task /g) || []).length;
+    const n = bk.k === 'all' ? run('myTasks().length')
+      : run('myTasks().filter(function(t){return taskBucket(t,S.session.id)==="' + bk.k + '"}).length');
+    if (shown !== n) throw new Error(bk.l + ': ظهر ' + shown + ' والعدّاد ' + n);
   });
+  run('S.tab.tasks="all"');
+});
+step('لا يبقى زر تصنيف قديم', () => {
+  const h = run('screenTasks()').split('<nav class="tabs"')[0];
+  if (h.indexOf('data-k="tasks"') >= 0) throw new Error('ما زال هناك زر تصنيف');
+});
+
+console.log('\nسؤال الإشعارات عند أول فتح');
+step('يُعرض مرة واحدة فقط', () => {
+  run('S.pushAsked=false; S.sheet=null');
+  const first = run('maybeAskPush()');
+  const second = run('maybeAskPush()');
+  if (second) throw new Error('تكرّر السؤال');
+  if (!run('S.pushAsked')) throw new Error('لم يُسجَّل');
+});
+step('ورقة السؤال فيها الخياران', () => {
+  const sh = run('pushAskSheet()');
+  if (sh.indexOf('data-a="pushask"') < 0) throw new Error('بلا زر تفعيل');
+  if (sh.indexOf('data-a="pushlater"') < 0) throw new Error('بلا زر لاحقًا');
+});
+step('«لاحقًا» يغلق ولا يمنع التفعيل من التحكم', () => {
+  run('S.sheet=pushAskSheet()');
+  click({ a: 'pushlater' });
+  if (run('S.sheet')) throw new Error('لم تُغلق');
+  const box = run('pushBox()');
+  if (box.indexOf('الإشعارات الخارجية') < 0) throw new Error('اختفى الصندوق من التحكم');
+  if (box.indexOf('إرسال إشعار لفئة') < 0) throw new Error('اختفى صندوق البثّ');
 });
 
 console.log('\nترتيب الإشعارات');

@@ -382,7 +382,7 @@ function screenMore() {
       (x[0] === 'notifs' && unread() ? pill(AR(unread()), 'no') : '') + icon('i-back','s16') + '</button>').join('') +
     '<button class="btn d" data-a="logout">' + icon('i-out','s16') + 'تسجيل الخروج</button>' +
     '<button class="btn l sm" data-a="appupdate">' + icon('i-reset','s16') + 'تحديث التطبيق إلى آخر نسخة</button>' +
-    '<div class="tiny dim2 center" style="margin-top:6px;line-height:1.9">تطبيق مُحسن · ' + APP_VER + ' · بنية ' + AR(SCHEMA) + '<br>' +
+    '<div class="tiny dim2 center" style="margin-top:6px;line-height:1.9">تطبيق مُحسن · ' + APP_VER + ' · ' + envStamp() + ' · بنية ' + AR(SCHEMA) + '<br>' +
       'مصادر الصور: ويكيميديا كومنز — Adli Wahid · Basheer Olakara · Omar Chatriwala · Shah134pk</div>' +
     '<i class="mnozoly dark" role="img" aria-label="نُزلي"></i>' +
     '</div>' + tabs();

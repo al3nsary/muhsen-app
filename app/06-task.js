@@ -10,20 +10,20 @@ function screenTasks() {
 
   return bar('المهام', { left:'<button data-a="go" data-n="calendar" aria-label="التقويم">' + icon('i-cal') + '</button>' }) +
     '<div class="view">' + ground() +
-    (L && un ? '<button class="note a" data-a="seg" data-k="tasks" data-v="next" style="width:100%">' +
+    (L && un ? '<button class="note a" data-a="pickbucket" data-v="next" style="width:100%">' +
       icon('i-assign','s18') + '<span class="sp" style="text-align:right"><b>' + AR(un) + ' مهمة تحتاج تسكينًا</b><br>' +
       'التسكين مطلوب فور استلام التطبيق — ولو كانت المهمة بعد أسابيع.</span></button>' : '') +
 
     '<button class="drop" data-a="bucketmenu">' + icon('i-filter','s18') +
-      '<span class="sp"><span class="tiny dim2">عرض</span><b>' + cur.l + '</b></span>' +
-      '<span class="cnt">' + AR(seg === 'all' ? all.length : count(seg)) + ' مهمة</span>' +
+      '<span class="sp"><span class="tiny dim2">التصنيف المعروض</span><b>' + cur.l + '</b></span>' +
+      '<span class="cnt">' + AR(list.length) + '</span>' +
       icon('i-down','s16') + '</button>' +
 
     (list.length ? list.map(t2 => taskRow(t2)).join('')
       : '<div class="c center" style="padding:28px"><b>لا توجد مهام في «' + cur.l + '»</b>' +
         '<div class="sm dim" style="margin-top:6px">' +
         (seg === 'undone' ? 'لا شيء مسجَّل عليك — أحسنت.' : 'جرّب تصنيفًا آخر من القائمة.') + '</div>' +
-        '<button class="btn l sm" style="margin-top:12px" data-a="seg" data-k="tasks" data-v="all">' +
+        '<button class="btn l sm" style="margin-top:12px" data-a="pickbucket" data-v="all">' +
           icon('i-list','s16') + 'عرض كل المهام</button></div>') +
     '</div>' + tabs();
 }
@@ -36,7 +36,7 @@ function bucketSheet() {
       (isLeader() ? 'مهام الـKT الذي تقوده' : 'المهام التي لك فيها دور') + '</div>' +
     '<div class="col" style="gap:7px">' + TBUCKETS.map(b => {
       const n = b.k === 'all' ? all.length : all.filter(x => taskBucket(x, uid_) === b.k).length;
-      return '<button class="listitem' + (b.k === seg ? ' on' : '') + '" data-a="seg" data-k="tasks" data-v="' + b.k + '">' +
+      return '<button class="listitem' + (b.k === seg ? ' on' : '') + '" data-a="pickbucket" data-v="' + b.k + '">' +
         '<span class="ico">' + icon(b.i, 's18') + '</span>' +
         '<span class="sp"><b style="font-size:13.5px;display:block">' + b.l + '</b>' +
         '<span class="tiny dim2">' + AR(n) + ' مهمة</span></span>' +

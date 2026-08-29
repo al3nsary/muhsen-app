@@ -48,15 +48,83 @@ function render() {
   const nv = el.querySelector('.view');
   if (nv && keep) nv.scrollTop = keep;
   S._viewKey = key;
+  const es = document.getElementById("envst");
+  if (es) es.textContent = envStampNow();
   centerActiveTab();
   save();
   if (S.toast) { const t = S.toast; setTimeout(() => { if (S.toast === t) { S.toast = null; render(); } }, 2600); }
 }
 
-/* لا سحب ولا صفحات — الشريط ثابت */
+/* ===== الشريط: الكتلة تتبدّل صفحةً واحدة ===== */
 function centerActiveTab() {}
 
-/* ===== ملاءمة الشاشة لأي جوال ===== */
+function goTabPage(next) {
+  const nav = document.querySelector('.tabs'); if (!nav) return;
+  const pages = Number(nav.dataset.pages || 1);
+  const cur = Math.min(Math.max(S.tabPage || 0, 0), pages - 1);
+  const to = Math.min(Math.max(next, 0), pages - 1);
+  if (to === cur) return;
+  S.tabPage = to; S._tabAuto = null;
+  nav.querySelectorAll('.trail').forEach(t => { t.style.transform = 'translateX(' + (to * 100) + '%)'; });
+  nav.querySelectorAll('.dots button').forEach((d, i) => {
+    if (i === to) d.classList.add('on'); else d.classList.remove('on');
+  });
+  try { navigator.vibrate && navigator.vibrate(8); } catch (e) {}
+  save();
+}
+
+(function tabSwipe() {
+  let st = null;
+  const grab = t => {
+    const nav = t && t.closest ? t.closest('.tabs') : null;
+    if (!nav || t.closest('.home') || t.closest('.dots')) return null;
+    return nav;
+  };
+  function move(x) {
+    if (!st) return false;
+    const dx = x - st.x;
+    if (Math.abs(dx) < 40) return false;
+    st.moved = true;
+    goTabPage((S.tabPage || 0) + (dx > 0 ? -1 : 1));   /* RTL: لليمين = صفحة سابقة */
+    const nav = st.nav; st = null;
+    nav.dataset.dragged = '1';
+    setTimeout(() => { delete nav.dataset.dragged; }, 220);
+    return true;
+  }
+  document.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    const nav = grab(e.target); if (!nav) return;
+    st = { nav, x: e.clientX, moved: false };
+  });
+  document.addEventListener('pointermove', e => { if (st) move(e.clientX); });
+  document.addEventListener('pointerup', () => { st = null; });
+  document.addEventListener('pointercancel', () => { st = null; });
+  document.addEventListener('touchstart', e => {
+    const nav = grab(e.target); if (!nav) return;
+    st = { nav, x: e.touches[0].clientX, moved: false };
+  }, { passive: true });
+  document.addEventListener('touchmove', e => {
+    if (!st) return;
+    if (move(e.touches[0].clientX) && e.cancelable) e.preventDefault();
+  }, { passive: false });
+  document.addEventListener('touchend', () => { st = null; });
+  let wl = 0;
+  document.addEventListener('wheel', e => {
+    const nav = e.target.closest && e.target.closest('.tabs'); if (!nav) return;
+    const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    if (!d) return;
+    if (e.cancelable) e.preventDefault();
+    const t = Date.now(); if (t - wl < 320) return; wl = t;
+    goTabPage((S.tabPage || 0) + (d > 0 ? 1 : -1));
+  }, { passive: false });
+  document.addEventListener('keydown', e => {
+    if (!document.querySelector('.tabs')) return;
+    if (e.key === 'ArrowLeft') goTabPage((S.tabPage || 0) + 1);
+    else if (e.key === 'ArrowRight') goTabPage((S.tabPage || 0) - 1);
+  });
+})();
+
+/* ===== ملاءمة الشاشة ===== */
 (function fitScreen() {
   const root = document.documentElement;
   const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
@@ -101,12 +169,17 @@ document.addEventListener('click', ev => {
     case 'close': S.sheet = null; break;
     case 'dismiss': S.push = null; break;
     case 'seg': S.tab[b.dataset.k] = v; break;
+    case 'tabpage': goTabPage(Number(v)); return;
+    /* اختيار التصنيف يغلق القائمة فورًا ولا يعيد فتحها */
+    case 'pickbucket': S.tab.tasks = v; S.sheet = null; buzz(); break;
     case 'psearch': return;
 
     case 'role': S.loginRole = b.dataset.r; break;
     case 'login': { const u = userById(id); S.session = { id: u.id, at: Date.now() };
       S.route = { n: u.role === 'leader' ? 'home' : 'mhome' };
-      toast('مرحبًا ' + u.name, 'g'); buzz(); break; }
+      toast('مرحبًا ' + u.name, 'g'); buzz();
+      setTimeout(function () { if (maybeAskPush()) render(); }, 1400);
+      break; }
     case 'logout': S.session = null; S.route = { n: 'login' }; S.sheet = null; break;
 
     case 'place': S.sheet = placeSheet(); break;
@@ -360,7 +433,8 @@ document.addEventListener('click', ev => {
       swapAct(s, 'escalate', val('txt')); S.sheet = null; toast('رُفع الطلب للكنترول'); break; }
 
     /* ===== الإشعارات الخارجية ===== */
-    case 'pushask': askPush(); return;
+    case 'pushask': S.sheet = null; askPush(); return;
+    case 'pushlater': S.sheet = null; toast('يمكنك تفعيلها لاحقًا من شاشة التحكم'); break;
     case 'pushtoggle': S.pushEnabled = !pushOn();
       toast(S.pushEnabled ? 'شُغّلت الإشعارات الخارجية' : 'أُوقفت الإشعارات الخارجية'); break;
     case 'pushtest': {
@@ -499,5 +573,6 @@ function onGuideMedia(ev, mk) {
 /* ============================ إقلاع ============================ */
 load();
 if (typeof flushPending === 'function') setTimeout(flushPending, 900);
+setTimeout(function () { if (typeof maybeAskPush === 'function' && maybeAskPush()) render(); }, 1800);
 if (!S.session) S.route = { n: 'login' };
 render();

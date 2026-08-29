@@ -994,3 +994,61 @@
   .push .sp > span { font-size: 11px; line-height: 1.6; display: -webkit-box;
     -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 </style>
+<style>
+  /* ===================== النسخة ١٫٦ — إنهاء الفراغ السفلي ===================== */
+  @media (max-width: 520px) {
+    /* أرضية الجهاز والشاشة بيضاء كالشريط، فلا يظهر أي فرق لون أسفل الأزرار */
+    html, body { background: #fff; }
+    #device { background: #fff; }
+    #screen { background: #fff; }
+    .view { background: var(--bg); }
+
+    /* الأزرار تنزل قرب الحافة: ثلث الحافة الآمنة يكفي لتجاوز شريط الآيفون */
+    .tabs { padding: 6px 4px 4px; }
+    .app-standalone .tabs { padding-bottom: calc(4px + env(safe-area-inset-bottom) * .34); }
+
+    /* حارس أخير: طلاء أبيض ممتد من أسفل الشريط إلى حافة الشاشة مهما كان السبب */
+    .tabs::after {
+      content: ""; position: absolute; inset-inline: 0; top: 100%; height: 180px;
+      background: #fff; pointer-events: none;
+    }
+
+    /* شريط أنحف: أيقونة أصغر ومسافات أضيق */
+    .tabs button .ic { width: 21px; height: 21px; }
+    .tabs button { gap: 2px; padding-top: 2px; }
+    .tabs .home .hb { width: 48px; height: 48px; margin-top: -17px; }
+    .tabs .home { width: 68px; }
+  }
+</style>
+<style>
+  /* ===================== النسخة ١٫٧ — كتلة التابات ===================== */
+  .tabs .tside { flex: 1 1 0; min-width: 0; overflow: hidden; display: block; }
+  .tabs .trail {
+    display: flex; width: 100%;
+    transition: transform .28s cubic-bezier(.32,.72,0,1);
+    will-change: transform;
+  }
+  .tabs .tpage { flex: 0 0 100%; width: 100%; display: flex; }
+  .tabs .tpage > button, .tabs .tpage > .tspacer { flex: 1 1 0; min-width: 0; }
+  .tabs .tspacer { display: block; }
+  @media (prefers-reduced-motion: reduce) { .tabs .trail { transition: none; } }
+
+  /* نقاط الصفحات — قابلة للنقر */
+  .tabs .dots {
+    position: absolute; inset-inline-start: 12px; top: 3px;
+    display: flex; gap: 5px; z-index: 4;
+  }
+  .tabs .dots button {
+    width: 6px; height: 6px; min-width: 0; padding: 0; border-radius: 50%;
+    background: #D5DCD7; display: block; flex: none; transition: all .2s ease;
+  }
+  .tabs .dots button.on { background: var(--g); width: 16px; border-radius: 99px; }
+
+  /* حاجز يمنع تنفيذ نقرة بعد سحب */
+  .tabs[data-dragged] button { pointer-events: none; }
+</style>
+<style>
+  .askic { width: 62px; height: 62px; border-radius: 22px; display: inline-grid; place-items: center;
+    background: linear-gradient(150deg, var(--g3), var(--g2)); color: #fff;
+    box-shadow: 0 12px 26px -12px rgba(11,53,39,.8); }
+</style>
