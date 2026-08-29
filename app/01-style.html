@@ -1073,3 +1073,68 @@
     .scrim { z-index: 50; } .sheet { z-index: 51; }
   }
 </style>
+<style>
+  /* ===================== النسخة ١٫٩ ===================== */
+  @media (max-width: 520px) {
+    /* الشريط يلامس الحافة، والأزرار تنزل إليها — ٦ بكسل فقط تكفي لتجاوز خط الآيفون */
+    .tabs { padding: 6px 4px min(env(safe-area-inset-bottom), 6px); }
+    .app-standalone .tabs { padding-bottom: min(env(safe-area-inset-bottom), 6px); }
+    .tabs::after { display: none; }
+    .view { padding-bottom: 74px; }
+    .toast { bottom: 86px; }
+  }
+  /* انزلاق أسرع وأكثر حسمًا */
+  .tabs .trail { transition: transform .17s cubic-bezier(.22,.7,.2,1); }
+</style>
+<style>
+  /* ===== الشرح المتحرك ===== */
+  .clip { border-radius: 20px; overflow: hidden; box-shadow: var(--card); background: #fff; }
+  .clip .stage {
+    position: relative; height: 178px; overflow: hidden; color: #fff;
+    background: linear-gradient(150deg, var(--kc), color-mix(in srgb, var(--kc) 55%, #0B2018));
+  }
+  .clip .stage::before {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(120% 90% at 82% 8%, rgba(255,255,255,.20), transparent 62%);
+  }
+  .clip .scene {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 7px; padding: 16px 22px; text-align: center;
+    opacity: 0; animation: clipIn var(--dur) linear infinite;
+  }
+  .clip .scene .sic {
+    width: 54px; height: 54px; border-radius: 18px; display: grid; place-items: center;
+    background: rgba(255,255,255,.18); box-shadow: inset 0 0 0 1px rgba(255,255,255,.28);
+  }
+  .clip .scene b { font-size: 15.5px; line-height: 1.5; }
+  .clip .scene > span:last-child { font-size: 11.5px; line-height: 1.7; opacity: .9; max-width: 260px; }
+  @keyframes clipIn {
+    0%   { opacity: 0; transform: translateY(12px) scale(.97) }
+    3%   { opacity: 1; transform: none }
+    17%  { opacity: 1; transform: none }
+    20%  { opacity: 0; transform: translateY(-10px) scale(.98) }
+    100% { opacity: 0 }
+  }
+  .clip .badge2 {
+    position: absolute; top: 11px; inset-inline-start: 12px; display: inline-flex; align-items: center;
+    gap: 5px; font-size: 10px; font-weight: 700; background: rgba(9,24,18,.34);
+    border-radius: 99px; padding: 4px 10px; backdrop-filter: blur(6px);
+  }
+  .clip .ctrl { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+  .clip .pb {
+    width: 32px; height: 32px; border-radius: 50%; flex: none; display: grid; place-items: center;
+    background: var(--kc); color: #fff;
+  }
+  .clip .bar { flex: 1; height: 4px; border-radius: 99px; background: #E7ECE6; overflow: hidden; }
+  .clip .bar i {
+    display: block; height: 100%; background: var(--kc); transform-origin: right center;
+    animation: clipBar var(--dur) linear infinite;
+  }
+  @keyframes clipBar { from { transform: scaleX(0) } to { transform: scaleX(1) } }
+  .clip .tm { font-size: 10.5px; color: var(--dim2); font-variant-numeric: tabular-nums; }
+  .clip.paused .scene, .clip.paused .bar i { animation-play-state: paused; }
+  @media (prefers-reduced-motion: reduce) {
+    .clip .scene, .clip .bar i { animation-duration: 0s; }
+    .clip .scene:first-child { opacity: 1; }
+  }
+</style>

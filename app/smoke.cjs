@@ -838,5 +838,47 @@ step('الجديد يحمل معرّفه للجسر', () => {
   if (!n.id || n.title !== 'وافق المحسن') throw new Error('لم يُنشأ بمعرّف');
 });
 
+const CATNAME = k => run('CAT.' + k + '.ar');
+console.log('\nالشرح المتحرك وثبات اختيار الدليل');
+run('S.session={id:"L1",at:Date.now()}');
+step('لكل نشاط مقطع من خمسة مشاهد', () => {
+  const miss = run('Object.keys(CAT).filter(function(k){return !CLIPS[k]})');
+  if (miss.length) throw new Error('بلا مقطع: ' + miss.join(', '));
+  const bad = run('Object.keys(CLIPS).filter(function(k){return CLIPS[k].length!==CLIP_SCENES})');
+  if (bad.length) throw new Error('عدد مشاهد خاطئ: ' + bad.join(', '));
+});
+step('كل مشهد له أيقونة وعنوان ونص', () => {
+  const bad = run('Object.keys(CLIPS).filter(function(k){return CLIPS[k].some(function(s){return !s[0]||!s[1]||!s[2]})})');
+  if (bad.length) throw new Error('مشهد ناقص: ' + bad.join(', '));
+});
+step('المقطع يظهر في كل صفحة دليل', () => {
+  run('Object.keys(CAT)').forEach(k => {
+    run('S.route={n:"guide",id:"' + k + '"}');
+    const h = run('screenGuide()');
+    if (h.indexOf('class="clip') < 0) throw new Error('بلا مقطع: ' + k);
+    if (h.indexOf('data-a="clipplay"') < 0) throw new Error('بلا زر تشغيل: ' + k);
+  });
+});
+step('اختيار النشاط يثبت بعد التبديل', () => {
+  click({ a: 'go', n: 'guide', id: 'mina' });
+  if (run('S.route.id') !== 'mina') throw new Error('المسار ' + run('S.route.id'));
+  run('screenGuide()');
+  if (run('S.tab.gk') !== 'mina') throw new Error('لم يُحفظ: ' + run('S.tab.gk'));
+  const h = run('screenGuide()');
+  if (h.indexOf(CATNAME('mina')) < 0) throw new Error('لم يعرض النشاط المختار');
+  /* العودة من الشريط بلا معرّف تُبقي آخر اختيار */
+  click({ a: 'go', n: 'guide' });
+  run('screenGuide()');
+  if (run('S.tab.gk') !== 'mina') throw new Error('ضاع الاختيار عند العودة');
+});
+step('التشغيل والإيقاف يعملان', () => {
+  run('S.clipPaused=false');
+  click({ a: 'clipplay' });
+  if (!run('S.clipPaused')) throw new Error('لم يتوقف');
+  if (run('screenGuide()').indexOf('clip paused') < 0) throw new Error('بلا صنف الإيقاف');
+  click({ a: 'clipplay' });
+  if (run('S.clipPaused')) throw new Error('لم يُستأنف');
+});
+
 console.log('\n' + (fail ? '✗ فشل ' + fail : '✓ نجحت كل الاختبارات'));
 process.exitCode = fail ? 1 : 0;

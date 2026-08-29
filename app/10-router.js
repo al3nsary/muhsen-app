@@ -48,6 +48,9 @@ function render() {
   const nv = el.querySelector('.view');
   if (nv && keep) nv.scrollTop = keep;
   S._viewKey = key;
+  const kp = el.querySelector('.kpicker');
+  if (kp) { const on = kp.querySelector('button.on');
+    if (on) kp.scrollLeft = on.offsetLeft - (kp.clientWidth - on.offsetWidth) / 2; }
   const es = document.getElementById("envst");
   if (es) es.textContent = envStampNow();
   centerActiveTab();
@@ -83,12 +86,12 @@ function goTabPage(next) {
   function move(x) {
     if (!st) return false;
     const dx = x - st.x;
-    if (Math.abs(dx) < 40) return false;
+    if (Math.abs(dx) < 26) return false;
     st.moved = true;
     goTabPage((S.tabPage || 0) + (dx > 0 ? 1 : -1));   /* الكتلة تتبع الإصبع */
     const nav = st.nav; st = null;
     nav.dataset.dragged = '1';
-    setTimeout(() => { delete nav.dataset.dragged; }, 220);
+    setTimeout(() => { delete nav.dataset.dragged; }, 140);
     return true;
   }
   document.addEventListener('pointerdown', e => {
@@ -454,6 +457,7 @@ document.addEventListener('click', ev => {
       buzz(); toast('أُرسل إلى ' + AR(n3) + ' شخصًا'); break; }
 
     /* ===== دليل المهام ===== */
+    case 'clipplay': S.clipPaused = !S.clipPaused; break;
     case 'guidedit': {
       if (!canEditGuide()) { toast('التحرير من صلاحية الليدر', 'r'); break; }
       S.guideEdit = !S.guideEdit;
