@@ -4,7 +4,7 @@ const SCREENS = {
   home: screenLeaderHome, mhome: screenMuhsenHome,
   tasks: screenTasks, task: screenTask, assign: screenAssign, timeline: screenTimeline,
   lreq: screenReqCenter, requests: screenRequests,
-  tickets: screenTickets, ticket: screenTicket,
+  tickets: screenTickets, ticket: screenTicket, desk: screenDesk, report: screenReport,
   rating: screenRating, taskrating: screenTaskRating,
   notifs: screenNotifs, pilgrims: screenPilgrims, muhsens: screenMuhsens,
   profile: screenProfile, more: screenMore, calendar: screenCalendar, admin: screenAdmin,
@@ -401,6 +401,53 @@ document.addEventListener('click', ev => {
       S.sheet = subPickSheet(t); break; }
     /* ===== تصنيف المهام ===== */
     case 'bucketmenu': S.sheet = bucketSheet(); break;
+
+    /* ===== الانسحاب من مهمة ===== */
+    case 'askwd': S.sheet = textSheet('طلب الانسحاب من المهمة',
+      'السبب إلزامي ويصل الليدر — ولا ينفذ الانسحاب إلا بموافقته',
+      'data-a="doaskwd" data-id="' + id + '"', '', 'سبب الانسحاب'); break;
+    case 'doaskwd': { const rr = val('txt');
+      if (!rr || rr.length < 5) { toast('اذكر سببًا واضحًا', 'r'); break; }
+      const t = T(); if (!t) break;
+      if (lockedForAssign(t)) { toast('المهمة بدأت — لا انسحاب بعد البدء', 'r'); break; }
+      if (!requestWithdraw(t, S.session.id, rr)) { toast('تعذّر إرسال الطلب', 'r'); break; }
+      S.sheet = null; buzz(); toast('أُرسل طلب الانسحاب إلى ليدرك'); break; }
+    case 'wdok': { const t = T();
+      if (!t || !canDecide(t, S.session.id)) { toast('ليست من صلاحيتك', 'r'); break; }
+      respondWithdraw(t, uid_, true); buzz(); toast('اعتُمد الانسحاب'); break; }
+    case 'wdno': { const t = T();
+      if (!t || !canDecide(t, S.session.id)) { toast('ليست من صلاحيتك', 'r'); break; }
+      S.sheet = textSheet('رفض طلب الانسحاب', userById(uid_).name,
+        'data-a="dowdno" data-id="' + id + '" data-u="' + uid_ + '"', '', 'سبب الرفض'); break; }
+    case 'dowdno': { const rr = val('txt');
+      if (!rr) { toast('السبب إلزامي', 'r'); break; }
+      respondWithdraw(T(), uid_, false, rr); S.sheet = null; toast('رُفض طلب الانسحاب', 'r'); break; }
+
+    /* ===== التقارير ===== */
+    case 'report': S.sheet = reportSheet(id); break;
+    case 'sendreport': {
+      const ti = val('rti'), bo = val('rb');
+      if (ti.length < 4) { toast('اكتب عنوانًا واضحًا', 'r'); break; }
+      if (bo.length < 10) { toast('اشرح التفاصيل — سطر واحد لا يكفي', 'r'); break; }
+      const to = isLeader() ? 'CONTROL' : me().leaderId;
+      addReport(S.session.id, to, val('rc'), ti, bo, val('rt') || null);
+      S.sheet = null; S.tab.desk = 'rp'; buzz();
+      toast('رُفع التقرير' + (isLeader() ? ' إلى الكنترول' : ' إلى ليدرك')); break; }
+    case 'rreply': S.sheet = textSheet('رد على التقرير', reportById(id).title,
+      'data-a="dorreply" data-id="' + id + '"', '', 'اكتب ردك أو ملاحظتك'); break;
+    case 'dorreply': { const x = val('txt');
+      if (!x) { toast('اكتب الرد', 'r'); break; }
+      reportReply(reportById(id), S.session.id, x, 'قيد المعالجة');
+      S.sheet = null; toast('أُرسل الرد'); break; }
+    case 'resc': S.sheet = textSheet('تصعيد إلى الكنترول', reportById(id).title,
+      'data-a="doresc" data-id="' + id + '"', '', 'سبب التصعيد (اختياري)'); break;
+    case 'doresc': reportEscalate(reportById(id), S.session.id, val('txt'));
+      S.sheet = null; toast('صُعّد التقرير إلى الكنترول'); break;
+    case 'rstate': S.sheet = reportStateSheet(reportById(id)); break;
+    case 'dorstate': reportSetStatus(reportById(id), S.session.id, v);
+      S.sheet = null; toast('صارت الحالة: ' + v); break;
+    case 'rclose': reportSetStatus(reportById(id), S.session.id, 'مغلق'); toast('أُغلق التقرير'); break;
+    case 'rreopen': reportSetStatus(reportById(id), S.session.id, 'قيد المعالجة'); toast('أُعيد فتح التقرير'); break;
 
     /* ===== التحضير اليومي ===== */
     case 'checkin': {

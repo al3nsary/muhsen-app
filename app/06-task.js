@@ -107,14 +107,42 @@ function screenTask() {
       '<div class="row"><b class="sm">تقييم المهمة</b>' + pill('التفاصيل', 'gold') + '</div>' +
       '<div class="fl" style="margin-top:10px;justify-content:center">' + stars(avgRating(t.rating), 'lg') + '</div></button>' : '') +
 
-    (lead ? '<div class="lbl">المحسنون المسكَّنون<small>' + AR(acc.length) + ' من الحد الأدنى ' + AR(MIN_ASSIGN) +
-        ' · ' + AR(att) + ' أثبتوا حضورهم</small></div>' +
+    (lead ? '<div class="lbl">المحسنون على المهمة<small>' + AR(acc.length) + ' محسن · ' +
+        AR(att) + ' أثبتوا حضورهم</small></div>' +
       (activeSlots(t).length ? activeSlots(t).map(a => slotRow(t, a, act && !deleg && !locked)).join('')
         : '<div class="c center dim sm" style="padding:20px">لم يُسكَّن أحد بعد</div>') +
       (locked ? '<div class="note a">' + icon('i-info','s16') +
         '<span>' + (running || closed ? 'المهمة بدأت — التسكين مقفل.' : 'حان وقت المهمة — التسكين مقفل.') + '</span></div>'
         : (act ? '<button class="btn l" data-a="go" data-n="assign" data-id="' + t.id + '">' +
-          icon('i-assign','s16') + 'إدارة التسكين</button>' : '')) : '') +
+          icon('i-assign','s16') + 'إدارة التسكين وطلب تعزيز</button>' : '')) : '') +
+
+    /* طلبات الانسحاب الواردة للّيدر */
+    (lead && act && pendingWithdraws(t).length
+      ? '<div class="lbl">طلبات انسحاب<small>' + AR(pendingWithdraws(t).length) + '</small></div>' +
+        pendingWithdraws(t).map(a2 => {
+          const mm = userById(a2.muhsenId);
+          return '<div class="c"><div class="fl">' + avat(mm, 'sm') +
+            '<span class="nm sp"><b>' + E(mm.name) + '</b><span>' + ago(a2.wd.at) + '</span></span>' +
+            pill('انسحاب','wait') + '</div>' +
+            '<div class="note a" style="margin-top:9px">' + icon('i-edit','s16') +
+              '<span>' + E(a2.wd.reason) + '</span></div>' +
+            '<div class="grid2" style="margin-top:10px">' +
+              '<button class="btn d sm" data-a="wdno" data-id="' + t.id + '" data-u="' + a2.muhsenId + '">رفض</button>' +
+              '<button class="btn p sm" data-a="wdok" data-id="' + t.id + '" data-u="' + a2.muhsenId + '">' +
+                'الموافقة على الانسحاب</button></div></div>';
+        }).join('') : '') +
+
+    /* المحسن: طلب انسحاب */
+    (!lead && !closed && slotOf(t, u.id) && slotOf(t, u.id).req === 'accepted'
+      ? (function () {
+          const w = myWithdraw(t, u.id);
+          if (w && w.state === 'pending') return '<div class="note a">' + icon('i-out','s16') +
+            '<span><b>طلب انسحابك قيد المراجعة</b><br>' + E(w.reason) + '</span></div>';
+          if (w && w.state === 'rejected') return '<div class="note r">' + icon('i-xc','s16') +
+            '<span><b>رُفض طلب انسحابك</b>' + (w.respNote ? '<br>' + E(w.respNote) : '') + '</span></div>';
+          return '<button class="btn l" data-a="askwd" data-id="' + t.id + '">' +
+            icon('i-out','s16') + 'طلب الانسحاب من المهمة</button>';
+        })() : '') +
 
     (lead && hasDocs(t) ? '<div class="lbl">مستندات المهمة<small>عقود الاستقبال — للّيدر</small></div>' + docButtons(t) : '') +
     taskPhotoSection(t, lead) +
@@ -225,51 +253,88 @@ function delegCard(t, isCo, canManage) {
 function screenAssign() {
   const t = taskById(S.route.id); if (!t) return screenTasks();
   recomputeStatus(t);
-  const acc = acceptedSlots(t).length;
+  const u = me();
+  if (!canDecide(t, u.id)) return screenTask();
   const locked = lockedForAssign(t);
   const team = teamOf(t.leaderId);
+  const res = reserveTeam();
+  const acc = acceptedSlots(t);
+  const seg = S.tab.asg || 'team';
+
   const busy = {};
-  team.forEach(m => { const b = busyIn(m.id, t); if (b) busy[m.id] = b.title; });
+  team.concat(res).forEach(m => { const x = busyIn(m.id, t); if (x) busy[m.id] = x.title; });
+
+  const card = (m, fromReserve) => {
+    const s = t.assigned.find(x => x.muhsenId === m.id && !x.removed);
+    const st = s ? s.req : null;
+    const blocked = !!busy[m.id] && !s;
+    let right, act = '';
+    if (st === 'accepted') {
+      right = pill(s.auto ? 'مُسكَّن تلقائيًّا' : 'مُسكَّن', 'live');
+      act = locked ? '' : '<button class="btn d sm" data-a="removeasg" data-id="' + t.id + '" data-u="' + m.id + '">' +
+        icon('i-x','s16') + 'إزالة من المهمة</button>';
+    } else if (st === 'pending') {
+      right = pill('بانتظار الرد · ' + ago(s.reqAt), 'wait');
+      act = locked ? '' : '<div class="grid3">' +
+        '<a class="btn l sm" href="tel:' + String(m.phone).replace(/[^0-9]/g,'') + '">' + icon('i-phone','s16') + 'اتصال</a>' +
+        '<a class="btn l sm" href="https://wa.me/' + String(m.phone).replace(/[^0-9]/g,'') + '" target="_blank" rel="noopener">' +
+          icon('i-send','s16') + 'واتساب</a>' +
+        '<button class="btn d sm" data-a="withdraw" data-id="' + t.id + '" data-u="' + m.id + '">' +
+          icon('i-x','s16') + 'سحب</button></div>';
+    } else if (st === 'rejected') {
+      right = pill('اعتذر', 'no');
+      act = locked ? '' : '<button class="btn l sm" data-a="send" data-id="' + t.id + '" data-u="' + m.id + '">' +
+        icon('i-swap','s16') + 'إعادة الطلب</button>';
+    } else {
+      const out = t.assigned.find(x => x.muhsenId === m.id && x.removed);
+      right = out ? pill('خرج من المهمة', 'grey') : blocked ? pill('مرتبط بمهمة أخرى', 'grey') : pill('متاح', 'grey');
+      act = locked ? '' : (blocked
+        ? '<div class="tiny dim2">مرتبط بـ«' + E(busy[m.id]) + '» في وقت متداخل</div>'
+        : '<button class="btn p sm" data-a="send" data-id="' + t.id + '" data-u="' + m.id + '">' +
+          icon('i-assign','s16') + (fromReserve ? 'طلب تعزيز من الاحتياط' : 'إرسال طلب تسكين') + '</button>');
+    }
+    return '<div class="c"><div class="fl">' + avat(m) +
+      '<span class="nm sp"><b>' + E(m.name) + '</b><span>' + E(m.code) + ' · ' + E(m.specialty) +
+        (fromReserve ? ' · احتياط' : '') + '</span></span>' + right + '</div>' +
+      (s && s.respNote ? '<div class="note r" style="margin-top:9px">' + icon('i-info','s16') +
+        '<span>' + E(s.respNote) + '</span></div>' : '') +
+      (s && s.wd && s.wd.state === 'accepted' ? '<div class="note a" style="margin-top:9px">' + icon('i-out','s16') +
+        '<span>انسحب بموافقتك — ' + E(s.wd.reason) + '</span></div>' : '') +
+      (act ? '<div style="margin-top:10px">' + act + '</div>' : '') + '</div>';
+  };
 
   return bar('التسكين', { back: 1 }) + '<div class="view">' + ground() +
     '<div class="c gold"><div class="row"><b style="font-size:14.5px" class="sp">' + E(t.title) + '</b>' +
       pill(untilTxt(t.start), locked ? 'no' : 'wait') + '</div>' +
-      '<div class="meter" style="margin:11px 0 7px"><i style="width:' +
-        Math.min(100, Math.round(acc / MIN_ASSIGN * 100)) + '%"></i></div>' +
-      '<div class="row tiny dim"><span>' + AR(acc) + ' من الحد الأدنى ' + AR(MIN_ASSIGN) + '</span>' +
-      '<span>' + AR(ktCount(t.kt)) + ' حاجًا في ' + E(t.kt) + '</span></div></div>' +
+      '<div class="fl" style="margin-top:11px;gap:8px;flex-wrap:wrap">' +
+        pill(AR(acc.length) + ' محسن على المهمة', 'live') +
+        pill(AR(ktCount(t.kt)) + ' حاجًّا في ' + t.kt, 'gold') +
+        (pendingSlots(t).length ? pill(AR(pendingSlots(t).length) + ' بانتظار الرد', 'wait') : '') +
+      '</div></div>' +
 
     (locked
       ? '<div class="note r">' + icon('i-warn','s16') + '<span><b>التسكين مقفل</b><br>' +
-        (t.status === 'running' ? 'المهمة بدأت — لا تسكين بعد البدء.' : 'حان وقت المهمة.') + '</span></div>'
+        (t.status === 'running' ? 'المهمة بدأت — لا تعديل على التسكين بعد البدء.' : 'حان وقت المهمة.') + '</span></div>'
       : '<div class="note b">' + icon('i-info','s16') +
-        '<span>الحد الأدنى ' + AR(MIN_ASSIGN) + ' محسنين. المهمة تبدأ في وقتها على كل حال، والتسكين الناقص يُسجَّل ملاحظةً ويؤثر في التقييم.</span></div>') +
+        '<span>فريقك مُسكَّن تلقائيًّا على كل مهمة. الطلبات هنا للتعزيز من الاحتياط أو لإعادة من خرج — ' +
+        'ولا حدّ أدنى ولا أعلى للعدد.</span></div>') +
 
-    '<div class="lbl">فريقك<small>' + AR(team.length) + ' محسن · جميعهم يخدمون ' + AR(ktCount(t.kt)) + ' حاجًا</small></div>' +
-    team.map(m => {
-      const a = slotOf(t, m.id);
-      const st = a ? a.req : null;
-      const blocked = !!busy[m.id] && !a;
-      let right, act = '';
-      if (st === 'accepted') { right = pill('مُسكَّن', 'live');
-        act = locked ? '' : '<button class="btn d sm" data-a="removeasg" data-id="' + t.id + '" data-u="' + m.id + '">' + icon('i-x','s16') + 'إزالة من المهمة</button>'; }
-      else if (st === 'pending') { right = pill('بانتظار الرد · ' + ago(a.reqAt), 'wait');
-        act = locked ? '' : '<div class="grid2">' +
-          '<a class="btn l sm" href="tel:' + m.phone.replace(/[^0-9]/g,'') + '">' + icon('i-phone','s16') + 'اتصال</a>' +
-          '<button class="btn d sm" data-a="withdraw" data-id="' + t.id + '" data-u="' + m.id + '">' + icon('i-x','s16') + 'سحب الطلب</button></div>'; }
-      else if (st === 'rejected') { right = pill('رفض', 'no');
-        act = locked ? '' : '<button class="btn l sm" data-a="send" data-id="' + t.id + '" data-u="' + m.id + '">' + icon('i-swap','s16') + 'إعادة الإرسال</button>'; }
-      else { right = blocked ? pill('مرتبط بمهمة أخرى', 'grey') : pill('متاح', 'grey');
-        act = locked ? '' : (blocked
-          ? '<div class="tiny dim2">مرتبط بـ«' + E(busy[m.id]) + '» في وقت متداخل</div>'
-          : '<button class="btn p sm" data-a="send" data-id="' + t.id + '" data-u="' + m.id + '">' + icon('i-assign','s16') + 'إرسال طلب</button>'); }
-      return '<div class="c"><div class="fl">' + avat(m) +
-        '<span class="nm sp"><b>' + E(m.name) + '</b><span>' + E(m.code) + ' · ' + E(m.specialty) + '</span></span>' + right + '</div>' +
-        (a && a.respNote ? '<div class="note r" style="margin-top:9px">' + icon('i-info','s16') + '<span>' + E(a.respNote) + '</span></div>' : '') +
-        (act ? '<div style="margin-top:10px">' + act + '</div>' : '') + '</div>';
-    }).join('') +
+    '<div class="seg">' +
+      '<button class="' + (seg === 'team' ? 'on' : '') + '" data-a="seg" data-k="asg" data-v="team">فريقك<i>' +
+        AR(team.length) + '</i></button>' +
+      '<button class="' + (seg === 'res' ? 'on' : '') + '" data-a="seg" data-k="asg" data-v="res">الفريق الاحتياطي<i>' +
+        AR(res.length) + '</i></button>' +
+    '</div>' +
+
+    (seg === 'team'
+      ? (team.length ? team.map(m => card(m, false)).join('')
+         : '<div class="c center dim sm" style="padding:22px">لا يوجد فريق</div>')
+      : '<div class="note a">' + icon('i-users','s16') +
+        '<span>الاحتياط مشترك بين الليدرز — اطلب من تحتاجه ولو كان فريقك كاملًا على المهمة.</span></div>' +
+        res.map(m => card(m, true)).join('')) +
     '</div>' + tabs();
 }
+
 
 /* ============================ تسلسل الإجراءات — للّيدر فقط ============================ */
 function screenTimeline() {

@@ -1,12 +1,12 @@
 /* ============================ الحالة ============================ */
 const KEY = 'muhsen_app_v1';
-const APP_VER = 'نسخة ٢٫٠';
-const SCHEMA = 16;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
+const APP_VER = 'نسخة ٢٫١';
+const SCHEMA = 17;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
 const uid = (p) => p + Math.random().toString(36).slice(2, 8);
 const MIN = 60000, HR = 3600000, DAY = 86400000;
-const MIN_ASSIGN = 2;           /* أقل عدد محسنين للتسكين على مهمة */
+/* لا حد أدنى ولا أعلى لعدد المحسنين على المهمة — التسكين تلقائي والزيادة من الاحتياط */
 const RADIUS_KM = 2;            /* نطاق إثبات الحضور */
 
 /* ============================ الوقت ============================ */
@@ -71,6 +71,18 @@ function makePilgrims(n, seedNo) {
   });
 }
 
+/* كل مهمة جديدة تُسكَّن تلقائيًّا بفريق الليدر كاملًا */
+function autoAssign(st, t) {
+  const team = (st.users || S.users).filter(u => u.role === 'muhsen' && u.leaderId === t.leaderId && !u.reserve);
+  team.forEach(m => {
+    if (t.assigned.some(a => a.muhsenId === m.id)) return;
+    t.assigned.push({ muhsenId: m.id, req: 'accepted', auto: true,
+      reqAt: t.start - 72 * HR, reqNote: 'تسكين تلقائي', respAt: t.start - 72 * HR, respNote: '',
+      attendedAt: null, farKm: 0, removed: false, removedWhy: null });
+  });
+  return t;
+}
+
 function newTask(L, kind, start, code) {
   const c = CAT[kind];
   return {
@@ -91,7 +103,7 @@ function newTask(L, kind, start, code) {
 function seed() {
   const st = {
     v: SCHEMA, clockOffset: 0, myPlace: 'site', session: null, route: { n: 'login' },
-    tab: {}, orgs: ORGS, users: USERS, tasks: [], tickets: [], notifs: [],
+    tab: {}, orgs: ORGS, users: USERS.concat(RESERVE), tasks: [], tickets: [], reports: [], notifs: [],
     requests: [], reminders: [], pilgrims: {}, photos: [], guides: {},
     shifts: {}, attend: [], swaps: [], broadcasts: [], tabPage: 0, toast: null
   };
@@ -100,28 +112,25 @@ function seed() {
   USERS.filter(u => u.role === 'leader').forEach((L, li) => {
     st.pilgrims[L.kt] = makePilgrims(L.pilgrims, li + 1);
     PLAN.forEach((p, idx) => {
-      st.tasks.push(newTask(L, p.k, Date.now() + p.h * HR, 1200 + idx * 7 + li * 3));
+      st.tasks.push(autoAssign(st, newTask(L, p.k, Date.now() + p.h * HR, 1200 + idx * 7 + li * 3)));
     });
   });
 
   /* المهام الماضية: تُسكَّن وتُنفَّذ وتُقيَّم لتظهر أمثلة حقيقية للتقييم */
   st.tasks.filter(t => t.start < Date.now()).forEach((t, i) => {
     const team = st.users.filter(u => u.role === 'muhsen' && u.leaderId === t.leaderId);
-    const take = team.slice(0, 2 + (i % 3));
-    take.forEach((m, k) => {
+    const take = t.assigned.filter(a => !a.removed);
+    take.forEach((a, k) => {
       const late = (i + k) % 4 === 0;
-      t.assigned.push({
-        muhsenId: m.id, req: 'accepted', reqAt: t.start - 30 * HR, reqNote: '',
-        respAt: t.start - 28 * HR, respNote: '',
-        attendedAt: (i + k) % 7 === 0 ? null : t.start + (late ? 20 : -90) * MIN,
-        farKm: 0.4, removed: false, removedWhy: null
-      });
+      a.attendedAt = (i + k) % 7 === 0 ? null : t.start + (late ? 20 : -90) * MIN;
+      a.farKm = 0.4;
     });
-    if (i % 3 === 1 && team[4]) t.assigned.push({
-      muhsenId: team[4].id, req: 'rejected', reqAt: t.start - 30 * HR, reqNote: '',
-      respAt: t.start - 29 * HR, respNote: 'مرتبط بمهمة أخرى', attendedAt: null,
-      farKm: 0, removed: false, removedWhy: null
-    });
+    /* نموذج انسحاب معتمد في مهمة ماضية */
+    if (i % 3 === 1 && take[take.length - 1]) {
+      const a2 = take[take.length - 1];
+      a2.removed = true; a2.removedWhy = 'انسحاب معتمد — ارتباط بمهمة أخرى';
+      a2.wd = { reason: 'ارتباط بمهمة أخرى', at: t.start - 29 * HR, state: 'accepted', respAt: t.start - 28 * HR, respNote: '' };
+    }
 
     t.leaderAttendedAt = i % 5 === 0 ? null : t.start - 100 * MIN;
     t.leaderFarKm = 0.6;
@@ -138,26 +147,6 @@ function seed() {
     autoNote(t);
     rateTask(t, i);
     t.history.unshift({ at: t.endedAt, text: 'أُغلقت المهمة' });
-  });
-
-  /* مهام قادمة مسكَّنة فعلًا — ليكون لكل محسن عمل قائم،
-     مع إبقاء الباقي بلا تسكين ليتدرّب الليدر عليه */
-  USERS.filter(u => u.role === 'leader').forEach(L => {
-    const team = st.users.filter(u => u.role === 'muhsen' && u.leaderId === L.id);
-    const future = st.tasks.filter(t => t.leaderId === L.id && t.start > Date.now())
-      .sort((a, b) => a.start - b.start);
-    [0, 2].forEach((idx, k) => {
-      const t = future[idx]; if (!t) return;
-      team.slice(k, k + 3).forEach(m => {
-        t.assigned.push({
-          muhsenId: m.id, req: 'accepted', reqAt: Date.now() - 20 * HR, reqNote: '',
-          respAt: Date.now() - 19 * HR, respNote: '', attendedAt: null,
-          farKm: 0, removed: false, removedWhy: null
-        });
-      });
-      recomputeStatus(t);
-      t.history.unshift({ at: Date.now() - 19 * HR, text: 'اكتمل التسكين — ' + AR(acceptedSlots(t).length) + ' محسنين' });
-    });
   });
 
   /* التذاكر — كلها تصل الليدر */
@@ -183,6 +172,7 @@ function seed() {
   seedPhotos(st);
   seedGuides(st);
   seedDaily(st);
+  seedReports(st);
   return st;
 }
 
@@ -192,7 +182,7 @@ function load() {
     if (!S || S.v !== SCHEMA) S = seed();
   } catch (e) { S = seed(); }
   S.reminders = S.reminders || []; S.requests = S.requests || []; S.pilgrims = S.pilgrims || {};
-  S.photos = S.photos || [];
+  S.photos = S.photos || []; S.reports = S.reports || [];
   S.guides = S.guides || {};
   S.attend = S.attend || []; S.swaps = S.swaps || [];
   S.shifts = S.shifts || {}; S.broadcasts = S.broadcasts || [];
@@ -220,7 +210,10 @@ const isLeader = () => { const u = me(); return !!u && u.role === 'leader'; };
 const userById = id => S.users.find(u => u.id === id);
 const orgOf = t => S.orgs.find(o => o.id === t.orgId);
 const taskById = id => S.tasks.find(t => t.id === id);
-const teamOf = leaderId => S.users.filter(u => u.role === 'muhsen' && u.leaderId === leaderId);
+const teamOf = leaderId => S.users.filter(u => u.role === 'muhsen' && u.leaderId === leaderId && !u.reserve);
+/* فريق احتياطي مشترك — يطلب منه الليدر تعزيزًا لأي مهمة */
+const reserveTeam = () => S.users.filter(u => u.role === 'muhsen' && u.reserve);
+const isReserve = id => { const u = userById(id); return !!(u && u.reserve); };
 const pilgrimsOf = kt => S.pilgrims[kt] || [];
 const ktCount = kt => { const L = S.users.find(u => u.kt === kt); return L ? L.pilgrims : 0; };
 
@@ -254,7 +247,7 @@ const STATUS = {
 
 function recomputeStatus(t) {
   if (['done', 'cancelled', 'running'].includes(t.status)) return t.status;
-  t.status = acceptedSlots(t).length >= MIN_ASSIGN ? 'assigned' : 'pending_assign';
+  t.status = acceptedSlots(t).length ? 'assigned' : 'pending_assign';
   return t.status;
 }
 function canStart(t, id) {
@@ -280,7 +273,6 @@ function note(t, text, kind) { t.notes.push({ at: now(), kind: kind || 'auto', t
 function autoNote(t) {
   const acc = acceptedSlots(t);
   if (!acc.length) note(t, 'لم يُسكَّن أي محسن على المهمة');
-  else if (acc.length < MIN_ASSIGN) note(t, 'التسكين ناقص — ' + AR(acc.length) + ' محسن فقط، والحد الأدنى ' + AR(MIN_ASSIGN));
   acc.forEach(a => {
     const nm = userById(a.muhsenId).name;
     if (!a.attendedAt) note(t, 'لم يثبت ' + nm + ' حضوره');
@@ -301,7 +293,6 @@ function systemScore(t) {
     const half = acc.filter(a => a.attendedAt && a.attendedAt > t.start).length;
     prep = (good + half * 0.5) / acc.length;
   }
-  if (acc.length < MIN_ASSIGN) prep *= 0.5;
   if (t.leaderAttendedAt && t.leaderAttendedAt <= t.start) prep = Math.min(1, prep + 0.1);
 
   const startScore = t.autoStarted ? 0
@@ -417,6 +408,42 @@ function respondRequest(t, muhsenId, ok, note_, excuse) {
     '«' + t.title + '» صار عليها ' + AR(acceptedSlots(t).length) + ' محسنين.', { n: 'task', id: t.id });
 }
 
+/* ============================ الانسحاب من مهمة ============================ */
+/* المحسن يطلب، والليدر يوافق أو يرفض — ولا ينسحب أحد بقراره وحده */
+function requestWithdraw(t, muhsenId, reason) {
+  const a = slotOf(t, muhsenId);
+  if (!a || a.req !== 'accepted' || a.wd) return false;
+  a.wd = { reason: reason, at: now(), state: 'pending' };
+  addReq('انسحاب', muhsenId, ownerOf(t), t.id, reason);
+  const nm = userById(muhsenId).name;
+  hist(t, 'طلب ' + nm + ' الانسحاب من المهمة — «' + reason + '»');
+  notify(ownerOf(t), 'i-out', 'طلب انسحاب من مهمة',
+    nm + ' يطلب الانسحاب من «' + t.title + '» — ' + reason, { n: 'task', id: t.id });
+  return true;
+}
+function respondWithdraw(t, muhsenId, ok, note_) {
+  const a = slotOf(t, muhsenId);
+  if (!a || !a.wd || a.wd.state !== 'pending') return false;
+  a.wd.state = ok ? 'accepted' : 'rejected';
+  a.wd.respAt = now(); a.wd.respNote = note_ || '';
+  closeReq(t.id, ownerOf(t), 'انسحاب', ok ? 'accepted' : 'rejected', note_);
+  const nm = userById(muhsenId).name;
+  if (ok) {
+    a.removed = true; a.removedWhy = 'انسحاب معتمد — ' + a.wd.reason;
+    hist(t, 'اعتُمد انسحاب ' + nm);
+    note(t, 'انسحب ' + nm + ' من المهمة بموافقة الليدر — ' + a.wd.reason);
+    notify(muhsenId, 'i-checkc', 'اعتُمد انسحابك', 'خرجتَ من «' + t.title + '».', { n: 'tasks' });
+  } else {
+    hist(t, 'رُفض انسحاب ' + nm + (note_ ? ' — «' + note_ + '»' : ''));
+    notify(muhsenId, 'i-xc', 'رُفض طلب الانسحاب',
+      '«' + t.title + '» — ' + (note_ || 'تبقى مسؤولًا عن المهمة'), { n: 'task', id: t.id });
+  }
+  recomputeStatus(t);
+  return true;
+}
+const pendingWithdraws = t => t.assigned.filter(a => a.wd && a.wd.state === 'pending' && !a.removed);
+const myWithdraw = (t, id) => { const a = slotOf(t, id); return a && a.wd ? a.wd : null; };
+
 /* ============================ التفويض — للشركات فقط ============================ */
 function sendDelegate(t, muhsenId, keepDuties) {
   t.delegate = { muhsenId, keepGroup: keepDuties, state: 'pending', at: now() };
@@ -472,7 +499,6 @@ function startTask(t, by) {
   if (by === 'SYSTEM') {
     note(t, 'بدأها النظام تلقائيًا — لم يبدأها المسؤول عنها');
     if (!acceptedSlots(t).length) note(t, 'بدأت بلا أي محسن مسكَّن');
-    else if (acceptedSlots(t).length < MIN_ASSIGN) note(t, 'بدأت والتسكين ناقص — ' + AR(acceptedSlots(t).length) + ' محسن');
     notify(ownerOf(t), 'i-warn', 'بدأها النظام',
       '«' + t.title + '» حان وقتها فبدأها النظام. لم تعد تستطيع التسكين — يمكنك إغلاقها فقط.', { n: 'task', id: t.id });
   }
@@ -648,7 +674,7 @@ function busyIn(muhsenId, t) {
 }
 /* مهام لم تُسكَّن بعد — يجب على الليدر تسكينها فورًا */
 const unassignedTasks = () => myTasks().filter(t =>
-  !lockedForAssign(t) && acceptedSlots(t).length < MIN_ASSIGN);
+  !lockedForAssign(t) && !acceptedSlots(t).length);
 
 /* ============================ التنبيهات التلقائية والبدء الآلي ============================ */
 function autoTick() {
@@ -662,7 +688,7 @@ function autoTick() {
     if (t0 >= t.start && ['pending_assign', 'assigned'].includes(t.status)) { startTask(t, 'SYSTEM'); return; }
     if (['done', 'cancelled', 'running'].includes(t.status)) return;
 
-    const empty = acceptedSlots(t).length < MIN_ASSIGN;
+    const empty = !acceptedSlots(t).length;
     if (empty && t0 >= t.start - 7 * DAY && !t._f.w7) {
       notify(t.leaderId, 'i-clock', 'مهمة تحتاج تسكينًا',
         '«' + t.title + '» — ' + hijri(t.start) + ' وما زالت بلا تسكين مكتمل.', { n: 'assign', id: t.id });

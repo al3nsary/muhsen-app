@@ -3,7 +3,7 @@ const PRI_C = { 'عاجلة':'no', 'متوسطة':'wait', 'عادية':'grey' };
 const ST_C  = { 'مفتوحة':'wait', 'مُسندة':'blue', 'قيد المعالجة':'blue', 'مُصعّدة':'no', 'مغلقة':'live' };
 const SRC_LBL = { 'حاج':'من حاج', 'كنترول':'من الكنترول', 'محسن':'من محسن', 'ليدر':'من الليدر' };
 
-function screenTickets() {
+function ticketsPane() {
   const L = isLeader();
   const f = S.tab.tk || 'open';
   let list = myTickets();
@@ -17,17 +17,18 @@ function screenTickets() {
   const segs = L ? [['open','المفتوحة'],['hajj','الحجاج'],['ctrl','الكنترول'],['muh','المحسنون'],['closed','المغلقة']]
                  : [['open','المفتوحة'],['mine','المسندة إليّ'],['closed','المغلقة']];
 
-  return bar('التذاكر') + '<div class="view">' + ground() +
-    '<button class="btn p" data-a="newticket">' + icon('i-plus','s16') +
+  return '<button class="btn p" data-a="newticket">' + icon('i-plus','s16') +
       (L ? 'رفع تذكرة إلى الكنترول' : 'رفع تذكرة إلى الليدر') + '</button>' +
-    (L ? '<div class="note b">' + icon('i-info','s16') +
-      '<span>كل التذاكر تصل إليك — من الحجاج والكنترول والمحسنين. أسند ما تريد لمحسن بعينه.</span></div>' : '') +
     '<div class="seg">' + segs.map(x =>
-      '<button class="' + (f === x[0] ? 'on' : '') + '" data-a="seg" data-k="tk" data-v="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>' +
+      '<button class="' + (f === x[0] ? 'on' : '') + '" data-a="seg" data-k="tk" data-v="' + x[0] + '">' +
+      x[1] + '</button>').join('') + '</div>' +
     (list.length ? list.map(k => ticketRow(k)).join('')
-      : '<div class="c center dim sm" style="padding:24px">لا توجد تذاكر في هذا التصنيف</div>') +
-    '</div>' + tabs();
+      : '<div class="c center" style="padding:26px"><b>لا توجد تذاكر في هذا التصنيف</b></div>');
 }
+
+/* التوافق: من يفتح «التذاكر» مباشرة يصل الشاشة المدمجة على تبويبها */
+function screenTickets() { S.tab.desk = 'tk'; return screenDesk(); }
+
 
 function ticketRow(k) {
   const t = k.taskId ? taskById(k.taskId) : null;
@@ -281,6 +282,13 @@ function screenMuhsens() {
         (active ? pill('في مهمة الآن', 'live') : r.n ? stars(r.avg) : pill('بلا تقييم', 'grey')) + '</div>' +
         '<div class="row tiny dim2" style="margin-top:8px"><span>' + AR(r.n) + ' مهمة مقيَّمة</span>' +
         (notes ? '<span style="color:var(--amber)">' + AR(notes) + ' ملاحظة</span>' : '<span>بلا ملاحظات</span>') + '</div></button>';
+    }).join('') +
+    '<div class="lbl">الفريق الاحتياطي<small>مشترك بين الليدرز · يُطلب من داخل المهمة</small></div>' +
+    reserveTeam().map(m2 => {
+      const n2 = S.tasks.filter(t => acceptedSlots(t).some(a2 => a2.muhsenId === m2.id)).length;
+      return '<button class="prow" data-a="go" data-n="profile" data-id="' + m2.id + '">' +
+        avat(m2) + '<span class="nm sp"><b>' + E(m2.name) + '</b><span>' + E(m2.specialty) + ' · احتياط</span></span>' +
+        pill(n2 ? AR(n2) + ' مهمة' : 'متاح', n2 ? 'live' : 'grey') + icon('i-back','s16') + '</button>';
     }).join('') + '</div>' + tabs();
 }
 
@@ -329,12 +337,15 @@ function screenProfile() {
     '<div class="lbl">البيانات</div><div class="c">' +
       kv('الاسم', u.name) + kv('الرقم الوظيفي', u.code) + kv('الدور', L ? 'محسن ليدر' : 'مُحسن') +
       (L ? kv('المجموعة', u.kt) + kv('عدد الحجاج', AR(u.pilgrims)) + kv('عدد المحسنين', AR(teamOf(u.id).length))
-         : kv('التخصص', u.specialty) + kv('الليدر', userById(u.leaderId).name) + kv('المجموعة', userById(u.leaderId).kt)) +
+         : kv('التخصص', u.specialty) +
+           (u.reserve ? kv('الفريق', 'احتياطي — مشترك بين الليدرز')
+             : kv('الليدر', (userById(u.leaderId) || {}).name || '—') +
+               kv('المجموعة', (userById(u.leaderId) || {}).kt || '—'))) +
       kv('الجهة', org.ar) + kv('النوع', org.type) + kv('الدولة', org.country) + kv('الجوال', u.phone) +
     '</div>' +
 
-    (!isMe && isLeader() && !L ? '<button class="btn p" data-a="assignto" data-u="' + u.id + '">' +
-      icon('i-assign','s16') + 'إسناد مهمة إلى ' + E(u.name.split(' ')[0]) + '</button>' +
+    (!isMe && isLeader() && !L ? '<div class="note b">' + icon('i-info','s16') +
+      '<span>التسكين والطلبات تُدار من داخل المهمة نفسها — افتح المهمة ثم «إدارة التسكين».</span></div>' +
       '<a class="btn l" href="tel:' + u.phone.replace(/[^0-9]/g,'') + '">' + icon('i-phone','s16') + 'اتصال</a>' : '') +
 
     (isMe ? '<button class="btn d" data-a="logout">' + icon('i-out','s16') + 'تسجيل الخروج</button>' : '') +
@@ -349,7 +360,7 @@ function screenMore() {
        ['lreq','i-swap','الطلبات','المرسلة والمستقبلة والمنتهية'],
        ['muhsens','i-users','المحسنون','فريقك وتقييماتهم'],
        ['rating','i-star','التقييم','تقييمك وتقييم الفريق'],
-       ['tickets','i-ticket','التذاكر','من الحجاج والكنترول والمحسنين'],
+       ['desk','i-ticket','التذاكر والتقارير','التذاكر الواردة والتقارير المرفوعة'],
        ['pilgrims','i-user','الحجاج','حجاج الـKT والبلاغات'],
        ['daily','i-check','التحضير اليومي','حضورك وشِفتك وطلبات التبديل'],
        ['guide','i-guide','دليل المهام','تعليمات كل نوع مهمة — وتحريرها'],
@@ -361,7 +372,7 @@ function screenMore() {
     : [['tasks','i-tasks','المهام','الحالية والمنجزة وغير المنجزة'],
        ['requests','i-swap','الطلبات','التسكين والتفويض'],
        ['rating','i-star','التقييم','تقييمك وتقييم الزملاء'],
-       ['tickets','i-ticket','التذاكر','المسندة إليك وما رفعته'],
+       ['desk','i-ticket','التذاكر والتقارير','المسندة إليك وما ترفعه'],
        ['pilgrims','i-user','الحجاج','حجاج الـKT والبلاغات'],
        ['daily','i-check','التحضير اليومي','حضورك وشِفتك وطلب التبديل'],
        ['guide','i-guide','دليل المهام','تعليمات تنفيذ كل نوع مهمة'],

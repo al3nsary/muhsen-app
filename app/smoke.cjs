@@ -22,7 +22,7 @@ const sandbox = {
 sandbox.window.IMG = JSON.parse(fs.readFileSync(IMGP, 'utf8'));
 sandbox.globalThis = sandbox;
 
-const FILES = ['03-data.js','04-core.js','05-ui.js','06-task.js','07-muhsen.js','08-more.js','09-admin.js','11-reqcenter.js','12-photos.js','13-docs.js','14-guide.js','15-daily.js','16-push.js','10-router.js'];
+const FILES = ['03-data.js','04-core.js','05-ui.js','06-task.js','07-muhsen.js','08-more.js','09-admin.js','11-reqcenter.js','12-photos.js','13-docs.js','14-guide.js','15-daily.js','16-push.js','17-reports.js','10-router.js'];
 const js = FILES.map(read).join('\n');
 const ctx = vm.createContext(sandbox);
 
@@ -42,11 +42,15 @@ step('التنفيذ الأولي', () => vm.runInContext(js, ctx, { filename: '
 if (fail) process.exit(1);
 
 console.log('\nالبيانات');
-step('٣ قادة و١٥ محسنًا — ٥ لكل ليدر', () => {
+step('٣ ليدرات · ٥ محسنين لكل واحد · وفريق احتياطي', () => {
   const L = run('S.users.filter(u=>u.role==="leader").length');
-  const M = run('S.users.filter(u=>u.role==="muhsen").length');
   const per = run('teamOf("L1").length');
-  if (L !== 3 || M !== 15 || per !== 5) throw new Error(L + ' قادة، ' + M + ' محسن، ' + per + ' لكل ليدر');
+  const res = run('reserveTeam().length');
+  if (L !== 3) throw new Error(L + ' ليدر');
+  if (per !== 5) throw new Error(per + ' لكل ليدر');
+  if (res < 4) throw new Error('الاحتياط ' + res);
+  if (run('reserveTeam().some(u=>u.leaderId)')) throw new Error('احتياطي مرتبط بليدر');
+  if (run('teamOf("L1").some(u=>u.reserve)')) throw new Error('احتياطي داخل فريق');
 });
 step('لا وجود للمجموعات', () => { if (run('S.tasks.some(t=>t.groups)')) throw new Error('ما زالت موجودة'); });
 step('الحجاج على مستوى الـKT', () => { if (!run('pilgrimsOf("KT085").length')) throw new Error('لا يوجد حجاج'); });
@@ -54,9 +58,18 @@ step('مهام منتهية مقيَّمة جاهزة', () => {
   const n = run('S.tasks.filter(t=>t.status==="done"&&t.rating).length');
   if (n < 5) throw new Error('فقط ' + n);
 });
-step('التقارير مدموجة في التذاكر', () => {
-  if (run('!!S.reports')) throw new Error('ما زال هناك reports');
+step('التذاكر والتقارير منفصلتان', () => {
+  if (!run('S.reports.length')) throw new Error('لا توجد تقارير');
+  if (!run('S.tickets.length')) throw new Error('لا توجد تذاكر');
   if (!run('S.tickets.some(k=>k.src==="محسن")')) throw new Error('لا تذاكر من محسنين');
+  if (!run('S.reports.some(r=>r.to==="CONTROL")')) throw new Error('لا تقارير للكنترول');
+  if (!run('S.reports.some(r=>r.to!=="CONTROL")')) throw new Error('لا تقارير من محسنين');
+});
+step('كل المهام مسكَّنة تلقائيًّا', () => {
+  const bad = run('S.tasks.filter(function(t){return !acceptedSlots(t).length}).length');
+  if (bad) throw new Error(bad + ' مهمة بلا محسنين');
+  if (!run('S.tasks.some(function(t){return t.assigned.some(function(a){return a.auto})})'))
+    throw new Error('لا يوجد تسكين تلقائي');
 });
 
 console.log('\nتصفّح شاشات الليدر');
@@ -64,46 +77,87 @@ click({ a: 'login', id: 'L1' });
 ['home','tasks','lreq','muhsens','rating','tickets','notifs','calendar','pilgrims','more','profile','admin']
   .forEach(n => step('شاشة ' + n, () => { click({ a: 'go', n }); if (!el.innerHTML) throw new Error('فارغة'); }));
 
-console.log('\nقواعد التسكين');
+console.log('\nالتسكين والاحتياط والانسحاب');
 let TID;
-step('فتح مهمة قادمة', () => {
-  /* مهمة قادمة بلا تسكين — هي محلّ اختبار دورة التسكين */
-  TID = run('S.tasks.filter(t=>t.leaderId==="L1"&&t.start>now()&&!t.assigned.length).sort((a,b)=>a.start-b.start)[0].id');
+step('فتح مهمة قادمة مسكَّنة', () => {
+  TID = run('S.tasks.filter(t=>t.leaderId==="L1"&&t.start>now()).sort((a,b)=>a.start-b.start)[0].id');
+  if (!TID) throw new Error('لا توجد مهمة قادمة');
+  if (!run('acceptedSlots(taskById("' + TID + '")).length')) throw new Error('غير مسكَّنة');
   click({ a: 'go', n: 'assign', id: TID });
-  if (!el.innerHTML) throw new Error('فارغة');
+  if (!el.innerHTML) throw new Error('شاشة التسكين فارغة');
 });
-step('إرسال طلبين', () => {
-  click({ a: 'send', id: TID, u: 'M1001' });
-  click({ a: 'send', id: TID, u: 'M1002' });
-  const p = run('taskById("' + TID + '").assigned.filter(a=>a.req==="pending").length');
-  if (p !== 2) throw new Error('أُرسل ' + p);
+step('لا حد أدنى ولا أعلى', () => {
+  if (run('typeof MIN_ASSIGN')  !== 'undefined') throw new Error('ما زال الحد الأدنى موجودًا');
+  const t = run('taskById("' + TID + '")');
+  if (run('recomputeStatus(taskById("' + TID + '"))') !== 'assigned') throw new Error('الحالة خاطئة');
 });
-step('منع تكرار الطلب لنفس الشخص', () => {
-  const before = run('taskById("' + TID + '").assigned.length');
-  click({ a: 'send', id: TID, u: 'M1001' });
-  if (run('taskById("' + TID + '").assigned.length') !== before) throw new Error('تكرر');
+step('إزالة محسن لا تُسقط الحالة ما دام غيره باقيًا', () => {
+  const mid = run('acceptedSlots(taskById("' + TID + '"))[0].muhsenId');
+  sandbox.document.getElementById = () => Object.assign({}, el, { value: 'استبدال' });
+  click({ a: 'doremove', id: TID, u: mid });
+  sandbox.document.getElementById = () => el;
+  if (run('slotOf(taskById("' + TID + '"),"' + mid + '")')) throw new Error('لم يُزل');
+  if (run('recomputeStatus(taskById("' + TID + '"))') !== 'assigned') throw new Error('سقطت الحالة');
+  sandbox.RM_ = mid;
 });
-step('المحسن يقبل', () => {
-  run('S.session={id:"M1001"}'); click({ a: 'resp', id: TID, v: '1' });
-  if (!run('acceptedSlots(taskById("' + TID + '")).some(a=>a.muhsenId==="M1001")')) throw new Error('لم يُقبل');
+step('طلب تعزيز من الفريق الاحتياطي', () => {
+  const r = run('reserveTeam()[0].id');
+  click({ a: 'send', id: TID, u: r });
+  const sl = run('taskById("' + TID + '").assigned.find(x=>x.muhsenId==="' + r + '")');
+  if (!sl) throw new Error('لم يُرسل الطلب');
+  if (sl.req !== 'pending') throw new Error('الحالة ' + sl.req);
+  run('respondRequest(taskById("' + TID + '"),"' + r + '",true)');
+  if (!run('acceptedSlots(taskById("' + TID + '")).some(a=>a.muhsenId==="' + r + '")'))
+    throw new Error('لم يُقبل');
+  sandbox.RS_ = r;
 });
-step('الرفض يضع المهمة في «غير المنجزة» للمحسن مع السبب', () => {
-  run('respondRequest(taskById("' + TID + '"),"M1002",false,"مرتبط بمهمة أخرى")');
-  const b = run('taskBucket(taskById("' + TID + '"),"M1002")');
-  if (b !== 'undone') throw new Error('التصنيف ' + b);
-  if (!run('undoneReason(taskById("' + TID + '"),"M1002")').includes('رفض')) throw new Error('السبب غير صحيح');
+step('الاحتياط يعمل ولو كان الفريق كاملًا', () => {
+  const t2 = run('S.tasks.filter(t=>t.leaderId==="L1"&&t.start>now()&&t.id!=="' + TID + '")[0]');
+  const full = run('acceptedSlots(taskById("' + t2.id + '")).length');
+  if (full < 5) throw new Error('الفريق غير كامل: ' + full);
+  const r2 = run('reserveTeam()[1].id');
+  click({ a: 'send', id: t2.id, u: r2 });
+  if (!run('taskById("' + t2.id + '").assigned.some(x=>x.muhsenId==="' + r2 + '")'))
+    throw new Error('مُنع الطلب رغم توفر الاحتياط');
 });
-step('الحالة تبقى بانتظار التسكين دون الحد الأدنى', () => {
-  const st = run('recomputeStatus(taskById("' + TID + '"))');
-  if (st !== 'pending_assign') throw new Error(st);
-});
-step('اكتمال الحد الأدنى ٢ يغيّر الحالة', () => {
-  run('S.session={id:"L1"}'); click({ a: 'send', id: TID, u: 'M1003' });
-  run('respondRequest(taskById("' + TID + '"),"M1003",true)');
-  const st = run('recomputeStatus(taskById("' + TID + '"))');
-  if (st !== 'assigned') throw new Error(st);
-});
+step('المحسن يطلب الانسحاب والليدر يقرّر', () => {
+  const mid = run('acceptedSlots(taskById("' + TID + '")).find(a=>!isReserve(a.muhsenId)).muhsenId');
+  run('S.session={id:"' + mid + '",at:Date.now()}');
+  sandbox.document.getElementById = () => Object.assign({}, el, { value: '' });
+  click({ a: 'doaskwd', id: TID });
+  sandbox.document.getElementById = () => el;
+  if (run('myWithdraw(taskById("' + TID + '"),"' + mid + '")')) throw new Error('قُبل طلب بلا سبب');
 
+  sandbox.document.getElementById = () => Object.assign({}, el, { value: 'ارتباط عائلي طارئ' });
+  click({ a: 'doaskwd', id: TID });
+  sandbox.document.getElementById = () => el;
+  const w = run('myWithdraw(taskById("' + TID + '"),"' + mid + '")');
+  if (!w || w.state !== 'pending') throw new Error('لم يُسجَّل الطلب');
+  if (!run('S.notifs.some(n=>n.to==="L1"&&n.title.indexOf("انسحاب")>=0)')) throw new Error('لم يصل الليدر');
+
+  /* المحسن لا يعتمد انسحابه بنفسه */
+  click({ a: 'wdok', id: TID, u: mid });
+  if (run('myWithdraw(taskById("' + TID + '"),"' + mid + '").state') !== 'pending')
+    throw new Error('اعتمد انسحابه بنفسه');
+
+  run('S.session={id:"L1",at:Date.now()}');
+  click({ a: 'wdok', id: TID, u: mid });
+  const w2 = run('taskById("' + TID + '").assigned.find(a=>a.muhsenId==="' + mid + '").wd');
+  if (w2.state !== 'accepted') throw new Error('لم يُعتمد');
+  if (!run('taskById("' + TID + '").assigned.find(a=>a.muhsenId==="' + mid + '").removed'))
+    throw new Error('لم يخرج من المهمة');
+  sandbox.WD_ = mid;
+});
+step('رفض الانسحاب يُبقي المحسن', () => {
+  const mid = run('acceptedSlots(taskById("' + TID + '")).find(a=>!isReserve(a.muhsenId)).muhsenId');
+  run('requestWithdraw(taskById("' + TID + '"),"' + mid + '","سبب آخر")');
+  sandbox.document.getElementById = () => Object.assign({}, el, { value: 'الحاجة قائمة إليك' });
+  click({ a: 'dowdno', id: TID, u: mid });
+  sandbox.document.getElementById = () => el;
+  const a2 = run('taskById("' + TID + '").assigned.find(a=>a.muhsenId==="' + mid + '")');
+  if (a2.wd.state !== 'rejected') throw new Error('لم يُرفض');
+  if (a2.removed) throw new Error('خرج رغم الرفض');
+});
 console.log('\nالتحضير والبدء الآلي');
 step('التحضير من بداية اليوم', () => {
   if (run('prepOpen(taskById("' + TID + '"))') !== run('dayStart(taskById("' + TID + '").start)'))
@@ -271,8 +325,9 @@ step('الصورة تبقى بعد انتهاء المهمة', () => {
 
 console.log('\nالمرفقات مع الرفض');
 step('رفض التسكين بلا سبب مرفوض', () => {
-  sandbox.T_ = run('S.tasks.filter(x=>x.leaderId==="L1"&&x.start>now()&&!x.assigned.length)[0].id');
-  sandbox.M_ = run('teamOf("L1")[3].id');
+  /* نستعمل محسنًا احتياطيًّا غير مسكَّن — لأن الفريق مسكَّن تلقائيًّا */
+  sandbox.T_ = run('S.tasks.filter(x=>x.leaderId==="L1"&&x.start>now())[0].id');
+  sandbox.M_ = run('reserveTeam().find(function(r){return !taskById("'+sandbox.T_+'").assigned.some(function(a){return a.muhsenId===r.id})}).id');
   run('sendRequest(taskById("' + sandbox.T_ + '"),"' + sandbox.M_ + '")');
   run('S.session={id:"' + sandbox.M_ + '",at:Date.now()}');
   sandbox.document.getElementById = () => Object.assign({}, el, { value: '' });
@@ -756,9 +811,9 @@ step('حالة الإذن تُقرأ بلا انهيار', () => {
 });
 step('الفئات محسوبة صحيحًا', () => {
   if (run('audienceUsers("leaders").length') !== 3) throw new Error('الليدرز');
-  if (run('audienceUsers("muhsens").length') !== 15) throw new Error('المحسنون');
+  if (run('audienceUsers("muhsens").length') !== 21) throw new Error('المحسنون ' + run('audienceUsers("muhsens").length'));
   if (run('audienceUsers("myteam").length') !== 5) throw new Error('فريقي');
-  if (run('audienceUsers("all").length') !== 18) throw new Error('الجميع');
+  if (run('audienceUsers("all").length') !== 24) throw new Error('الجميع ' + run('audienceUsers("all").length'));
 });
 step('البثّ يصل كل الفئة', () => {
   run('S.bcAud="muhsens"');
@@ -767,7 +822,7 @@ step('البثّ يصل كل الفئة', () => {
   click({ a: 'dobroadcast' });
   sandbox.document.getElementById = () => el;
   const got = run('S.users.filter(u=>u.role==="muhsen"&&S.notifs.some(n=>n.to===u.id&&n.title==="اجتماع الفريق")).length');
-  if (got !== 15) throw new Error('وصل ' + got + ' فقط');
+  if (got !== 21) throw new Error('وصل ' + got + ' فقط');
   if (!run('S.broadcasts.length')) throw new Error('بلا سجل');
 });
 step('بثّ بلا عنوان أو نص مرفوض', () => {
@@ -880,6 +935,94 @@ step('التشغيل والإيقاف يعملان', () => {
   if (run('screenGuide()').indexOf('clip paused') < 0) throw new Error('بلا صنف الإيقاف');
   click({ a: 'clipplay' });
   if (run('S.clipPaused')) throw new Error('لم يُستأنف');
+});
+
+console.log('\nالتذاكر والتقارير — مدمجتان في تاب ومنفصلتان في المحتوى');
+run('S.session={id:"L1",at:Date.now()}');
+step('شاشة واحدة بتبويبين', () => {
+  run('S.route={n:"desk"}; S.tab.desk="tk"');
+  const tk = run('screenDesk()').split('<nav class="tabs"')[0];
+  if (tk.indexOf('التذاكر والتقارير') < 0) throw new Error('بلا عنوان');
+  if (tk.indexOf('data-v="rp"') < 0) throw new Error('بلا تبويب تقارير');
+  if (tk.indexOf('data-a="newticket"') < 0) throw new Error('بلا زر تذكرة');
+  run('S.tab.desk="rp"');
+  const rp = run('screenDesk()').split('<nav class="tabs"')[0];
+  if (rp.indexOf('data-a="report"') < 0) throw new Error('بلا زر تقرير');
+  if (rp.indexOf('data-a="newticket"') >= 0) throw new Error('اختلط المحتوى');
+});
+step('التقرير كيان مستقل عن التذكرة', () => {
+  if (run('S.reports.some(function(r){return S.tickets.some(function(k){return k.id===r.id})})'))
+    throw new Error('تداخل المعرّفات');
+  const r = run('S.reports[0]');
+  ['no','from','to','cat','status','replies'].forEach(k => {
+    if (r[k] === undefined) throw new Error('ينقص الحقل ' + k);
+  });
+});
+step('المحسن يرفع لليدره والليدر للكنترول', () => {
+  const m = run('teamOf("L1")[0].id');
+  run('S.session={id:"' + m + '",at:Date.now()}');
+  const before = run('S.reports.length');
+  const vals = { rti: 'ازدحام عند المصعد', rb: 'ازدحام شديد عند مصاعد الدور الخامس وقت الخروج للحرم.', rc: 'ازدحام أو أمن', rt: '' };
+  sandbox.document.getElementById = i2 => (vals[i2] !== undefined ? Object.assign({}, el, { value: vals[i2] }) : el);
+  click({ a: 'sendreport' });
+  sandbox.document.getElementById = () => el;
+  if (run('S.reports.length') !== before + 1) throw new Error('لم يُرفع');
+  if (run('S.reports[0].to') !== 'L1') throw new Error('لم يصل الليدر');
+  if (!run('S.notifs.some(function(n){return n.to==="L1"&&n.title==="تقرير جديد"})')) throw new Error('بلا إشعار');
+  sandbox.RP_ = run('S.reports[0].id');
+
+  run('S.session={id:"L1",at:Date.now()}');
+  const v2 = { rti: 'نقص وجبات المشاعر', rb: 'نقص اثنتي عشرة وجبة عن كشف المجموعة في مخيم منى.', rc: 'مشكلة إعاشة', rt: '' };
+  sandbox.document.getElementById = i2 => (v2[i2] !== undefined ? Object.assign({}, el, { value: v2[i2] }) : el);
+  click({ a: 'sendreport' });
+  sandbox.document.getElementById = () => el;
+  if (run('S.reports[0].to') !== 'CONTROL') throw new Error('الليدر لم يرفع للكنترول');
+});
+step('تقرير بلا عنوان أو تفاصيل مرفوض', () => {
+  const before = run('S.reports.length');
+  const v = { rti: 'اا', rb: 'تفاصيل كافية جدًّا هنا', rc: 'أخرى', rt: '' };
+  sandbox.document.getElementById = i2 => (v[i2] !== undefined ? Object.assign({}, el, { value: v[i2] }) : el);
+  click({ a: 'sendreport' });
+  const v2 = { rti: 'عنوان صالح', rb: 'قصير', rc: 'أخرى', rt: '' };
+  sandbox.document.getElementById = i2 => (v2[i2] !== undefined ? Object.assign({}, el, { value: v2[i2] }) : el);
+  click({ a: 'sendreport' });
+  sandbox.document.getElementById = () => el;
+  if (run('S.reports.length') !== before) throw new Error('قُبل تقرير ناقص');
+});
+step('الرد والتصعيد وتغيير الحالة والإغلاق', () => {
+  const id = sandbox.RP_;
+  sandbox.document.getElementById = () => Object.assign({}, el, { value: 'استلمتُ التقرير وسأنسّق مع السكن.' });
+  click({ a: 'dorreply', id: id });
+  sandbox.document.getElementById = () => el;
+  if (!run('reportById("' + id + '").replies.length')) throw new Error('لم يُسجَّل الرد');
+  if (run('reportById("' + id + '").status') !== 'قيد المعالجة') throw new Error('لم تتغيّر الحالة');
+
+  sandbox.document.getElementById = () => Object.assign({}, el, { value: 'يحتاج تدخّل الكنترول' });
+  click({ a: 'doresc', id: id });
+  sandbox.document.getElementById = () => el;
+  if (!run('reportById("' + id + '").escalated')) throw new Error('لم يُصعَّد');
+  if (run('reportById("' + id + '").status') !== 'مُصعّد للكنترول') throw new Error('الحالة ' + run('reportById("' + id + '").status'));
+
+  click({ a: 'dorstate', id: id, v: 'بانتظار معلومات' });
+  if (run('reportById("' + id + '").status') !== 'بانتظار معلومات') throw new Error('لم تتغيّر');
+  click({ a: 'rclose', id: id });
+  if (run('reportById("' + id + '").status') !== 'مغلق') throw new Error('لم يُغلق');
+  click({ a: 'rreopen', id: id });
+  if (run('reportById("' + id + '").status') === 'مغلق') throw new Error('لم يُعد فتحه');
+});
+step('شاشة التقرير تفتح ولها إجراءات', () => {
+  run('S.route={n:"report",id:"' + sandbox.RP_ + '"}');
+  const h = run('screenReport()').split('<nav class="tabs"')[0];
+  ['تفاصيل التقرير', 'المتابعة', 'إجراء'].forEach(k => {
+    if (h.indexOf(k) < 0) throw new Error('ينقص: ' + k);
+  });
+});
+step('طلبات التسكين من داخل المهمة فقط', () => {
+  const m = run('teamOf("L1")[0].id');
+  run('S.route={n:"profile",id:"' + m + '"}');
+  const h = run('screenProfile()').split('<nav class="tabs"')[0];
+  if (h.indexOf('data-a="assignto"') >= 0) throw new Error('ما زال الإسناد من البروفايل');
+  if (h.indexOf('من داخل المهمة') < 0) throw new Error('لا يوجد توجيه للمهمة');
 });
 
 console.log('\n' + (fail ? '✗ فشل ' + fail : '✓ نجحت كل الاختبارات'));

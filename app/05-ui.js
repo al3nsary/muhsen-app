@@ -48,7 +48,8 @@ function tabItems() {
     { k:'tasks',   i:'i-tasks',  l:'المهام',    on:['tasks','task','assign','timeline','doc'] },
     { k: L ? 'lreq' : 'requests', i:'i-swap', l:'الطلبات', b:inbox, on:['lreq','requests'] },
     { k:'daily',   i:'i-check',  l:'التحضير',   on:['daily'] },
-    { k:'tickets', i:'i-ticket', l:'التذاكر',   b:openTk, on:['tickets','ticket'] },
+    { k:'desk', i:'i-ticket', l:'التذاكر والتقارير', b:openTk + openReports(),
+      on:['desk','tickets','ticket','report'] },
     { k:'notifs',  i:'i-bell',   l:'الإشعارات', b:unread(), on:['notifs'] },
     { k:'guide',   i:'i-guide',  l:'الدليل',    on:['guide'] },
     { k:'rating',  i:'i-star',   l:'التقييم',   on:['rating','taskrating'] },
@@ -159,14 +160,18 @@ function mapBox(t, showMe) {
 function urgency(t) {
   if (['done', 'cancelled', 'running'].includes(t.status)) return null;
   const left = t.start - now(), acc = acceptedSlots(t).length;
-  if (acc >= MIN_ASSIGN) return null;
+  const pend = pendingWithdraws(t).length;
   if (left < 0) return null;
-  if (left < 3 * HR) return { k:'urgent', c:'r', i:'i-warn',
-    txt:'تبدأ ' + untilTxt(t.start) + ' — التسكين ناقص (' + AR(acc) + ' من ' + AR(MIN_ASSIGN) + ')' };
-  if (left < 24 * HR) return { k:'soon', c:'a', i:'i-clock',
-    txt:'تبدأ ' + untilTxt(t.start) + ' — أكمل التسكين' };
-  return { k:'', c:'a', i:'i-clock', txt:'بحاجة إلى تسكين — ' + AR(acc) + ' من ' + AR(MIN_ASSIGN) };
+  if (!acc) return left < 3 * HR
+    ? { k:'urgent', c:'r', i:'i-warn', txt:'تبدأ ' + untilTxt(t.start) + ' — ولا يوجد محسن عليها' }
+    : { k:'soon', c:'a', i:'i-assign', txt:'بلا محسنين — اطلب تعزيزًا من الاحتياط' };
+  if (pend) return { k:'soon', c:'a', i:'i-out',
+    txt:AR(pend) + ' طلب انسحاب ينتظر قرارك' };
+  if (left < 3 * HR) return { k:'soon', c:'a', i:'i-clock',
+    txt:'تبدأ ' + untilTxt(t.start) + ' — ' + AR(acc) + ' محسن جاهزون' };
+  return null;
 }
+
 
 function taskRow(t) {
   recomputeStatus(t);
@@ -194,7 +199,7 @@ function taskRow(t) {
         (hideDetail ? '' :
         '<div class="fl" style="gap:6px;margin-top:7px;flex-wrap:wrap">' +
           pill(AR(t.subs.length) + ' فرعية', 'grey') +
-          pill(AR(acc) + ' محسن', acc >= MIN_ASSIGN ? 'live' : 'wait') +
+          pill(AR(acc) + ' محسن', acc ? 'live' : 'no') +
           (t.status === 'running' ? pill(AR(doneSubs) + ' من ' + AR(t.subs.length) + ' منجزة', 'live') : '') +
           (t.rating ? pill('★ ' + AR(avgRating(t.rating)), 'gold') : '') +
           photoBadge(t) + guideChip(t) + '</div>') +
@@ -311,7 +316,7 @@ function pendingCountFor(uid_) {
     if (S.tickets.some(k => k.assignedTo === uid_ && k.status !== 'مغلقة')) n++;
   } else {
     S.tasks.filter(t => t.leaderId === uid_).forEach(t => {
-      if (!lockedForAssign(t) && acceptedSlots(t).length < MIN_ASSIGN) n++;
+      if (!lockedForAssign(t) && !acceptedSlots(t).length) n++;
       if (t.status === 'running' && t.autoStarted) n++;
       if (t.status === 'running' && now() > t.end) n++;
     });
