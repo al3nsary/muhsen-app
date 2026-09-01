@@ -19,7 +19,7 @@ sandbox.window.IMG = {};
 sandbox.globalThis = sandbox;
 
 const FILES = ['03-data.js','04-core.js','05-ui.js','06-task.js','07-muhsen.js','08-more.js','09-admin.js',
-  '11-reqcenter.js','12-photos.js','13-docs.js','14-guide.js','15-daily.js','16-push.js','17-reports.js','10-router.js'];
+  '11-reqcenter.js','12-photos.js','13-docs.js','14-guide.js','15-daily.js','16-push.js','17-reports.js','18-assign.js','10-router.js'];
 const ctx = vm.createContext(sandbox);
 vm.runInContext(FILES.map(read).join('\n'), ctx, { filename: 'app.js' });
 const run = c => vm.runInContext(c, ctx);

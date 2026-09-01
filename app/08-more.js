@@ -17,8 +17,8 @@ function ticketsPane() {
   const segs = L ? [['open','المفتوحة'],['hajj','الحجاج'],['ctrl','الكنترول'],['muh','المحسنون'],['closed','المغلقة']]
                  : [['open','المفتوحة'],['mine','المسندة إليّ'],['closed','المغلقة']];
 
-  return '<button class="btn p" data-a="newticket">' + icon('i-plus','s16') +
-      (L || !me().leaderId ? 'رفع تذكرة إلى الكنترول' : 'رفع تذكرة إلى الليدر') + '</button>' +
+  return '<div class="note b">' + icon('i-info','s16') +
+      '<span>التذاكر يرفعها <b>الحجاج</b> وحدهم — وتصل الليدر ليُسندها ويتابعها. وما ترفعه أنت يكون <b>تقريرًا</b>.</span></div>' +
     '<div class="seg">' + segs.map(x =>
       '<button class="' + (f === x[0] ? 'on' : '') + '" data-a="seg" data-k="tk" data-v="' + x[0] + '">' +
       x[1] + '</button>').join('') + '</div>' +
@@ -338,15 +338,6 @@ function screenProfile() {
       '<br><span class="tiny dim2">' + E(n.t.title) + ' · ' + hijri(n.at) + '</span></span></div>').join('')
       : '<div class="note g">' + icon('i-checkc','s16') + '<span>لا توجد ملاحظات مسجّلة — سجلّ نظيف.</span></div>') +
 
-    '<div class="lbl">البيانات</div><div class="c">' +
-      kv('الاسم', u.name) + kv('الرقم الوظيفي', u.code) + kv('الدور', L ? 'محسن ليدر' : 'مُحسن') +
-      (L ? kv('المجموعة', u.kt) + kv('عدد الحجاج', AR(u.pilgrims)) + kv('عدد المحسنين', AR(teamOf(u.id).length))
-         : kv('التخصص', u.specialty) +
-           (u.reserve ? kv('الفريق', 'احتياطي — مشترك بين الليدرز')
-             : kv('الليدر', (userById(u.leaderId) || {}).name || '—') +
-               kv('المجموعة', (userById(u.leaderId) || {}).kt || '—'))) +
-      kv('الجهة', org.ar) + kv('النوع', org.type) + kv('الدولة', org.country) + kv('الجوال', u.phone) +
-    '</div>' +
 
     (!isMe && isLeader() && !L ? '<div class="note b">' + icon('i-info','s16') +
       '<span>التسكين والطلبات تُدار من داخل المهمة نفسها — افتح المهمة ثم «إدارة التسكين».</span></div>' +
@@ -359,50 +350,70 @@ function screenProfile() {
 /* ============================ المزيد ============================ */
 function screenMore() {
   const u = me(), L = isLeader();
-  const items = (L
-    ? [['tasks','i-tasks','المهام','الحالية والمنجزة وغير المنجزة'],
-       ['lreq','i-swap','الطلبات','المرسلة والمستقبلة والمنتهية'],
-       ['muhsens','i-users','المحسنون','فريقك وتقييماتهم'],
-       ['rating','i-star','التقييم','تقييمك وتقييم الفريق'],
-       ['desk','i-ticket','التذاكر والتقارير','التذاكر الواردة والتقارير المرفوعة'],
-       ['pilgrims','i-user','الحجاج','حجاج الـKT والبلاغات'],
-       ['daily','i-check','التحضير اليومي','حضورك وشِفتك وطلبات التبديل'],
-       ['guide','i-guide','دليل المهام','تعليمات كل نوع مهمة — وتحريرها'],
-       ['album','i-album','ألبوم الصور','توثيق المهام بالصور'],
-       ['calendar','i-cal','التقويم','أسبوعي مع التذكيرات'],
-       ['notifs','i-bell','الإشعارات','كل التحديثات'],
-       ['profile','i-user','الملف الشخصي','بياناتك وتقييمك'],
-       ['admin','i-gear','شاشة التحكم','للتجربة وإعادة الضبط']]
-    : [['tasks','i-tasks','المهام','الحالية والمنجزة وغير المنجزة'],
-       ['requests','i-swap','الطلبات','التسكين والتفويض'],
-       ['rating','i-star','التقييم','تقييمك وتقييم الزملاء'],
-       ['desk','i-ticket','التذاكر والتقارير','المسندة إليك وما ترفعه'],
-       ['pilgrims','i-user','الحجاج','حجاج الـKT والبلاغات'],
-       ['muhsens','i-users','الفريق','زملاؤك والفريق الاحتياطي'],
-       ['daily','i-check','التحضير اليومي','حضورك وشِفتك وطلب التبديل'],
-       ['guide','i-guide','دليل المهام','تعليمات تنفيذ كل نوع مهمة'],
-       ['album','i-album','ألبوم الصور','صور المهام التي تشارك فيها'],
-       ['calendar','i-cal','التقويم','أسبوعي مع التذكيرات'],
-       ['notifs','i-bell','الإشعارات','كل التحديثات'],
-       ['profile','i-user','الملف الشخصي','بياناتك وتقييمك'],
-       ['admin','i-gear','شاشة التحكم','للتجربة وإعادة الضبط']]);
+  const rt = personRating(u.id);
+  const groups = [
+    { t: 'العمل', items: [
+      ['tasks',   'i-tasks',  'المهام',        'الجارية والقادمة والمنجزة'],
+      ['daily',   'i-check',  'التحضير اليومي','حضورك وشِفتك وطلب التبديل'],
+      [L ? 'lreq' : 'requests', 'i-swap', 'الطلبات', 'المرسلة والمستقبلة'],
+      ['desk',    'i-ticket', 'التذاكر والتقارير', 'ما يَرِد إليك وما ترفعه']
+    ] },
+    { t: 'الفريق والحجاج', items: [
+      ['muhsens', 'i-users',  L ? 'المحسنون' : 'الفريق', L ? 'فريقك وتقييماتهم' : 'زملاؤك'],
+      ['pilgrims','i-user',   'الحجاج',        'بيانات الـKT والبلاغات'],
+      ['rating',  'i-star',   'التقييم',       'تقييمك وترتيب الفريق']
+    ] },
+    { t: 'المرجع والتوثيق', items: [
+      ['guide',   'i-guide',  'دليل المهام',   'تعليمات كل نوع مهمة'],
+      ['album',   'i-album',  'ألبوم الصور',   'ميموريز وإثباتات الفرعية'],
+      ['calendar','i-cal',    'التقويم',       'أسبوعي مع التذكيرات']
+    ] },
+    { t: 'حسابك', items: [
+      ['notifs',  'i-bell',   'الإشعارات',     'كل التحديثات'],
+      ['profile', 'i-user',   'الملف الشخصي',  'تقييمك وملاحظاتك'],
+      ['admin',   'i-gear',   'شاشة التحكم',   'للتجربة وإعادة الضبط']
+    ] }
+  ];
+
+  const row = x => '<button class="listitem" data-a="go" data-n="' + x[0] + '">' +
+    '<span class="ico">' + icon(x[1], 's18') + '</span>' +
+    '<span class="sp"><b style="font-size:13.5px;display:block">' + x[2] + '</b>' +
+    '<span class="tiny dim2">' + x[3] + '</span></span>' +
+    (x[0] === 'notifs' && unread() ? pill(AR(unread()), 'no') : '') +
+    (x[0] === 'desk' && (myTickets().filter(k => k.status !== 'مغلقة').length + openReports())
+      ? pill(AR(myTickets().filter(k => k.status !== 'مغلقة').length + openReports()), 'wait') : '') +
+    icon('i-back','s16') + '</button>';
+
   return bar('المزيد') + '<div class="view">' + ground() +
-    '<button class="c" data-a="go" data-n="profile" style="width:100%;text-align:right"><div class="fl">' + avat(u, 'lg') +
-      '<span class="nm sp"><b style="font-size:15px">' + E(u.name) + '</b>' +
-      '<span class="tiny dim2">' + (L ? 'محسن ليدر · ' + u.kt : 'مُحسن · ' + u.specialty) + '</span></span>' +
-      icon('i-back','s16') + '</div></button>' +
-    items.map(x => '<button class="listitem" data-a="go" data-n="' + x[0] + '">' +
-      '<span class="ico">' + icon(x[1], 's18') + '</span>' +
-      '<span class="sp"><b style="font-size:13.5px;display:block">' + x[2] + '</b>' +
-      '<span class="tiny dim2">' + x[3] + '</span></span>' +
-      (x[0] === 'notifs' && unread() ? pill(AR(unread()), 'no') : '') + icon('i-back','s16') + '</button>').join('') +
+    /* بطاقة الحساب */
+    '<button class="c gold mecard" data-a="go" data-n="profile">' +
+      '<div class="fl">' + avat(u, 'lg') +
+        '<span class="nm sp"><b style="font-size:15.5px">' + E(u.name) + '</b>' +
+        '<span class="tiny dim2">' + (L ? 'محسن ليدر · ' + E(u.kt)
+          : u.reserve ? 'مُحسن · فريق احتياطي' : 'مُحسن · ' + E(u.specialty)) + '</span>' +
+        (rt.n ? '<span style="display:block;margin-top:5px">' + stars(rt.avg) + '</span>' : '') + '</span>' +
+        icon('i-back','s16') + '</div></button>' +
+
+    /* اختصارات سريعة */
+    '<div class="quick">' +
+      '<button data-a="go" data-n="daily"><span class="qi">' + icon('i-check','s18') + '</span>التحضير</button>' +
+      '<button data-a="go" data-n="desk"><span class="qi">' + icon('i-flag','s18') + '</span>تقرير</button>' +
+      '<button data-a="go" data-n="guide"><span class="qi">' + icon('i-guide','s18') + '</span>الدليل</button>' +
+      '<button data-a="go" data-n="album"><span class="qi">' + icon('i-album','s18') + '</span>الصور</button>' +
+    '</div>' +
+
+    groups.map(g => '<div class="lbl">' + g.t + '</div>' +
+      '<div class="mgroup">' + g.items.map(row).join('') + '</div>').join('') +
+
     '<button class="btn d" data-a="logout">' + icon('i-out','s16') + 'تسجيل الخروج</button>' +
     '<button class="btn l sm" data-a="appupdate">' + icon('i-reset','s16') + 'تحديث التطبيق إلى آخر نسخة</button>' +
-    '<div class="tiny dim2 center" style="margin-top:6px;line-height:1.9">تطبيق مُحسن · ' + APP_VER + ' · ' + envStamp() + ' · بنية ' + AR(SCHEMA) + '<br>' +
+    '<div class="tiny dim2 center" style="margin-top:6px;line-height:1.9">تطبيق مُحسن · ' + APP_VER +
+      ' · ' + envStamp() + ' · بنية ' + AR(SCHEMA) + '<br>' +
       'مصادر الصور: ويكيميديا كومنز — Adli Wahid · Basheer Olakara · Omar Chatriwala · Shah134pk</div>' +
     '<i class="mnozoly dark" role="img" aria-label="نُزلي"></i>' +
     '</div>' + tabs();
 }
+
 
 /* ============================ التقويم ============================ */
 const D_SHORT = ['أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];

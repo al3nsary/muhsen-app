@@ -1204,3 +1204,39 @@
   .view { gap: 11px }
   .lbl { margin-top: 6px }
 </style>
+<style>
+  /* لا حركة دخول عند إعادة رسم الشاشة نفسها — تمنع الاهتزاز */
+  #screen.nofx .view > * { animation: none !important; }
+  /* حالات المحسن على المهمة */
+  .c.slot { position: relative; overflow: hidden; }
+  .c.slot::before { content: ""; position: absolute; inset-inline-start: 0; top: 12px; bottom: 12px;
+    width: 3px; border-radius: 3px; background: var(--g); opacity: .8; }
+  .c.slot.s-pending::before, .c.slot.s-replacing::before { background: var(--amber) }
+  .c.slot.s-declined::before, .c.slot.s-excluded::before { background: var(--red) }
+  .c.slot.s-expired::before, .c.slot.s-withdrawn::before, .c.slot.s-replaced::before { background: #B6C0B8 }
+  .c.slot.s-expired, .c.slot.s-withdrawn, .c.slot.s-replaced, .c.slot.s-excluded { opacity: .82 }
+</style>
+<style>
+  /* مسار الاعتماد ثلاثي المراحل */
+  .flow3 { display: flex; gap: 8px; }
+  .flow3 .stp { flex: 1; min-width: 0; text-align: center; padding: 11px 6px; border-radius: 14px;
+    background: #F3F6F2; color: #8C9B92; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .flow3 .stp b { font-size: 11.5px; display: block; color: inherit }
+  .flow3 .stp span { font-size: 9px; line-height: 1.5; opacity: .85 }
+  .flow3 .stp.ok { background: #E4F2E9; color: #0B6540 }
+  .flow3 .stp.now { background: #FCF3E3; color: #7A5512; box-shadow: inset 0 0 0 1.5px rgba(184,121,26,.4) }
+  .flow3 .stp.no { background: #FBEBE8; color: #93261C }
+</style>
+<style>
+  /* شاشة المزيد */
+  .mecard { text-align: right; width: 100% }
+  .quick { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px }
+  .quick button { background: #fff; border-radius: 16px; padding: 12px 4px; box-shadow: var(--card);
+    display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 11px; font-weight: 700 }
+  .quick .qi { width: 38px; height: 38px; border-radius: 13px; display: grid; place-items: center;
+    background: #EFF4F0; color: var(--g) }
+  .mgroup { background: #fff; border-radius: 18px; box-shadow: var(--card); overflow: hidden }
+  .mgroup .listitem { box-shadow: none; border-radius: 0; background: transparent }
+  .mgroup .listitem + .listitem { border-top: 1px solid #F0F3EF }
+  .mgroup .listitem:active { background: #F7F9F6 }
+</style>

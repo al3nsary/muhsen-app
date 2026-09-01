@@ -1,11 +1,12 @@
 /* ============================ التقارير — منفصلة عن التذاكر ============================ */
 /* المحسن يرفع تقريره إلى ليدره، والليدر يرفع إلى الكنترول أو يُصعّد ما وصله */
 
-function addReport(fromId, toId, cat, title, body, taskId, pilgrimName) {
+function addReport(fromId, toId, cat, title, body, taskId, pilgrimName, room) {
   const r = {
     id: uid('R'), no: 'RP-' + AR(5200 + S.reports.length),
     from: fromId, to: toId, cat, title, body, taskId: taskId || null,
-    pilgrim: pilgrimName || null, at: now(), status: 'مرسل', escalated: false, replies: []
+    pilgrim: pilgrimName || null, at: now(), status: 'مرسل', escalated: false, replies: [],
+    room: room || null, stage: room ? 'supervisor' : null
   };
   S.reports.unshift(r);
   const f = userById(fromId);
@@ -35,6 +36,34 @@ function reportSetStatus(r, byId, st) {
     r.title + ' — ' + st, { n: 'report', id: r.id });
 }
 const reportById = id => S.reports.find(r => r.id === id);
+const isRoomReport = r => !!r && r.cat === ROOM_CAT && !!r.room;
+/* اعتماد مرحلي: مشرف السكن ثم الكنترول */
+function roomAdvance(r, byId, ok, note_) {
+  if (!isRoomReport(r) || r.stage === 'done') return false;
+  if (!ok) {
+    r.status = 'مغلق'; r.stage = 'rejected';
+    r.replies.push({ by: byId, text: 'رُفض التعديل — ' + (note_ || 'بلا سبب'), at: now(), sys: true });
+    notify(r.from, 'i-xc', 'رُفض تعديل بيانات الغرفة', note_ || '', { n: 'report', id: r.id });
+    return true;
+  }
+  if (r.stage === 'supervisor') {
+    r.stage = 'control'; r.status = 'قيد المعالجة';
+    r.replies.push({ by: byId, text: 'اعتمد مشرف السكن التعديل وأحاله إلى الكنترول', at: now(), sys: true });
+    notify(r.from, 'i-checkc', 'اعتمد مشرف السكن التعديل',
+      'أُحيل إلى الكنترول لتحديث قاعدة البيانات.', { n: 'report', id: r.id });
+  } else if (r.stage === 'control') {
+    r.stage = 'done'; r.status = 'مغلق';
+    r.replies.push({ by: byId, text: 'حدّث الكنترول بيانات الغرفة في قاعدة البيانات', at: now(), sys: true });
+    /* التحديث الفعلي على سجل الحاج */
+    const t = r.taskId ? taskById(r.taskId) : null;
+    const kt = t ? t.kt : Object.keys(S.pilgrims)[0];
+    const p = (S.pilgrims[kt] || []).find(x => x.name === r.pilgrim) || (S.pilgrims[kt] || [])[0];
+    if (p) { p.floor = r.room.floor; p.room = r.room.no; }
+    notify(r.from, 'i-checkc', 'تمّ تعديل بيانات الغرفة',
+      r.room.floor + ' · غرفة ' + r.room.no, { n: 'report', id: r.id });
+  }
+  return true;
+}
 const myReports = () => {
   const u = me(); if (!u) return [];
   return S.reports.filter(r => r.from === u.id || r.to === u.id);
@@ -104,6 +133,27 @@ function screenReport() {
       (t ? '<button class="btn l sm" style="margin-top:10px" data-a="go" data-n="task" data-id="' + t.id + '">' +
         icon('i-tasks','s16') + 'فتح المهمة: ' + E(t.title) + '</button>' : '') + '</div>' +
 
+    (isRoomReport(r) ? '<div class="lbl">بيانات الغرفة المطلوبة</div>' +
+      '<div class="c"><div class="kv"><span>الدور</span><b>' + E(r.room.floor) + '</b></div>' +
+        '<div class="kv"><span>رقم الغرفة</span><b>' + AR(r.room.no) + '</b></div>' +
+        (r.room.note ? '<div class="note b" style="margin-top:9px">' + icon('i-edit','s16') +
+          '<span>' + E(r.room.note) + '</span></div>' : '') + '</div>' +
+      '<div class="lbl">مسار الاعتماد</div>' +
+      '<div class="c"><div class="flow3">' + ROOM_FLOW.map((f, i) => {
+        const idx = ROOM_FLOW.findIndex(x => x.k === r.stage);
+        const st = r.stage === 'rejected' ? 'no' : i < idx ? 'ok' : i === idx ? 'now' : '';
+        return '<span class="stp ' + st + '">' + icon(f.i,'s16') +
+          '<b>' + f.l + '</b><span>' + f.d + '</span></span>';
+      }).join('') + '</div>' +
+      (r.stage === 'rejected' ? '<div class="note r" style="margin-top:10px">' + icon('i-xc','s16') +
+        '<span>رُفض التعديل</span></div>' : '') +
+      (isLeader() && r.stage && r.stage !== 'done' && r.stage !== 'rejected'
+        ? '<div class="grid2" style="margin-top:11px">' +
+          '<button class="btn d sm" data-a="roomno" data-id="' + r.id + '">رفض</button>' +
+          '<button class="btn p sm" data-a="roomok" data-id="' + r.id + '">' +
+            (r.stage === 'supervisor' ? 'اعتماد مشرف السكن' : 'تحديث قاعدة البيانات') + '</button></div>' : '') +
+      '</div>' : '') +
+
     (r.replies.length ? '<div class="lbl">المتابعة<small>' + AR(r.replies.length) + '</small></div>' +
       r.replies.map(x => '<div class="c" style="' + (x.sys ? 'background:#F4F6F3' : '') + '">' +
         '<div class="fl" style="gap:8px;margin-bottom:6px">' +
@@ -128,14 +178,35 @@ function screenReport() {
 /* ---------- أوراق ---------- */
 function reportSheet(taskId) {
   const L = isLeader(), tasks = myTasks();
+  const cat = S.rCat || RCATS[1];
   return '<div class="grip"></div><h3>رفع تقرير</h3>' +
     '<div class="tiny dim2" style="margin-bottom:12px">' +
       (L || !me().leaderId ? 'يُرفع إلى غرفة العمليات — الكنترول' : 'يُرفع إلى ليدر فريقك') + '</div>' +
     '<div class="lbl plain">التصنيف</div>' +
+    '<div class="col" style="gap:6px;margin:8px 0">' + RCATS.slice(0, 4).map(c =>
+      '<button class="listitem' + (c === cat ? ' on' : '') + '" data-a="rcat" data-v="' + c + '">' +
+        '<span class="ico">' + icon(c === ROOM_CAT ? 'i-key' : 'i-flag','s18') + '</span>' +
+        '<span class="sp"><b style="font-size:13px;display:block">' + c + '</b>' +
+        (c === ROOM_CAT ? '<span class="tiny dim2">يمرّ بمشرف السكن ثم الكنترول</span>' : '') + '</span>' +
+        (c === cat ? icon('i-check','s16') : '') + '</button>').join('') + '</div>' +
     '<div class="field" style="margin:8px 0"><select id="rc">' +
-      RCATS.map(c => '<option>' + c + '</option>').join('') + '</select></div>' +
-    '<div class="lbl plain">المهمة</div>' +
-    '<div class="field" style="margin:8px 0"><select id="rt"><option value="">بدون ربط بمهمة</option>' +
+      RCATS.map(c => '<option' + (c === cat ? ' selected' : '') + '>' + c + '</option>').join('') + '</select></div>' +
+
+    (cat === ROOM_CAT
+      ? '<div class="lbl plain">الدور</div>' +
+        '<div class="field" style="margin:8px 0"><select id="rfl">' +
+          FLOORS.map(f => '<option>' + f + '</option>').join('') + '</select></div>' +
+        '<div class="lbl plain">رقم الغرفة</div>' +
+        '<div class="field" style="margin:8px 0"><input id="rno" inputmode="numeric" maxlength="6" ' +
+          'placeholder="مثال: ٣١٤"></div>' +
+        '<div class="lbl plain">ملاحظة (اختيارية)</div>' +
+        '<div class="field" style="margin:8px 0"><input id="rnote" maxlength="140" ' +
+          'placeholder="سبب التعديل أو تفصيل إضافي"></div>' +
+        '<div class="note b">' + icon('i-info','s16') +
+          '<span>يصل الطلب <b>مشرف السكن</b>، وبعد اعتماده يذهب إلى <b>الكنترول</b> لتحديث قاعدة البيانات.</span></div>'
+      : '') +
+    '<div class="lbl plain">المهمة المرتبطة<small style="font-weight:400;color:var(--dim2)"> — إلزامية</small></div>' +
+    '<div class="field" style="margin:8px 0"><select id="rt">' +
       tasks.map(t => '<option value="' + t.id + '"' + (t.id === taskId ? ' selected' : '') + '>' +
         E(t.title) + ' — ' + hijri(t.start) + '</option>').join('') + '</select></div>' +
     '<div class="lbl plain">العنوان</div>' +
@@ -162,8 +233,8 @@ function reportStateSheet(r) {
 function screenDesk() {
   const seg = S.tab.desk || 'tk';
   const openTk = myTickets().filter(k => k.status !== 'مغلقة').length;
-  return bar('التذاكر والتقارير', { right: '<button data-a="' + (seg === 'tk' ? 'newticket' : 'report') +
-      '" aria-label="جديد">' + icon('i-plus') + '</button>' }) +
+  return bar('التذاكر والتقارير', { right: '<button data-a="report" aria-label="رفع تقرير">' +
+      icon('i-plus') + '</button>' }) +
     '<div class="view">' + ground() +
     '<div class="seg big">' +
       '<button class="' + (seg === 'tk' ? 'on' : '') + '" data-a="seg" data-k="desk" data-v="tk">' +

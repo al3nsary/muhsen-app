@@ -1231,6 +1231,42 @@
   .view { gap: 11px }
   .lbl { margin-top: 6px }
 </style>
+<style>
+  /* لا حركة دخول عند إعادة رسم الشاشة نفسها — تمنع الاهتزاز */
+  #screen.nofx .view > * { animation: none !important; }
+  /* حالات المحسن على المهمة */
+  .c.slot { position: relative; overflow: hidden; }
+  .c.slot::before { content: ""; position: absolute; inset-inline-start: 0; top: 12px; bottom: 12px;
+    width: 3px; border-radius: 3px; background: var(--g); opacity: .8; }
+  .c.slot.s-pending::before, .c.slot.s-replacing::before { background: var(--amber) }
+  .c.slot.s-declined::before, .c.slot.s-excluded::before { background: var(--red) }
+  .c.slot.s-expired::before, .c.slot.s-withdrawn::before, .c.slot.s-replaced::before { background: #B6C0B8 }
+  .c.slot.s-expired, .c.slot.s-withdrawn, .c.slot.s-replaced, .c.slot.s-excluded { opacity: .82 }
+</style>
+<style>
+  /* مسار الاعتماد ثلاثي المراحل */
+  .flow3 { display: flex; gap: 8px; }
+  .flow3 .stp { flex: 1; min-width: 0; text-align: center; padding: 11px 6px; border-radius: 14px;
+    background: #F3F6F2; color: #8C9B92; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .flow3 .stp b { font-size: 11.5px; display: block; color: inherit }
+  .flow3 .stp span { font-size: 9px; line-height: 1.5; opacity: .85 }
+  .flow3 .stp.ok { background: #E4F2E9; color: #0B6540 }
+  .flow3 .stp.now { background: #FCF3E3; color: #7A5512; box-shadow: inset 0 0 0 1.5px rgba(184,121,26,.4) }
+  .flow3 .stp.no { background: #FBEBE8; color: #93261C }
+</style>
+<style>
+  /* شاشة المزيد */
+  .mecard { text-align: right; width: 100% }
+  .quick { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px }
+  .quick button { background: #fff; border-radius: 16px; padding: 12px 4px; box-shadow: var(--card);
+    display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 11px; font-weight: 700 }
+  .quick .qi { width: 38px; height: 38px; border-radius: 13px; display: grid; place-items: center;
+    background: #EFF4F0; color: var(--g) }
+  .mgroup { background: #fff; border-radius: 18px; box-shadow: var(--card); overflow: hidden }
+  .mgroup .listitem { box-shadow: none; border-radius: 0; background: transparent }
+  .mgroup .listitem + .listitem { border-top: 1px solid #F0F3EF }
+  .mgroup .listitem:active { background: #F7F9F6 }
+</style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <symbol id="av-m" viewBox="0 0 44 44">
@@ -1341,6 +1377,7 @@
 <div id="device"><div id="screen"></div></div>
 <input id="cam" type="file" accept="image/*" capture="environment" aria-hidden="true" style="position:fixed;inset-inline-start:-9999px;width:1px;height:1px;opacity:0">
 <input id="vid" type="file" accept="video/*" aria-hidden="true" style="position:fixed;inset-inline-start:-9999px;width:1px;height:1px;opacity:0">
+<input id="gal" type="file" accept="image/*" multiple aria-hidden="true" style="position:fixed;inset-inline-start:-9999px;width:1px;height:1px;opacity:0">
 <input id="pdf" type="file" accept="application/pdf" aria-hidden="true" style="position:fixed;inset-inline-start:-9999px;width:1px;height:1px;opacity:0">
 <script>window.IMG={};</script>
 <script>
@@ -1484,8 +1521,16 @@ const KIND_UI = {
 const kindUI = t => KIND_UI[t.kind] || { i:'i-tasks', c:'#5A6C63', n:'مهمة' };
 
 /* ============ التقارير — منفصلة عن التذاكر ============ */
-const RCATS = ['حالة صحية','مشكلة سكن','مشكلة نقل','مشكلة إعاشة','حاج مفقود','وفاة','ازدحام أو أمن','ملاحظة تشغيلية','أخرى'];
+const ROOM_CAT = 'تعديل بيانات الغرفة';
+const RCATS = [ROOM_CAT,'حالة صحية','مشكلة سكن','مشكلة نقل','مشكلة إعاشة','حاج مفقود','وفاة','ازدحام أو أمن','ملاحظة تشغيلية','أخرى'];
+const FLOORS = ['الدور الأرضي','الدور الأول','الدور الثاني','الدور الثالث','الدور الرابع','الدور الخامس','الدور السادس'];
 const RSTATES = ['مرسل','قيد المعالجة','مُصعّد للكنترول','بانتظار معلومات','مغلق'];
+/* مسار تعديل الغرفة: مشرف السكن ← الكنترول ← قاعدة البيانات */
+const ROOM_FLOW = [
+  { k:'supervisor', l:'مشرف السكن',  i:'i-user',   d:'يعتمد صحة الغرفة والدور' },
+  { k:'control',    l:'الكنترول',    i:'i-shield', d:'يعدّل البيانات في قاعدة البيانات' },
+  { k:'done',       l:'تمّ التعديل', i:'i-checkc', d:'اعتُمد وحُدِّث السجل' }
+];
 const REPORT_SEED = [
   { up:0, cat:'مشكلة سكن',      t:'تكييف الدور الثالث متوقف',
     b:'توقف التكييف في ست غرف بالدور الثالث منذ الظهر، والحجاج يشكون الحرارة. أبلغتُ مشرف السكن ولم يُصلَح.', ago:180 },
@@ -1503,8 +1548,8 @@ const REPORT_SEED = [
 
 /* ============================ الحالة ============================ */
 const KEY = 'muhsen_app_v1';
-const APP_VER = 'نسخة ٢٫٢';
-const SCHEMA = 17;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
+const APP_VER = 'نسخة ٣٫٠';
+const SCHEMA = 18;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
 const uid = (p) => p + Math.random().toString(36).slice(2, 8);
@@ -1554,11 +1599,17 @@ function hms(ms) {
 }
 
 /* ============================ نوافذ المهمة ============================ */
-const EARLY_START_H = 2;                       /* يبدأها المسؤول قبل موعدها بساعتين */
-const prepOpen = t => dayStart(t.start);       /* التحضير من أول يوم المهمة */
-const prepDeadline = t => t.start;             /* ينتهي التحضير ببداية المهمة */
-const inPrep = t => now() >= prepOpen(t) && now() < t.start;
-const earlyStartFrom = t => t.start - EARLY_START_H * HR;
+/* نافذة التحضير والبدء: تُفتح قبل المهمة بساعتين وتُغلق قبلها بساعة ونصف */
+const EARLY_START_H = 2, PREP_CLOSE_H = 1.5;
+const prepOpen = t => t.start - EARLY_START_H * HR;
+const prepDeadline = t => t.start - PREP_CLOSE_H * HR;
+const inPrep = t => now() >= prepOpen(t) && now() < prepDeadline(t);
+const earlyStartFrom = t => prepOpen(t);
+function prepWhy(t) {
+  if (now() < prepOpen(t)) return 'يُفتح التحضير قبل المهمة بساعتين — ' + untilTxt(prepOpen(t));
+  if (now() >= prepDeadline(t)) return 'أُغلق التحضير قبل المهمة بساعة ونصف';
+  return '';
+}
 
 /* ============================ التهيئة ============================ */
 function makePilgrims(n, seedNo) {
@@ -1581,7 +1632,7 @@ function autoAssign(st, t) {
     if (t.assigned.some(a => a.muhsenId === m.id)) return;
     t.assigned.push({ muhsenId: m.id, req: 'accepted', auto: true,
       reqAt: t.start - 72 * HR, reqNote: 'تسكين تلقائي', respAt: t.start - 72 * HR, respNote: '',
-      attendedAt: null, farKm: 0, removed: false, removedWhy: null });
+      attendedAt: null, farKm: 0 });
   });
   return t;
 }
@@ -1607,7 +1658,7 @@ function seed() {
   const st = {
     v: SCHEMA, clockOffset: 0, myPlace: 'site', session: null, route: { n: 'login' },
     tab: {}, orgs: ORGS, users: USERS.concat(RESERVE), tasks: [], tickets: [], reports: [], notifs: [],
-    requests: [], reminders: [], pilgrims: {}, photos: [], guides: {},
+    requests: [], reminders: [], pilgrims: {}, photos: [], guides: {}, support: [],
     shifts: {}, attend: [], swaps: [], broadcasts: [], tabPage: 0, toast: null
   };
   S = st;   /* لتعمل الدوال المعتمِدة على S أثناء التهيئة */
@@ -1622,7 +1673,7 @@ function seed() {
   /* المهام الماضية: تُسكَّن وتُنفَّذ وتُقيَّم لتظهر أمثلة حقيقية للتقييم */
   st.tasks.filter(t => t.start < Date.now()).forEach((t, i) => {
     const team = st.users.filter(u => u.role === 'muhsen' && u.leaderId === t.leaderId);
-    const take = t.assigned.filter(a => !a.removed);
+    const take = t.assigned.filter(a => !a.out);
     take.forEach((a, k) => {
       const late = (i + k) % 4 === 0;
       a.attendedAt = (i + k) % 7 === 0 ? null : t.start + (late ? 20 : -90) * MIN;
@@ -1631,8 +1682,8 @@ function seed() {
     /* نموذج انسحاب معتمد في مهمة ماضية */
     if (i % 3 === 1 && take[take.length - 1]) {
       const a2 = take[take.length - 1];
-      a2.removed = true; a2.removedWhy = 'انسحاب معتمد — ارتباط بمهمة أخرى';
       a2.wd = { reason: 'ارتباط بمهمة أخرى', at: t.start - 29 * HR, state: 'accepted', respAt: t.start - 28 * HR, respNote: '' };
+      a2.out = { kind: 'withdrawn', why: 'ارتباط بمهمة أخرى', by: t.leaderId, at: t.start - 28 * HR };
     }
 
     t.leaderAttendedAt = i % 5 === 0 ? null : t.start - 100 * MIN;
@@ -1685,7 +1736,7 @@ function load() {
     if (!S || S.v !== SCHEMA) S = seed();
   } catch (e) { S = seed(); }
   S.reminders = S.reminders || []; S.requests = S.requests || []; S.pilgrims = S.pilgrims || {};
-  S.photos = S.photos || []; S.reports = S.reports || [];
+  S.photos = S.photos || []; S.reports = S.reports || []; S.support = S.support || [];
   S.guides = S.guides || {};
   S.attend = S.attend || []; S.swaps = S.swaps || [];
   S.shifts = S.shifts || {}; S.broadcasts = S.broadcasts || [];
@@ -1720,10 +1771,12 @@ const isReserve = id => { const u = userById(id); return !!(u && u.reserve); };
 const pilgrimsOf = kt => S.pilgrims[kt] || [];
 const ktCount = kt => { const L = S.users.find(u => u.kt === kt); return L ? L.pilgrims : 0; };
 
-const slotOf = (t, id) => t.assigned.find(a => a.muhsenId === id && !a.removed);
-const activeSlots = t => t.assigned.filter(a => !a.removed && a.req !== 'rejected');
-const acceptedSlots = t => t.assigned.filter(a => !a.removed && a.req === 'accepted');
-const pendingSlots = t => t.assigned.filter(a => !a.removed && a.req === 'pending');
+/* لا يُحذف أحد من المهمة — تتغيّر حالته فقط (انظر 18-assign.js) */
+const slotOf = (t, id) => t.assigned.find(a => a.muhsenId === id && !a.out);
+const allSlots = t => t.assigned.slice();
+const activeSlots = t => t.assigned.filter(a => !a.out && a.req !== 'rejected' && a.req !== 'expired');
+const acceptedSlots = t => t.assigned.filter(a => !a.out && a.req === 'accepted');
+const pendingSlots = t => t.assigned.filter(a => !a.out && a.req === 'pending');
 
 function actsAsLeader(t, id) {
   if (t.leaderId === id) return true;
@@ -1754,10 +1807,11 @@ function recomputeStatus(t) {
   return t.status;
 }
 function canStart(t, id) {
-  if (!['pending_assign', 'assigned'].includes(t.status)) return false;
-  if (!actsAsLeader(t, id)) return false;
-  return now() >= earlyStartFrom(t) && now() < t.start;
+  if (!actsAsLeader(t, id) || !canDecide(t, id)) return false;
+  if (['running', 'done', 'cancelled'].indexOf(t.status) >= 0) return false;
+  return now() >= prepOpen(t) && now() < prepDeadline(t);
 }
+
 const lockedForAssign = t => now() >= t.start || ['running', 'done', 'cancelled'].includes(t.status);
 
 /* ============================ التنبيهات ============================ */
@@ -1867,11 +1921,11 @@ const reqTask = r => taskById(r.taskId);
 /* ============================ إجراءات التسكين ============================ */
 function sendRequest(t, muhsenId, note_) {
   if (lockedForAssign(t)) return false;
-  const ex = t.assigned.find(a => a.muhsenId === muhsenId && !a.removed);
+  const ex = t.assigned.find(a => a.muhsenId === muhsenId && !a.out);
   if (ex && ex.req !== 'rejected') return false;
-  if (ex) { ex.removed = true; ex.removedWhy = 'أُعيد الإرسال'; }
+  if (ex) ex.out = { kind: 'excluded', why: 'أُعيد إرسال الطلب', by: t.leaderId, at: now() };
   t.assigned.push({ muhsenId, req: 'pending', reqAt: now(), reqNote: note_ || '',
-    respAt: null, respNote: '', attendedAt: null, farKm: 0, removed: false, removedWhy: null });
+    respAt: null, respNote: '', attendedAt: null, farKm: 0 });
   addReq('تسكين', t.leaderId, muhsenId, t.id, note_);
   hist(t, 'أُرسل طلب تسكين إلى ' + userById(muhsenId).name);
   notify(muhsenId, 'i-assign', 'طلب تسكين جديد',
@@ -1880,7 +1934,7 @@ function sendRequest(t, muhsenId, note_) {
 }
 function withdrawRequest(t, muhsenId) {
   const a = slotOf(t, muhsenId); if (!a) return;
-  a.removed = true; a.removedWhy = 'سحب الليدر الطلب';
+  a.out = { kind: 'excluded', why: 'سحب الليدر الطلب', by: t.leaderId, at: now() };
   closeReq(t.id, muhsenId, 'تسكين', 'withdrawn', 'سحبه الليدر');
   hist(t, 'سحب الليدر طلب التسكين المرسل إلى ' + userById(muhsenId).name);
   notify(muhsenId, 'i-x', 'سُحب طلب التسكين', 'سحب الليدر طلب تسكينك في «' + t.title + '».', { n: 'requests' });
@@ -1888,7 +1942,7 @@ function withdrawRequest(t, muhsenId) {
 }
 function removeAssignee(t, muhsenId, why, excuse) {
   const a = slotOf(t, muhsenId); if (!a) return;
-  a.removed = true; a.removedWhy = why || 'أزاله الليدر';
+  a.out = { kind: 'excluded', why: why || 'أزاله الليدر', by: S.session.id, at: now() };
   if (excuse) a.removePhoto = attachExcuse(t.id, excuse, 'مرفق قرار الإزالة', S.session.id);
   hist(t, 'أُزيل ' + userById(muhsenId).name + ' من المهمة — ' + a.removedWhy);
   note(t, 'أُزيل ' + userById(muhsenId).name + ' من التسكين — ' + a.removedWhy);
@@ -1896,7 +1950,7 @@ function removeAssignee(t, muhsenId, why, excuse) {
   recomputeStatus(t);
 }
 function respondRequest(t, muhsenId, ok, note_, excuse) {
-  const a = t.assigned.find(x => x.muhsenId === muhsenId && x.req === 'pending' && !x.removed);
+  const a = t.assigned.find(x => x.muhsenId === muhsenId && x.req === 'pending' && !x.out);
   if (!a) return;
   a.req = ok ? 'accepted' : 'rejected'; a.respAt = now(); a.respNote = note_ || '';
   if (excuse) a.respPhoto = attachExcuse(t.id, excuse, 'مرفق عذر — ' + userById(muhsenId).name, muhsenId);
@@ -1932,7 +1986,7 @@ function respondWithdraw(t, muhsenId, ok, note_) {
   closeReq(t.id, ownerOf(t), 'انسحاب', ok ? 'accepted' : 'rejected', note_);
   const nm = userById(muhsenId).name;
   if (ok) {
-    a.removed = true; a.removedWhy = 'انسحاب معتمد — ' + a.wd.reason;
+    markWithdrawn(t, muhsenId);
     hist(t, 'اعتُمد انسحاب ' + nm);
     note(t, 'انسحب ' + nm + ' من المهمة بموافقة الليدر — ' + a.wd.reason);
     notify(muhsenId, 'i-checkc', 'اعتُمد انسحابك', 'خرجتَ من «' + t.title + '».', { n: 'tasks' });
@@ -1944,7 +1998,7 @@ function respondWithdraw(t, muhsenId, ok, note_) {
   recomputeStatus(t);
   return true;
 }
-const pendingWithdraws = t => t.assigned.filter(a => a.wd && a.wd.state === 'pending' && !a.removed);
+const pendingWithdraws = t => t.assigned.filter(a => a.wd && a.wd.state === 'pending' && !a.out);
 const myWithdraw = (t, id) => { const a = slotOf(t, id); return a && a.wd ? a.wd : null; };
 
 /* ============================ التفويض — للشركات فقط ============================ */
@@ -1964,7 +2018,7 @@ function respondDelegate(t, ok, note_, excuse) {
     t.delegate.state = 'accepted'; t.delegate.respAt = now();
     if (!t.delegate.keepGroup) {
       const a = slotOf(t, t.delegate.muhsenId);
-      if (a) { a.removed = true; a.removedWhy = 'تفرّغ للقيادة'; }
+      if (a) a.out = { kind: 'excluded', why: 'تفرّغ للقيادة', by: t.leaderId, at: now() };
     }
     hist(t, 'قبِل ' + nm + ' إسناد صلاحية القيادة');
   } else { hist(t, 'رفض ' + nm + ' إسناد صلاحية القيادة' + (note_ ? ' — «' + note_ + '»' : '')); t.delegate = null; }
@@ -1977,9 +2031,10 @@ function respondDelegate(t, ok, note_, excuse) {
 /* ============================ الحضور والتنفيذ ============================ */
 const myFarKm = () => (S.myPlace === 'site' ? 0.4 : S.myPlace === 'hq' ? 1.4 : 3.4);
 /* التحضير لا يُقبل إلا من داخل نطاق ٢ كم من حدود الموقع */
-const canAttend = t => now() >= prepOpen(t) && myFarKm() <= RADIUS_KM;
+const canAttend = t => inPrep(t) && myFarKm() <= RADIUS_KM &&
+  ['done', 'cancelled'].indexOf(t.status) < 0;
 function attendBlockReason(t) {
-  if (now() < prepOpen(t)) return 'يفتح التحضير من بداية يوم المهمة';
+  const w = prepWhy(t); if (w) return w;
   if (myFarKm() > RADIUS_KM) return 'أنت خارج النطاق — ' + AR(myFarKm()) + ' كم، والمسموح ' + AR(RADIUS_KM) + ' كم';
   return '';
 }
@@ -2038,6 +2093,7 @@ function toggleSub(t, s, by) {
 }
 
 /* ============================ التذاكر (تشمل التقارير) ============================ */
+/* التذاكر يرفعها الحجاج وحدهم — والفريق يرفع تقارير */
 function addTicket(fromId, title, body, cat, pri, taskId, pilgrimId) {
   const u = userById(fromId);
   const leaderId = u.role === 'leader' ? u.id : u.leaderId;
@@ -2105,9 +2161,9 @@ function isBlamed(t, uid_) {
     const s = t.assigned.find(a => a.muhsenId === uid_);
     if (!s) return false;
     if (s.req === 'rejected') return true;
-    /* الخروج بموافقة الليدر اتفاق لا إدانة */
-    if (s.wd && s.wd.state === 'accepted') return false;
-    if (s.removed) return true;
+    if (s.req === 'expired') return true;
+    /* الخروج بقرار غيره ليس إدانة عليه */
+    if (s.out) return false;
     if (t.status === 'done' && s.req === 'accepted' && !s.attendedAt) return true;
     if (t.status === 'done' && s.attendedAt && s.attendedAt > t.start) return true;
     return false;
@@ -2134,8 +2190,10 @@ function undoneReason(t, uid_) {
   if (u.role === 'muhsen') {
     const s = t.assigned.find(a => a.muhsenId === uid_) || {};
     if (s.req === 'rejected') return 'رفضتَ الإسناد' + (s.respNote ? ' — «' + s.respNote + '»' : '');
-    if (s.wd && s.wd.state === 'accepted') return 'انسحبتَ بموافقة الليدر — ' + s.wd.reason;
-    if (s.removed) return 'أُزيل إسنادك — ' + (s.removedWhy || 'بقرار من الليدر');
+    if (s.req === 'expired') return 'انتهت مهلة ردّك على الطلب';
+    if (s.out && s.out.kind === 'withdrawn') return 'انسحبتَ بموافقة الليدر — ' + s.out.why;
+    if (s.out && s.out.kind === 'replaced') return 'استُبدلت بـ ' + (s.out.byName || '') + ' — ' + s.out.why;
+    if (s.out) return 'استُبعدت من المهمة — ' + s.out.why;
     if (!s.attendedAt) return 'لم تثبت حضورك في المهمة';
     if (s.attendedAt > t.start) return 'تأخرت عن التحضير — أثبت حضورك بعد بدايتها';
     return 'غير منجزة';
@@ -2186,6 +2244,7 @@ const unassignedTasks = () => myTasks().filter(t =>
 
 /* ============================ التنبيهات التلقائية والبدء الآلي ============================ */
 function autoTick() {
+  S.tasks.forEach(t => { if (typeof expireRequests === 'function') expireRequests(t); });
   const t0 = now();
   (S.reminders || []).forEach(r => {
     if (!r.fired && t0 >= r.at) { r.fired = true; notify(r.who, 'i-bell', 'تذكير', r.text, { n: 'calendar' }); }
@@ -2677,30 +2736,28 @@ function screenTask() {
       '<div class="row"><b class="sm">تقييم المهمة</b>' + pill('التفاصيل', 'gold') + '</div>' +
       '<div class="fl" style="margin-top:10px;justify-content:center">' + stars(avgRating(t.rating), 'lg') + '</div></button>' : '') +
 
-    (lead ? '<div class="lbl">المحسنون على المهمة<small>' + AR(acc.length) + ' محسن · ' +
+    /* ===== التسكين: يراه الليدر والكنترول فقط ===== */
+    (lead ? '<div class="lbl">المحسنون على المهمة<small>' + AR(acc.length) + ' فعليًّا · ' +
         AR(att) + ' أثبتوا حضورهم</small></div>' +
-      (activeSlots(t).length ? activeSlots(t).map(a => slotRow(t, a, act && !deleg && !locked)).join('')
-        : '<div class="c center dim sm" style="padding:20px">لم يُسكَّن أحد بعد</div>') +
+      (allSlots(t).length ? allSlots(t).map(a2 => slotCard(t, a2, act && !deleg)).join('')
+        : '<div class="c center dim sm" style="padding:20px">لا يوجد أحد على المهمة</div>') +
+
+      /* نافذة الطلبات */
       (locked ? '<div class="note a">' + icon('i-info','s16') +
         '<span>' + (running || closed ? 'المهمة بدأت — التسكين مقفل.' : 'حان وقت المهمة — التسكين مقفل.') + '</span></div>'
-        : (act ? '<button class="btn l" data-a="go" data-n="assign" data-id="' + t.id + '">' +
-          icon('i-assign','s16') + 'إدارة التسكين وطلب تعزيز</button>' : '')) : '') +
+        : act ? (reqWindowOpen(t)
+          ? '<div class="note b">' + icon('i-clock','s16') +
+            '<span>نافذة الطلبات مفتوحة — تُغلق ' + untilTxt(reqCloseAt(t)) + '. وكل طلب مهلته ' +
+            AR(REQ_TTL_H) + ' ساعات.</span></div>' +
+            '<button class="btn l" data-a="supportsheet" data-id="' + t.id + '">' +
+              icon('i-send','s16') + 'طلب دعم من الكنترول</button>'
+          : '<div class="note a">' + icon('i-clock','s16') + '<span>' + E(reqWindowWhy(t)) + '</span></div>' +
+            (now() >= reqCloseAt(t) ? '<button class="btn l" data-a="supportsheet" data-id="' + t.id + '">' +
+              icon('i-send','s16') + 'طلب دعم من الكنترول</button>' : '')) : '') +
 
-    /* طلبات الانسحاب الواردة للّيدر */
-    (lead && act && pendingWithdraws(t).length
-      ? '<div class="lbl">طلبات انسحاب<small>' + AR(pendingWithdraws(t).length) + '</small></div>' +
-        pendingWithdraws(t).map(a2 => {
-          const mm = userById(a2.muhsenId);
-          return '<div class="c"><div class="fl">' + avat(mm, 'sm') +
-            '<span class="nm sp"><b>' + E(mm.name) + '</b><span>' + ago(a2.wd.at) + '</span></span>' +
-            pill('انسحاب','wait') + '</div>' +
-            '<div class="note a" style="margin-top:9px">' + icon('i-edit','s16') +
-              '<span>' + E(a2.wd.reason) + '</span></div>' +
-            '<div class="grid2" style="margin-top:10px">' +
-              '<button class="btn d sm" data-a="wdno" data-id="' + t.id + '" data-u="' + a2.muhsenId + '">رفض</button>' +
-              '<button class="btn p sm" data-a="wdok" data-id="' + t.id + '" data-u="' + a2.muhsenId + '">' +
-                'الموافقة على الانسحاب</button></div></div>';
-        }).join('') : '') +
+      (taskSupport(t.id).length ? '<div class="lbl">طلبات الدعم<small>' +
+        AR(taskSupport(t.id).length) + '</small></div>' +
+        taskSupport(t.id).map(s2 => supportCard(s2)).join('') : '') : '') +
 
     /* المحسن: طلب انسحاب */
     (!lead && !closed && slotOf(t, u.id) && slotOf(t, u.id).req === 'accepted'
@@ -2751,7 +2808,7 @@ function screenTask() {
 
     (!closed ? '<div class="grid2">' +
       '<button class="btn l sm" data-a="note" data-id="' + t.id + '">' + icon('i-edit','s16') + 'ملاحظة</button>' +
-      '<button class="btn l sm" data-a="newticket" data-id="' + t.id + '">' + icon('i-ticket','s16') + 'تذكرة</button></div>' : '') +
+      '<button class="btn l sm" data-a="report" data-id="' + t.id + '">' + icon('i-flag','s16') + 'تقرير</button></div>' : '') +
     (act && !closed && !running ? '<button class="btn d" data-a="cancel" data-id="' + t.id + '">' +
       icon('i-cancel','s16') + 'إلغاء المهمة</button>' : '') +
     '</div>' + tabs();
@@ -2810,9 +2867,10 @@ function subRow(t, s, i, running) {
       (s.done ? '<span class="tiny dim2">' + t12(s.at) + '</span>' : isNext ? pill('التالية','wait') : '') +
     '</button>' +
     (shots ? '<button class="sshot has" data-a="viewphoto" data-id="' + photosFor(t.id, s.id)[0].id + '" ' +
-      'aria-label="إثباتات">' + icon('i-camera','s14') + '<i>' + AR(shots) + '</i></button>'
-      : (canShoot() ? '<button class="sshot" data-a="shoot" data-tid="' + t.id + '" data-sid="' + s.id + '" ' +
-        'data-kid="" aria-label="توثيق">' + icon('i-camera','s14') + '</button>' : '')) +
+      'aria-label="إثباتات">' + icon('i-camera','s14') + '<i>' + AR(shots) + '</i></button>' : '') +
+    (canShootSub(t) && ['done','cancelled'].indexOf(t.status) < 0
+      ? '<button class="sshot" data-a="shoot" data-tid="' + t.id + '" data-sid="' + s.id + '" ' +
+        'data-kid="" aria-label="توثيق بالكاميرا">' + icon('i-camera','s14') + '</button>' : '') +
     '</div>';
 }
 
@@ -2837,90 +2895,9 @@ function delegCard(t, isCo, canManage) {
 }
 
 /* ============================ شاشة التسكين ============================ */
-function screenAssign() {
-  const t = taskById(S.route.id); if (!t) return screenTasks();
-  recomputeStatus(t);
-  const u = me();
-  if (!canDecide(t, u.id)) return screenTask();
-  const locked = lockedForAssign(t);
-  const team = teamOf(t.leaderId);
-  const res = reserveTeam();
-  const acc = acceptedSlots(t);
-  const seg = S.tab.asg || 'team';
+/* التسكين صار داخل المهمة نفسها */
+function screenAssign() { return screenTask(); }
 
-  const busy = {};
-  team.concat(res).forEach(m => { const x = busyIn(m.id, t); if (x) busy[m.id] = x.title; });
-
-  const card = (m, fromReserve) => {
-    const s = t.assigned.find(x => x.muhsenId === m.id && !x.removed);
-    const st = s ? s.req : null;
-    const blocked = !!busy[m.id] && !s;
-    let right, act = '';
-    if (st === 'accepted') {
-      right = pill(s.auto ? 'مُسكَّن تلقائيًّا' : 'مُسكَّن', 'live');
-      act = locked ? '' : '<button class="btn d sm" data-a="removeasg" data-id="' + t.id + '" data-u="' + m.id + '">' +
-        icon('i-x','s16') + 'إزالة من المهمة</button>';
-    } else if (st === 'pending') {
-      right = pill('بانتظار الرد · ' + ago(s.reqAt), 'wait');
-      act = locked ? '' : '<div class="grid3">' +
-        '<a class="btn l sm" href="tel:' + String(m.phone).replace(/[^0-9]/g,'') + '">' + icon('i-phone','s16') + 'اتصال</a>' +
-        '<a class="btn l sm" href="https://wa.me/' + String(m.phone).replace(/[^0-9]/g,'') + '" target="_blank" rel="noopener">' +
-          icon('i-send','s16') + 'واتساب</a>' +
-        '<button class="btn d sm" data-a="withdraw" data-id="' + t.id + '" data-u="' + m.id + '">' +
-          icon('i-x','s16') + 'سحب</button></div>';
-    } else if (st === 'rejected') {
-      right = pill('اعتذر', 'no');
-      act = locked ? '' : '<button class="btn l sm" data-a="send" data-id="' + t.id + '" data-u="' + m.id + '">' +
-        icon('i-swap','s16') + 'إعادة الطلب</button>';
-    } else {
-      const out = t.assigned.find(x => x.muhsenId === m.id && x.removed);
-      right = out ? pill('خرج من المهمة', 'grey') : blocked ? pill('مرتبط بمهمة أخرى', 'grey') : pill('متاح', 'grey');
-      act = locked ? '' : (blocked
-        ? '<div class="tiny dim2">مرتبط بـ«' + E(busy[m.id]) + '» في وقت متداخل</div>'
-        : '<button class="btn p sm" data-a="send" data-id="' + t.id + '" data-u="' + m.id + '">' +
-          icon('i-assign','s16') + (fromReserve ? 'طلب تعزيز من الاحتياط' : 'إرسال طلب تسكين') + '</button>');
-    }
-    return '<div class="c"><div class="fl">' + avat(m) +
-      '<span class="nm sp"><b>' + E(m.name) + '</b><span>' + E(m.code) + ' · ' + E(m.specialty) +
-        (fromReserve ? ' · احتياط' : '') + '</span></span>' + right + '</div>' +
-      (s && s.respNote ? '<div class="note r" style="margin-top:9px">' + icon('i-info','s16') +
-        '<span>' + E(s.respNote) + '</span></div>' : '') +
-      (s && s.wd && s.wd.state === 'accepted' ? '<div class="note a" style="margin-top:9px">' + icon('i-out','s16') +
-        '<span>انسحب بموافقتك — ' + E(s.wd.reason) + '</span></div>' : '') +
-      (act ? '<div style="margin-top:10px">' + act + '</div>' : '') + '</div>';
-  };
-
-  return bar('التسكين', { back: 1 }) + '<div class="view">' + ground() +
-    '<div class="c gold"><div class="row"><b style="font-size:14.5px" class="sp">' + E(t.title) + '</b>' +
-      pill(untilTxt(t.start), locked ? 'no' : 'wait') + '</div>' +
-      '<div class="fl" style="margin-top:11px;gap:8px;flex-wrap:wrap">' +
-        pill(AR(acc.length) + ' محسن على المهمة', 'live') +
-        pill(AR(ktCount(t.kt)) + ' حاجًّا في ' + t.kt, 'gold') +
-        (pendingSlots(t).length ? pill(AR(pendingSlots(t).length) + ' بانتظار الرد', 'wait') : '') +
-      '</div></div>' +
-
-    (locked
-      ? '<div class="note r">' + icon('i-warn','s16') + '<span><b>التسكين مقفل</b><br>' +
-        (t.status === 'running' ? 'المهمة بدأت — لا تعديل على التسكين بعد البدء.' : 'حان وقت المهمة.') + '</span></div>'
-      : '<div class="note b">' + icon('i-info','s16') +
-        '<span>فريقك مُسكَّن تلقائيًّا على كل مهمة. الطلبات هنا للتعزيز من الاحتياط أو لإعادة من خرج — ' +
-        'ولا حدّ أدنى ولا أعلى للعدد.</span></div>') +
-
-    '<div class="seg">' +
-      '<button class="' + (seg === 'team' ? 'on' : '') + '" data-a="seg" data-k="asg" data-v="team">فريقك<i>' +
-        AR(team.length) + '</i></button>' +
-      '<button class="' + (seg === 'res' ? 'on' : '') + '" data-a="seg" data-k="asg" data-v="res">الفريق الاحتياطي<i>' +
-        AR(res.length) + '</i></button>' +
-    '</div>' +
-
-    (seg === 'team'
-      ? (team.length ? team.map(m => card(m, false)).join('')
-         : '<div class="c center dim sm" style="padding:22px">لا يوجد فريق</div>')
-      : '<div class="note a">' + icon('i-users','s16') +
-        '<span>الاحتياط مشترك بين الليدرز — اطلب من تحتاجه ولو كان فريقك كاملًا على المهمة.</span></div>' +
-        res.map(m => card(m, true)).join('')) +
-    '</div>' + tabs();
-}
 
 
 /* ============================ تسلسل الإجراءات — للّيدر فقط ============================ */
@@ -3150,8 +3127,8 @@ function ticketsPane() {
   const segs = L ? [['open','المفتوحة'],['hajj','الحجاج'],['ctrl','الكنترول'],['muh','المحسنون'],['closed','المغلقة']]
                  : [['open','المفتوحة'],['mine','المسندة إليّ'],['closed','المغلقة']];
 
-  return '<button class="btn p" data-a="newticket">' + icon('i-plus','s16') +
-      (L || !me().leaderId ? 'رفع تذكرة إلى الكنترول' : 'رفع تذكرة إلى الليدر') + '</button>' +
+  return '<div class="note b">' + icon('i-info','s16') +
+      '<span>التذاكر يرفعها <b>الحجاج</b> وحدهم — وتصل الليدر ليُسندها ويتابعها. وما ترفعه أنت يكون <b>تقريرًا</b>.</span></div>' +
     '<div class="seg">' + segs.map(x =>
       '<button class="' + (f === x[0] ? 'on' : '') + '" data-a="seg" data-k="tk" data-v="' + x[0] + '">' +
       x[1] + '</button>').join('') + '</div>' +
@@ -3471,15 +3448,6 @@ function screenProfile() {
       '<br><span class="tiny dim2">' + E(n.t.title) + ' · ' + hijri(n.at) + '</span></span></div>').join('')
       : '<div class="note g">' + icon('i-checkc','s16') + '<span>لا توجد ملاحظات مسجّلة — سجلّ نظيف.</span></div>') +
 
-    '<div class="lbl">البيانات</div><div class="c">' +
-      kv('الاسم', u.name) + kv('الرقم الوظيفي', u.code) + kv('الدور', L ? 'محسن ليدر' : 'مُحسن') +
-      (L ? kv('المجموعة', u.kt) + kv('عدد الحجاج', AR(u.pilgrims)) + kv('عدد المحسنين', AR(teamOf(u.id).length))
-         : kv('التخصص', u.specialty) +
-           (u.reserve ? kv('الفريق', 'احتياطي — مشترك بين الليدرز')
-             : kv('الليدر', (userById(u.leaderId) || {}).name || '—') +
-               kv('المجموعة', (userById(u.leaderId) || {}).kt || '—'))) +
-      kv('الجهة', org.ar) + kv('النوع', org.type) + kv('الدولة', org.country) + kv('الجوال', u.phone) +
-    '</div>' +
 
     (!isMe && isLeader() && !L ? '<div class="note b">' + icon('i-info','s16') +
       '<span>التسكين والطلبات تُدار من داخل المهمة نفسها — افتح المهمة ثم «إدارة التسكين».</span></div>' +
@@ -3492,50 +3460,70 @@ function screenProfile() {
 /* ============================ المزيد ============================ */
 function screenMore() {
   const u = me(), L = isLeader();
-  const items = (L
-    ? [['tasks','i-tasks','المهام','الحالية والمنجزة وغير المنجزة'],
-       ['lreq','i-swap','الطلبات','المرسلة والمستقبلة والمنتهية'],
-       ['muhsens','i-users','المحسنون','فريقك وتقييماتهم'],
-       ['rating','i-star','التقييم','تقييمك وتقييم الفريق'],
-       ['desk','i-ticket','التذاكر والتقارير','التذاكر الواردة والتقارير المرفوعة'],
-       ['pilgrims','i-user','الحجاج','حجاج الـKT والبلاغات'],
-       ['daily','i-check','التحضير اليومي','حضورك وشِفتك وطلبات التبديل'],
-       ['guide','i-guide','دليل المهام','تعليمات كل نوع مهمة — وتحريرها'],
-       ['album','i-album','ألبوم الصور','توثيق المهام بالصور'],
-       ['calendar','i-cal','التقويم','أسبوعي مع التذكيرات'],
-       ['notifs','i-bell','الإشعارات','كل التحديثات'],
-       ['profile','i-user','الملف الشخصي','بياناتك وتقييمك'],
-       ['admin','i-gear','شاشة التحكم','للتجربة وإعادة الضبط']]
-    : [['tasks','i-tasks','المهام','الحالية والمنجزة وغير المنجزة'],
-       ['requests','i-swap','الطلبات','التسكين والتفويض'],
-       ['rating','i-star','التقييم','تقييمك وتقييم الزملاء'],
-       ['desk','i-ticket','التذاكر والتقارير','المسندة إليك وما ترفعه'],
-       ['pilgrims','i-user','الحجاج','حجاج الـKT والبلاغات'],
-       ['muhsens','i-users','الفريق','زملاؤك والفريق الاحتياطي'],
-       ['daily','i-check','التحضير اليومي','حضورك وشِفتك وطلب التبديل'],
-       ['guide','i-guide','دليل المهام','تعليمات تنفيذ كل نوع مهمة'],
-       ['album','i-album','ألبوم الصور','صور المهام التي تشارك فيها'],
-       ['calendar','i-cal','التقويم','أسبوعي مع التذكيرات'],
-       ['notifs','i-bell','الإشعارات','كل التحديثات'],
-       ['profile','i-user','الملف الشخصي','بياناتك وتقييمك'],
-       ['admin','i-gear','شاشة التحكم','للتجربة وإعادة الضبط']]);
+  const rt = personRating(u.id);
+  const groups = [
+    { t: 'العمل', items: [
+      ['tasks',   'i-tasks',  'المهام',        'الجارية والقادمة والمنجزة'],
+      ['daily',   'i-check',  'التحضير اليومي','حضورك وشِفتك وطلب التبديل'],
+      [L ? 'lreq' : 'requests', 'i-swap', 'الطلبات', 'المرسلة والمستقبلة'],
+      ['desk',    'i-ticket', 'التذاكر والتقارير', 'ما يَرِد إليك وما ترفعه']
+    ] },
+    { t: 'الفريق والحجاج', items: [
+      ['muhsens', 'i-users',  L ? 'المحسنون' : 'الفريق', L ? 'فريقك وتقييماتهم' : 'زملاؤك'],
+      ['pilgrims','i-user',   'الحجاج',        'بيانات الـKT والبلاغات'],
+      ['rating',  'i-star',   'التقييم',       'تقييمك وترتيب الفريق']
+    ] },
+    { t: 'المرجع والتوثيق', items: [
+      ['guide',   'i-guide',  'دليل المهام',   'تعليمات كل نوع مهمة'],
+      ['album',   'i-album',  'ألبوم الصور',   'ميموريز وإثباتات الفرعية'],
+      ['calendar','i-cal',    'التقويم',       'أسبوعي مع التذكيرات']
+    ] },
+    { t: 'حسابك', items: [
+      ['notifs',  'i-bell',   'الإشعارات',     'كل التحديثات'],
+      ['profile', 'i-user',   'الملف الشخصي',  'تقييمك وملاحظاتك'],
+      ['admin',   'i-gear',   'شاشة التحكم',   'للتجربة وإعادة الضبط']
+    ] }
+  ];
+
+  const row = x => '<button class="listitem" data-a="go" data-n="' + x[0] + '">' +
+    '<span class="ico">' + icon(x[1], 's18') + '</span>' +
+    '<span class="sp"><b style="font-size:13.5px;display:block">' + x[2] + '</b>' +
+    '<span class="tiny dim2">' + x[3] + '</span></span>' +
+    (x[0] === 'notifs' && unread() ? pill(AR(unread()), 'no') : '') +
+    (x[0] === 'desk' && (myTickets().filter(k => k.status !== 'مغلقة').length + openReports())
+      ? pill(AR(myTickets().filter(k => k.status !== 'مغلقة').length + openReports()), 'wait') : '') +
+    icon('i-back','s16') + '</button>';
+
   return bar('المزيد') + '<div class="view">' + ground() +
-    '<button class="c" data-a="go" data-n="profile" style="width:100%;text-align:right"><div class="fl">' + avat(u, 'lg') +
-      '<span class="nm sp"><b style="font-size:15px">' + E(u.name) + '</b>' +
-      '<span class="tiny dim2">' + (L ? 'محسن ليدر · ' + u.kt : 'مُحسن · ' + u.specialty) + '</span></span>' +
-      icon('i-back','s16') + '</div></button>' +
-    items.map(x => '<button class="listitem" data-a="go" data-n="' + x[0] + '">' +
-      '<span class="ico">' + icon(x[1], 's18') + '</span>' +
-      '<span class="sp"><b style="font-size:13.5px;display:block">' + x[2] + '</b>' +
-      '<span class="tiny dim2">' + x[3] + '</span></span>' +
-      (x[0] === 'notifs' && unread() ? pill(AR(unread()), 'no') : '') + icon('i-back','s16') + '</button>').join('') +
+    /* بطاقة الحساب */
+    '<button class="c gold mecard" data-a="go" data-n="profile">' +
+      '<div class="fl">' + avat(u, 'lg') +
+        '<span class="nm sp"><b style="font-size:15.5px">' + E(u.name) + '</b>' +
+        '<span class="tiny dim2">' + (L ? 'محسن ليدر · ' + E(u.kt)
+          : u.reserve ? 'مُحسن · فريق احتياطي' : 'مُحسن · ' + E(u.specialty)) + '</span>' +
+        (rt.n ? '<span style="display:block;margin-top:5px">' + stars(rt.avg) + '</span>' : '') + '</span>' +
+        icon('i-back','s16') + '</div></button>' +
+
+    /* اختصارات سريعة */
+    '<div class="quick">' +
+      '<button data-a="go" data-n="daily"><span class="qi">' + icon('i-check','s18') + '</span>التحضير</button>' +
+      '<button data-a="go" data-n="desk"><span class="qi">' + icon('i-flag','s18') + '</span>تقرير</button>' +
+      '<button data-a="go" data-n="guide"><span class="qi">' + icon('i-guide','s18') + '</span>الدليل</button>' +
+      '<button data-a="go" data-n="album"><span class="qi">' + icon('i-album','s18') + '</span>الصور</button>' +
+    '</div>' +
+
+    groups.map(g => '<div class="lbl">' + g.t + '</div>' +
+      '<div class="mgroup">' + g.items.map(row).join('') + '</div>').join('') +
+
     '<button class="btn d" data-a="logout">' + icon('i-out','s16') + 'تسجيل الخروج</button>' +
     '<button class="btn l sm" data-a="appupdate">' + icon('i-reset','s16') + 'تحديث التطبيق إلى آخر نسخة</button>' +
-    '<div class="tiny dim2 center" style="margin-top:6px;line-height:1.9">تطبيق مُحسن · ' + APP_VER + ' · ' + envStamp() + ' · بنية ' + AR(SCHEMA) + '<br>' +
+    '<div class="tiny dim2 center" style="margin-top:6px;line-height:1.9">تطبيق مُحسن · ' + APP_VER +
+      ' · ' + envStamp() + ' · بنية ' + AR(SCHEMA) + '<br>' +
       'مصادر الصور: ويكيميديا كومنز — Adli Wahid · Basheer Olakara · Omar Chatriwala · Shah134pk</div>' +
     '<i class="mnozoly dark" role="img" aria-label="نُزلي"></i>' +
     '</div>' + tabs();
 }
+
 
 /* ============================ التقويم ============================ */
 const D_SHORT = ['أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
@@ -3958,6 +3946,9 @@ const thumbKey = p => String(p.src).slice(4).replace(/_w$/, '');
 const thumbAttr = p => seeded(p)
   ? 'class="__C__ bg-' + thumbKey(p) + '"'
   : 'class="__C__" style="background-image:url(' + p.src + ')"';
+/* المحسن يصوّر المهام الفرعية فقط · والليدر يرفع «ميموريز» للمهمة الرئيسية */
+const canShootSub = t => isLeader() || (t && !!slotOf(t, S.session.id));
+const canMemories = () => isLeader();
 const canShoot = () => isLeader();
 /* اسم مختصر نظيف: نقطع عند أول فاصل ثم نقصّ إن طال */
 function shortTitle(s) {
@@ -4009,7 +4000,7 @@ function deletePhoto(id) {
 function photoStrip(ctx, label) {
   const list = photosFor(ctx.taskId, ctx.subId === undefined ? null : ctx.subId,
     ctx.ticketId === undefined ? null : ctx.ticketId);
-  const can = canShoot();
+  const can = ctx.subId ? canShootSub(ctx.taskId ? taskById(ctx.taskId) : null) : canMemories();
   if (!list.length && !can) return '';
   const ctxAttr = 'data-tid="' + (ctx.taskId || '') + '" data-sid="' + (ctx.subId || '') +
     '" data-kid="' + (ctx.ticketId || '') + '"';
@@ -4262,24 +4253,26 @@ function subPickSheet(t) {
 /* ---------- قسم التوثيق داخل تفاصيل المهمة ---------- */
 function taskPhotoSection(t, lead) {
   const all = taskPhotos(t.id).filter(p => !p.excuse);
-  const main = all.filter(p => !p.subId);
-  const subsWith = t.subs.filter(s => photosFor(t.id, s.id).length);
-  if (!all.length && !lead) return '';
-  return '<div class="lbl">توثيق المهمة بالصور<small>' + AR(all.length) + ' صورة' +
-      (lead ? '' : ' · يصوّرها الليدر') + '</small></div>' +
+  const mem = all.filter(p => !p.subId);
+  const subShots = all.length - mem.length;
+  const canMem = canMemories() && !['cancelled'].includes(t.status);
+  if (!all.length && !canMem) return '';
+  return '<div class="lbl">ميموريز المهمة<small>' + AR(mem.length) + ' صورة' +
+      (subShots ? ' · و' + AR(subShots) + ' إثبات فرعية' : '') + '</small></div>' +
     '<div class="c">' +
-      photoStrip({ taskId: t.id, subId: null, ticketId: null }, 'على المهمة الرئيسية') +
-      subsWith.map(s => photoStrip({ taskId: t.id, subId: s.id, ticketId: null }, 'إثبات: ' + s.name)).join('') +
-      (lead ? '<div class="grid2" style="margin-top:11px">' +
-        '<button class="btn l sm" data-a="picksub" data-id="' + t.id + '">' +
-          icon('i-check','s16') + 'توثيق فرعية</button>' +
-        '<button class="btn l sm" data-a="go" data-n="album" data-id="' + t.id + '">' +
-          icon('i-album','s16') + 'الألبوم</button></div>'
-        : (all.length ? '<button class="btn l sm" style="margin-top:11px" data-a="go" data-n="album" data-id="' + t.id + '">' +
-          icon('i-album','s16') + 'عرض كل صور المهمة</button>' : '')) +
-      (!all.length && lead ? '<div class="tiny dim2" style="margin-top:9px">لا توجد صور بعد — وثّق حضورك أو إنجازك بلقطة.</div>' : '') +
+      (canMem ? '<div class="tiny dim2" style="margin-bottom:8px">صور عامة للمهمة — تُرفع من استوديو جهازك.</div>' : '') +
+      '<div class="pscroll">' +
+        (canMem ? '<button class="padd" data-a="memories" data-tid="' + t.id + '">' +
+          icon('i-album','s26') + '<span>رفع صور</span></button>' : '') +
+        mem.map(p => '<button ' + thumbAttr(p).replace('__C__', 'pthumb') + ' data-a="viewphoto" data-id="' + p.id + '">' +
+          '<span>' + E(p.title) + '</span></button>').join('') +
+      '</div>' +
+      (!mem.length && canMem ? '<div class="tiny dim2" style="margin-top:9px">لا توجد ميموريز بعد.</div>' : '') +
+      (all.length ? '<button class="btn l sm" style="margin-top:11px" data-a="go" data-n="album" data-id="' + t.id + '">' +
+        icon('i-album','s16') + 'ألبوم المهمة كاملًا</button>' : '') +
     '</div>';
 }
+
 
 /* شارة عدد الصور على بطاقة المهمة في القوائم */
 function photoBadge(t) {
@@ -5282,11 +5275,12 @@ function maybeAskPush() {
 /* ============================ التقارير — منفصلة عن التذاكر ============================ */
 /* المحسن يرفع تقريره إلى ليدره، والليدر يرفع إلى الكنترول أو يُصعّد ما وصله */
 
-function addReport(fromId, toId, cat, title, body, taskId, pilgrimName) {
+function addReport(fromId, toId, cat, title, body, taskId, pilgrimName, room) {
   const r = {
     id: uid('R'), no: 'RP-' + AR(5200 + S.reports.length),
     from: fromId, to: toId, cat, title, body, taskId: taskId || null,
-    pilgrim: pilgrimName || null, at: now(), status: 'مرسل', escalated: false, replies: []
+    pilgrim: pilgrimName || null, at: now(), status: 'مرسل', escalated: false, replies: [],
+    room: room || null, stage: room ? 'supervisor' : null
   };
   S.reports.unshift(r);
   const f = userById(fromId);
@@ -5316,6 +5310,34 @@ function reportSetStatus(r, byId, st) {
     r.title + ' — ' + st, { n: 'report', id: r.id });
 }
 const reportById = id => S.reports.find(r => r.id === id);
+const isRoomReport = r => !!r && r.cat === ROOM_CAT && !!r.room;
+/* اعتماد مرحلي: مشرف السكن ثم الكنترول */
+function roomAdvance(r, byId, ok, note_) {
+  if (!isRoomReport(r) || r.stage === 'done') return false;
+  if (!ok) {
+    r.status = 'مغلق'; r.stage = 'rejected';
+    r.replies.push({ by: byId, text: 'رُفض التعديل — ' + (note_ || 'بلا سبب'), at: now(), sys: true });
+    notify(r.from, 'i-xc', 'رُفض تعديل بيانات الغرفة', note_ || '', { n: 'report', id: r.id });
+    return true;
+  }
+  if (r.stage === 'supervisor') {
+    r.stage = 'control'; r.status = 'قيد المعالجة';
+    r.replies.push({ by: byId, text: 'اعتمد مشرف السكن التعديل وأحاله إلى الكنترول', at: now(), sys: true });
+    notify(r.from, 'i-checkc', 'اعتمد مشرف السكن التعديل',
+      'أُحيل إلى الكنترول لتحديث قاعدة البيانات.', { n: 'report', id: r.id });
+  } else if (r.stage === 'control') {
+    r.stage = 'done'; r.status = 'مغلق';
+    r.replies.push({ by: byId, text: 'حدّث الكنترول بيانات الغرفة في قاعدة البيانات', at: now(), sys: true });
+    /* التحديث الفعلي على سجل الحاج */
+    const t = r.taskId ? taskById(r.taskId) : null;
+    const kt = t ? t.kt : Object.keys(S.pilgrims)[0];
+    const p = (S.pilgrims[kt] || []).find(x => x.name === r.pilgrim) || (S.pilgrims[kt] || [])[0];
+    if (p) { p.floor = r.room.floor; p.room = r.room.no; }
+    notify(r.from, 'i-checkc', 'تمّ تعديل بيانات الغرفة',
+      r.room.floor + ' · غرفة ' + r.room.no, { n: 'report', id: r.id });
+  }
+  return true;
+}
 const myReports = () => {
   const u = me(); if (!u) return [];
   return S.reports.filter(r => r.from === u.id || r.to === u.id);
@@ -5385,6 +5407,27 @@ function screenReport() {
       (t ? '<button class="btn l sm" style="margin-top:10px" data-a="go" data-n="task" data-id="' + t.id + '">' +
         icon('i-tasks','s16') + 'فتح المهمة: ' + E(t.title) + '</button>' : '') + '</div>' +
 
+    (isRoomReport(r) ? '<div class="lbl">بيانات الغرفة المطلوبة</div>' +
+      '<div class="c"><div class="kv"><span>الدور</span><b>' + E(r.room.floor) + '</b></div>' +
+        '<div class="kv"><span>رقم الغرفة</span><b>' + AR(r.room.no) + '</b></div>' +
+        (r.room.note ? '<div class="note b" style="margin-top:9px">' + icon('i-edit','s16') +
+          '<span>' + E(r.room.note) + '</span></div>' : '') + '</div>' +
+      '<div class="lbl">مسار الاعتماد</div>' +
+      '<div class="c"><div class="flow3">' + ROOM_FLOW.map((f, i) => {
+        const idx = ROOM_FLOW.findIndex(x => x.k === r.stage);
+        const st = r.stage === 'rejected' ? 'no' : i < idx ? 'ok' : i === idx ? 'now' : '';
+        return '<span class="stp ' + st + '">' + icon(f.i,'s16') +
+          '<b>' + f.l + '</b><span>' + f.d + '</span></span>';
+      }).join('') + '</div>' +
+      (r.stage === 'rejected' ? '<div class="note r" style="margin-top:10px">' + icon('i-xc','s16') +
+        '<span>رُفض التعديل</span></div>' : '') +
+      (isLeader() && r.stage && r.stage !== 'done' && r.stage !== 'rejected'
+        ? '<div class="grid2" style="margin-top:11px">' +
+          '<button class="btn d sm" data-a="roomno" data-id="' + r.id + '">رفض</button>' +
+          '<button class="btn p sm" data-a="roomok" data-id="' + r.id + '">' +
+            (r.stage === 'supervisor' ? 'اعتماد مشرف السكن' : 'تحديث قاعدة البيانات') + '</button></div>' : '') +
+      '</div>' : '') +
+
     (r.replies.length ? '<div class="lbl">المتابعة<small>' + AR(r.replies.length) + '</small></div>' +
       r.replies.map(x => '<div class="c" style="' + (x.sys ? 'background:#F4F6F3' : '') + '">' +
         '<div class="fl" style="gap:8px;margin-bottom:6px">' +
@@ -5409,14 +5452,35 @@ function screenReport() {
 /* ---------- أوراق ---------- */
 function reportSheet(taskId) {
   const L = isLeader(), tasks = myTasks();
+  const cat = S.rCat || RCATS[1];
   return '<div class="grip"></div><h3>رفع تقرير</h3>' +
     '<div class="tiny dim2" style="margin-bottom:12px">' +
       (L || !me().leaderId ? 'يُرفع إلى غرفة العمليات — الكنترول' : 'يُرفع إلى ليدر فريقك') + '</div>' +
     '<div class="lbl plain">التصنيف</div>' +
+    '<div class="col" style="gap:6px;margin:8px 0">' + RCATS.slice(0, 4).map(c =>
+      '<button class="listitem' + (c === cat ? ' on' : '') + '" data-a="rcat" data-v="' + c + '">' +
+        '<span class="ico">' + icon(c === ROOM_CAT ? 'i-key' : 'i-flag','s18') + '</span>' +
+        '<span class="sp"><b style="font-size:13px;display:block">' + c + '</b>' +
+        (c === ROOM_CAT ? '<span class="tiny dim2">يمرّ بمشرف السكن ثم الكنترول</span>' : '') + '</span>' +
+        (c === cat ? icon('i-check','s16') : '') + '</button>').join('') + '</div>' +
     '<div class="field" style="margin:8px 0"><select id="rc">' +
-      RCATS.map(c => '<option>' + c + '</option>').join('') + '</select></div>' +
-    '<div class="lbl plain">المهمة</div>' +
-    '<div class="field" style="margin:8px 0"><select id="rt"><option value="">بدون ربط بمهمة</option>' +
+      RCATS.map(c => '<option' + (c === cat ? ' selected' : '') + '>' + c + '</option>').join('') + '</select></div>' +
+
+    (cat === ROOM_CAT
+      ? '<div class="lbl plain">الدور</div>' +
+        '<div class="field" style="margin:8px 0"><select id="rfl">' +
+          FLOORS.map(f => '<option>' + f + '</option>').join('') + '</select></div>' +
+        '<div class="lbl plain">رقم الغرفة</div>' +
+        '<div class="field" style="margin:8px 0"><input id="rno" inputmode="numeric" maxlength="6" ' +
+          'placeholder="مثال: ٣١٤"></div>' +
+        '<div class="lbl plain">ملاحظة (اختيارية)</div>' +
+        '<div class="field" style="margin:8px 0"><input id="rnote" maxlength="140" ' +
+          'placeholder="سبب التعديل أو تفصيل إضافي"></div>' +
+        '<div class="note b">' + icon('i-info','s16') +
+          '<span>يصل الطلب <b>مشرف السكن</b>، وبعد اعتماده يذهب إلى <b>الكنترول</b> لتحديث قاعدة البيانات.</span></div>'
+      : '') +
+    '<div class="lbl plain">المهمة المرتبطة<small style="font-weight:400;color:var(--dim2)"> — إلزامية</small></div>' +
+    '<div class="field" style="margin:8px 0"><select id="rt">' +
       tasks.map(t => '<option value="' + t.id + '"' + (t.id === taskId ? ' selected' : '') + '>' +
         E(t.title) + ' — ' + hijri(t.start) + '</option>').join('') + '</select></div>' +
     '<div class="lbl plain">العنوان</div>' +
@@ -5443,8 +5507,8 @@ function reportStateSheet(r) {
 function screenDesk() {
   const seg = S.tab.desk || 'tk';
   const openTk = myTickets().filter(k => k.status !== 'مغلقة').length;
-  return bar('التذاكر والتقارير', { right: '<button data-a="' + (seg === 'tk' ? 'newticket' : 'report') +
-      '" aria-label="جديد">' + icon('i-plus') + '</button>' }) +
+  return bar('التذاكر والتقارير', { right: '<button data-a="report" aria-label="رفع تقرير">' +
+      icon('i-plus') + '</button>' }) +
     '<div class="view">' + ground() +
     '<div class="seg big">' +
       '<button class="' + (seg === 'tk' ? 'on' : '') + '" data-a="seg" data-k="desk" data-v="tk">' +
@@ -5484,6 +5548,321 @@ function seedReports(st) {
     st.reports.push(rep);
   });
   st.reports.sort((a, b) => b.at - a.at);
+}
+
+/* ============================ التسكين: حالات لا حذف ============================ */
+/* لا يخرج محسن من المهمة أبدًا — تتغيّر حالته فقط، وتبقى أمام الليدر والكنترول.
+   والمحسن لا يرى إلا إجراءه هو. */
+
+/* نافذة الطلبات: تُفتح قبل المهمة بـ ١٢ ساعة وتُغلق قبلها بـ ٨، وعمر الطلب ٤ ساعات */
+const REQ_OPEN_H = 12, REQ_CLOSE_H = 8, REQ_TTL_H = 4;
+const reqOpenAt = t => t.start - REQ_OPEN_H * HR;
+const reqCloseAt = t => t.start - REQ_CLOSE_H * HR;
+const reqWindowOpen = t => now() >= reqOpenAt(t) && now() < reqCloseAt(t);
+function reqWindowWhy(t) {
+  if (now() < reqOpenAt(t)) return 'تُفتح الطلبات قبل المهمة بـ ' + AR(REQ_OPEN_H) + ' ساعة — ' + untilTxt(reqOpenAt(t));
+  if (now() >= reqCloseAt(t)) return 'أُغلقت الطلبات قبل المهمة بـ ' + AR(REQ_CLOSE_H) + ' ساعات';
+  return '';
+}
+
+/* حالة المحسن على المهمة */
+const SLOT_STATE = {
+  active:    ['على المهمة',        'live'],
+  pending:   ['بانتظار ردّه',      'wait'],
+  declined:  ['اعتذر',             'no'],
+  expired:   ['انتهت مهلة الطلب',  'grey'],
+  withdrawn: ['منسحب بموافقة',     'grey'],
+  excluded:  ['مستبعد',            'no'],
+  replacing: ['بانتظار البديل',    'wait'],
+  replaced:  ['مستبدل',            'grey'],
+  standin:   ['بديل',              'live']
+};
+function slotState(a) {
+  if (a.out) return a.out.kind;
+  if (a.repl && a.repl.state === 'pending') return 'replacing';
+  if (a.req === 'pending') return 'pending';
+  if (a.req === 'rejected') return 'declined';
+  if (a.req === 'expired') return 'expired';
+  if (a.standin) return 'standin';
+  return 'active';
+}
+/* من يُحتسب فعلًا على المهمة */
+const onTask = a => !a.out && a.req === 'accepted';
+const slotLabel = a => {
+  const s = slotState(a), d = SLOT_STATE[s] || ['—', 'grey'];
+  if (s === 'replaced' && a.out && a.out.byName) return ['مستبدل بـ ' + a.out.byName, 'grey'];
+  return d;
+};
+
+/* ---------- الاستبعاد: استبدال أو عدم حاجة ---------- */
+const EXCLUDE_KINDS = {
+  swap: { l: 'استبدال بمحسن آخر', d: 'يبقى على المهمة حتى يقبل البديل' },
+  none: { l: 'عدم الحاجة',        d: 'العدد المتبقي يكفي — وتتحمّل مسؤولية النتيجة' }
+};
+
+/* طلب استبدال: لا يخرج الأول حتى يقبل الثاني */
+function requestReplace(t, outId, inId, why) {
+  const a = t.assigned.find(x => x.muhsenId === outId && onTask(x));
+  if (!a || a.repl) return false;
+  const inU = userById(inId), outU = userById(outId);
+  if (!inU || !outU) return false;
+  a.repl = { toId: inId, state: 'pending', at: now(), why: why || '' };
+  /* البديل يدخل بحالة «بانتظار ردّه» ولا يُحتسب إلا بعد القبول */
+  t.assigned.push({
+    muhsenId: inId, req: 'pending', standin: true, forId: outId,
+    reqAt: now(), reqNote: 'بديلًا عن ' + outU.name, respAt: null, respNote: '',
+    attendedAt: null, farKm: 0
+  });
+  addReq('استبدال', t.leaderId, inId, t.id, 'بديلًا عن ' + outU.name + (why ? ' — ' + why : ''));
+  hist(t, 'طلب استبدال ' + outU.name + ' بـ ' + inU.name + (why ? ' — «' + why + '»' : ''));
+  notify(inId, 'i-swap', 'طلب حلول مكان زميل',
+    'يُطلب حلولك مكان ' + outU.name + ' في «' + t.title + '».', { n: 'requests' });
+  notify(outId, 'i-info', 'طلب استبدالك',
+    'طُلب استبدالك في «' + t.title + '» — تبقى على المهمة حتى يقبل البديل.', { n: 'task', id: t.id });
+  return true;
+}
+function respondReplace(t, inId, ok, note_) {
+  const b = t.assigned.find(x => x.muhsenId === inId && x.standin && x.req === 'pending');
+  if (!b) return false;
+  const a = t.assigned.find(x => x.muhsenId === b.forId && x.repl && x.repl.state === 'pending');
+  const inU = userById(inId), outU = userById(b.forId);
+  closeReq(t.id, inId, 'استبدال', ok ? 'accepted' : 'rejected', note_);
+  b.respAt = now(); b.respNote = note_ || '';
+  if (ok) {
+    b.req = 'accepted';
+    if (a) {
+      a.repl.state = 'accepted'; a.repl.respAt = now();
+      a.out = { kind: 'replaced', why: a.repl.why || 'استبدال', by: t.leaderId,
+        byId: inId, byName: inU.name, at: now() };
+    }
+    hist(t, 'قبِل ' + inU.name + ' الحلول مكان ' + outU.name);
+    note(t, 'استُبدل ' + outU.name + ' بـ ' + inU.name + (a && a.repl.why ? ' — ' + a.repl.why : ''));
+    notify(outU.id, 'i-swap', 'اكتمل استبدالك',
+      'حلّ ' + inU.name + ' مكانك في «' + t.title + '».', { n: 'tasks' });
+    notify(t.leaderId, 'i-checkc', 'قبول الاستبدال',
+      inU.name + ' حلّ مكان ' + outU.name + ' في «' + t.title + '».', { n: 'task', id: t.id });
+  } else {
+    b.req = 'rejected';
+    if (a) { a.repl.state = 'rejected'; a.repl.respAt = now(); a.repl.respNote = note_ || ''; }
+    hist(t, 'رفض ' + inU.name + ' الحلول مكان ' + outU.name + (note_ ? ' — «' + note_ + '»' : ''));
+    notify(t.leaderId, 'i-xc', 'رفض الاستبدال',
+      inU.name + ' اعتذر — يبقى ' + outU.name + ' على المهمة.', { n: 'task', id: t.id });
+    notify(outU.id, 'i-checkc', 'أُلغي استبدالك',
+      'اعتذر البديل — تبقى على «' + t.title + '».', { n: 'task', id: t.id });
+  }
+  recomputeStatus(t);
+  return true;
+}
+
+/* استبعاد لعدم الحاجة — بإقرار مسؤولية */
+function excludeNoNeed(t, muhsenId, why) {
+  const a = t.assigned.find(x => x.muhsenId === muhsenId && onTask(x));
+  if (!a) return false;
+  a.out = { kind: 'excluded', why: why || 'عدم الحاجة', by: S.session.id, at: now(), owned: true };
+  const nm = userById(muhsenId).name;
+  hist(t, 'استبعد ' + me().name + ' ' + nm + ' لعدم الحاجة — «' + a.out.why + '»');
+  note(t, 'استُبعد ' + nm + ' لعدم الحاجة بقرار الليدر ومسؤوليته — ' + a.out.why);
+  notify(muhsenId, 'i-xc', 'استُبعدت من مهمة',
+    '«' + t.title + '» — ' + a.out.why, { n: 'task', id: t.id });
+  recomputeStatus(t);
+  return true;
+}
+
+/* الانسحاب: يبقى على المهمة وتتغيّر حالته */
+function markWithdrawn(t, muhsenId) {
+  const a = t.assigned.find(x => x.muhsenId === muhsenId);
+  if (!a) return;
+  a.out = { kind: 'withdrawn', why: (a.wd && a.wd.reason) || 'انسحاب معتمد', by: t.leaderId, at: now() };
+}
+
+/* ---------- انتهاء مهلة الطلبات ---------- */
+function expireRequests(t) {
+  let n = 0;
+  t.assigned.forEach(a => {
+    if (a.req !== 'pending') return;
+    const dead = Math.min(a.reqAt + REQ_TTL_H * HR, reqCloseAt(t));
+    if (now() < dead) return;
+    a.req = 'expired'; a.respAt = now();
+    a.respNote = 'انتهت مهلة الرد (' + AR(REQ_TTL_H) + ' ساعات)';
+    if (a.standin) {
+      const src = t.assigned.find(x => x.muhsenId === a.forId && x.repl && x.repl.state === 'pending');
+      if (src) { src.repl.state = 'expired'; src.repl.respAt = now(); }
+    }
+    closeReq(t.id, a.muhsenId, a.standin ? 'استبدال' : 'تسكين', 'expired', a.respNote);
+    const nm = (userById(a.muhsenId) || {}).name || '';
+    hist(t, 'انتهت مهلة طلب ' + nm + ' بلا رد');
+    notify(t.leaderId, 'i-clock', 'انتهت مهلة طلب',
+      'لم يردّ ' + nm + ' على «' + t.title + '» خلال ' + AR(REQ_TTL_H) + ' ساعات.', { n: 'task', id: t.id });
+    notify(a.muhsenId, 'i-clock', 'انتهت مهلة طلبك',
+      'انقضت مهلة الرد على «' + t.title + '».', { n: 'tasks' });
+    n++;
+  });
+  if (n) recomputeStatus(t);
+  return n;
+}
+
+/* ---------- طلب دعم من الكنترول ---------- */
+/* الليدر لا يعرف الفريق الاحتياطي ولا يختار منه — يطلب دعمًا، والكنترول يلبّي ويوضّح */
+const SUPPORT_STATE = { pending:['لدى الكنترول','wait'], done:['لُبّي','live'], denied:['غير متاح','no'] };
+function requestSupport(t, count, why) {
+  S.support = S.support || [];
+  const s = {
+    id: uid('SP'), no: 'SP-' + AR(7100 + S.support.length),
+    taskId: t.id, by: S.session.id, count: count, why: why,
+    at: now(), state: 'pending', log: [{ at: now(), text: 'رفع ' + me().name + ' طلب دعم — ' + why }]
+  };
+  S.support.unshift(s);
+  hist(t, 'طلب دعم من الكنترول: ' + AR(count) + ' محسن — «' + why + '»');
+  notify(t.leaderId, 'i-send', 'وصل طلب الدعم للكنترول',
+    'طلبك على «' + t.title + '» قيد الدراسة لدى غرفة العمليات.', { n: 'task', id: t.id });
+  return s;
+}
+/* استجابة الكنترول — تُحاكى بزر في شاشة التحكم */
+function controlAnswerSupport(s, ok, reason) {
+  const t = taskById(s.taskId); if (!t) return;
+  s.state = ok ? 'done' : 'denied';
+  s.at2 = now(); s.reason = reason;
+  if (ok) {
+    const pool = S.users.filter(u => u.role === 'muhsen' && u.reserve &&
+      !t.assigned.some(a => a.muhsenId === u.id) && !busyIn(u.id, t));
+    const take = pool.slice(0, s.count);
+    take.forEach(m => {
+      t.assigned.push({
+        muhsenId: m.id, req: 'accepted', bySupport: true,
+        reqAt: now(), reqNote: 'دعم من الكنترول', respAt: now(), respNote: '',
+        attendedAt: null, farKm: 0
+      });
+      hist(t, 'أسند الكنترول ' + m.name + ' دعمًا للمهمة');
+    });
+    s.assigned = take.map(m => m.id);
+    s.log.push({ at: now(), text: 'لبّى الكنترول الطلب بـ ' + AR(take.length) + ' محسن — ' + reason });
+    notify(t.leaderId, 'i-checkc', 'لُبّي طلب الدعم',
+      'أسند الكنترول ' + AR(take.length) + ' محسن للمهمة — ' + reason, { n: 'task', id: t.id });
+    take.forEach(m => notify(m.id, 'i-assign', 'أُسندت إليك مهمة دعمًا',
+      '«' + t.title + '» — بقرار غرفة العمليات.', { n: 'task', id: t.id }));
+  } else {
+    s.log.push({ at: now(), text: 'اعتذر الكنترول — ' + reason });
+    notify(t.leaderId, 'i-xc', 'تعذّر تلبية طلب الدعم', reason, { n: 'task', id: t.id });
+  }
+  recomputeStatus(t);
+}
+const taskSupport = tid => (S.support || []).filter(s => s.taskId === tid);
+const openSupport = tid => taskSupport(tid).filter(s => s.state === 'pending');
+
+/* ---------- بطاقة محسن داخل المهمة (للّيدر والكنترول) ---------- */
+function slotCard(t, a, canAct) {
+  const m = userById(a.muhsenId); if (!m) return '';
+  const st = slotState(a), lab = slotLabel(a);
+  const ph = String(m.phone || '').replace(/[^0-9]/g, '');
+  const canReq = canAct && reqWindowOpen(t) && !lockedForAssign(t);
+  return '<div class="c slot s-' + st + '">' +
+    '<div class="fl">' + avat(m) +
+      '<span class="nm sp"><b>' + E(m.name) + '</b><span>' + E(m.code) + ' · ' + E(m.specialty) +
+        (a.bySupport ? ' · دعم من الكنترول' : a.standin ? ' · بديل' : '') + '</span></span>' +
+      pill(lab[0], lab[1]) + '</div>' +
+
+    (a.attendedAt ? '<div class="strip a" style="margin-top:9px">' + icon('i-check','s16') +
+      '<span>أثبت حضوره ' + t12(a.attendedAt) + '</span></div>' : '') +
+    (a.out ? '<div class="note ' + (a.out.kind === 'excluded' ? 'r' : 'a') + '" style="margin-top:9px">' +
+      icon('i-info','s16') + '<span>' +
+      (a.out.kind === 'replaced' ? 'استُبدل بـ ' + E(a.out.byName || '') : SLOT_STATE[a.out.kind][0]) +
+      ' — ' + E(a.out.why) + '</span></div>' : '') +
+    (a.repl && a.repl.state === 'pending' ? '<div class="note a" style="margin-top:9px">' + icon('i-swap','s16') +
+      '<span>بانتظار قبول ' + E((userById(a.repl.toId) || {}).name) + ' — يبقى على المهمة حتى ذلك</span></div>' : '') +
+    (a.repl && a.repl.state === 'rejected' ? '<div class="note r" style="margin-top:9px">' + icon('i-xc','s16') +
+      '<span>اعتذر البديل — بقي على المهمة' + (a.repl.respNote ? ' · ' + E(a.repl.respNote) : '') + '</span></div>' : '') +
+    (a.respNote && a.req === 'rejected' ? '<div class="note r" style="margin-top:9px">' + icon('i-info','s16') +
+      '<span>' + E(a.respNote) + '</span></div>' : '') +
+    (a.wd && a.wd.state === 'pending' ? '<div class="note a" style="margin-top:9px">' + icon('i-out','s16') +
+      '<span><b>طلب انسحاب</b> — ' + E(a.wd.reason) + '</span></div>' +
+      (canAct ? '<div class="grid2" style="margin-top:9px">' +
+        '<button class="btn d sm" data-a="wdno" data-id="' + t.id + '" data-u="' + m.id + '">رفض</button>' +
+        '<button class="btn p sm" data-a="wdok" data-id="' + t.id + '" data-u="' + m.id + '">اعتماد الانسحاب</button></div>' : '') : '') +
+
+    (canReq && onTask(a) && !a.repl && !a.wd ?
+      '<div class="grid3" style="margin-top:10px">' +
+        (ph ? '<a class="btn l sm" href="tel:' + ph + '">' + icon('i-phone','s16') + 'اتصال</a>' : '') +
+        '<button class="btn l sm" data-a="exclude" data-id="' + t.id + '" data-u="' + m.id + '">' +
+          icon('i-swap','s16') + 'استبعاد</button>' +
+      '</div>' : '') +
+    (canReq && a.req === 'pending' ?
+      '<button class="btn d sm" style="margin-top:9px" data-a="withdraw" data-id="' + t.id + '" data-u="' + m.id + '">' +
+        icon('i-x','s16') + 'سحب الطلب</button>' : '') +
+  '</div>';
+}
+
+/* ---------- ورقة الاستبعاد ---------- */
+function excludeSheet(t, muhsenId) {
+  const m = userById(muhsenId);
+  const kind = S.exKind || 'swap';
+  const cands = teamOf(t.leaderId).filter(x =>
+    x.id !== muhsenId && !t.assigned.some(a => a.muhsenId === x.id && !a.out) && !busyIn(x.id, t));
+  const pick = S.exTo && cands.some(c => c.id === S.exTo) ? S.exTo : (cands[0] || {}).id;
+  return '<div class="grip"></div><h3>استبعاد من المهمة</h3>' +
+    '<div class="tiny dim2" style="margin-bottom:10px">' + E(m.name) + ' · ' + E(t.title) + '</div>' +
+    '<div class="lbl plain">السبب</div>' +
+    '<div class="col" style="gap:7px;margin:8px 0">' + Object.keys(EXCLUDE_KINDS).map(k =>
+      '<button class="listitem' + (k === kind ? ' on' : '') + '" data-a="exkind" data-v="' + k + '">' +
+        '<span class="ico">' + icon(k === 'swap' ? 'i-swap' : 'i-x', 's18') + '</span>' +
+        '<span class="sp"><b style="font-size:13.5px;display:block">' + EXCLUDE_KINDS[k].l + '</b>' +
+        '<span class="tiny dim2">' + EXCLUDE_KINDS[k].d + '</span></span>' +
+        (k === kind ? icon('i-check','s16') : '') + '</button>').join('') + '</div>' +
+
+    (kind === 'swap'
+      ? (cands.length
+        ? '<div class="lbl plain">البديل من فريقك</div>' +
+          '<div class="col" style="gap:6px;max-height:34vh;overflow:auto;margin:8px 0">' + cands.map(c =>
+            '<button class="listitem' + (c.id === pick ? ' on' : '') + '" data-a="exto" data-v="' + c.id + '">' +
+              avat(c, 'sm') + '<span class="sp"><b style="font-size:13px;display:block">' + E(c.name) + '</b>' +
+              '<span class="tiny dim2">' + E(c.specialty) + '</span></span>' +
+              (c.id === pick ? icon('i-check','s16') : '') + '</button>').join('') + '</div>' +
+          '<div class="note a">' + icon('i-info','s16') +
+            '<span>يبقى ' + E(m.name.split(' ')[0]) + ' على المهمة حتى يقبل البديل. وإن اعتذر، يبقى ولا يُستبعد.</span></div>'
+        : '<div class="note r">' + icon('i-warn','s16') +
+          '<span>لا يوجد بديل متاح من فريقك — اطلب دعمًا من الكنترول.</span></div>')
+      : '<div class="note r">' + icon('i-warn','s16') +
+        '<span><b>إقرار مسؤولية</b><br>باستبعاده لعدم الحاجة تتحمّل مسؤولية ما ينتج عن نقص العدد في هذه المهمة.</span></div>') +
+
+    '<div class="lbl plain">ملاحظة</div>' +
+    '<div class="field" style="margin:8px 0"><input id="exwhy" maxlength="140" placeholder="سبب مختصر — إلزامي"></div>' +
+    '<div class="grid2" style="margin-top:12px">' +
+      '<button class="btn g" data-a="close">تراجع</button>' +
+      (kind === 'swap' && !cands.length
+        ? '<button class="btn p" data-a="supportreq" data-id="' + t.id + '">طلب دعم من الكنترول</button>'
+        : '<button class="btn p" data-a="doexclude" data-id="' + t.id + '" data-u="' + muhsenId + '">' +
+          (kind === 'swap' ? 'إرسال طلب الاستبدال' : 'استبعاد وأتحمّل المسؤولية') + '</button>') +
+    '</div>';
+}
+
+/* ---------- ورقة طلب الدعم ---------- */
+function supportSheet(t) {
+  const n = S.spCount || 1;
+  return '<div class="grip"></div><h3>طلب دعم من الكنترول</h3>' +
+    '<div class="tiny dim2" style="margin-bottom:10px">' + E(t.title) + ' · ' + hijri(t.start) + '</div>' +
+    '<div class="note b">' + icon('i-info','s16') +
+      '<span>غرفة العمليات هي من تختار المحسنين وتسند الدعم — وتوضّح سبب قرارها.</span></div>' +
+    '<div class="lbl plain" style="margin-top:12px">العدد المطلوب</div>' +
+    '<div class="grid3" style="margin:8px 0">' + [1, 2, 3].map(k =>
+      '<button class="btn ' + (k === n ? 'p' : 'l') + ' sm" data-a="spcount" data-v="' + k + '">' +
+        AR(k) + ' محسن</button>').join('') + '</div>' +
+    '<div class="lbl plain">سبب الطلب</div>' +
+    '<div class="field" style="margin:8px 0"><input id="spwhy" maxlength="160" placeholder="لماذا تحتاج دعمًا؟"></div>' +
+    '<div class="grid2" style="margin-top:12px">' +
+      '<button class="btn g" data-a="close">إلغاء</button>' +
+      '<button class="btn p" data-a="dosupport" data-id="' + t.id + '">رفع الطلب</button></div>';
+}
+
+/* ---------- بطاقة طلب الدعم داخل المهمة ---------- */
+function supportCard(s) {
+  const st = SUPPORT_STATE[s.state] || ['—', 'grey'];
+  return '<div class="c"><div class="row"><span class="fl" style="gap:7px">' + icon('i-send','s16') +
+    '<b class="sm">طلب دعم · ' + E(s.no) + '</b></span>' + pill(st[0], st[1]) + '</div>' +
+    '<div class="sm dim" style="margin:8px 0">' + AR(s.count) + ' محسن · ' + E(s.why) + '</div>' +
+    (s.reason ? '<div class="note ' + (s.state === 'done' ? 'g' : 'r') + '">' + icon('i-info','s16') +
+      '<span>رد الكنترول: ' + E(s.reason) + '</span></div>' : '') +
+    '<div class="tline" style="margin-top:9px">' + s.log.map(x =>
+      '<div class="ti"><span class="d"></span><span class="tiny"><b>' + E(x.text) + '</b><br>' +
+      '<span class="dim2">' + t12(x.at) + ' · ' + hijri(x.at) + '</span></span></div>').join('') + '</div></div>';
 }
 
 /* ============================ المُوجِّه ============================ */
@@ -5530,8 +5909,10 @@ function render() {
     '<span class="sp">' + E(S.toast.text) + '</span></div>';
 
   const key = n + ':' + (S.route.id || '');
+  const sameView = S._viewKey === key;
   const prev = el.querySelector('.view');
   const keep = S._viewKey === key && prev ? prev.scrollTop : 0;
+  el.className = (el.className || '').replace(/ ?nofx/, '') + (sameView ? ' nofx' : '');
   el.innerHTML = html;
   const nv = el.querySelector('.view');
   if (nv && keep) nv.scrollTop = keep;
@@ -5544,6 +5925,12 @@ function render() {
   centerActiveTab();
   save();
   if (S.toast) { const t = S.toast; setTimeout(() => { if (S.toast === t) { S.toast = null; render(); } }, 2600); }
+  /* اللافتة العلوية تختفي وحدها بعد ٥ ثوانٍ */
+  if (S.push && S._pushT !== S.push) {
+    S._pushT = S.push;
+    const p0 = S.push;
+    setTimeout(() => { if (S.push === p0) { S.push = null; S._pushT = null; render(); } }, 5000);
+  }
 }
 
 /* ===== الشريط: الكتلة تتبدّل صفحةً واحدة ===== */
@@ -5634,12 +6021,13 @@ setInterval(() => {
   let due = false;
   document.querySelectorAll('.timer[data-deadline]').forEach(el => {
     const target = Number(el.dataset.deadline);
-    if (now() >= target) due = true;
+    if (now() >= target) due = String(target);
     const r = hms(Math.abs(target - now()));
     const b = el.querySelectorAll('b');
     if (b.length === 3) { b[0].textContent = AR(r.h); b[1].textContent = AR(r.m); b[2].textContent = AR(r.s); }
   });
-  if (due) render();
+  /* لا نعيد الرسم إلا مرة واحدة عند تجاوز كل مهلة — كان يعيده كل ثانية فيهتزّ ويعلّق */
+  if (due && S._dueKey !== due) { S._dueKey = due; render(); }
 }, 1000);
 
 /* ============================ الأحداث ============================ */
@@ -5691,6 +6079,7 @@ document.addEventListener('click', ev => {
     case 'send': { const t = T(); if (!t) break;
       if (!canDecide(t, S.session.id)) { toast('التسكين للمفوَّض على هذه المهمة', 'r'); break; }
       if (lockedForAssign(t)) { toast('التسكين مقفل — بدأت المهمة', 'r'); break; }
+      if (!reqWindowOpen(t)) { toast(reqWindowWhy(t), 'r'); break; }
       const mu = userById(uid_);
       if (!mu || mu.role !== 'muhsen') { toast('لا يُسكَّن إلا محسن', 'r'); break; }
       if (!mu.reserve && mu.leaderId !== t.leaderId) { toast('هذا المحسن ليس من فريقك ولا من الاحتياط', 'r'); break; }
@@ -5880,6 +6269,13 @@ document.addEventListener('click', ev => {
       S.pendingPhoto = null;
       openCamera({ taskId: tid || null, subId: sid || null, ticketId: kid || null });
       return; }
+    case 'memories': {
+      if (!canMemories()) { toast('رفع الميموريز من صلاحية الليدر', 'r'); break; }
+      S.pendingPhoto = null;
+      S.camCtx = { taskId: b.dataset.tid || null, subId: null, ticketId: null, gallery: true };
+      const g = document.getElementById('gal');
+      if (!g) { toast('الاستوديو غير متاح', 'r'); break; }
+      g.value = ''; g.click(); return; }
     case 'shootexcuse': {
       S.camCtx = { mode: 'excuse', kind: b.dataset.k, taskId: id || null, extraId: uid_ || null };
       S.sheetDraft = val('txt');
@@ -5909,6 +6305,59 @@ document.addEventListener('click', ev => {
     /* ===== تصنيف المهام ===== */
     case 'bucketmenu': S.sheet = bucketSheet(); break;
 
+    /* ===== الاستبعاد: استبدال أو عدم حاجة ===== */
+    case 'exclude': { const t = T();
+      if (!t || !canDecide(t, S.session.id)) { toast('ليست من صلاحيتك', 'r'); break; }
+      if (lockedForAssign(t)) { toast('التسكين مقفل', 'r'); break; }
+      if (!reqWindowOpen(t)) { toast(reqWindowWhy(t), 'r'); break; }
+      S.exKind = 'swap'; S.exTo = null; S.exFor = uid_;
+      S.sheet = excludeSheet(t, uid_); break; }
+    case 'exkind': S.exKind = v; S.sheet = excludeSheet(taskById(S.route.id), S.exFor); break;
+    case 'exto': S.exTo = v; S.sheet = excludeSheet(taskById(S.route.id), S.exFor); break;
+    case 'doexclude': { const t = T();
+      if (!t || !canDecide(t, S.session.id)) { toast('ليست من صلاحيتك', 'r'); break; }
+      if (!reqWindowOpen(t)) { toast(reqWindowWhy(t), 'r'); break; }
+      const why = val('exwhy');
+      if (!why || why.length < 4) { toast('السبب إلزامي', 'r'); break; }
+      if (S.exKind === 'swap') {
+        if (!S.exTo) { toast('اختر البديل', 'r'); break; }
+        if (busyIn(S.exTo, t)) { toast('البديل مرتبط بمهمة متداخلة', 'r'); break; }
+        if (!requestReplace(t, uid_, S.exTo, why)) { toast('تعذّر إرسال الطلب', 'r'); break; }
+        toast('أُرسل طلب الاستبدال — يبقى على المهمة حتى يقبل البديل');
+      } else {
+        if (!excludeNoNeed(t, uid_, why)) { toast('تعذّر الاستبعاد', 'r'); break; }
+        toast('استُبعد — وسُجّلت مسؤوليتك عن القرار', 'r');
+      }
+      S.sheet = null; S.exFor = null; buzz(); break; }
+    case 'rrepl': { const t = T(); if (!t) break;
+      if (v === '1') { respondReplace(t, S.session.id, true); buzz(); toast('قبلت الحلول مكان زميلك'); }
+      else S.sheet = textSheet('اعتذار عن الحلول', t.title,
+        'data-a="dorrepl" data-id="' + id + '"', '', 'سبب الاعتذار');
+      break; }
+    case 'dorrepl': { const rr = val('txt');
+      if (!rr) { toast('السبب إلزامي', 'r'); break; }
+      respondReplace(T(), S.session.id, false, rr); S.sheet = null;
+      toast('اعتذرت — يبقى زميلك على المهمة', 'r'); break; }
+
+    /* ===== طلب دعم من الكنترول ===== */
+    case 'supportsheet': { const t = T(); if (!t) break;
+      if (!canDecide(t, S.session.id)) { toast('ليست من صلاحيتك', 'r'); break; }
+      S.spCount = 1; S.sheet = supportSheet(t); break; }
+    case 'spcount': S.spCount = Number(v); S.sheet = supportSheet(taskById(S.route.id)); break;
+    case 'dosupport': { const t = T();
+      if (!t || !canDecide(t, S.session.id)) { toast('ليست من صلاحيتك', 'r'); break; }
+      const why = val('spwhy');
+      if (!why || why.length < 6) { toast('اذكر سبب الطلب', 'r'); break; }
+      if (openSupport(t.id).length) { toast('لديك طلب دعم قائم على هذه المهمة', 'r'); break; }
+      requestSupport(t, S.spCount || 1, why); S.sheet = null; buzz();
+      toast('رُفع طلب الدعم إلى الكنترول'); break; }
+    case 'ctrlsupport': { const s = (S.support || []).find(x => x.id === id);
+      if (!s || s.state !== 'pending') break;
+      controlAnswerSupport(s, v === '1',
+        v === '1' ? 'توفّر محسنون في الاحتياط ضمن نطاق المهمة ولا تعارض في أوقاتهم.'
+                  : 'لا يتوفّر محسن غير مرتبط في هذا التوقيت — أعد التوزيع من فريقك.');
+      toast(v === '1' ? 'لُبّي طلب الدعم' : 'اعتذر الكنترول', v === '1' ? 'g' : 'r'); break; }
+
     /* ===== الانسحاب من مهمة ===== */
     case 'askwd': S.sheet = textSheet('طلب الانسحاب من المهمة',
       'السبب إلزامي ويصل الليدر — ولا ينفذ الانسحاب إلا بموافقته',
@@ -5917,6 +6366,7 @@ document.addEventListener('click', ev => {
       if (!rr || rr.length < 5) { toast('اذكر سببًا واضحًا', 'r'); break; }
       const t = T(); if (!t) break;
       if (lockedForAssign(t)) { toast('المهمة بدأت — لا انسحاب بعد البدء', 'r'); break; }
+      if (!reqWindowOpen(t)) { toast(reqWindowWhy(t), 'r'); break; }
       if (!requestWithdraw(t, S.session.id, rr)) { toast('تعذّر إرسال الطلب', 'r'); break; }
       S.sheet = null; buzz(); toast('أُرسل طلب الانسحاب إلى ليدرك'); break; }
     case 'wdok': { const t = T();
@@ -5931,15 +6381,33 @@ document.addEventListener('click', ev => {
       respondWithdraw(T(), uid_, false, rr); S.sheet = null; toast('رُفض طلب الانسحاب', 'r'); break; }
 
     /* ===== التقارير ===== */
-    case 'report': S.sheet = reportSheet(id); break;
+    case 'report': S.rCat = null; S.rTask = id || null; S.sheet = reportSheet(id); break;
+    case 'rcat': S.rCat = v; S.sheet = reportSheet(S.rTask || null); break;
     case 'sendreport': {
-      const ti = val('rti'), bo = val('rb');
-      if (ti.length < 4) { toast('اكتب عنوانًا واضحًا', 'r'); break; }
-      if (bo.length < 10) { toast('اشرح التفاصيل — سطر واحد لا يكفي', 'r'); break; }
+      const ti = val('rti'), bo = val('rb'), cat = val('rc') || S.rCat, tid = val('rt');
+      if (ti.length < 4) { toast('اكتب عنوانًا واضحًا للتقرير', 'r'); break; }
+      if (!tid) { toast('اربط التقرير بمهمة', 'r'); break; }
+      let room = null;
+      if (cat === ROOM_CAT) {
+        const no = val('rno');
+        if (!no) { toast('اكتب رقم الغرفة', 'r'); break; }
+        if (!/^[0-9٠-٩]{1,6}$/.test(no)) { toast('رقم الغرفة أرقام فقط', 'r'); break; }
+        room = { floor: val('rfl') || FLOORS[0], no: no, note: val('rnote') || '' };
+      } else if (bo.length < 10) { toast('اشرح التفاصيل — سطر واحد لا يكفي', 'r'); break; }
       const to = (isLeader() || !me().leaderId) ? 'CONTROL' : me().leaderId;
-      addReport(S.session.id, to, val('rc'), ti, bo, val('rt') || null);
-      S.sheet = null; S.tab.desk = 'rp'; buzz();
-      toast('رُفع التقرير' + (isLeader() ? ' إلى الكنترول' : ' إلى ليدرك')); break; }
+      addReport(S.session.id, to, cat, ti, bo || (room ? 'طلب تعديل بيانات غرفة' : ''), tid, null, room);
+      S.sheet = null; S.rCat = null; S.tab.desk = 'rp'; buzz();
+      toast(room ? 'أُرسل الطلب إلى مشرف السكن' : 'رُفع التقرير'); break; }
+    case 'roomok': { const rp = reportById(id);
+      if (!isLeader()) { toast('الاعتماد لمشرف السكن والكنترول', 'r'); break; }
+      roomAdvance(rp, S.session.id, true); buzz();
+      toast(rp.stage === 'done' ? 'حُدِّثت بيانات الغرفة' : 'اعتُمد وأُحيل للكنترول'); break; }
+    case 'roomno': S.sheet = textSheet('رفض تعديل الغرفة', reportById(id).title,
+      'data-a="doroomno" data-id="' + id + '"', '', 'سبب الرفض'); break;
+    case 'doroomno': { const rr = val('txt');
+      if (!rr) { toast('السبب إلزامي', 'r'); break; }
+      roomAdvance(reportById(id), S.session.id, false, rr); S.sheet = null;
+      toast('رُفض التعديل', 'r'); break; }
     case 'rreply': S.sheet = textSheet('رد على التقرير', reportById(id).title,
       'data-a="dorreply" data-id="' + id + '"', '', 'اكتب ردك أو ملاحظتك'); break;
     case 'dorreply': { const x = val('txt');
@@ -6086,6 +6554,7 @@ document.addEventListener('keydown', ev => {
 /* ============================ الكاميرا ============================ */
 document.addEventListener('change', ev => {
   const id2 = ev.target && ev.target.id;
+  if (id2 === 'gal') return onMemories(ev);
   if (id2 === 'vid' || id2 === 'pdf') return onGuideMedia(ev, id2 === 'vid' ? 'video' : 'pdf');
   if (id2 === 'cam' && S.mediaCtx) return onGuideMedia(ev, 'photo');
   if (id2 !== 'cam') return;
@@ -6111,6 +6580,32 @@ document.addEventListener('change', ev => {
     if (d) { const el = document.getElementById('txt'); if (el) el.value = d; }
   });
 });
+
+/* ميموريز: صور المهمة الرئيسية تُرفع من استوديو الجهاز */
+function onMemories(ev) {
+  const files = [].slice.call(ev.target.files || []);
+  ev.target.value = '';
+  const ctx = S.camCtx;
+  if (!files.length || !ctx) return;
+  const t = ctx.taskId ? taskById(ctx.taskId) : null;
+  toast('جارٍ تجهيز ' + AR(files.length) + ' صورة…'); render();
+  let done = 0, ok = 0;
+  files.slice(0, 8).forEach((f, i) => {
+    readShot(f, src => {
+      done++;
+      if (src) {
+        ok++;
+        addPhoto(src, 'ميموريز — ' + (t ? t.title : 'المهمة'),
+          'صورة من أرشيف المهمة رفعها ' + me().name + '.', ctx);
+      }
+      if (done === Math.min(files.length, 8)) {
+        S.toast = null; S.camCtx = null;
+        toast(ok ? 'أُضيفت ' + AR(ok) + ' صورة إلى ميموريز المهمة' : 'تعذّرت قراءة الصور', ok ? 'g' : 'r');
+        render();
+      }
+    });
+  });
+}
 
 /* وسائط الدليل: صورة أو فيديو أو PDF */
 function onGuideMedia(ev, mk) {

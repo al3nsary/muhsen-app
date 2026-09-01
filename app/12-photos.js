@@ -17,6 +17,9 @@ const thumbKey = p => String(p.src).slice(4).replace(/_w$/, '');
 const thumbAttr = p => seeded(p)
   ? 'class="__C__ bg-' + thumbKey(p) + '"'
   : 'class="__C__" style="background-image:url(' + p.src + ')"';
+/* المحسن يصوّر المهام الفرعية فقط · والليدر يرفع «ميموريز» للمهمة الرئيسية */
+const canShootSub = t => isLeader() || (t && !!slotOf(t, S.session.id));
+const canMemories = () => isLeader();
 const canShoot = () => isLeader();
 /* اسم مختصر نظيف: نقطع عند أول فاصل ثم نقصّ إن طال */
 function shortTitle(s) {
@@ -68,7 +71,7 @@ function deletePhoto(id) {
 function photoStrip(ctx, label) {
   const list = photosFor(ctx.taskId, ctx.subId === undefined ? null : ctx.subId,
     ctx.ticketId === undefined ? null : ctx.ticketId);
-  const can = canShoot();
+  const can = ctx.subId ? canShootSub(ctx.taskId ? taskById(ctx.taskId) : null) : canMemories();
   if (!list.length && !can) return '';
   const ctxAttr = 'data-tid="' + (ctx.taskId || '') + '" data-sid="' + (ctx.subId || '') +
     '" data-kid="' + (ctx.ticketId || '') + '"';
@@ -321,24 +324,26 @@ function subPickSheet(t) {
 /* ---------- قسم التوثيق داخل تفاصيل المهمة ---------- */
 function taskPhotoSection(t, lead) {
   const all = taskPhotos(t.id).filter(p => !p.excuse);
-  const main = all.filter(p => !p.subId);
-  const subsWith = t.subs.filter(s => photosFor(t.id, s.id).length);
-  if (!all.length && !lead) return '';
-  return '<div class="lbl">توثيق المهمة بالصور<small>' + AR(all.length) + ' صورة' +
-      (lead ? '' : ' · يصوّرها الليدر') + '</small></div>' +
+  const mem = all.filter(p => !p.subId);
+  const subShots = all.length - mem.length;
+  const canMem = canMemories() && !['cancelled'].includes(t.status);
+  if (!all.length && !canMem) return '';
+  return '<div class="lbl">ميموريز المهمة<small>' + AR(mem.length) + ' صورة' +
+      (subShots ? ' · و' + AR(subShots) + ' إثبات فرعية' : '') + '</small></div>' +
     '<div class="c">' +
-      photoStrip({ taskId: t.id, subId: null, ticketId: null }, 'على المهمة الرئيسية') +
-      subsWith.map(s => photoStrip({ taskId: t.id, subId: s.id, ticketId: null }, 'إثبات: ' + s.name)).join('') +
-      (lead ? '<div class="grid2" style="margin-top:11px">' +
-        '<button class="btn l sm" data-a="picksub" data-id="' + t.id + '">' +
-          icon('i-check','s16') + 'توثيق فرعية</button>' +
-        '<button class="btn l sm" data-a="go" data-n="album" data-id="' + t.id + '">' +
-          icon('i-album','s16') + 'الألبوم</button></div>'
-        : (all.length ? '<button class="btn l sm" style="margin-top:11px" data-a="go" data-n="album" data-id="' + t.id + '">' +
-          icon('i-album','s16') + 'عرض كل صور المهمة</button>' : '')) +
-      (!all.length && lead ? '<div class="tiny dim2" style="margin-top:9px">لا توجد صور بعد — وثّق حضورك أو إنجازك بلقطة.</div>' : '') +
+      (canMem ? '<div class="tiny dim2" style="margin-bottom:8px">صور عامة للمهمة — تُرفع من استوديو جهازك.</div>' : '') +
+      '<div class="pscroll">' +
+        (canMem ? '<button class="padd" data-a="memories" data-tid="' + t.id + '">' +
+          icon('i-album','s26') + '<span>رفع صور</span></button>' : '') +
+        mem.map(p => '<button ' + thumbAttr(p).replace('__C__', 'pthumb') + ' data-a="viewphoto" data-id="' + p.id + '">' +
+          '<span>' + E(p.title) + '</span></button>').join('') +
+      '</div>' +
+      (!mem.length && canMem ? '<div class="tiny dim2" style="margin-top:9px">لا توجد ميموريز بعد.</div>' : '') +
+      (all.length ? '<button class="btn l sm" style="margin-top:11px" data-a="go" data-n="album" data-id="' + t.id + '">' +
+        icon('i-album','s16') + 'ألبوم المهمة كاملًا</button>' : '') +
     '</div>';
 }
+
 
 /* شارة عدد الصور على بطاقة المهمة في القوائم */
 function photoBadge(t) {

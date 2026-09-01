@@ -1,7 +1,7 @@
 /* ============================ الحالة ============================ */
 const KEY = 'muhsen_app_v1';
-const APP_VER = 'نسخة ٢٫٢';
-const SCHEMA = 17;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
+const APP_VER = 'نسخة ٣٫٠';
+const SCHEMA = 18;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
 const uid = (p) => p + Math.random().toString(36).slice(2, 8);
@@ -51,11 +51,17 @@ function hms(ms) {
 }
 
 /* ============================ نوافذ المهمة ============================ */
-const EARLY_START_H = 2;                       /* يبدأها المسؤول قبل موعدها بساعتين */
-const prepOpen = t => dayStart(t.start);       /* التحضير من أول يوم المهمة */
-const prepDeadline = t => t.start;             /* ينتهي التحضير ببداية المهمة */
-const inPrep = t => now() >= prepOpen(t) && now() < t.start;
-const earlyStartFrom = t => t.start - EARLY_START_H * HR;
+/* نافذة التحضير والبدء: تُفتح قبل المهمة بساعتين وتُغلق قبلها بساعة ونصف */
+const EARLY_START_H = 2, PREP_CLOSE_H = 1.5;
+const prepOpen = t => t.start - EARLY_START_H * HR;
+const prepDeadline = t => t.start - PREP_CLOSE_H * HR;
+const inPrep = t => now() >= prepOpen(t) && now() < prepDeadline(t);
+const earlyStartFrom = t => prepOpen(t);
+function prepWhy(t) {
+  if (now() < prepOpen(t)) return 'يُفتح التحضير قبل المهمة بساعتين — ' + untilTxt(prepOpen(t));
+  if (now() >= prepDeadline(t)) return 'أُغلق التحضير قبل المهمة بساعة ونصف';
+  return '';
+}
 
 /* ============================ التهيئة ============================ */
 function makePilgrims(n, seedNo) {
@@ -78,7 +84,7 @@ function autoAssign(st, t) {
     if (t.assigned.some(a => a.muhsenId === m.id)) return;
     t.assigned.push({ muhsenId: m.id, req: 'accepted', auto: true,
       reqAt: t.start - 72 * HR, reqNote: 'تسكين تلقائي', respAt: t.start - 72 * HR, respNote: '',
-      attendedAt: null, farKm: 0, removed: false, removedWhy: null });
+      attendedAt: null, farKm: 0 });
   });
   return t;
 }
@@ -104,7 +110,7 @@ function seed() {
   const st = {
     v: SCHEMA, clockOffset: 0, myPlace: 'site', session: null, route: { n: 'login' },
     tab: {}, orgs: ORGS, users: USERS.concat(RESERVE), tasks: [], tickets: [], reports: [], notifs: [],
-    requests: [], reminders: [], pilgrims: {}, photos: [], guides: {},
+    requests: [], reminders: [], pilgrims: {}, photos: [], guides: {}, support: [],
     shifts: {}, attend: [], swaps: [], broadcasts: [], tabPage: 0, toast: null
   };
   S = st;   /* لتعمل الدوال المعتمِدة على S أثناء التهيئة */
@@ -119,7 +125,7 @@ function seed() {
   /* المهام الماضية: تُسكَّن وتُنفَّذ وتُقيَّم لتظهر أمثلة حقيقية للتقييم */
   st.tasks.filter(t => t.start < Date.now()).forEach((t, i) => {
     const team = st.users.filter(u => u.role === 'muhsen' && u.leaderId === t.leaderId);
-    const take = t.assigned.filter(a => !a.removed);
+    const take = t.assigned.filter(a => !a.out);
     take.forEach((a, k) => {
       const late = (i + k) % 4 === 0;
       a.attendedAt = (i + k) % 7 === 0 ? null : t.start + (late ? 20 : -90) * MIN;
@@ -128,8 +134,8 @@ function seed() {
     /* نموذج انسحاب معتمد في مهمة ماضية */
     if (i % 3 === 1 && take[take.length - 1]) {
       const a2 = take[take.length - 1];
-      a2.removed = true; a2.removedWhy = 'انسحاب معتمد — ارتباط بمهمة أخرى';
       a2.wd = { reason: 'ارتباط بمهمة أخرى', at: t.start - 29 * HR, state: 'accepted', respAt: t.start - 28 * HR, respNote: '' };
+      a2.out = { kind: 'withdrawn', why: 'ارتباط بمهمة أخرى', by: t.leaderId, at: t.start - 28 * HR };
     }
 
     t.leaderAttendedAt = i % 5 === 0 ? null : t.start - 100 * MIN;
@@ -182,7 +188,7 @@ function load() {
     if (!S || S.v !== SCHEMA) S = seed();
   } catch (e) { S = seed(); }
   S.reminders = S.reminders || []; S.requests = S.requests || []; S.pilgrims = S.pilgrims || {};
-  S.photos = S.photos || []; S.reports = S.reports || [];
+  S.photos = S.photos || []; S.reports = S.reports || []; S.support = S.support || [];
   S.guides = S.guides || {};
   S.attend = S.attend || []; S.swaps = S.swaps || [];
   S.shifts = S.shifts || {}; S.broadcasts = S.broadcasts || [];
@@ -217,10 +223,12 @@ const isReserve = id => { const u = userById(id); return !!(u && u.reserve); };
 const pilgrimsOf = kt => S.pilgrims[kt] || [];
 const ktCount = kt => { const L = S.users.find(u => u.kt === kt); return L ? L.pilgrims : 0; };
 
-const slotOf = (t, id) => t.assigned.find(a => a.muhsenId === id && !a.removed);
-const activeSlots = t => t.assigned.filter(a => !a.removed && a.req !== 'rejected');
-const acceptedSlots = t => t.assigned.filter(a => !a.removed && a.req === 'accepted');
-const pendingSlots = t => t.assigned.filter(a => !a.removed && a.req === 'pending');
+/* لا يُحذف أحد من المهمة — تتغيّر حالته فقط (انظر 18-assign.js) */
+const slotOf = (t, id) => t.assigned.find(a => a.muhsenId === id && !a.out);
+const allSlots = t => t.assigned.slice();
+const activeSlots = t => t.assigned.filter(a => !a.out && a.req !== 'rejected' && a.req !== 'expired');
+const acceptedSlots = t => t.assigned.filter(a => !a.out && a.req === 'accepted');
+const pendingSlots = t => t.assigned.filter(a => !a.out && a.req === 'pending');
 
 function actsAsLeader(t, id) {
   if (t.leaderId === id) return true;
@@ -251,10 +259,11 @@ function recomputeStatus(t) {
   return t.status;
 }
 function canStart(t, id) {
-  if (!['pending_assign', 'assigned'].includes(t.status)) return false;
-  if (!actsAsLeader(t, id)) return false;
-  return now() >= earlyStartFrom(t) && now() < t.start;
+  if (!actsAsLeader(t, id) || !canDecide(t, id)) return false;
+  if (['running', 'done', 'cancelled'].indexOf(t.status) >= 0) return false;
+  return now() >= prepOpen(t) && now() < prepDeadline(t);
 }
+
 const lockedForAssign = t => now() >= t.start || ['running', 'done', 'cancelled'].includes(t.status);
 
 /* ============================ التنبيهات ============================ */
@@ -364,11 +373,11 @@ const reqTask = r => taskById(r.taskId);
 /* ============================ إجراءات التسكين ============================ */
 function sendRequest(t, muhsenId, note_) {
   if (lockedForAssign(t)) return false;
-  const ex = t.assigned.find(a => a.muhsenId === muhsenId && !a.removed);
+  const ex = t.assigned.find(a => a.muhsenId === muhsenId && !a.out);
   if (ex && ex.req !== 'rejected') return false;
-  if (ex) { ex.removed = true; ex.removedWhy = 'أُعيد الإرسال'; }
+  if (ex) ex.out = { kind: 'excluded', why: 'أُعيد إرسال الطلب', by: t.leaderId, at: now() };
   t.assigned.push({ muhsenId, req: 'pending', reqAt: now(), reqNote: note_ || '',
-    respAt: null, respNote: '', attendedAt: null, farKm: 0, removed: false, removedWhy: null });
+    respAt: null, respNote: '', attendedAt: null, farKm: 0 });
   addReq('تسكين', t.leaderId, muhsenId, t.id, note_);
   hist(t, 'أُرسل طلب تسكين إلى ' + userById(muhsenId).name);
   notify(muhsenId, 'i-assign', 'طلب تسكين جديد',
@@ -377,7 +386,7 @@ function sendRequest(t, muhsenId, note_) {
 }
 function withdrawRequest(t, muhsenId) {
   const a = slotOf(t, muhsenId); if (!a) return;
-  a.removed = true; a.removedWhy = 'سحب الليدر الطلب';
+  a.out = { kind: 'excluded', why: 'سحب الليدر الطلب', by: t.leaderId, at: now() };
   closeReq(t.id, muhsenId, 'تسكين', 'withdrawn', 'سحبه الليدر');
   hist(t, 'سحب الليدر طلب التسكين المرسل إلى ' + userById(muhsenId).name);
   notify(muhsenId, 'i-x', 'سُحب طلب التسكين', 'سحب الليدر طلب تسكينك في «' + t.title + '».', { n: 'requests' });
@@ -385,7 +394,7 @@ function withdrawRequest(t, muhsenId) {
 }
 function removeAssignee(t, muhsenId, why, excuse) {
   const a = slotOf(t, muhsenId); if (!a) return;
-  a.removed = true; a.removedWhy = why || 'أزاله الليدر';
+  a.out = { kind: 'excluded', why: why || 'أزاله الليدر', by: S.session.id, at: now() };
   if (excuse) a.removePhoto = attachExcuse(t.id, excuse, 'مرفق قرار الإزالة', S.session.id);
   hist(t, 'أُزيل ' + userById(muhsenId).name + ' من المهمة — ' + a.removedWhy);
   note(t, 'أُزيل ' + userById(muhsenId).name + ' من التسكين — ' + a.removedWhy);
@@ -393,7 +402,7 @@ function removeAssignee(t, muhsenId, why, excuse) {
   recomputeStatus(t);
 }
 function respondRequest(t, muhsenId, ok, note_, excuse) {
-  const a = t.assigned.find(x => x.muhsenId === muhsenId && x.req === 'pending' && !x.removed);
+  const a = t.assigned.find(x => x.muhsenId === muhsenId && x.req === 'pending' && !x.out);
   if (!a) return;
   a.req = ok ? 'accepted' : 'rejected'; a.respAt = now(); a.respNote = note_ || '';
   if (excuse) a.respPhoto = attachExcuse(t.id, excuse, 'مرفق عذر — ' + userById(muhsenId).name, muhsenId);
@@ -429,7 +438,7 @@ function respondWithdraw(t, muhsenId, ok, note_) {
   closeReq(t.id, ownerOf(t), 'انسحاب', ok ? 'accepted' : 'rejected', note_);
   const nm = userById(muhsenId).name;
   if (ok) {
-    a.removed = true; a.removedWhy = 'انسحاب معتمد — ' + a.wd.reason;
+    markWithdrawn(t, muhsenId);
     hist(t, 'اعتُمد انسحاب ' + nm);
     note(t, 'انسحب ' + nm + ' من المهمة بموافقة الليدر — ' + a.wd.reason);
     notify(muhsenId, 'i-checkc', 'اعتُمد انسحابك', 'خرجتَ من «' + t.title + '».', { n: 'tasks' });
@@ -441,7 +450,7 @@ function respondWithdraw(t, muhsenId, ok, note_) {
   recomputeStatus(t);
   return true;
 }
-const pendingWithdraws = t => t.assigned.filter(a => a.wd && a.wd.state === 'pending' && !a.removed);
+const pendingWithdraws = t => t.assigned.filter(a => a.wd && a.wd.state === 'pending' && !a.out);
 const myWithdraw = (t, id) => { const a = slotOf(t, id); return a && a.wd ? a.wd : null; };
 
 /* ============================ التفويض — للشركات فقط ============================ */
@@ -461,7 +470,7 @@ function respondDelegate(t, ok, note_, excuse) {
     t.delegate.state = 'accepted'; t.delegate.respAt = now();
     if (!t.delegate.keepGroup) {
       const a = slotOf(t, t.delegate.muhsenId);
-      if (a) { a.removed = true; a.removedWhy = 'تفرّغ للقيادة'; }
+      if (a) a.out = { kind: 'excluded', why: 'تفرّغ للقيادة', by: t.leaderId, at: now() };
     }
     hist(t, 'قبِل ' + nm + ' إسناد صلاحية القيادة');
   } else { hist(t, 'رفض ' + nm + ' إسناد صلاحية القيادة' + (note_ ? ' — «' + note_ + '»' : '')); t.delegate = null; }
@@ -474,9 +483,10 @@ function respondDelegate(t, ok, note_, excuse) {
 /* ============================ الحضور والتنفيذ ============================ */
 const myFarKm = () => (S.myPlace === 'site' ? 0.4 : S.myPlace === 'hq' ? 1.4 : 3.4);
 /* التحضير لا يُقبل إلا من داخل نطاق ٢ كم من حدود الموقع */
-const canAttend = t => now() >= prepOpen(t) && myFarKm() <= RADIUS_KM;
+const canAttend = t => inPrep(t) && myFarKm() <= RADIUS_KM &&
+  ['done', 'cancelled'].indexOf(t.status) < 0;
 function attendBlockReason(t) {
-  if (now() < prepOpen(t)) return 'يفتح التحضير من بداية يوم المهمة';
+  const w = prepWhy(t); if (w) return w;
   if (myFarKm() > RADIUS_KM) return 'أنت خارج النطاق — ' + AR(myFarKm()) + ' كم، والمسموح ' + AR(RADIUS_KM) + ' كم';
   return '';
 }
@@ -535,6 +545,7 @@ function toggleSub(t, s, by) {
 }
 
 /* ============================ التذاكر (تشمل التقارير) ============================ */
+/* التذاكر يرفعها الحجاج وحدهم — والفريق يرفع تقارير */
 function addTicket(fromId, title, body, cat, pri, taskId, pilgrimId) {
   const u = userById(fromId);
   const leaderId = u.role === 'leader' ? u.id : u.leaderId;
@@ -602,9 +613,9 @@ function isBlamed(t, uid_) {
     const s = t.assigned.find(a => a.muhsenId === uid_);
     if (!s) return false;
     if (s.req === 'rejected') return true;
-    /* الخروج بموافقة الليدر اتفاق لا إدانة */
-    if (s.wd && s.wd.state === 'accepted') return false;
-    if (s.removed) return true;
+    if (s.req === 'expired') return true;
+    /* الخروج بقرار غيره ليس إدانة عليه */
+    if (s.out) return false;
     if (t.status === 'done' && s.req === 'accepted' && !s.attendedAt) return true;
     if (t.status === 'done' && s.attendedAt && s.attendedAt > t.start) return true;
     return false;
@@ -631,8 +642,10 @@ function undoneReason(t, uid_) {
   if (u.role === 'muhsen') {
     const s = t.assigned.find(a => a.muhsenId === uid_) || {};
     if (s.req === 'rejected') return 'رفضتَ الإسناد' + (s.respNote ? ' — «' + s.respNote + '»' : '');
-    if (s.wd && s.wd.state === 'accepted') return 'انسحبتَ بموافقة الليدر — ' + s.wd.reason;
-    if (s.removed) return 'أُزيل إسنادك — ' + (s.removedWhy || 'بقرار من الليدر');
+    if (s.req === 'expired') return 'انتهت مهلة ردّك على الطلب';
+    if (s.out && s.out.kind === 'withdrawn') return 'انسحبتَ بموافقة الليدر — ' + s.out.why;
+    if (s.out && s.out.kind === 'replaced') return 'استُبدلت بـ ' + (s.out.byName || '') + ' — ' + s.out.why;
+    if (s.out) return 'استُبعدت من المهمة — ' + s.out.why;
     if (!s.attendedAt) return 'لم تثبت حضورك في المهمة';
     if (s.attendedAt > t.start) return 'تأخرت عن التحضير — أثبت حضورك بعد بدايتها';
     return 'غير منجزة';
@@ -683,6 +696,7 @@ const unassignedTasks = () => myTasks().filter(t =>
 
 /* ============================ التنبيهات التلقائية والبدء الآلي ============================ */
 function autoTick() {
+  S.tasks.forEach(t => { if (typeof expireRequests === 'function') expireRequests(t); });
   const t0 = now();
   (S.reminders || []).forEach(r => {
     if (!r.fired && t0 >= r.at) { r.fired = true; notify(r.who, 'i-bell', 'تذكير', r.text, { n: 'calendar' }); }

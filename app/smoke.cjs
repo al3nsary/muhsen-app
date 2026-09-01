@@ -22,7 +22,7 @@ const sandbox = {
 sandbox.window.IMG = JSON.parse(fs.readFileSync(IMGP, 'utf8'));
 sandbox.globalThis = sandbox;
 
-const FILES = ['03-data.js','04-core.js','05-ui.js','06-task.js','07-muhsen.js','08-more.js','09-admin.js','11-reqcenter.js','12-photos.js','13-docs.js','14-guide.js','15-daily.js','16-push.js','17-reports.js','10-router.js'];
+const FILES = ['03-data.js','04-core.js','05-ui.js','06-task.js','07-muhsen.js','08-more.js','09-admin.js','11-reqcenter.js','12-photos.js','13-docs.js','14-guide.js','15-daily.js','16-push.js','17-reports.js','18-assign.js','10-router.js'];
 const js = FILES.map(read).join('\n');
 const ctx = vm.createContext(sandbox);
 
@@ -77,91 +77,148 @@ click({ a: 'login', id: 'L1' });
 ['home','tasks','lreq','muhsens','rating','tickets','notifs','calendar','pilgrims','more','profile','admin']
   .forEach(n => step('شاشة ' + n, () => { click({ a: 'go', n }); if (!el.innerHTML) throw new Error('فارغة'); }));
 
-console.log('\nالتسكين والاحتياط والانسحاب');
+console.log('\nالتسكين: نافذة الطلبات والاستبعاد والاستبدال');
 let TID;
-step('فتح مهمة قادمة مسكَّنة', () => {
-  TID = run('S.tasks.filter(t=>t.leaderId==="L1"&&t.start>now()).sort((a,b)=>a.start-b.start)[0].id');
-  if (!TID) throw new Error('لا توجد مهمة قادمة');
+/* أداة: تنقل ساعة التطبيق إلى داخل نافذة الطلبات لمهمة بعينها */
+const intoWindow = id => run('S.clockOffset = Math.round((taskById("' + id + '").start - 10*HR - Date.now())/60000)');
+const afterWindow = id => run('S.clockOffset = Math.round((taskById("' + id + '").start - 7*HR - Date.now())/60000)');
+
+step('فتح مهمة قادمة مسكَّنة تلقائيًّا', () => {
+  run('S.clockOffset=0');
+  TID = run('S.tasks.filter(t=>t.leaderId==="L1"&&t.start>now()+13*HR).sort((a,b)=>a.start-b.start)[0].id');
+  if (!TID) throw new Error('لا توجد مهمة بعيدة');
   if (!run('acceptedSlots(taskById("' + TID + '")).length')) throw new Error('غير مسكَّنة');
-  click({ a: 'go', n: 'assign', id: TID });
-  if (!el.innerHTML) throw new Error('شاشة التسكين فارغة');
 });
-step('لا حد أدنى ولا أعلى', () => {
-  if (run('typeof MIN_ASSIGN')  !== 'undefined') throw new Error('ما زال الحد الأدنى موجودًا');
-  const t = run('taskById("' + TID + '")');
-  if (run('recomputeStatus(taskById("' + TID + '"))') !== 'assigned') throw new Error('الحالة خاطئة');
-});
-step('إزالة محسن لا تُسقط الحالة ما دام غيره باقيًا', () => {
-  const mid = run('acceptedSlots(taskById("' + TID + '"))[0].muhsenId');
-  sandbox.document.getElementById = () => Object.assign({}, el, { value: 'استبدال' });
-  click({ a: 'doremove', id: TID, u: mid });
-  sandbox.document.getElementById = () => el;
-  if (run('slotOf(taskById("' + TID + '"),"' + mid + '")')) throw new Error('لم يُزل');
-  if (run('recomputeStatus(taskById("' + TID + '"))') !== 'assigned') throw new Error('سقطت الحالة');
-  sandbox.RM_ = mid;
-});
-step('طلب تعزيز من الفريق الاحتياطي', () => {
+step('لا طلبات قبل ١٢ ساعة من المهمة', () => {
+  if (run('reqWindowOpen(taskById("' + TID + '"))')) throw new Error('النافذة مفتوحة مبكرًا');
+  const before = run('taskById("' + TID + '").assigned.length');
   const r = run('reserveTeam()[0].id');
   click({ a: 'send', id: TID, u: r });
+  if (run('taskById("' + TID + '").assigned.length') !== before) throw new Error('قُبل طلب قبل النافذة');
+});
+step('النافذة تفتح عند ١٢ ساعة وتُغلق عند ٨', () => {
+  intoWindow(TID);
+  if (!run('reqWindowOpen(taskById("' + TID + '"))')) throw new Error('لم تفتح');
+  afterWindow(TID);
+  if (run('reqWindowOpen(taskById("' + TID + '"))')) throw new Error('لم تُغلق');
+  if (run('reqWindowWhy(taskById("' + TID + '")).indexOf("أُغلقت")') < 0) throw new Error('بلا سبب واضح');
+  intoWindow(TID);
+});
+step('لا يُحذف أحد — تتغيّر حالته فقط', () => {
+  const n0 = run('taskById("' + TID + '").assigned.length');
+  const mid = run('acceptedSlots(taskById("' + TID + '"))[0].muhsenId');
+  run('excludeNoNeed(taskById("' + TID + '"),"' + mid + '","العدد يكفي")');
+  if (run('taskById("' + TID + '").assigned.length') !== n0) throw new Error('حُذف من القائمة');
+  const sl = run('taskById("' + TID + '").assigned.find(x=>x.muhsenId==="' + mid + '")');
+  if (!sl.out || sl.out.kind !== 'excluded') throw new Error('الحالة ' + JSON.stringify(sl.out));
+  if (run('slotState(taskById("' + TID + '").assigned.find(x=>x.muhsenId==="' + mid + '"))') !== 'excluded')
+    throw new Error('حالة العرض خاطئة');
+  if (run('acceptedSlots(taskById("' + TID + '")).some(x=>x.muhsenId==="' + mid + '")'))
+    throw new Error('ما زال محتسبًا');
+});
+step('الاستبعاد لعدم الحاجة يُسجَّل بمسؤولية الليدر', () => {
+  const n = run('taskById("' + TID + '").notes.filter(x=>x.text.indexOf("مسؤوليته")>=0).length');
+  if (!n) throw new Error('بلا إقرار مسؤولية');
+});
+step('الاستبدال يُبقي الأول حتى يقبل البديل', () => {
+  const t = run('taskById("' + TID + '")');
+  const outId = run('acceptedSlots(taskById("' + TID + '")).find(function(a){return !isReserve(a.muhsenId)}).muhsenId');
+  const inId = run('teamOf("L1").find(function(x){return !taskById("' + TID + '").assigned.some(function(a){return a.muhsenId===x.id&&!a.out})&&x.id!=="' + outId + '"}).id');
+  if (!inId) throw new Error('لا يوجد بديل متاح');
+  if (!run('requestReplace(taskById("' + TID + '"),"' + outId + '","' + inId + '","تعارض")'))
+    throw new Error('تعذّر الطلب');
+  if (!run('acceptedSlots(taskById("' + TID + '")).some(x=>x.muhsenId==="' + outId + '")'))
+    throw new Error('خرج قبل قبول البديل');
+  if (run('slotState(taskById("' + TID + '").assigned.find(x=>x.muhsenId==="' + outId + '"))') !== 'replacing')
+    throw new Error('حالته ليست «بانتظار البديل»');
+  sandbox.OUT_ = outId; sandbox.IN_ = inId;
+});
+step('رفض البديل يُبقي الأول على المهمة', () => {
+  run('respondReplace(taskById("' + TID + '"),"' + sandbox.IN_ + '",false,"مرتبط")');
+  if (!run('acceptedSlots(taskById("' + TID + '")).some(x=>x.muhsenId==="' + sandbox.OUT_ + '")'))
+    throw new Error('خرج رغم رفض البديل');
+  if (run('taskById("' + TID + '").assigned.find(x=>x.muhsenId==="' + sandbox.OUT_ + '").out'))
+    throw new Error('وُضع في حالة خروج');
+});
+step('قبول البديل يُبدّل الحالة لا القائمة', () => {
+  const n0 = run('taskById("' + TID + '").assigned.length');
+  run('(function(){var t=taskById("' + TID + '");var a=t.assigned.find(function(x){return x.muhsenId==="' + sandbox.OUT_ + '"});delete a.repl;})()');
+  run('requestReplace(taskById("' + TID + '"),"' + sandbox.OUT_ + '","' + sandbox.IN_ + '","محاولة ثانية")');
+  run('respondReplace(taskById("' + TID + '"),"' + sandbox.IN_ + '",true)');
+  const a2 = run('taskById("' + TID + '").assigned.find(x=>x.muhsenId==="' + sandbox.OUT_ + '")');
+  if (!a2.out || a2.out.kind !== 'replaced') throw new Error('لم تتغيّر حالته');
+  if (!run('acceptedSlots(taskById("' + TID + '")).some(x=>x.muhsenId==="' + sandbox.IN_ + '")'))
+    throw new Error('البديل لم يدخل');
+  if (run('slotLabel(taskById("' + TID + '").assigned.find(x=>x.muhsenId==="' + sandbox.OUT_ + '"))[0].indexOf("مستبدل")') < 0)
+    throw new Error('التسمية غير واضحة');
+});
+step('انتهاء مهلة الطلب أربع ساعات', () => {
+  const r = run('reserveTeam()[0].id');
+  run('(function(){var t=taskById("' + TID + '");t.assigned.push({muhsenId:"' + r + '",req:"pending",reqAt:now()-5*HR,reqNote:"",respAt:null,respNote:"",attendedAt:null,farKm:0});})()');
+  run('expireRequests(taskById("' + TID + '"))');
   const sl = run('taskById("' + TID + '").assigned.find(x=>x.muhsenId==="' + r + '")');
-  if (!sl) throw new Error('لم يُرسل الطلب');
-  if (sl.req !== 'pending') throw new Error('الحالة ' + sl.req);
-  run('respondRequest(taskById("' + TID + '"),"' + r + '",true)');
-  if (!run('acceptedSlots(taskById("' + TID + '")).some(a=>a.muhsenId==="' + r + '")'))
-    throw new Error('لم يُقبل');
-  sandbox.RS_ = r;
+  if (sl.req !== 'expired') throw new Error('لم تنتهِ المهلة: ' + sl.req);
 });
-step('الاحتياط يعمل ولو كان الفريق كاملًا', () => {
-  const t2 = run('S.tasks.filter(t=>t.leaderId==="L1"&&t.start>now()&&t.id!=="' + TID + '")[0]');
-  const full = run('acceptedSlots(taskById("' + t2.id + '")).length');
-  if (full < 5) throw new Error('الفريق غير كامل: ' + full);
-  const r2 = run('reserveTeam()[1].id');
-  click({ a: 'send', id: t2.id, u: r2 });
-  if (!run('taskById("' + t2.id + '").assigned.some(x=>x.muhsenId==="' + r2 + '")'))
-    throw new Error('مُنع الطلب رغم توفر الاحتياط');
-});
-step('المحسن يطلب الانسحاب والليدر يقرّر', () => {
-  const mid = run('acceptedSlots(taskById("' + TID + '")).find(a=>!isReserve(a.muhsenId)).muhsenId');
-  run('S.session={id:"' + mid + '",at:Date.now()}');
-  sandbox.document.getElementById = () => Object.assign({}, el, { value: '' });
-  click({ a: 'doaskwd', id: TID });
+step('طلب الدعم يذهب للكنترول لا لاختيار الليدر', () => {
+  const h = run('S.route={n:"task",id:"' + TID + '"}; screenTask()');
+  if (h.indexOf('الفريق الاحتياطي') >= 0) throw new Error('الليدر يرى الاحتياط');
+  if (h.indexOf('data-a="supportsheet"') < 0) throw new Error('لا يوجد طلب دعم');
+  sandbox.document.getElementById = i2 => Object.assign({}, el, { value: i2 === 'spwhy' ? 'نقص بسبب استبعاد' : '' });
+  run('S.spCount=2');
+  click({ a: 'dosupport', id: TID });
   sandbox.document.getElementById = () => el;
-  if (run('myWithdraw(taskById("' + TID + '"),"' + mid + '")')) throw new Error('قُبل طلب بلا سبب');
-
+  const sp = run('openSupport("' + TID + '")[0]');
+  if (!sp) throw new Error('لم يُرفع الطلب');
+  if (sp.count !== 2) throw new Error('العدد ' + sp.count);
+});
+step('الكنترول يلبّي ويوضّح سببه', () => {
+  const sp = run('openSupport("' + TID + '")[0]');
+  const before = run('acceptedSlots(taskById("' + TID + '")).length');
+  click({ a: 'ctrlsupport', id: sp.id, v: '1' });
+  const after = run('acceptedSlots(taskById("' + TID + '")).length');
+  if (after <= before) throw new Error('لم يُسند أحد');
+  const s2 = run('(S.support||[]).find(x=>x.id==="' + sp.id + '")');
+  if (s2.state !== 'done' || !s2.reason) throw new Error('بلا رد موضّح');
+});
+step('المحسن يطلب الانسحاب ويبقى بحالة منسحب', () => {
+  const mid = run('acceptedSlots(taskById("' + TID + '")).find(function(a){return !isReserve(a.muhsenId)}).muhsenId');
+  run('S.session={id:"' + mid + '",at:Date.now()}');
   sandbox.document.getElementById = () => Object.assign({}, el, { value: 'ارتباط عائلي طارئ' });
   click({ a: 'doaskwd', id: TID });
   sandbox.document.getElementById = () => el;
-  const w = run('myWithdraw(taskById("' + TID + '"),"' + mid + '")');
-  if (!w || w.state !== 'pending') throw new Error('لم يُسجَّل الطلب');
-  if (!run('S.notifs.some(n=>n.to==="L1"&&n.title.indexOf("انسحاب")>=0)')) throw new Error('لم يصل الليدر');
-
-  /* المحسن لا يعتمد انسحابه بنفسه */
-  click({ a: 'wdok', id: TID, u: mid });
-  if (run('myWithdraw(taskById("' + TID + '"),"' + mid + '").state') !== 'pending')
-    throw new Error('اعتمد انسحابه بنفسه');
-
+  if (!run('myWithdraw(taskById("' + TID + '"),"' + mid + '")')) throw new Error('لم يُسجَّل');
   run('S.session={id:"L1",at:Date.now()}');
+  const n0 = run('taskById("' + TID + '").assigned.length');
   click({ a: 'wdok', id: TID, u: mid });
-  const w2 = run('taskById("' + TID + '").assigned.find(a=>a.muhsenId==="' + mid + '").wd');
-  if (w2.state !== 'accepted') throw new Error('لم يُعتمد');
-  if (!run('taskById("' + TID + '").assigned.find(a=>a.muhsenId==="' + mid + '").removed'))
-    throw new Error('لم يخرج من المهمة');
-  sandbox.WD_ = mid;
+  if (run('taskById("' + TID + '").assigned.length') !== n0) throw new Error('حُذف');
+  const sl = run('taskById("' + TID + '").assigned.find(x=>x.muhsenId==="' + mid + '")');
+  if (!sl.out || sl.out.kind !== 'withdrawn') throw new Error('الحالة ' + JSON.stringify(sl.out));
 });
-step('رفض الانسحاب يُبقي المحسن', () => {
-  const mid = run('acceptedSlots(taskById("' + TID + '")).find(a=>!isReserve(a.muhsenId)).muhsenId');
-  run('requestWithdraw(taskById("' + TID + '"),"' + mid + '","سبب آخر")');
-  sandbox.document.getElementById = () => Object.assign({}, el, { value: 'الحاجة قائمة إليك' });
-  click({ a: 'dowdno', id: TID, u: mid });
-  sandbox.document.getElementById = () => el;
-  const a2 = run('taskById("' + TID + '").assigned.find(a=>a.muhsenId==="' + mid + '")');
-  if (a2.wd.state !== 'rejected') throw new Error('لم يُرفض');
-  if (a2.removed) throw new Error('خرج رغم الرفض');
+step('المحسن لا يرى إجراءات غيره', () => {
+  const mid = run('acceptedSlots(taskById("' + TID + '"))[0].muhsenId');
+  run('S.session={id:"' + mid + '",at:Date.now()}; S.route={n:"task",id:"' + TID + '"}');
+  const h = run('screenTask()').split('<nav class="tabs"')[0];
+  ['data-a="exclude"', 'data-a="supportsheet"', 'data-a="wdok"', 'طلبات الدعم'].forEach(k => {
+    if (h.indexOf(k) >= 0) throw new Error('يرى: ' + k);
+  });
+  run('S.session={id:"L1",at:Date.now()}; S.clockOffset=0');
 });
+
 console.log('\nالتحضير والبدء الآلي');
-step('التحضير من بداية اليوم', () => {
-  if (run('prepOpen(taskById("' + TID + '"))') !== run('dayStart(taskById("' + TID + '").start)'))
-    throw new Error('النافذة غير مطابقة');
+step('نافذة التحضير: ساعتان قبل المهمة إلى ساعة ونصف', () => {
+  const t = run('taskById("' + TID + '")');
+  if (run('prepOpen(taskById("' + TID + '"))') !== t.start - 2 * 3600000)
+    throw new Error('الفتح غير مطابق');
+  if (run('prepDeadline(taskById("' + TID + '"))') !== t.start - 1.5 * 3600000)
+    throw new Error('الإغلاق غير مطابق');
+  run('S.clockOffset = Math.round((taskById("' + TID + '").start - 3*HR - Date.now())/60000)');
+  if (run('inPrep(taskById("' + TID + '"))')) throw new Error('فُتح قبل ساعتين');
+  run('S.clockOffset = Math.round((taskById("' + TID + '").start - 1.75*HR - Date.now())/60000)');
+  if (!run('inPrep(taskById("' + TID + '"))')) throw new Error('لم يُفتح داخل النافذة');
+  run('S.clockOffset = Math.round((taskById("' + TID + '").start - 1.2*HR - Date.now())/60000)');
+  if (run('inPrep(taskById("' + TID + '"))')) throw new Error('لم يُغلق عند ساعة ونصف');
+  if (run('canStart(taskById("' + TID + '"),"L1")')) throw new Error('البدء متاح بعد الإغلاق');
+  run('S.clockOffset=0');
 });
 step('البدء اليدوي ممنوع قبل ساعتين', () => {
   const far = run('S.tasks.find(t=>t.leaderId==="L1"&&t.start-now()>3*HR)');
@@ -326,8 +383,11 @@ step('الصورة تبقى بعد انتهاء المهمة', () => {
 console.log('\nالمرفقات مع الرفض');
 step('رفض التسكين بلا سبب مرفوض', () => {
   /* نستعمل محسنًا احتياطيًّا غير مسكَّن — لأن الفريق مسكَّن تلقائيًّا */
-  sandbox.T_ = run('S.tasks.filter(x=>x.leaderId==="L1"&&x.start>now())[0].id');
+  run('S.clockOffset=0');
+  sandbox.T_ = run('S.tasks.filter(x=>x.leaderId==="L1"&&x.start>now()+13*HR)[0].id');
+  run('S.clockOffset = Math.round((taskById("'+sandbox.T_+'").start - 10*HR - Date.now())/60000)');
   sandbox.M_ = run('reserveTeam().find(function(r){return !taskById("'+sandbox.T_+'").assigned.some(function(a){return a.muhsenId===r.id})}).id');
+  run('sendRequest(taskById("'+sandbox.T_+'"),"'+sandbox.M_+'")');
   run('sendRequest(taskById("' + sandbox.T_ + '"),"' + sandbox.M_ + '")');
   run('S.session={id:"' + sandbox.M_ + '",at:Date.now()}');
   sandbox.document.getElementById = () => Object.assign({}, el, { value: '' });
@@ -403,8 +463,8 @@ step('لا حضور من خارج نطاق ٢ كم', () => {
   const tid = run('(S.tasks.find(x=>x.leaderId==="L1"&&x.start>now())||{}).id');
   run('S.myPlace="away"');
   /* نثبّت ساعة التطبيق على منتصف النهار حتى لا يتعلّق الاختبار بوقت التشغيل */
-  run('S.clockOffset = 12*60 - (new Date().getHours()*60 + new Date().getMinutes())');
-  run('var _T=taskById("' + tid + '"); _T.start = now()+30*MIN; _T.end=_T.start+3*HR; 1');
+  run('var _T=taskById("'+tid+'"); _T.start = Date.now()+3*HR; _T.end=_T.start+3*HR; 1');
+  run('S.clockOffset = Math.round((taskById("'+tid+'").start - 1.75*HR - Date.now())/60000)');
   if (run('canAttend(taskById("' + tid + '"))')) throw new Error('سُمح بالتحضير من خارج النطاق');
   click({ a: 'attend', id: tid });
   if (run('taskById("' + tid + '").leaderAttendedAt')) throw new Error('سُجِّل حضور من خارج النطاق');
@@ -944,11 +1004,12 @@ step('شاشة واحدة بتبويبين', () => {
   const tk = run('screenDesk()').split('<nav class="tabs"')[0];
   if (tk.indexOf('التذاكر والتقارير') < 0) throw new Error('بلا عنوان');
   if (tk.indexOf('data-v="rp"') < 0) throw new Error('بلا تبويب تقارير');
-  if (tk.indexOf('data-a="newticket"') < 0) throw new Error('بلا زر تذكرة');
+  if (tk.indexOf('data-a="newticket"') >= 0) throw new Error('الفريق يرفع تذاكر');
+  if (tk.indexOf('يرفعها <b>الحجاج</b>') < 0) throw new Error('بلا توضيح أن التذاكر للحجاج');
   run('S.tab.desk="rp"');
   const rp = run('screenDesk()').split('<nav class="tabs"')[0];
   if (rp.indexOf('data-a="report"') < 0) throw new Error('بلا زر تقرير');
-  if (rp.indexOf('data-a="newticket"') >= 0) throw new Error('اختلط المحتوى');
+  if (rp.indexOf('data-a="report"') < 0) throw new Error('اختلط المحتوى');
 });
 step('التقرير كيان مستقل عن التذكرة', () => {
   if (run('S.reports.some(function(r){return S.tickets.some(function(k){return k.id===r.id})})'))
@@ -962,7 +1023,7 @@ step('المحسن يرفع لليدره والليدر للكنترول', () =>
   const m = run('teamOf("L1")[0].id');
   run('S.session={id:"' + m + '",at:Date.now()}');
   const before = run('S.reports.length');
-  const vals = { rti: 'ازدحام عند المصعد', rb: 'ازدحام شديد عند مصاعد الدور الخامس وقت الخروج للحرم.', rc: 'ازدحام أو أمن', rt: '' };
+  const vals = { rti: 'ازدحام عند المصعد', rb: 'ازدحام شديد عند مصاعد الدور الخامس وقت الخروج للحرم.', rc: 'ازدحام أو أمن', rt: run('myTasks()[0].id') };
   sandbox.document.getElementById = i2 => (vals[i2] !== undefined ? Object.assign({}, el, { value: vals[i2] }) : el);
   click({ a: 'sendreport' });
   sandbox.document.getElementById = () => el;
@@ -972,7 +1033,7 @@ step('المحسن يرفع لليدره والليدر للكنترول', () =>
   sandbox.RP_ = run('S.reports[0].id');
 
   run('S.session={id:"L1",at:Date.now()}');
-  const v2 = { rti: 'نقص وجبات المشاعر', rb: 'نقص اثنتي عشرة وجبة عن كشف المجموعة في مخيم منى.', rc: 'مشكلة إعاشة', rt: '' };
+  const v2 = { rti: 'نقص وجبات المشاعر', rb: 'نقص اثنتي عشرة وجبة عن كشف المجموعة في مخيم منى.', rc: 'مشكلة إعاشة', rt: run('myTasks()[0].id') };
   sandbox.document.getElementById = i2 => (v2[i2] !== undefined ? Object.assign({}, el, { value: v2[i2] }) : el);
   click({ a: 'sendreport' });
   sandbox.document.getElementById = () => el;
@@ -980,10 +1041,10 @@ step('المحسن يرفع لليدره والليدر للكنترول', () =>
 });
 step('تقرير بلا عنوان أو تفاصيل مرفوض', () => {
   const before = run('S.reports.length');
-  const v = { rti: 'اا', rb: 'تفاصيل كافية جدًّا هنا', rc: 'أخرى', rt: '' };
+  const v = { rti: 'اا', rb: 'تفاصيل كافية جدًّا هنا', rc: 'أخرى', rt: run('myTasks()[0].id') };
   sandbox.document.getElementById = i2 => (v[i2] !== undefined ? Object.assign({}, el, { value: v[i2] }) : el);
   click({ a: 'sendreport' });
-  const v2 = { rti: 'عنوان صالح', rb: 'قصير', rc: 'أخرى', rt: '' };
+  const v2 = { rti: 'عنوان صالح', rb: 'قصير', rc: 'أخرى', rt: run('myTasks()[0].id') };
   sandbox.document.getElementById = i2 => (v2[i2] !== undefined ? Object.assign({}, el, { value: v2[i2] }) : el);
   click({ a: 'sendreport' });
   sandbox.document.getElementById = () => el;
@@ -1022,7 +1083,7 @@ step('طلبات التسكين من داخل المهمة فقط', () => {
   run('S.route={n:"profile",id:"' + m + '"}');
   const h = run('screenProfile()').split('<nav class="tabs"')[0];
   if (h.indexOf('data-a="assignto"') >= 0) throw new Error('ما زال الإسناد من البروفايل');
-  if (h.indexOf('من داخل المهمة') < 0) throw new Error('لا يوجد توجيه للمهمة');
+  if (h.indexOf('البيانات') >= 0) throw new Error('صندوق البيانات ما زال موجودًا');
 });
 
 console.log('\nمراجعة أخيرة — تناقضات وفاليديشنز');
@@ -1114,12 +1175,93 @@ step('لا إغلاق لمهمة لم تبدأ', () => {
 step('تقرير الاحتياطي يذهب للكنترول', () => {
   const r = run('reserveTeam()[0].id');
   run('S.session={id:"' + r + '",at:Date.now()}');
-  const vals = { rti: 'ملاحظة من الاحتياط', rb: 'ملاحظة تشغيلية كافية الطول للاختبار.', rc: 'أخرى', rt: '' };
+  const vals = { rti: 'ملاحظة من الاحتياط', rb: 'ملاحظة تشغيلية كافية الطول للاختبار.', rc: 'أخرى', rt: run('myTasks()[0]&&myTasks()[0].id||S.tasks[0].id') };
   sandbox.document.getElementById = i2 => (vals[i2] !== undefined ? Object.assign({}, el, { value: vals[i2] }) : el);
   click({ a: 'sendreport' });
   sandbox.document.getElementById = () => el;
   if (run('S.reports[0].to') !== 'CONTROL') throw new Error('ذهب إلى ' + run('S.reports[0].to'));
   run('S.session={id:"L1",at:Date.now()}');
+});
+
+console.log('\nالصور: ميموريز وإثبات الفرعية');
+run('S.session={id:"L1",at:Date.now()}; S.clockOffset=0');
+step('الليدر يرفع ميموريز والمحسن لا', () => {
+  if (!run('canMemories()')) throw new Error('الليدر ممنوع');
+  const m = run('teamOf("L1")[0].id');
+  run('S.session={id:"' + m + '",at:Date.now()}');
+  if (run('canMemories()')) throw new Error('المحسن يرفع ميموريز');
+  run('S.session={id:"L1",at:Date.now()}');
+});
+step('المحسن المسكَّن يصوّر الفرعية', () => {
+  const t = run('S.tasks.find(function(x){return acceptedSlots(x).length&&["done","cancelled"].indexOf(x.status)<0})');
+  const m = run('acceptedSlots(taskById("' + t.id + '"))[0].muhsenId');
+  run('S.session={id:"' + m + '",at:Date.now()}');
+  if (!run('canShootSub(taskById("' + t.id + '"))')) throw new Error('مُنع من تصوير الفرعية');
+  const out = run('reserveTeam().find(function(r){return !taskById("' + t.id + '").assigned.some(function(a){return a.muhsenId===r.id})}).id');
+  run('S.session={id:"' + out + '",at:Date.now()}');
+  if (run('canShootSub(taskById("' + t.id + '"))')) throw new Error('من ليس على المهمة يصوّر');
+  run('S.session={id:"L1",at:Date.now()}');
+});
+step('زر الكاميرا على الفرعية فقط', () => {
+  const t = run('S.tasks.find(function(x){return ["done","cancelled"].indexOf(x.status)<0})');
+  run('S.route={n:"task",id:"' + t.id + '"}');
+  const h = run('screenTask()').split('<nav class="tabs"')[0];
+  if (h.indexOf('ميموريز المهمة') < 0) throw new Error('لا يوجد قسم ميموريز');
+  if (h.indexOf('data-a="memories"') < 0) throw new Error('لا يوجد رفع من الاستوديو');
+  const mainShoot = h.split('المهام الفرعية')[0];
+  if (mainShoot.indexOf('data-a="shoot" data-tid="' + t.id + '" data-sid=""') >= 0)
+    throw new Error('ما زال هناك تصوير للمهمة الرئيسية');
+});
+
+console.log('\nتعديل بيانات الغرفة');
+step('التصنيف موجود بمساره', () => {
+  if (run('RCATS.indexOf(ROOM_CAT)') !== 0) throw new Error('غير مدرج أولًا');
+  if (run('ROOM_FLOW.length') !== 3) throw new Error('المسار ناقص');
+  if (run('FLOORS.length') < 5) throw new Error('الأدوار ناقصة');
+});
+step('الطلب يحتاج رقم غرفة صالحًا', () => {
+  run('S.rCat=ROOM_CAT');
+  const before = run('S.reports.length');
+  let vals = { rti: 'تعديل غرفة حاج', rb: '', rc: run('ROOM_CAT'), rt: run('myTasks()[0].id'), rfl: run('FLOORS[2]'), rno: '', rnote: '' };
+  sandbox.document.getElementById = i2 => (vals[i2] !== undefined ? Object.assign({}, el, { value: vals[i2] }) : el);
+  click({ a: 'sendreport' });
+  vals.rno = 'abc';
+  click({ a: 'sendreport' });
+  sandbox.document.getElementById = () => el;
+  if (run('S.reports.length') !== before) throw new Error('قُبل بلا رقم صالح');
+});
+step('الطلب يمرّ بمشرف السكن ثم الكنترول', () => {
+  const vals = { rti: 'تعديل غرفة حاج', rb: '', rc: run('ROOM_CAT'), rt: run('myTasks()[0].id'),
+    rfl: run('FLOORS[2]'), rno: '٣١٤', rnote: 'انتقل لغرفة أقرب للمصعد' };
+  sandbox.document.getElementById = i2 => (vals[i2] !== undefined ? Object.assign({}, el, { value: vals[i2] }) : el);
+  click({ a: 'sendreport' });
+  sandbox.document.getElementById = () => el;
+  const r = run('S.reports[0]');
+  if (!run('isRoomReport(S.reports[0])')) throw new Error('لم يُسجَّل كطلب غرفة');
+  if (r.stage !== 'supervisor') throw new Error('المرحلة ' + r.stage);
+  sandbox.RM_ = r.id;
+  click({ a: 'roomok', id: r.id });
+  if (run('reportById("' + r.id + '").stage') !== 'control') throw new Error('لم يُحل للكنترول');
+  click({ a: 'roomok', id: r.id });
+  const r2 = run('reportById("' + r.id + '")');
+  if (r2.stage !== 'done' || r2.status !== 'مغلق') throw new Error('لم يكتمل');
+  if (!run('reportById("' + r.id + '").replies.some(function(x){return x.text.indexOf("قاعدة البيانات")>=0})'))
+    throw new Error('بلا أثر في السجل');
+});
+step('الرفض يوقف المسار', () => {
+  const vals = { rti: 'طلب غرفة ثانٍ', rb: '', rc: run('ROOM_CAT'), rt: run('myTasks()[0].id'),
+    rfl: run('FLOORS[1]'), rno: '٢٠٧', rnote: '' };
+  sandbox.document.getElementById = i2 => (vals[i2] !== undefined ? Object.assign({}, el, { value: vals[i2] }) : el);
+  click({ a: 'sendreport' });
+  sandbox.document.getElementById = () => Object.assign({}, el, { value: 'الغرفة مشغولة' });
+  const id2 = run('S.reports[0].id');
+  click({ a: 'doroomno', id: id2 });
+  sandbox.document.getElementById = () => el;
+  if (run('reportById("' + id2 + '").stage') !== 'rejected') throw new Error('لم يُرفض');
+});
+step('كل تقرير له عنوان ومهمة', () => {
+  const bad = run('S.reports.filter(function(r){return !r.title||!r.taskId}).length');
+  if (bad) throw new Error(bad + ' تقرير بلا عنوان أو مهمة');
 });
 
 console.log('\n' + (fail ? '✗ فشل ' + fail : '✓ نجحت كل الاختبارات'));
