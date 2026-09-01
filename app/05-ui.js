@@ -231,12 +231,15 @@ function screenLogin() {
         '</div>' +
         '<div class="lbl plain" style="margin:14px 0 7px">اختر الحساب<small style="font-weight:400;color:var(--dim2)">' + AR(list.length) + ' حساب متاح للتجربة</small></div>' +
         '<div class="acclist">' + list.map(u => {
+          const L2 = userById(u.leaderId);
           const sub = u.role === 'leader'
-            ? u.kt + ' · ' + ORGS.find(o => o.id === u.orgId).ar
-            : u.code + ' · ' + u.specialty + ' · فريق ' + userById(u.leaderId).name.split(' ')[0];
+            ? u.kt + ' · ' + ((ORGS.find(o => o.id === u.orgId) || {}).ar || '')
+            : u.code + ' · ' + u.specialty + ' · ' +
+              (u.reserve ? 'فريق احتياطي' : L2 ? 'فريق ' + L2.name.split(' ')[0] : 'بلا فريق');
           const pc = pendingCountFor(u.id);
           return '<button class="prow" data-a="login" data-id="' + u.id + '">' + avat(u) +
             '<span class="nm sp"><b>' + E(u.name) + '</b><span>' + E(sub) + '</span></span>' +
+            (u.reserve ? pill('احتياط', 'gold') : '') +
             (pc ? '<span class="pill no">' + AR(pc) + ' إجراء</span>' : '') +
             icon('i-back','s16') + '</button>';
         }).join('') + '</div>' +
@@ -300,6 +303,7 @@ function alertsHTML() {
     icon('i-back', 's16') + '</button>';
 }
 
+/* عدّاد الإجراءات على الحساب: ما ينتظر ردّه هو وحده — لا ما ينتظر وقته */
 function pendingCountFor(uid_) {
   const u = userById(uid_); if (!u) return 0;
   let n = 0;
@@ -308,19 +312,21 @@ function pendingCountFor(uid_) {
       if (['done','cancelled'].includes(t.status)) return;
       t.assigned.forEach(a => {
         if (a.muhsenId !== uid_ || a.removed) return;
-        if (a.req === 'pending') n++;
-        if (a.req === 'accepted' && !a.attendedAt && now() >= prepOpen(t)) n++;
+        if (a.req === 'pending') n++;                 /* طلب تسكين ينتظر ردّه */
       });
       if (t.delegate && t.delegate.muhsenId === uid_ && t.delegate.state === 'pending') n++;
     });
-    if (S.tickets.some(k => k.assignedTo === uid_ && k.status !== 'مغلقة')) n++;
+    n += S.tickets.filter(k => k.assignedTo === uid_ && k.status !== 'مغلقة').length;
   } else {
     S.tasks.filter(t => t.leaderId === uid_).forEach(t => {
-      if (!lockedForAssign(t) && !acceptedSlots(t).length) n++;
+      if (['done','cancelled'].includes(t.status)) return;
+      if (!lockedForAssign(t) && !acceptedSlots(t).length) n++;   /* بلا محسنين */
+      n += t.assigned.filter(a => a.wd && a.wd.state === 'pending' && !a.removed).length;
       if (t.status === 'running' && t.autoStarted) n++;
       if (t.status === 'running' && now() > t.end) n++;
     });
-    if (S.tickets.some(k => k.leaderId === uid_ && k.status === 'مفتوحة')) n++;
+    n += (S.swaps || []).filter(s => s.leaderId === uid_ && s.state === 'pending').length;
+    n += S.reports.filter(r => r.to === uid_ && r.status !== 'مغلق').length;
   }
   return n;
 }

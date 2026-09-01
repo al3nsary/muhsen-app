@@ -51,7 +51,7 @@ function reportsPane() {
   const list = (seg === 'out' ? sent : got).slice().sort((a, b) => b.at - a.at);
 
   return '<button class="btn p" data-a="report">' + icon('i-flag','s16') +
-      (L ? 'رفع تقرير إلى الكنترول' : 'رفع تقرير إلى الليدر') + '</button>' +
+      (L || !me().leaderId ? 'رفع تقرير إلى الكنترول' : 'رفع تقرير إلى الليدر') + '</button>' +
     (L ? '<div class="seg">' +
       '<button class="' + (seg === 'in' ? 'on' : '') + '" data-a="seg" data-k="rep" data-v="in">واردة من المحسنين<i>' +
         AR(got.length) + '</i></button>' +
@@ -130,7 +130,7 @@ function reportSheet(taskId) {
   const L = isLeader(), tasks = myTasks();
   return '<div class="grip"></div><h3>رفع تقرير</h3>' +
     '<div class="tiny dim2" style="margin-bottom:12px">' +
-      (L ? 'يُرفع إلى غرفة العمليات — الكنترول' : 'يُرفع إلى ليدر فريقك') + '</div>' +
+      (L || !me().leaderId ? 'يُرفع إلى غرفة العمليات — الكنترول' : 'يُرفع إلى ليدر فريقك') + '</div>' +
     '<div class="lbl plain">التصنيف</div>' +
     '<div class="field" style="margin:8px 0"><select id="rc">' +
       RCATS.map(c => '<option>' + c + '</option>').join('') + '</select></div>' +

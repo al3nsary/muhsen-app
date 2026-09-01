@@ -22,7 +22,8 @@
 ```bash
 cd app
 node build.cjs      # يبني muhsen-app.html و docs/index.html
-node smoke.cjs      # ٣١ اختبارًا لدورة العمل كاملة
+node smoke.cjs      # ١٤٧ اختبارًا لقواعد العمل كاملة
+node audit.cjs      # مسح كل شاشة لكل دور + ٢١ فحص تناقض
 ```
 
 لا يحتاج المشروع أي تثبيت — Node.js وحده يكفي، بلا حزم خارجية.

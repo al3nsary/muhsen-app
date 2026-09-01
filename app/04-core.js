@@ -1,6 +1,6 @@
 /* ============================ الحالة ============================ */
 const KEY = 'muhsen_app_v1';
-const APP_VER = 'نسخة ٢٫١';
+const APP_VER = 'نسخة ٢٫٢';
 const SCHEMA = 17;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
@@ -556,6 +556,8 @@ function ticketReply(k, byId, text, newStatus) {
   });
 }
 function ticketAssign(k, muhsenId, byId) {
+  const mu = userById(muhsenId);
+  if (!mu || mu.role !== 'muhsen') return false;
   k.assignedTo = muhsenId; k.status = 'مُسندة';
   k.replies.push({ by: byId, text: 'أُسندت إلى ' + userById(muhsenId).name, at: now(), sys: true });
   notify(muhsenId, 'i-ticket', 'تذكرة أُسندت إليك', k.title, { n: 'ticket', id: k.id });
@@ -600,6 +602,8 @@ function isBlamed(t, uid_) {
     const s = t.assigned.find(a => a.muhsenId === uid_);
     if (!s) return false;
     if (s.req === 'rejected') return true;
+    /* الخروج بموافقة الليدر اتفاق لا إدانة */
+    if (s.wd && s.wd.state === 'accepted') return false;
     if (s.removed) return true;
     if (t.status === 'done' && s.req === 'accepted' && !s.attendedAt) return true;
     if (t.status === 'done' && s.attendedAt && s.attendedAt > t.start) return true;
@@ -627,6 +631,7 @@ function undoneReason(t, uid_) {
   if (u.role === 'muhsen') {
     const s = t.assigned.find(a => a.muhsenId === uid_) || {};
     if (s.req === 'rejected') return 'رفضتَ الإسناد' + (s.respNote ? ' — «' + s.respNote + '»' : '');
+    if (s.wd && s.wd.state === 'accepted') return 'انسحبتَ بموافقة الليدر — ' + s.wd.reason;
     if (s.removed) return 'أُزيل إسنادك — ' + (s.removedWhy || 'بقرار من الليدر');
     if (!s.attendedAt) return 'لم تثبت حضورك في المهمة';
     if (s.attendedAt > t.start) return 'تأخرت عن التحضير — أثبت حضورك بعد بدايتها';

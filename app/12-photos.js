@@ -265,6 +265,7 @@ const photoById = id => (S.photos || []).find(p => p.id === id);
 
 /* ورقة سبب — مع إمكانية إرفاق صورة كعذر */
 function reasonSheet(title, sub2, action, ph, kind, taskId, extraId) {
+  title = title || 'السبب'; 
   return '<div class="grip"></div><h3>' + E(title) + '</h3>' +
     (sub2 ? '<div class="tiny dim2" style="margin-bottom:10px">' + E(sub2) + '</div>' : '') +
     '<div class="field" style="margin:10px 0"><input id="txt" placeholder="' + E(ph || 'اذكر السبب…') + '"></div>' +
@@ -302,6 +303,7 @@ function excuseChip(photoId) {
 
 /* ---------- اختيار المهمة الفرعية المراد توثيقها ---------- */
 function subPickSheet(t) {
+  if (!t) return '<div class="grip"></div><h3>لا توجد مهمة</h3>';
   return '<div class="grip"></div><h3>توثيق مهمة فرعية بصورة</h3>' +
     '<div class="tiny dim2" style="margin-bottom:10px">اختر ما تريد إثباته — تُربط الصورة به وتبقى معه بعد انتهاء المهمة.</div>' +
     '<div class="col" style="max-height:46vh;overflow:auto;gap:7px">' +

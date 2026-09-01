@@ -102,6 +102,7 @@ function placeSheet() {
     '</div><button class="btn g" style="margin-top:12px" data-a="close">إغلاق</button>';
 }
 function delegSheet(t) {
+  if (!t) return '<div class="grip"></div><h3>لا توجد مهمة</h3>';
   const team = teamOf(t.leaderId);
   const keep = S.delegKeep !== false;
   return '<div class="grip"></div><h3>إسناد صلاحية القيادة</h3>' +
@@ -147,6 +148,7 @@ function ticketStateSheet(k) {
     '<button class="btn g" style="margin-top:12px" data-a="close">إغلاق</button>';
 }
 function ticketAssignSheet(k) {
+  if (!k) return '<div class="grip"></div><h3>لا توجد تذكرة</h3>';
   const team = teamOf(k.leaderId);
   return '<div class="grip"></div><h3>إسناد التذكرة</h3>' +
     '<div class="tiny dim2" style="margin-bottom:12px">' + E(k.title) + '</div>' +
@@ -201,6 +203,7 @@ function reminderSheet() {
       '<button class="btn p" data-a="dorem">حفظ التذكير</button></div>';
 }
 function editTaskSheet(t) {
+  if (!t) return '<div class="grip"></div><h3>لا توجد مهمة</h3>';
   const d = new Date(t.start);
   return '<div class="grip"></div><h3>تعديل «' + E(t.title) + '»</h3>' +
     '<div class="tiny dim2" style="margin-bottom:12px">' + E(userById(t.leaderId).name) + ' · ' + E(t.kt) + '</div>' +

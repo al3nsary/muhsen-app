@@ -1171,6 +1171,66 @@
     padding: 11px 8px; font-size: 13px; }
   .seg.big button .ic { width: 16px; height: 16px; }
 </style>
+<style>
+  /* ===================== النسخة ٢٫٢ — صقل الواجهة ===================== */
+
+  /* حركة دخول هادئة للمحتوى: يشعر الانتقال بالسلاسة بلا بطء */
+  .view > * { animation: rise .26s cubic-bezier(.22,.7,.2,1) both; }
+  .view > *:nth-child(1) { animation-delay: 0ms }
+  .view > *:nth-child(2) { animation-delay: 18ms }
+  .view > *:nth-child(3) { animation-delay: 34ms }
+  .view > *:nth-child(4) { animation-delay: 48ms }
+  .view > *:nth-child(n+5) { animation-delay: 60ms }
+  @keyframes rise { from { opacity: 0; transform: translateY(9px) } to { opacity: 1; transform: none } }
+  @media (prefers-reduced-motion: reduce) { .view > * { animation: none } }
+
+  /* لمسة تفاعل موحّدة */
+  .btn, .cta, .listitem, .prow, .c.task, .drop, .nrow, .pcard, .docbtn {
+    transition: transform .13s ease, box-shadow .18s ease, background .18s ease;
+  }
+  .btn:active, .listitem:active, .prow:active, .drop:active, .nrow:active,
+  .pcard:active, .docbtn:active { transform: scale(.985) }
+
+  /* عناوين الأقسام أوضح */
+  .lbl { font-size: 15px; letter-spacing: -.1px }
+  .lbl::after { width: 28px; height: 2.5px }
+
+  /* البطاقات: حدّ أنعم وظل أهدأ */
+  .c { border-radius: 19px }
+  .note { border-radius: 15px; line-height: 1.8 }
+
+  /* الأزرار: ارتفاع لمس مريح */
+  .btn { min-height: 46px; border-radius: 15px; font-weight: 700 }
+  .btn.sm { min-height: 40px; font-size: 12.5px }
+  .cta { border-radius: 19px }
+
+  /* الحقول */
+  .field { border-radius: 14px }
+  .field input, .field select { min-height: 44px }
+
+  /* شرائح التصنيف */
+  .seg { border-radius: 16px; padding: 4px }
+  .seg button { border-radius: 13px; min-height: 40px; transition: all .16s ease }
+
+  /* حالة فارغة موحّدة */
+  .empty { text-align: center; padding: 30px 18px }
+  .empty .ic { width: 30px; height: 30px; color: var(--dim2); margin: 0 auto 10px }
+  .empty b { display: block; font-size: 14.5px }
+  .empty span { display: block; font-size: 12px; color: var(--dim); margin-top: 6px; line-height: 1.8 }
+
+  /* شارة الاحتياط */
+  .pill.gold { background: #F7EFE0; color: #7A5512 }
+
+  /* صف الزميل على المهمة */
+  .c .fl .av.sm { flex: none }
+
+  /* تحسين قراءة الأرقام */
+  .kpi b, .cnt, .nt, .score b { font-variant-numeric: tabular-nums }
+
+  /* تباعد أهدأ بين الأقسام */
+  .view { gap: 11px }
+  .lbl { margin-top: 6px }
+</style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <symbol id="av-m" viewBox="0 0 44 44">
@@ -1443,7 +1503,7 @@ const REPORT_SEED = [
 
 /* ============================ الحالة ============================ */
 const KEY = 'muhsen_app_v1';
-const APP_VER = 'نسخة ٢٫١';
+const APP_VER = 'نسخة ٢٫٢';
 const SCHEMA = 17;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
@@ -1999,6 +2059,8 @@ function ticketReply(k, byId, text, newStatus) {
   });
 }
 function ticketAssign(k, muhsenId, byId) {
+  const mu = userById(muhsenId);
+  if (!mu || mu.role !== 'muhsen') return false;
   k.assignedTo = muhsenId; k.status = 'مُسندة';
   k.replies.push({ by: byId, text: 'أُسندت إلى ' + userById(muhsenId).name, at: now(), sys: true });
   notify(muhsenId, 'i-ticket', 'تذكرة أُسندت إليك', k.title, { n: 'ticket', id: k.id });
@@ -2043,6 +2105,8 @@ function isBlamed(t, uid_) {
     const s = t.assigned.find(a => a.muhsenId === uid_);
     if (!s) return false;
     if (s.req === 'rejected') return true;
+    /* الخروج بموافقة الليدر اتفاق لا إدانة */
+    if (s.wd && s.wd.state === 'accepted') return false;
     if (s.removed) return true;
     if (t.status === 'done' && s.req === 'accepted' && !s.attendedAt) return true;
     if (t.status === 'done' && s.attendedAt && s.attendedAt > t.start) return true;
@@ -2070,6 +2134,7 @@ function undoneReason(t, uid_) {
   if (u.role === 'muhsen') {
     const s = t.assigned.find(a => a.muhsenId === uid_) || {};
     if (s.req === 'rejected') return 'رفضتَ الإسناد' + (s.respNote ? ' — «' + s.respNote + '»' : '');
+    if (s.wd && s.wd.state === 'accepted') return 'انسحبتَ بموافقة الليدر — ' + s.wd.reason;
     if (s.removed) return 'أُزيل إسنادك — ' + (s.removedWhy || 'بقرار من الليدر');
     if (!s.attendedAt) return 'لم تثبت حضورك في المهمة';
     if (s.attendedAt > t.start) return 'تأخرت عن التحضير — أثبت حضورك بعد بدايتها';
@@ -2403,12 +2468,15 @@ function screenLogin() {
         '</div>' +
         '<div class="lbl plain" style="margin:14px 0 7px">اختر الحساب<small style="font-weight:400;color:var(--dim2)">' + AR(list.length) + ' حساب متاح للتجربة</small></div>' +
         '<div class="acclist">' + list.map(u => {
+          const L2 = userById(u.leaderId);
           const sub = u.role === 'leader'
-            ? u.kt + ' · ' + ORGS.find(o => o.id === u.orgId).ar
-            : u.code + ' · ' + u.specialty + ' · فريق ' + userById(u.leaderId).name.split(' ')[0];
+            ? u.kt + ' · ' + ((ORGS.find(o => o.id === u.orgId) || {}).ar || '')
+            : u.code + ' · ' + u.specialty + ' · ' +
+              (u.reserve ? 'فريق احتياطي' : L2 ? 'فريق ' + L2.name.split(' ')[0] : 'بلا فريق');
           const pc = pendingCountFor(u.id);
           return '<button class="prow" data-a="login" data-id="' + u.id + '">' + avat(u) +
             '<span class="nm sp"><b>' + E(u.name) + '</b><span>' + E(sub) + '</span></span>' +
+            (u.reserve ? pill('احتياط', 'gold') : '') +
             (pc ? '<span class="pill no">' + AR(pc) + ' إجراء</span>' : '') +
             icon('i-back','s16') + '</button>';
         }).join('') + '</div>' +
@@ -2472,6 +2540,7 @@ function alertsHTML() {
     icon('i-back', 's16') + '</button>';
 }
 
+/* عدّاد الإجراءات على الحساب: ما ينتظر ردّه هو وحده — لا ما ينتظر وقته */
 function pendingCountFor(uid_) {
   const u = userById(uid_); if (!u) return 0;
   let n = 0;
@@ -2480,19 +2549,21 @@ function pendingCountFor(uid_) {
       if (['done','cancelled'].includes(t.status)) return;
       t.assigned.forEach(a => {
         if (a.muhsenId !== uid_ || a.removed) return;
-        if (a.req === 'pending') n++;
-        if (a.req === 'accepted' && !a.attendedAt && now() >= prepOpen(t)) n++;
+        if (a.req === 'pending') n++;                 /* طلب تسكين ينتظر ردّه */
       });
       if (t.delegate && t.delegate.muhsenId === uid_ && t.delegate.state === 'pending') n++;
     });
-    if (S.tickets.some(k => k.assignedTo === uid_ && k.status !== 'مغلقة')) n++;
+    n += S.tickets.filter(k => k.assignedTo === uid_ && k.status !== 'مغلقة').length;
   } else {
     S.tasks.filter(t => t.leaderId === uid_).forEach(t => {
-      if (!lockedForAssign(t) && !acceptedSlots(t).length) n++;
+      if (['done','cancelled'].includes(t.status)) return;
+      if (!lockedForAssign(t) && !acceptedSlots(t).length) n++;   /* بلا محسنين */
+      n += t.assigned.filter(a => a.wd && a.wd.state === 'pending' && !a.removed).length;
       if (t.status === 'running' && t.autoStarted) n++;
       if (t.status === 'running' && now() > t.end) n++;
     });
-    if (S.tickets.some(k => k.leaderId === uid_ && k.status === 'مفتوحة')) n++;
+    n += (S.swaps || []).filter(s => s.leaderId === uid_ && s.state === 'pending').length;
+    n += S.reports.filter(r => r.to === uid_ && r.status !== 'مغلق').length;
   }
   return n;
 }
@@ -2645,6 +2716,22 @@ function screenTask() {
 
     (lead && hasDocs(t) ? '<div class="lbl">مستندات المهمة<small>عقود الاستقبال — للّيدر</small></div>' + docButtons(t) : '') +
     taskPhotoSection(t, lead) +
+    /* المحسن يرى من معه على المهمة ووسيلة الاتصال به — لا في «غير المنجزة» */
+    (!lead && bucket !== 'undone' && acc.length > 1
+      ? '<div class="lbl">معك على المهمة<small>' + AR(acc.length - 1) + '</small></div>' +
+        acc.filter(a2 => a2.muhsenId !== u.id).map(a2 => {
+          const mm = userById(a2.muhsenId); if (!mm) return '';
+          const ph = String(mm.phone || '').replace(/[^0-9]/g, '');
+          return '<div class="c"><div class="fl">' + avat(mm, 'sm') +
+            '<span class="nm sp"><b>' + E(mm.name) + '</b><span>' + E(mm.specialty) +
+              (mm.reserve ? ' · احتياط' : '') + '</span></span>' +
+            (a2.attendedAt ? pill('حاضر ' + t12(a2.attendedAt), 'live') : pill('لم يحضر بعد', 'wait')) + '</div>' +
+            (ph ? '<div class="grid2" style="margin-top:9px">' +
+              '<a class="btn l sm" href="tel:' + ph + '">' + icon('i-phone','s16') + 'اتصال</a>' +
+              '<a class="btn l sm" href="https://wa.me/' + ph + '" target="_blank" rel="noopener">' +
+                icon('i-send','s16') + 'واتساب</a></div>' : '') + '</div>';
+        }).join('') : '') +
+
     '<div class="lbl">المهام الفرعية<small>' + AR(doneSubs) + ' من ' + AR(t.subs.length) + '</small></div>' +
     '<div class="c">' + t.subs.map((s, i) => subRow(t, s, i, running)).join('') + '</div>' +
 
@@ -2730,6 +2817,7 @@ function subRow(t, s, i, running) {
 }
 
 function delegCard(t, isCo, canManage) {
+  if (!t) return '';
   if (!isCo) return '<div class="note a">' + icon('i-shield','s16') +
     '<span>إسناد صلاحية القيادة غير متاح — هذه المهمة تتبع <b>بعثة</b>، والإسناد للشركات فقط.</span></div>';
   if (!t.delegate) return canManage
@@ -2917,7 +3005,7 @@ function statusBoxes() {
 
 /* ============================ رئيسية الليدر ============================ */
 function screenLeaderHome() {
-  const u = me(), org = ORGS.find(o => o.id === u.orgId), ts = myTasks();
+  const u = me(), org = ORGS.find(o => o.id === u.orgId) || ORGS[0], ts = myTasks();
   const live = activeTasks(u.id), upcoming = live.slice(0, 3);
   const rt = personRating(u.id);
   return bar('مُحسن ليدر') + '<div class="view">' + ground() +
@@ -2951,11 +3039,13 @@ function screenLeaderHome() {
 /* ============================ رئيسية المحسن ============================ */
 function screenMuhsenHome() {
   const u = me(), L = userById(u.leaderId), t = currentTask();
+  const teamLine = u.reserve ? 'فريق احتياطي — مشترك بين الليدرز'
+    : L ? 'فريق ' + L.name + ' · ' + L.kt : 'بلا فريق';
   const rt = personRating(u.id);
   return bar('المهمة الحالية') + '<div class="view">' + ground() +
     '<div class="c gold"><div class="fl">' + avat(u, 'lg') +
       '<div class="sp"><div class="row"><b style="font-size:16px">' + E(u.name) + '</b>' + pill(u.code, 'gold') + '</div>' +
-      '<div class="sm dim">' + E(u.specialty) + ' · فريق ' + E(L.name) + ' · ' + E(L.kt) + '</div>' +
+      '<div class="sm dim">' + E(u.specialty) + ' · ' + E(teamLine) + '</div>' +
       (rt.n ? '<div style="margin-top:6px">' + stars(rt.avg) + '</div>' : '') + '</div></div></div>' +
 
     statusBoxes() +
@@ -3061,7 +3151,7 @@ function ticketsPane() {
                  : [['open','المفتوحة'],['mine','المسندة إليّ'],['closed','المغلقة']];
 
   return '<button class="btn p" data-a="newticket">' + icon('i-plus','s16') +
-      (L ? 'رفع تذكرة إلى الكنترول' : 'رفع تذكرة إلى الليدر') + '</button>' +
+      (L || !me().leaderId ? 'رفع تذكرة إلى الكنترول' : 'رفع تذكرة إلى الليدر') + '</button>' +
     '<div class="seg">' + segs.map(x =>
       '<button class="' + (f === x[0] ? 'on' : '') + '" data-a="seg" data-k="tk" data-v="' + x[0] + '">' +
       x[1] + '</button>').join('') + '</div>' +
@@ -3289,7 +3379,9 @@ function screenNotifs() {
 /* ============================ الحجاج — كلهم لكل المحسنين ============================ */
 function screenPilgrims() {
   const u = me();
-  const kt = u.role === 'leader' ? u.kt : userById(u.leaderId).kt;
+  const kt = isLeader() ? me().kt
+    : (userById(me().leaderId) || {}).kt
+      || ((myTasks()[0] || {}).kt) || Object.keys(S.pilgrims)[0];
   const list = pilgrimsOf(kt);
   const q = (S.tab.pq || '').trim();
   const shown = q ? list.filter(p => p.name.includes(q) || String(p.room).includes(q) || p.pp.includes(q)) : list;
@@ -3311,7 +3403,9 @@ function screenPilgrims() {
 
 /* ============================ المحسنون ============================ */
 function screenMuhsens() {
-  const u = me(), team = teamOf(u.id);
+  /* الفريق: يراه الليدر ويراه المحسن */
+  const u = me();
+  const team = isLeader() ? teamOf(u.id) : teamOf(u.leaderId).filter(x => x.id !== u.id);
   return bar('المحسنون') + '<div class="view">' + ground() +
     '<div class="c gold"><div class="row"><b class="sm">فريق ' + E(u.kt) + '</b>' +
       pill(AR(team.length) + ' محسن', 'gold') + '</div></div>' +
@@ -3342,7 +3436,7 @@ function screenProfile() {
   const id = S.route.id || S.session.id;
   const u = userById(id); if (!u) return screenMore();
   const L = u.role === 'leader';
-  const org = ORGS.find(o => o.id === (L ? u.orgId : userById(u.leaderId).orgId));
+  const org = ORGS.find(o => o.id === (L ? u.orgId : (userById(u.leaderId) || {}).orgId)) || ORGS[0];
   const isMe = id === S.session.id;
   const r = personRating(id);
   const notes = personNotes(id);
@@ -3417,6 +3511,7 @@ function screenMore() {
        ['rating','i-star','التقييم','تقييمك وتقييم الزملاء'],
        ['desk','i-ticket','التذاكر والتقارير','المسندة إليك وما ترفعه'],
        ['pilgrims','i-user','الحجاج','حجاج الـKT والبلاغات'],
+       ['muhsens','i-users','الفريق','زملاؤك والفريق الاحتياطي'],
        ['daily','i-check','التحضير اليومي','حضورك وشِفتك وطلب التبديل'],
        ['guide','i-guide','دليل المهام','تعليمات تنفيذ كل نوع مهمة'],
        ['album','i-album','ألبوم الصور','صور المهام التي تشارك فيها'],
@@ -3601,6 +3696,7 @@ function placeSheet() {
     '</div><button class="btn g" style="margin-top:12px" data-a="close">إغلاق</button>';
 }
 function delegSheet(t) {
+  if (!t) return '<div class="grip"></div><h3>لا توجد مهمة</h3>';
   const team = teamOf(t.leaderId);
   const keep = S.delegKeep !== false;
   return '<div class="grip"></div><h3>إسناد صلاحية القيادة</h3>' +
@@ -3646,6 +3742,7 @@ function ticketStateSheet(k) {
     '<button class="btn g" style="margin-top:12px" data-a="close">إغلاق</button>';
 }
 function ticketAssignSheet(k) {
+  if (!k) return '<div class="grip"></div><h3>لا توجد تذكرة</h3>';
   const team = teamOf(k.leaderId);
   return '<div class="grip"></div><h3>إسناد التذكرة</h3>' +
     '<div class="tiny dim2" style="margin-bottom:12px">' + E(k.title) + '</div>' +
@@ -3700,6 +3797,7 @@ function reminderSheet() {
       '<button class="btn p" data-a="dorem">حفظ التذكير</button></div>';
 }
 function editTaskSheet(t) {
+  if (!t) return '<div class="grip"></div><h3>لا توجد مهمة</h3>';
   const d = new Date(t.start);
   return '<div class="grip"></div><h3>تعديل «' + E(t.title) + '»</h3>' +
     '<div class="tiny dim2" style="margin-bottom:12px">' + E(userById(t.leaderId).name) + ' · ' + E(t.kt) + '</div>' +
@@ -3748,6 +3846,7 @@ function slotMenuSheet(t, muhsenId) {
 /* ============================ مركز الطلبات — للدورين ============================ */
 const REQST = { pending:['بانتظار الرد','wait'], accepted:['مقبول','live'],
   rejected:['مرفوض','no'], withdrawn:['مسحوب','grey'] };
+const REQ_ICON = { 'تسكين':'i-assign', 'تفويض':'i-shield', 'انسحاب':'i-out' };
 
 function reqCardFull(r, actionable) {
   const t = reqTask(r);
@@ -3758,7 +3857,9 @@ function reqCardFull(r, actionable) {
   const phone = to.phone ? to.phone.replace(/[^0-9]/g, '') : '';
 
   return '<div class="c ' + (urgent ? 'urgent' : '') + '">' +
-    '<div class="row"><b style="font-size:14px">طلب ' + E(r.kind) + '</b>' + pill(st[0], st[1]) + '</div>' +
+    '<div class="row"><span class="fl" style="gap:7px">' +
+      icon(REQ_ICON[r.kind] || 'i-swap','s16') + '<b style="font-size:14px">طلب ' + E(r.kind) + '</b></span>' +
+      pill(st[0], st[1]) + '</div>' +
 
     '<div class="flow2">' +
       '<span class="who">' + avat(from, 'sm') + '<span class="tiny"><b>' + E(from.name) + '</b>' +
@@ -3785,7 +3886,11 @@ function reqCardFull(r, actionable) {
     (urgent ? '<div class="strip r">' + icon('i-warn','s16') + '<span>بقي أقل من ٣ ساعات على المهمة</span></div>' : '') +
 
     (actionable && r.state === 'pending' && t ? (
-      r.kind === 'تسكين'
+      r.kind === 'انسحاب'
+        ? '<div class="grid2" style="margin-top:10px">' +
+          '<button class="btn d sm" data-a="wdno" data-id="' + t.id + '" data-u="' + r.from + '">رفض</button>' +
+          '<button class="btn p sm" data-a="wdok" data-id="' + t.id + '" data-u="' + r.from + '">اعتماد الانسحاب</button></div>'
+        : r.kind === 'تسكين'
         ? '<div class="grid2" style="margin-top:10px">' +
           '<button class="btn d sm" data-a="resp" data-id="' + t.id + '" data-v="0">رفض</button>' +
           '<button class="btn p sm" data-a="resp" data-id="' + t.id + '" data-v="1">قبول</button></div>'
@@ -4101,6 +4206,7 @@ const photoById = id => (S.photos || []).find(p => p.id === id);
 
 /* ورقة سبب — مع إمكانية إرفاق صورة كعذر */
 function reasonSheet(title, sub2, action, ph, kind, taskId, extraId) {
+  title = title || 'السبب'; 
   return '<div class="grip"></div><h3>' + E(title) + '</h3>' +
     (sub2 ? '<div class="tiny dim2" style="margin-bottom:10px">' + E(sub2) + '</div>' : '') +
     '<div class="field" style="margin:10px 0"><input id="txt" placeholder="' + E(ph || 'اذكر السبب…') + '"></div>' +
@@ -4138,6 +4244,7 @@ function excuseChip(photoId) {
 
 /* ---------- اختيار المهمة الفرعية المراد توثيقها ---------- */
 function subPickSheet(t) {
+  if (!t) return '<div class="grip"></div><h3>لا توجد مهمة</h3>';
   return '<div class="grip"></div><h3>توثيق مهمة فرعية بصورة</h3>' +
     '<div class="tiny dim2" style="margin-bottom:10px">اختر ما تريد إثباته — تُربط الصورة به وتبقى معه بعد انتهاء المهمة.</div>' +
     '<div class="col" style="max-height:46vh;overflow:auto;gap:7px">' +
@@ -5225,7 +5332,7 @@ function reportsPane() {
   const list = (seg === 'out' ? sent : got).slice().sort((a, b) => b.at - a.at);
 
   return '<button class="btn p" data-a="report">' + icon('i-flag','s16') +
-      (L ? 'رفع تقرير إلى الكنترول' : 'رفع تقرير إلى الليدر') + '</button>' +
+      (L || !me().leaderId ? 'رفع تقرير إلى الكنترول' : 'رفع تقرير إلى الليدر') + '</button>' +
     (L ? '<div class="seg">' +
       '<button class="' + (seg === 'in' ? 'on' : '') + '" data-a="seg" data-k="rep" data-v="in">واردة من المحسنين<i>' +
         AR(got.length) + '</i></button>' +
@@ -5304,7 +5411,7 @@ function reportSheet(taskId) {
   const L = isLeader(), tasks = myTasks();
   return '<div class="grip"></div><h3>رفع تقرير</h3>' +
     '<div class="tiny dim2" style="margin-bottom:12px">' +
-      (L ? 'يُرفع إلى غرفة العمليات — الكنترول' : 'يُرفع إلى ليدر فريقك') + '</div>' +
+      (L || !me().leaderId ? 'يُرفع إلى غرفة العمليات — الكنترول' : 'يُرفع إلى ليدر فريقك') + '</div>' +
     '<div class="lbl plain">التصنيف</div>' +
     '<div class="field" style="margin:8px 0"><select id="rc">' +
       RCATS.map(c => '<option>' + c + '</option>').join('') + '</select></div>' +
@@ -5574,6 +5681,9 @@ document.addEventListener('click', ev => {
         : v === 'hq' ? 'موقعك داخل المقر — التحضير اليومي متاح'
         : 'موقعك خارج النطاق — لا يُقبل تحضير', v === 'away' ? 'r' : 'g'); break;
     case 'attend': { const t = T(); if (!t) break;
+      if (['done','cancelled'].indexOf(t.status) >= 0) { toast('المهمة أُغلقت', 'r'); break; }
+      if (!actsAsLeader(t, S.session.id) && !slotOf(t, S.session.id))
+        { toast('لست مسكَّنًا على هذه المهمة', 'r'); break; }
       if (!canAttend(t)) { toast(attendBlockReason(t), 'r'); break; }
       if (!attend(t, S.session.id)) { toast('تعذّر إثبات الحضور', 'r'); break; }
       buzz(); toast('أُثبت حضورك ' + t12(now())); break; }
@@ -5581,6 +5691,9 @@ document.addEventListener('click', ev => {
     case 'send': { const t = T(); if (!t) break;
       if (!canDecide(t, S.session.id)) { toast('التسكين للمفوَّض على هذه المهمة', 'r'); break; }
       if (lockedForAssign(t)) { toast('التسكين مقفل — بدأت المهمة', 'r'); break; }
+      const mu = userById(uid_);
+      if (!mu || mu.role !== 'muhsen') { toast('لا يُسكَّن إلا محسن', 'r'); break; }
+      if (!mu.reserve && mu.leaderId !== t.leaderId) { toast('هذا المحسن ليس من فريقك ولا من الاحتياط', 'r'); break; }
       if (busyIn(uid_, t)) { toast('المحسن مرتبط بمهمة متداخلة', 'r'); break; }
       if (sendRequest(t, uid_)) { S.sheet = null; toast('أُرسل الطلب إلى ' + userById(uid_).name); }
       else toast('تعذّر الإرسال — الطلب قائم بالفعل', 'r');
@@ -5592,7 +5705,10 @@ document.addEventListener('click', ev => {
       S.sheet = reasonSheet('سبب الإزالة من التسكين', userById(uid_).name,
         'data-a="doremove" data-id="' + id + '" data-u="' + uid_ + '"', 'سبب الإزالة', 'remove', id, uid_); break; }
     case 'doremove': { const rr = val('txt');
-      if (!rr) { toast('سبب الإزالة إلزامي', 'r'); break; }
+      if (!rr || rr.length < 4) { toast('اذكر سبب الإزالة', 'r'); break; }
+      { const t2 = T();
+        if (!t2 || !canDecide(t2, S.session.id)) { toast('ليست من صلاحيتك', 'r'); break; }
+        if (lockedForAssign(t2)) { toast('التسكين مقفل', 'r'); break; } }
       removeAssignee(T(), uid_, rr, S.pendingExcuse); S.pendingExcuse = null;
       S.sheet = null; toast('أُزيل من المهمة'); break; }
     case 'smenu': S.sheet = slotMenuSheet(T(), uid_); break;
@@ -5632,7 +5748,10 @@ document.addEventListener('click', ev => {
       if (!canDecide(t, S.session.id)) { toast('القرار للمفوَّض على هذه المهمة', 'r'); break; }
       if (!canStart(t, S.session.id)) { toast('لا يمكن البدء الآن', 'r'); break; }
       startTask(t, S.session.id); buzz(); toast('بدأت المهمة'); break; }
-    case 'end': S.sheet = confirmSheet('إنهاء المهمة',
+    case 'end': { const t = T();
+      if (!t || t.status !== 'running') { toast('المهمة ليست جارية', 'r'); break; }
+      if (!canDecide(t, S.session.id)) { toast('الإغلاق للمفوَّض على هذه المهمة', 'r'); break; } }
+      S.sheet = confirmSheet('إنهاء المهمة',
       'ستُسجَّل الملاحظات التلقائية ويُحتسب تقييم النظام.', 'data-a="doend" data-id="' + id + '"'); break;
     case 'doend': { const t = T();
       if (!canDecide(t, S.session.id)) { toast('القرار للمفوَّض على هذه المهمة', 'r'); break; }
@@ -5645,11 +5764,17 @@ document.addEventListener('click', ev => {
       if (!canDecide(T(), S.session.id)) { toast('القرار للمفوَّض على هذه المهمة', 'r'); break; }
       cancelTask(T(), S.session.id, r, S.pendingExcuse); S.pendingExcuse = null;
       S.sheet = null; toast('أُلغيت المهمة', 'r'); break; }
-    case 'sub': { const t = T(); if (t.status !== 'running') { toast('المهمة لم تبدأ بعد', 'r'); break; }
+    case 'sub': { const t = T(); if (!t) break;
+      if (t.status !== 'running') { toast('المهمة لم تبدأ بعد', 'r'); break; }
+      if (!canDecide(t, S.session.id) && !slotOf(t, S.session.id))
+        { toast('لست مسكَّنًا على هذه المهمة', 'r'); break; }
       const s = t.subs.find(x => x.id === b.dataset.s); toggleSub(t, s, S.session.id); buzz(); break; }
-    case 'note': S.sheet = textSheet('إضافة ملاحظة', 'تُسجَّل على المهمة',
+    case 'note': if (!T()) break;
+      S.sheet = textSheet('إضافة ملاحظة', 'تُسجَّل على المهمة',
       'data-a="donote" data-id="' + id + '"', '', 'اكتب ملاحظتك'); break;
     case 'donote': { const t = T(), x = val('txt');
+      if (!t) { S.sheet = null; break; }
+      if (x && x.length < 4) { toast('الملاحظة قصيرة', 'r'); break; }
       if (x) { note(t, x + ' — ' + me().name, 'user'); hist(t, 'أضاف ' + me().name + ' ملاحظة'); toast('أُضيفت الملاحظة'); }
       S.sheet = null; break; }
 
@@ -5661,6 +5786,7 @@ document.addEventListener('click', ev => {
       endTask(t, ownerOf(t)); toast('أُنهيت «' + t.title + '» — التقييم ' + AR(avgRating(t.rating))); break; }
 
     case 'newticket': S.sheet = ticketSheet(id); break;
+    case 'kclosecheck': break;
     case 'sendticket': { const ti = val('kti'); if (!ti) { toast('العنوان مطلوب', 'r'); break; }
       const k = addTicket(S.session.id, ti, val('kb'), val('kc'), val('kp'), val('kt2') || null);
       S.sheet = null; toast('رُفعت التذكرة ' + k.no); break; }
@@ -5810,7 +5936,7 @@ document.addEventListener('click', ev => {
       const ti = val('rti'), bo = val('rb');
       if (ti.length < 4) { toast('اكتب عنوانًا واضحًا', 'r'); break; }
       if (bo.length < 10) { toast('اشرح التفاصيل — سطر واحد لا يكفي', 'r'); break; }
-      const to = isLeader() ? 'CONTROL' : me().leaderId;
+      const to = (isLeader() || !me().leaderId) ? 'CONTROL' : me().leaderId;
       addReport(S.session.id, to, val('rc'), ti, bo, val('rt') || null);
       S.sheet = null; S.tab.desk = 'rp'; buzz();
       toast('رُفع التقرير' + (isLeader() ? ' إلى الكنترول' : ' إلى ليدرك')); break; }

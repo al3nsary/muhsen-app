@@ -1,6 +1,7 @@
 /* ============================ مركز الطلبات — للدورين ============================ */
 const REQST = { pending:['بانتظار الرد','wait'], accepted:['مقبول','live'],
   rejected:['مرفوض','no'], withdrawn:['مسحوب','grey'] };
+const REQ_ICON = { 'تسكين':'i-assign', 'تفويض':'i-shield', 'انسحاب':'i-out' };
 
 function reqCardFull(r, actionable) {
   const t = reqTask(r);
@@ -11,7 +12,9 @@ function reqCardFull(r, actionable) {
   const phone = to.phone ? to.phone.replace(/[^0-9]/g, '') : '';
 
   return '<div class="c ' + (urgent ? 'urgent' : '') + '">' +
-    '<div class="row"><b style="font-size:14px">طلب ' + E(r.kind) + '</b>' + pill(st[0], st[1]) + '</div>' +
+    '<div class="row"><span class="fl" style="gap:7px">' +
+      icon(REQ_ICON[r.kind] || 'i-swap','s16') + '<b style="font-size:14px">طلب ' + E(r.kind) + '</b></span>' +
+      pill(st[0], st[1]) + '</div>' +
 
     '<div class="flow2">' +
       '<span class="who">' + avat(from, 'sm') + '<span class="tiny"><b>' + E(from.name) + '</b>' +
@@ -38,7 +41,11 @@ function reqCardFull(r, actionable) {
     (urgent ? '<div class="strip r">' + icon('i-warn','s16') + '<span>بقي أقل من ٣ ساعات على المهمة</span></div>' : '') +
 
     (actionable && r.state === 'pending' && t ? (
-      r.kind === 'تسكين'
+      r.kind === 'انسحاب'
+        ? '<div class="grid2" style="margin-top:10px">' +
+          '<button class="btn d sm" data-a="wdno" data-id="' + t.id + '" data-u="' + r.from + '">رفض</button>' +
+          '<button class="btn p sm" data-a="wdok" data-id="' + t.id + '" data-u="' + r.from + '">اعتماد الانسحاب</button></div>'
+        : r.kind === 'تسكين'
         ? '<div class="grid2" style="margin-top:10px">' +
           '<button class="btn d sm" data-a="resp" data-id="' + t.id + '" data-v="0">رفض</button>' +
           '<button class="btn p sm" data-a="resp" data-id="' + t.id + '" data-v="1">قبول</button></div>'

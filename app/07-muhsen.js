@@ -40,7 +40,7 @@ function statusBoxes() {
 
 /* ============================ رئيسية الليدر ============================ */
 function screenLeaderHome() {
-  const u = me(), org = ORGS.find(o => o.id === u.orgId), ts = myTasks();
+  const u = me(), org = ORGS.find(o => o.id === u.orgId) || ORGS[0], ts = myTasks();
   const live = activeTasks(u.id), upcoming = live.slice(0, 3);
   const rt = personRating(u.id);
   return bar('مُحسن ليدر') + '<div class="view">' + ground() +
@@ -74,11 +74,13 @@ function screenLeaderHome() {
 /* ============================ رئيسية المحسن ============================ */
 function screenMuhsenHome() {
   const u = me(), L = userById(u.leaderId), t = currentTask();
+  const teamLine = u.reserve ? 'فريق احتياطي — مشترك بين الليدرز'
+    : L ? 'فريق ' + L.name + ' · ' + L.kt : 'بلا فريق';
   const rt = personRating(u.id);
   return bar('المهمة الحالية') + '<div class="view">' + ground() +
     '<div class="c gold"><div class="fl">' + avat(u, 'lg') +
       '<div class="sp"><div class="row"><b style="font-size:16px">' + E(u.name) + '</b>' + pill(u.code, 'gold') + '</div>' +
-      '<div class="sm dim">' + E(u.specialty) + ' · فريق ' + E(L.name) + ' · ' + E(L.kt) + '</div>' +
+      '<div class="sm dim">' + E(u.specialty) + ' · ' + E(teamLine) + '</div>' +
       (rt.n ? '<div style="margin-top:6px">' + stars(rt.avg) + '</div>' : '') + '</div></div></div>' +
 
     statusBoxes() +

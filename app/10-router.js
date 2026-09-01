@@ -193,6 +193,9 @@ document.addEventListener('click', ev => {
         : v === 'hq' ? 'موقعك داخل المقر — التحضير اليومي متاح'
         : 'موقعك خارج النطاق — لا يُقبل تحضير', v === 'away' ? 'r' : 'g'); break;
     case 'attend': { const t = T(); if (!t) break;
+      if (['done','cancelled'].indexOf(t.status) >= 0) { toast('المهمة أُغلقت', 'r'); break; }
+      if (!actsAsLeader(t, S.session.id) && !slotOf(t, S.session.id))
+        { toast('لست مسكَّنًا على هذه المهمة', 'r'); break; }
       if (!canAttend(t)) { toast(attendBlockReason(t), 'r'); break; }
       if (!attend(t, S.session.id)) { toast('تعذّر إثبات الحضور', 'r'); break; }
       buzz(); toast('أُثبت حضورك ' + t12(now())); break; }
@@ -200,6 +203,9 @@ document.addEventListener('click', ev => {
     case 'send': { const t = T(); if (!t) break;
       if (!canDecide(t, S.session.id)) { toast('التسكين للمفوَّض على هذه المهمة', 'r'); break; }
       if (lockedForAssign(t)) { toast('التسكين مقفل — بدأت المهمة', 'r'); break; }
+      const mu = userById(uid_);
+      if (!mu || mu.role !== 'muhsen') { toast('لا يُسكَّن إلا محسن', 'r'); break; }
+      if (!mu.reserve && mu.leaderId !== t.leaderId) { toast('هذا المحسن ليس من فريقك ولا من الاحتياط', 'r'); break; }
       if (busyIn(uid_, t)) { toast('المحسن مرتبط بمهمة متداخلة', 'r'); break; }
       if (sendRequest(t, uid_)) { S.sheet = null; toast('أُرسل الطلب إلى ' + userById(uid_).name); }
       else toast('تعذّر الإرسال — الطلب قائم بالفعل', 'r');
@@ -211,7 +217,10 @@ document.addEventListener('click', ev => {
       S.sheet = reasonSheet('سبب الإزالة من التسكين', userById(uid_).name,
         'data-a="doremove" data-id="' + id + '" data-u="' + uid_ + '"', 'سبب الإزالة', 'remove', id, uid_); break; }
     case 'doremove': { const rr = val('txt');
-      if (!rr) { toast('سبب الإزالة إلزامي', 'r'); break; }
+      if (!rr || rr.length < 4) { toast('اذكر سبب الإزالة', 'r'); break; }
+      { const t2 = T();
+        if (!t2 || !canDecide(t2, S.session.id)) { toast('ليست من صلاحيتك', 'r'); break; }
+        if (lockedForAssign(t2)) { toast('التسكين مقفل', 'r'); break; } }
       removeAssignee(T(), uid_, rr, S.pendingExcuse); S.pendingExcuse = null;
       S.sheet = null; toast('أُزيل من المهمة'); break; }
     case 'smenu': S.sheet = slotMenuSheet(T(), uid_); break;
@@ -251,7 +260,10 @@ document.addEventListener('click', ev => {
       if (!canDecide(t, S.session.id)) { toast('القرار للمفوَّض على هذه المهمة', 'r'); break; }
       if (!canStart(t, S.session.id)) { toast('لا يمكن البدء الآن', 'r'); break; }
       startTask(t, S.session.id); buzz(); toast('بدأت المهمة'); break; }
-    case 'end': S.sheet = confirmSheet('إنهاء المهمة',
+    case 'end': { const t = T();
+      if (!t || t.status !== 'running') { toast('المهمة ليست جارية', 'r'); break; }
+      if (!canDecide(t, S.session.id)) { toast('الإغلاق للمفوَّض على هذه المهمة', 'r'); break; } }
+      S.sheet = confirmSheet('إنهاء المهمة',
       'ستُسجَّل الملاحظات التلقائية ويُحتسب تقييم النظام.', 'data-a="doend" data-id="' + id + '"'); break;
     case 'doend': { const t = T();
       if (!canDecide(t, S.session.id)) { toast('القرار للمفوَّض على هذه المهمة', 'r'); break; }
@@ -264,11 +276,17 @@ document.addEventListener('click', ev => {
       if (!canDecide(T(), S.session.id)) { toast('القرار للمفوَّض على هذه المهمة', 'r'); break; }
       cancelTask(T(), S.session.id, r, S.pendingExcuse); S.pendingExcuse = null;
       S.sheet = null; toast('أُلغيت المهمة', 'r'); break; }
-    case 'sub': { const t = T(); if (t.status !== 'running') { toast('المهمة لم تبدأ بعد', 'r'); break; }
+    case 'sub': { const t = T(); if (!t) break;
+      if (t.status !== 'running') { toast('المهمة لم تبدأ بعد', 'r'); break; }
+      if (!canDecide(t, S.session.id) && !slotOf(t, S.session.id))
+        { toast('لست مسكَّنًا على هذه المهمة', 'r'); break; }
       const s = t.subs.find(x => x.id === b.dataset.s); toggleSub(t, s, S.session.id); buzz(); break; }
-    case 'note': S.sheet = textSheet('إضافة ملاحظة', 'تُسجَّل على المهمة',
+    case 'note': if (!T()) break;
+      S.sheet = textSheet('إضافة ملاحظة', 'تُسجَّل على المهمة',
       'data-a="donote" data-id="' + id + '"', '', 'اكتب ملاحظتك'); break;
     case 'donote': { const t = T(), x = val('txt');
+      if (!t) { S.sheet = null; break; }
+      if (x && x.length < 4) { toast('الملاحظة قصيرة', 'r'); break; }
       if (x) { note(t, x + ' — ' + me().name, 'user'); hist(t, 'أضاف ' + me().name + ' ملاحظة'); toast('أُضيفت الملاحظة'); }
       S.sheet = null; break; }
 
@@ -280,6 +298,7 @@ document.addEventListener('click', ev => {
       endTask(t, ownerOf(t)); toast('أُنهيت «' + t.title + '» — التقييم ' + AR(avgRating(t.rating))); break; }
 
     case 'newticket': S.sheet = ticketSheet(id); break;
+    case 'kclosecheck': break;
     case 'sendticket': { const ti = val('kti'); if (!ti) { toast('العنوان مطلوب', 'r'); break; }
       const k = addTicket(S.session.id, ti, val('kb'), val('kc'), val('kp'), val('kt2') || null);
       S.sheet = null; toast('رُفعت التذكرة ' + k.no); break; }
@@ -429,7 +448,7 @@ document.addEventListener('click', ev => {
       const ti = val('rti'), bo = val('rb');
       if (ti.length < 4) { toast('اكتب عنوانًا واضحًا', 'r'); break; }
       if (bo.length < 10) { toast('اشرح التفاصيل — سطر واحد لا يكفي', 'r'); break; }
-      const to = isLeader() ? 'CONTROL' : me().leaderId;
+      const to = (isLeader() || !me().leaderId) ? 'CONTROL' : me().leaderId;
       addReport(S.session.id, to, val('rc'), ti, bo, val('rt') || null);
       S.sheet = null; S.tab.desk = 'rp'; buzz();
       toast('رُفع التقرير' + (isLeader() ? ' إلى الكنترول' : ' إلى ليدرك')); break; }

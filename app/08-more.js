@@ -18,7 +18,7 @@ function ticketsPane() {
                  : [['open','المفتوحة'],['mine','المسندة إليّ'],['closed','المغلقة']];
 
   return '<button class="btn p" data-a="newticket">' + icon('i-plus','s16') +
-      (L ? 'رفع تذكرة إلى الكنترول' : 'رفع تذكرة إلى الليدر') + '</button>' +
+      (L || !me().leaderId ? 'رفع تذكرة إلى الكنترول' : 'رفع تذكرة إلى الليدر') + '</button>' +
     '<div class="seg">' + segs.map(x =>
       '<button class="' + (f === x[0] ? 'on' : '') + '" data-a="seg" data-k="tk" data-v="' + x[0] + '">' +
       x[1] + '</button>').join('') + '</div>' +
@@ -246,7 +246,9 @@ function screenNotifs() {
 /* ============================ الحجاج — كلهم لكل المحسنين ============================ */
 function screenPilgrims() {
   const u = me();
-  const kt = u.role === 'leader' ? u.kt : userById(u.leaderId).kt;
+  const kt = isLeader() ? me().kt
+    : (userById(me().leaderId) || {}).kt
+      || ((myTasks()[0] || {}).kt) || Object.keys(S.pilgrims)[0];
   const list = pilgrimsOf(kt);
   const q = (S.tab.pq || '').trim();
   const shown = q ? list.filter(p => p.name.includes(q) || String(p.room).includes(q) || p.pp.includes(q)) : list;
@@ -268,7 +270,9 @@ function screenPilgrims() {
 
 /* ============================ المحسنون ============================ */
 function screenMuhsens() {
-  const u = me(), team = teamOf(u.id);
+  /* الفريق: يراه الليدر ويراه المحسن */
+  const u = me();
+  const team = isLeader() ? teamOf(u.id) : teamOf(u.leaderId).filter(x => x.id !== u.id);
   return bar('المحسنون') + '<div class="view">' + ground() +
     '<div class="c gold"><div class="row"><b class="sm">فريق ' + E(u.kt) + '</b>' +
       pill(AR(team.length) + ' محسن', 'gold') + '</div></div>' +
@@ -299,7 +303,7 @@ function screenProfile() {
   const id = S.route.id || S.session.id;
   const u = userById(id); if (!u) return screenMore();
   const L = u.role === 'leader';
-  const org = ORGS.find(o => o.id === (L ? u.orgId : userById(u.leaderId).orgId));
+  const org = ORGS.find(o => o.id === (L ? u.orgId : (userById(u.leaderId) || {}).orgId)) || ORGS[0];
   const isMe = id === S.session.id;
   const r = personRating(id);
   const notes = personNotes(id);
@@ -374,6 +378,7 @@ function screenMore() {
        ['rating','i-star','التقييم','تقييمك وتقييم الزملاء'],
        ['desk','i-ticket','التذاكر والتقارير','المسندة إليك وما ترفعه'],
        ['pilgrims','i-user','الحجاج','حجاج الـKT والبلاغات'],
+       ['muhsens','i-users','الفريق','زملاؤك والفريق الاحتياطي'],
        ['daily','i-check','التحضير اليومي','حضورك وشِفتك وطلب التبديل'],
        ['guide','i-guide','دليل المهام','تعليمات تنفيذ كل نوع مهمة'],
        ['album','i-album','ألبوم الصور','صور المهام التي تشارك فيها'],

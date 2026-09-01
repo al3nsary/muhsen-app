@@ -1025,5 +1025,102 @@ step('طلبات التسكين من داخل المهمة فقط', () => {
   if (h.indexOf('من داخل المهمة') < 0) throw new Error('لا يوجد توجيه للمهمة');
 });
 
+console.log('\nمراجعة أخيرة — تناقضات وفاليديشنز');
+run('S.session={id:"L1",at:Date.now()}');
+step('المحسن الاحتياطي يسجّل دخوله', () => {
+  run('S.session=null; S.loginRole="muhsen"');
+  const h = run('screenLogin()');
+  const r = run('reserveTeam()[0]');
+  if (h.indexOf(r.name) < 0) throw new Error('الاحتياطي غير مدرج');
+  if (h.indexOf('فريق احتياطي') < 0) throw new Error('بلا وسم');
+  run('S.session={id:"' + r.id + '",at:Date.now()}');
+  ['mhome','tasks','daily','desk','profile','pilgrims','muhsens'].forEach(n => {
+    run('S.route={n:"' + n + '"}');
+    if (!run('SCREENS["' + n + '"]()')) throw new Error('شاشة ' + n + ' فارغة');
+  });
+  run('S.session={id:"L1",at:Date.now()}');
+});
+step('عدّاد الإجراءات يعدّ ما ينتظر ردًّا فقط', () => {
+  const m = run('teamOf("L1")[0].id');
+  const before = run('pendingCountFor("' + m + '")');
+  const t = run('S.tasks.filter(function(x){return x.leaderId==="L1"&&x.start>now()})[0]');
+  run('(function(){var a=slotOf(taskById("' + t.id + '"),"' + m + '"); if(a) a.attendedAt=null;})()');
+  if (run('pendingCountFor("' + m + '")') !== before)
+    throw new Error('عدّ ما لم يُطلب منه ردّ');
+});
+step('لا يُسكَّن إلا محسن من الفريق أو الاحتياط', () => {
+  const t = run('S.tasks.filter(function(x){return x.leaderId==="L1"&&x.start>now()})[0]');
+  const other = run('S.users.find(function(u){return u.role==="muhsen"&&!u.reserve&&u.leaderId!=="L1"}).id');
+  const before = run('taskById("' + t.id + '").assigned.length');
+  click({ a: 'send', id: t.id, u: other });
+  if (run('taskById("' + t.id + '").assigned.length') !== before) throw new Error('سُكِّن من فريق آخر');
+  click({ a: 'send', id: t.id, u: 'L2' });
+  if (run('taskById("' + t.id + '").assigned.length') !== before) throw new Error('سُكِّن ليدر');
+});
+step('لا إنجاز فرعية لغير المسكَّن', () => {
+  const t = run('S.tasks.find(function(x){return x.status==="running"})') ||
+            run('(function(){var t=S.tasks.filter(function(x){return x.leaderId==="L1"})[0];t.status="running";return t})()');
+  const outsider = run('reserveTeam().find(function(r){return !taskById("' + t.id + '").assigned.some(function(a){return a.muhsenId===r.id})}).id');
+  run('S.session={id:"' + outsider + '",at:Date.now()}');
+  const s = run('taskById("' + t.id + '").subs[0]');
+  const was = s.done;
+  click({ a: 'sub', id: t.id, s: s.id });
+  if (run('taskById("' + t.id + '").subs[0].done') !== was) throw new Error('أنجزها من ليس عليها');
+  run('S.session={id:"L1",at:Date.now()}');
+});
+step('لا إثبات حضور لغير المسكَّن', () => {
+  const t = run('S.tasks.filter(function(x){return x.leaderId==="L1"&&x.start>now()})[0]');
+  const outsider = run('reserveTeam().find(function(r){return !taskById("' + t.id + '").assigned.some(function(a){return a.muhsenId===r.id})}).id');
+  run('S.session={id:"' + outsider + '",at:Date.now()}; S.myPlace="site"');
+  click({ a: 'attend', id: t.id });
+  if (run('slotOf(taskById("' + t.id + '"),"' + outsider + '")')) throw new Error('سُجّل حضور لغير مسكَّن');
+  run('S.session={id:"L1",at:Date.now()}');
+});
+step('الانسحاب المعتمد ليس إدانة', () => {
+  const t = run('S.tasks.find(function(x){return x.assigned.some(function(a){return a.wd&&a.wd.state==="accepted"})})');
+  if (!t) throw new Error('لا يوجد نموذج انسحاب');
+  const mid = run('S.tasks.find(function(x){return x.assigned.some(function(a){return a.wd&&a.wd.state==="accepted"})}).assigned.find(function(a){return a.wd&&a.wd.state==="accepted"}).muhsenId');
+  if (run('isBlamed(taskById("' + t.id + '"),"' + mid + '")')) throw new Error('عُدّ إدانة');
+  if (run('undoneReason(taskById("' + t.id + '"),"' + mid + '").indexOf("انسحبتَ")') < 0)
+    throw new Error('السبب غير واضح');
+});
+step('المحسن يرى زملاءه على المهمة الجارية', () => {
+  const t = run('S.tasks.find(function(x){return acceptedSlots(x).length>1&&["done","cancelled"].indexOf(x.status)<0})');
+  const mid = run('acceptedSlots(taskById("' + t.id + '"))[0].muhsenId');
+  run('S.session={id:"' + mid + '",at:Date.now()}; S.route={n:"task",id:"' + t.id + '"}');
+  const h = run('screenTask()').split('<nav class="tabs"')[0];
+  if (run('taskBucket(taskById("' + t.id + '"),"' + mid + '")') !== 'undone') {
+    if (h.indexOf('معك على المهمة') < 0) throw new Error('لا يرى زملاءه');
+  }
+  run('S.session={id:"L1",at:Date.now()}');
+});
+step('طلب الانسحاب له إجراء في مركز الطلبات', () => {
+  const t = run('S.tasks.filter(function(x){return x.leaderId==="L1"&&x.start>now()})[0]');
+  const mid = run('acceptedSlots(taskById("' + t.id + '")).find(function(a){return !isReserve(a.muhsenId)}).muhsenId');
+  run('requestWithdraw(taskById("' + t.id + '"),"' + mid + '","عذر ميداني")');
+  const r = run('S.requests.find(function(x){return x.kind==="انسحاب"&&x.state==="pending"})');
+  if (!r) throw new Error('لم يُسجَّل الطلب');
+  const card = run('reqCardFull(S.requests.find(function(x){return x.kind==="انسحاب"&&x.state==="pending"}), true)');
+  if (card.indexOf('data-a="wdok"') < 0) throw new Error('بلا زر اعتماد');
+  if (card.indexOf('data-a="wdno"') < 0) throw new Error('بلا زر رفض');
+});
+step('لا إغلاق لمهمة لم تبدأ', () => {
+  const t = run('S.tasks.filter(function(x){return x.leaderId==="L1"&&x.start>now()&&x.status!=="running"})[0]');
+  if (!t) return;
+  S_sheet_before = run('S.sheet');
+  click({ a: 'end', id: t.id });
+  if (run('taskById("' + t.id + '").status') === 'done') throw new Error('أُغلقت قبل أن تبدأ');
+});
+step('تقرير الاحتياطي يذهب للكنترول', () => {
+  const r = run('reserveTeam()[0].id');
+  run('S.session={id:"' + r + '",at:Date.now()}');
+  const vals = { rti: 'ملاحظة من الاحتياط', rb: 'ملاحظة تشغيلية كافية الطول للاختبار.', rc: 'أخرى', rt: '' };
+  sandbox.document.getElementById = i2 => (vals[i2] !== undefined ? Object.assign({}, el, { value: vals[i2] }) : el);
+  click({ a: 'sendreport' });
+  sandbox.document.getElementById = () => el;
+  if (run('S.reports[0].to') !== 'CONTROL') throw new Error('ذهب إلى ' + run('S.reports[0].to'));
+  run('S.session={id:"L1",at:Date.now()}');
+});
+
 console.log('\n' + (fail ? '✗ فشل ' + fail : '✓ نجحت كل الاختبارات'));
 process.exitCode = fail ? 1 : 0;

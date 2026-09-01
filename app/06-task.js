@@ -146,6 +146,22 @@ function screenTask() {
 
     (lead && hasDocs(t) ? '<div class="lbl">مستندات المهمة<small>عقود الاستقبال — للّيدر</small></div>' + docButtons(t) : '') +
     taskPhotoSection(t, lead) +
+    /* المحسن يرى من معه على المهمة ووسيلة الاتصال به — لا في «غير المنجزة» */
+    (!lead && bucket !== 'undone' && acc.length > 1
+      ? '<div class="lbl">معك على المهمة<small>' + AR(acc.length - 1) + '</small></div>' +
+        acc.filter(a2 => a2.muhsenId !== u.id).map(a2 => {
+          const mm = userById(a2.muhsenId); if (!mm) return '';
+          const ph = String(mm.phone || '').replace(/[^0-9]/g, '');
+          return '<div class="c"><div class="fl">' + avat(mm, 'sm') +
+            '<span class="nm sp"><b>' + E(mm.name) + '</b><span>' + E(mm.specialty) +
+              (mm.reserve ? ' · احتياط' : '') + '</span></span>' +
+            (a2.attendedAt ? pill('حاضر ' + t12(a2.attendedAt), 'live') : pill('لم يحضر بعد', 'wait')) + '</div>' +
+            (ph ? '<div class="grid2" style="margin-top:9px">' +
+              '<a class="btn l sm" href="tel:' + ph + '">' + icon('i-phone','s16') + 'اتصال</a>' +
+              '<a class="btn l sm" href="https://wa.me/' + ph + '" target="_blank" rel="noopener">' +
+                icon('i-send','s16') + 'واتساب</a></div>' : '') + '</div>';
+        }).join('') : '') +
+
     '<div class="lbl">المهام الفرعية<small>' + AR(doneSubs) + ' من ' + AR(t.subs.length) + '</small></div>' +
     '<div class="c">' + t.subs.map((s, i) => subRow(t, s, i, running)).join('') + '</div>' +
 
@@ -231,6 +247,7 @@ function subRow(t, s, i, running) {
 }
 
 function delegCard(t, isCo, canManage) {
+  if (!t) return '';
   if (!isCo) return '<div class="note a">' + icon('i-shield','s16') +
     '<span>إسناد صلاحية القيادة غير متاح — هذه المهمة تتبع <b>بعثة</b>، والإسناد للشركات فقط.</span></div>';
   if (!t.delegate) return canManage
