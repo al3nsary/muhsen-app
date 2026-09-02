@@ -108,6 +108,7 @@ function requestReplace(t, outId, inId, why) {
   if (!inU || !outU) return false;
   /* أي بديل سابق اعتذر أو انقضت مهلته يُنحّى من القائمة حتى لا تتكدّس الصفوف */
   t.assigned = t.assigned.filter(x => !(x.standin && x.forId === outId && x.req !== 'accepted'));
+  archiveAttempt(a, 'repl');   /* محاولة سابقة تُحفظ ولا تُمحى */
   a.repl = { toId: inId, state: 'pending', at: now(), why: why || '', deadline: now() + REQ_TTL_H * HR };
   /* البديل يدخل بحالة «بانتظار ردّه» ولا يُحتسب إلا بعد القبول */
   t.assigned.push({
@@ -162,6 +163,7 @@ function excludeNoNeed(t, muhsenId, why) {
   if (lockedForAssign(t) || !reqWindowOpen(t)) return false;
   const a = t.assigned.find(x => x.muhsenId === muhsenId && onTask(x));
   if (!a || (a.ex && a.ex.state === 'pending') || (a.repl && a.repl.state === 'pending')) return false;
+  archiveAttempt(a, 'ex');   /* محاولة سابقة تُحفظ ولا تُمحى */
   a.ex = { state: 'pending', why: reasonOr(why), by: S.session.id, at: now(),
     deadline: Math.min(now() + REQ_TTL_H * HR, reqCloseAt(t)) };
   const nm = userById(muhsenId).name;
@@ -316,17 +318,19 @@ function primaryRow(t, id) {
 /* هل اتُّخذ عليه إجراء؟ — من اتُّخذ عليه شيء يُعرض أسفل القائمة */
 function slotTouched(t, id) {
   return personRows(t, id).some(a =>
-    a.out || a.ex || a.repl || a.wd || a.req === 'rejected' || a.req === 'expired');
+    a.out || attempts(a, 'ex').length || attempts(a, 'repl').length || attempts(a, 'wd').length ||
+    a.req === 'rejected' || a.req === 'expired');
 }
 
 /* آخر وقت وقع فيه إجراء عليه — لترتيب المتَّخَذ عليهم بينهم */
 function lastActionAt(t, id) {
   let m = 0;
   personRows(t, id).forEach(a => {
-    [a.reqAt, a.respAt, a.attendedAt, a.out && a.out.at,
-     a.ex && a.ex.at, a.ex && a.ex.respAt,
-     a.repl && a.repl.at, a.repl && a.repl.respAt,
-     a.wd && a.wd.at, a.wd && a.wd.respAt].forEach(x => { if (x && x > m) m = x; });
+    const times = [a.reqAt, a.respAt, a.attendedAt, a.out && a.out.at];
+    ['ex', 'repl', 'wd'].forEach(key => attempts(a, key).forEach(x => {
+      times.push(x.at); times.push(x.respAt);
+    }));
+    times.forEach(x => { if (x && x > m) m = x; });
   });
   return m;
 }
@@ -373,31 +377,35 @@ function slotEvents(t, id) {
 
     if (a.attendedAt) add(a.attendedAt, 'i-target', 'أثبت حضوره', 'حاضر');
 
-    if (a.ex) {
-      add(a.ex.at, 'i-xc', 'طُلب استبعاده — ' + E(reasonOr(a.ex.why)), 'طلب استبعاد');
-      if (a.ex.state === 'accepted') add(a.ex.respAt, 'i-checkc', 'وافق على الاستبعاد', 'مستبعد');
-      if (a.ex.state === 'rejected')
-        add(a.ex.respAt, 'i-xc', 'رفض الاستبعاد' +
-          (a.ex.respNote ? ' — «' + E(a.ex.respNote) + '»' : '') + ' — وبقي على المهمة', 'على المهمة');
-      if (a.ex.state === 'expired')
-        add(a.ex.respAt, 'i-clock', 'لم يُرد على طلب الاستبعاد — وبقي على المهمة', 'على المهمة');
-    }
-    if (a.repl) {
-      const toU = (userById(a.repl.toId) || {}).name || '';
-      add(a.repl.at, 'i-swap', 'طُلب استبداله بـ ' + E(toU) +
-        (a.repl.why ? ' — ' + E(a.repl.why) : ''), 'بانتظار البديل');
-      if (a.repl.state === 'accepted')
-        add(a.repl.respAt, 'i-swap', 'قبِل ' + E(toU) + ' الحلول مكانه', 'مستبدل بـ ' + E(toU));
-      if (a.repl.state === 'rejected')
-        add(a.repl.respAt, 'i-xc', 'اعتذر ' + E(toU) + ' — وبقي على المهمة', 'على المهمة');
-      if (a.repl.state === 'expired')
-        add(a.repl.respAt, 'i-clock', 'لم يُرد البديل خلال المهلة — وبقي على المهمة', 'على المهمة');
-    }
-    if (a.wd) {
-      add(a.wd.at, 'i-out', 'طلب الانسحاب — ' + E(reasonOr(a.wd.reason)), 'طلب انسحاب');
-      if (a.wd.state === 'accepted') add(a.wd.respAt, 'i-checkc', 'اعتمد الليدر انسحابه', 'منسحب بموافقة');
-      if (a.wd.state === 'rejected') add(a.wd.respAt, 'i-xc', 'رفض الليدر الانسحاب — وبقي على المهمة', 'على المهمة');
-    }
+    attempts(a, 'ex').forEach((ex, k, arr) => {
+      const nth = arr.length > 1 ? ' (الطلب ' + AR(k + 1) + ')' : '';
+      add(ex.at, 'i-xc', 'طُلب استبعاده' + nth + ' — ' + E(reasonOr(ex.why)), 'طلب استبعاد');
+      if (ex.state === 'accepted') add(ex.respAt, 'i-checkc', 'وافق على الاستبعاد' + nth, 'مستبعد');
+      if (ex.state === 'rejected')
+        add(ex.respAt, 'i-xc', 'رفض الاستبعاد' + nth +
+          (ex.respNote ? ' — «' + E(ex.respNote) + '»' : '') + ' — وبقي على المهمة', 'على المهمة');
+      if (ex.state === 'expired')
+        add(ex.respAt, 'i-clock', 'لم يُرد على طلب الاستبعاد' + nth + ' — وبقي على المهمة', 'على المهمة');
+    });
+    attempts(a, 'repl').forEach(rp => {
+      const toU = (userById(rp.toId) || {}).name || '';
+      add(rp.at, 'i-swap', 'طُلب استبداله بـ ' + E(toU) +
+        (rp.why ? ' — ' + E(rp.why) : ''), 'بانتظار البديل');
+      if (rp.state === 'accepted')
+        add(rp.respAt, 'i-swap', 'قبِل ' + E(toU) + ' الحلول مكانه', 'مستبدل بـ ' + E(toU));
+      if (rp.state === 'rejected')
+        add(rp.respAt, 'i-xc', 'اعتذر ' + E(toU) + ' — وبقي على المهمة', 'على المهمة');
+      if (rp.state === 'expired')
+        add(rp.respAt, 'i-clock', 'لم يُرد ' + E(toU) + ' خلال المهلة — وبقي على المهمة', 'على المهمة');
+    });
+    attempts(a, 'wd').forEach((w, k, arr) => {
+      const nth = arr.length > 1 ? ' (الطلب ' + AR(k + 1) + ')' : '';
+      add(w.at, 'i-out', 'طلب الانسحاب' + nth + ' — ' + E(reasonOr(w.reason)), 'طلب انسحاب');
+      if (w.state === 'accepted') add(w.respAt, 'i-checkc', 'اعتمد الليدر انسحابه', 'منسحب بموافقة');
+      if (w.state === 'rejected')
+        add(w.respAt, 'i-xc', 'رفض الليدر الانسحاب' + nth +
+          (w.respNote ? ' — «' + E(w.respNote) + '»' : '') + ' — وبقي على المهمة', 'على المهمة');
+    });
     if (a.out && a.out.kind === 'excluded' && !(a.ex && a.ex.state === 'accepted'))
       add(a.out.at, 'i-xc', 'استُبعد من المهمة — ' + E(reasonOr(a.out.why)), 'مستبعد');
   });

@@ -1898,5 +1898,93 @@ step('من عاد إلى المهمة لا تبقى غير منجزة له', () 
   if (run('taskBucket(taskById("' + tid + '"),"' + mid + '")') === 'undone')
     throw new Error('بقيت غير منجزة رغم عودته');
 });
+console.log('\nلا حركة تُمحى من سجل المحسن');
+run('S.session={id:"L1",at:Date.now()};S.clockOffset=0');
+step('طلبا استبعاد متتاليان يُسجَّلان كلاهما', () => {
+  /* فريق ليدر آخر — فريق L1 استُهلك في الاختبارات السابقة */
+  run('S.session={id:"L3",at:Date.now()}');
+  /* نبحث عن مهمة ومحسن لم يقع عليهما شيء بعد */
+  const pick = run('(function(){' +
+    'var ts = myTasks().filter(function(t){' +
+      'return t.start>now()+13*HR && acceptedSlots(t).length>2 && ' +
+      '["done","cancelled","running"].indexOf(t.status)<0; });' +
+    'for (var i=0;i<ts.length;i++){' +
+      'var t=ts[i];' +
+      'var a=acceptedSlots(t).find(function(x){return !x.ex && !x.repl && !x.wd && !x.exLog && !x.wdLog});' +
+      'if (a) return {t:t.id, m:a.muhsenId};' +
+    '} return null; })()');
+  if (!pick) throw new Error('لا توجد مهمة ومحسن بلا إجراءات سابقة');
+  const tid = pick.t, m = pick.m;
+  run('excludeNoNeed(taskById("' + tid + '"),"' + m + '","العدد يكفي")');
+  run('S.session={id:"' + m + '",at:Date.now()}');
+  run('respondExclude(taskById("' + tid + '"),"' + m + '",false,"ملتزم بالمهمة")');
+  run('S.session={id:"L3",at:Date.now()}');
+  run('S.clockOffset = S.clockOffset + 30');
+  run('excludeNoNeed(taskById("' + tid + '"),"' + m + '","إعادة توزيع الفريق")');
+  run('S.session={id:"' + m + '",at:Date.now()}');
+  run('respondExclude(taskById("' + tid + '"),"' + m + '",true)');
+  run('S.session={id:"L3",at:Date.now()};S.clockOffset=0');
+  const ev = run('slotEvents(taskById("' + tid + '"),"' + m + '")');
+  const txt = ev.map(function (e) { return e.text; }).join(' | ');
+  if (txt.indexOf('العدد يكفي') < 0) throw new Error('ضاع الطلب الأول');
+  if (txt.indexOf('رفض الاستبعاد') < 0) throw new Error('ضاع رفض الطلب الأول');
+  if (txt.indexOf('إعادة توزيع الفريق') < 0) throw new Error('ضاع الطلب الثاني');
+  if (txt.indexOf('وافق على الاستبعاد') < 0) throw new Error('ضاعت الموافقة');
+  const asks = ev.filter(function (e) { return e.text.indexOf('طُلب استبعاده') >= 0; }).length;
+  if (asks !== 2) throw new Error('عدد طلبات الاستبعاد المسجّلة ' + asks);
+  for (let i = 1; i < ev.length; i++)
+    if (ev[i].at < ev[i - 1].at) throw new Error('السجل غير مرتّب');
+  if (!ev.every(function (e) { return !!e.state; })) throw new Error('حركة بلا حالة');
+  sandbox.AR_ = tid; sandbox.ARM_ = m;
+  run('S.session={id:"L1",at:Date.now()}');
+});
+step('المحاولة السابقة محفوظة في الأرشيف لا ممحوّة', () => {
+  const a = run('primaryRow(taskById("' + sandbox.AR_ + '"),"' + sandbox.ARM_ + '") || ' +
+    'taskById("' + sandbox.AR_ + '").assigned.find(function(x){return x.muhsenId==="' + sandbox.ARM_ + '"})');
+  if (!a.exLog || !a.exLog.length) throw new Error('لا يوجد أرشيف للمحاولة الأولى');
+  if (a.exLog[0].state !== 'rejected') throw new Error('حالة المؤرشفة ' + a.exLog[0].state);
+  if (run('attempts(taskById("' + sandbox.AR_ + '").assigned.find(function(x){return x.muhsenId==="' + sandbox.ARM_ + '"}), "ex").length') !== 2)
+    throw new Error('عدد المحاولات ليس اثنتين');
+});
+step('طلب انسحاب جديد بعد الرفض يُقبل ويُسجَّل', () => {
+  run('S.session={id:"L1",at:Date.now()};S.clockOffset=0');
+  const tid = run('myTasks().filter(function(t){return t.start>now()+13*HR && acceptedSlots(t).length>1 && ' +
+    '["done","cancelled","running"].indexOf(t.status)<0})[0].id');
+  const m = run('acceptedSlots(taskById("' + tid + '")).find(function(a){return !a.wd && !a.ex && !a.repl}).muhsenId');
+  run('requestWithdraw(taskById("' + tid + '"),"' + m + '","ظرف طارئ")');
+  run('respondWithdraw(taskById("' + tid + '"),"' + m + '",false,"الفريق ناقص")');
+  run('S.clockOffset = S.clockOffset + 20');
+  if (!run('requestWithdraw(taskById("' + tid + '"),"' + m + '","الظرف قائم")'))
+    throw new Error('رُفض طلب انسحاب جديد بعد الرفض');
+  const ev = run('slotEvents(taskById("' + tid + '"),"' + m + '")');
+  const txt = ev.map(function (e) { return e.text; }).join(' | ');
+  if (txt.indexOf('ظرف طارئ') < 0) throw new Error('ضاع طلب الانسحاب الأول');
+  if (txt.indexOf('رفض الليدر الانسحاب') < 0) throw new Error('ضاع رفض الليدر');
+  if (txt.indexOf('الظرف قائم') < 0) throw new Error('ضاع طلب الانسحاب الثاني');
+  run('S.clockOffset=0');
+});
+step('محاولتا استبدال متتاليتان تُسجَّلان', () => {
+  run('S.session={id:"L1",at:Date.now()};S.clockOffset=0');
+  const pick = run('(function(){' +
+    'var ts = myTasks().filter(function(t){' +
+      'return t.start>now()+13*HR && acceptedSlots(t).length>2 && ' +
+      '["done","cancelled","running"].indexOf(t.status)<0; });' +
+    'for (var i=0;i<ts.length;i++){' +
+      'var t=ts[i];' +
+      'var c=teamOf("L1").filter(function(x){return freeForTask(t, x.id) && !busyIn(x.id,t)})[0];' +
+      'var o=acceptedSlots(t).find(function(a){return !a.ex && !a.repl && !a.wd});' +
+      'if (c && o) return {t:t.id, out:o.muhsenId, cand:c.id};' +
+    '} return null; })()');
+  if (!pick) return;   /* لا مرشّح متاح في هذه الحالة */
+  run('requestReplace(taskById("' + pick.t + '"),"' + pick.out + '","' + pick.cand + '","محاولة أولى")');
+  run('respondReplace(taskById("' + pick.t + '"),"' + pick.cand + '",false,"مرتبط")');
+  run('S.clockOffset = S.clockOffset + 15');
+  run('requestReplace(taskById("' + pick.t + '"),"' + pick.out + '","' + pick.cand + '","محاولة ثانية")');
+  const txt = run('slotEvents(taskById("' + pick.t + '"),"' + pick.out + '").map(function(e){return e.text}).join(" | ")');
+  if (txt.indexOf('محاولة أولى') < 0) throw new Error('ضاعت المحاولة الأولى');
+  if (txt.indexOf('اعتذر') < 0) throw new Error('ضاع اعتذار البديل');
+  if (txt.indexOf('محاولة ثانية') < 0) throw new Error('ضاعت المحاولة الثانية');
+  run('S.clockOffset=0');
+});
 console.log('\n' + (fail ? '✗ فشل ' + fail : '✓ نجحت كل الاختبارات'));
 process.exitCode = fail ? 1 : 0;

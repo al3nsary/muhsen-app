@@ -1,6 +1,6 @@
 /* ============================ الحالة ============================ */
 const KEY = 'muhsen_app_v1';
-const APP_VER = 'نسخة ٣٫٧';
+const APP_VER = 'نسخة ٣٫٨';
 const SCHEMA = 18;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
@@ -222,6 +222,16 @@ const reserveTeam = () => S.users.filter(u => u.role === 'muhsen' && u.reserve);
 /* السبب اختياري دائمًا — وما يُترك يُسجَّل صراحةً لا يُطمس */
 const NO_REASON = 'بلا سبب مذكور';
 const reasonOr = x => (x && String(x).trim()) || NO_REASON;
+/* كل محاولة سابقة تُحفظ في أرشيفها قبل أن تُكتب الجديدة فوقها */
+function archiveAttempt(a, key) {
+  if (!a || !a[key]) return;
+  const log = key + 'Log';
+  a[log] = a[log] || [];
+  a[log].push(a[key]);
+  a[key] = null;
+}
+/* كل محاولات هذا النوع: المؤرشفة ثم القائمة */
+const attempts = (a, key) => (a[key + 'Log'] || []).concat(a[key] ? [a[key]] : []);
 const isReserve = id => { const u = userById(id); return !!(u && u.reserve); };
 const pilgrimsOf = kt => S.pilgrims[kt] || [];
 const ktCount = kt => { const L = S.users.find(u => u.kt === kt); return L ? L.pilgrims : 0; };
@@ -428,8 +438,10 @@ function requestWithdraw(t, muhsenId, reason) {
   /* الانسحاب طلبٌ كبقية الطلبات: قبل المهمة بـ ١٢ ساعة فأكثر، ولا شيء بعد بدايتها */
   if (lockedForAssign(t) || !reqWindowOpen(t)) return false;
   const a = slotOf(t, muhsenId);
-  if (!a || a.req !== 'accepted' || a.wd) return false;
-  a.wd = { reason: reason, at: now(), state: 'pending' };
+  if (!a || a.req !== 'accepted') return false;
+  if (a.wd && a.wd.state === 'pending') return false;   /* طلب قائم بالفعل */
+  archiveAttempt(a, 'wd');     /* محاولة سابقة تُحفظ ولا تُمحى */
+  a.wd = { reason: reasonOr(reason), at: now(), state: 'pending' };
   addReq('انسحاب', muhsenId, ownerOf(t), t.id, reason);
   const nm = userById(muhsenId).name;
   hist(t, 'طلب ' + nm + ' الانسحاب من المهمة — «' + reason + '»');
