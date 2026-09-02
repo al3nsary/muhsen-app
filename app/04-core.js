@@ -1,6 +1,6 @@
 /* ============================ الحالة ============================ */
 const KEY = 'muhsen_app_v1';
-const APP_VER = 'نسخة ٣٫٢';
+const APP_VER = 'نسخة ٣٫٣';
 const SCHEMA = 18;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
@@ -422,6 +422,8 @@ function respondRequest(t, muhsenId, ok, note_, excuse) {
 /* ============================ الانسحاب من مهمة ============================ */
 /* المحسن يطلب، والليدر يوافق أو يرفض — ولا ينسحب أحد بقراره وحده */
 function requestWithdraw(t, muhsenId, reason) {
+  /* الانسحاب طلبٌ كبقية الطلبات: قبل المهمة بـ ١٢ ساعة فأكثر، ولا شيء بعد بدايتها */
+  if (lockedForAssign(t) || !reqWindowOpen(t)) return false;
   const a = slotOf(t, muhsenId);
   if (!a || a.req !== 'accepted' || a.wd) return false;
   a.wd = { reason: reason, at: now(), state: 'pending' };

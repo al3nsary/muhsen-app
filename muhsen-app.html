@@ -1554,7 +1554,7 @@ const REPORT_SEED = [
 
 /* ============================ الحالة ============================ */
 const KEY = 'muhsen_app_v1';
-const APP_VER = 'نسخة ٣٫٢';
+const APP_VER = 'نسخة ٣٫٣';
 const SCHEMA = 18;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
@@ -1976,6 +1976,8 @@ function respondRequest(t, muhsenId, ok, note_, excuse) {
 /* ============================ الانسحاب من مهمة ============================ */
 /* المحسن يطلب، والليدر يوافق أو يرفض — ولا ينسحب أحد بقراره وحده */
 function requestWithdraw(t, muhsenId, reason) {
+  /* الانسحاب طلبٌ كبقية الطلبات: قبل المهمة بـ ١٢ ساعة فأكثر، ولا شيء بعد بدايتها */
+  if (lockedForAssign(t) || !reqWindowOpen(t)) return false;
   const a = slotOf(t, muhsenId);
   if (!a || a.req !== 'accepted' || a.wd) return false;
   a.wd = { reason: reason, at: now(), state: 'pending' };
@@ -2612,7 +2614,7 @@ function alertsHTML() {
       'data-a="go" data-n="task" data-id="' + auto[0].id + '"'));
     const notAtt = myTasks().filter(t => ['running','assigned','pending_assign'].includes(t.status) && inPrep(t) && !t.leaderAttendedAt);
     if (notAtt.length) out.push(box('warn', 'i-target', 'أثبت حضورك',
-      '«' + notAtt[0].title + '» — التحضير مفتوح منذ بداية اليوم.',
+      '«' + notAtt[0].title + '»',
       'data-a="go" data-n="task" data-id="' + notAtt[0].id + '"'));
   }
   if (!out.length) return '';
@@ -2765,8 +2767,10 @@ function screenTask() {
     guideChip(t, 1) +
 
     '<div class="lbl">المهام الفرعية<small>' + AR(doneSubs) + ' من ' + AR(t.subs.length) + '</small></div>' +
-    (!act && !closed ? '<div class="note b">' + icon('i-info','s16') +
-      '<span>الليدر هو من يؤشّر على الإنجاز — ولك توثيق كل خطوة بالكاميرا.</span></div>' : '') +
+    (!act && !closed ? '<div class="note ' + (canShootSub(t) ? 'b' : 'a') + '">' + icon('i-info','s16') +
+      '<span>' + (canShootSub(t)
+        ? 'الليدر هو من يؤشّر على الإنجاز — ولك توثيق كل خطوة بالكاميرا.'
+        : 'الليدر هو من يؤشّر على الإنجاز. ' + E(shootSubWhy(t)) + '.') + '</span></div>' : '') +
     '<div class="c">' + t.subs.map((s, i2) => subRow(t, s, i2, running)).join('') + '</div>' +
 
     (t.rating ? '<button class="c gold" data-a="go" data-n="taskrating" data-id="' + t.id + '" style="width:100%;text-align:right">' +
@@ -2779,19 +2783,27 @@ function screenTask() {
           : '<div class="c center dim sm" style="padding:20px">لا يوجد أحد على المهمة</div>'),
       'i-users') : '') +
 
-    /* نافذة الطلبات وطلب الدعم: ظاهران دائمًا للّيدر — لا يُطويان */
-    (lead ? (locked
+    /* نوافذ التسكين: مشروحة للّيدر الأصيل وحده */
+    (canAssign(t, u.id) ? (locked
       ? '<div class="note a">' + icon('i-info','s16') +
         '<span>' + (running || closed ? 'المهمة بدأت — التسكين مقفل.' : 'حان وقت المهمة — التسكين مقفل.') + '</span></div>'
-      : act ? (reqWindowOpen(t)
+      : (reqWindowOpen(t)
         ? '<div class="note b">' + icon('i-clock','s16') +
           '<span>الطلبات مفتوحة — تُغلق ' + untilTxt(reqCloseAt(t)) + '. ومهلة كل طلب ' + AR(REQ_TTL_H) + ' ساعات.</span></div>'
-        : '<div class="note a">' + icon('i-clock','s16') + '<span>' + E(reqWindowWhy(t)) + '</span></div>') : '') +
-      (act && !closed ? '<button class="btn l" data-a="supportsheet" data-id="' + t.id + '">' +
-        icon('i-send','s16') + 'طلب دعم من الكنترول</button>' : '') +
-      (taskSupport(t.id).length ? '<div class="lbl">طلبات الدعم<small>' +
+        : '<div class="note a">' + icon('i-clock','s16') + '<span>' + E(reqWindowWhy(t)) +
+          (supportOpen(t) ? ' — ولم يبقَ إلا طلب الدعم.' : '') + '</span></div>')) : '') +
+      (canAssign(t, u.id) && !closed
+        ? (supportOpen(t)
+          ? '<button class="btn l" data-a="supportsheet" data-id="' + t.id + '">' +
+            icon('i-send','s16') + 'طلب دعم من الكنترول</button>' +
+            '<div class="tiny dim2 center">يُغلق ' + untilTxt(supportCloseAt(t)) +
+            ' — قبل المهمة بـ ' + AR(SUPPORT_CLOSE_H) + ' ساعات</div>'
+          : '<button class="btn l off" disabled>' + icon('i-send','s16') +
+            'طلب دعم من الكنترول</button>' +
+            '<div class="tiny dim2 center">' + E(supportWhy(t)) + '</div>') : '') +
+      (lead && taskSupport(t.id).length ? '<div class="lbl">طلبات الدعم<small>' +
         AR(taskSupport(t.id).length) + '</small></div>' +
-        taskSupport(t.id).map(s2 => supportCard(s2)).join('') : '') : '') +
+        taskSupport(t.id).map(s2 => supportCard(s2)).join('') : '') +
 
     (lead && hasDocs(t)
       ? fold('docs', 'مستندات المهمة', 'عقد النقل وعقد السكن', docButtons(t), 'i-file') : '') +
@@ -2803,8 +2815,15 @@ function screenTask() {
             '<span><b>طلب انسحابك قيد المراجعة</b><br>' + E(w.reason) + '</span></div>';
           if (w && w.state === 'rejected') return '<div class="note r">' + icon('i-xc','s16') +
             '<span><b>رُفض طلب انسحابك</b>' + (w.respNote ? '<br>' + E(w.respNote) : '') + '</span></div>';
+          if (lockedForAssign(t)) return '<div class="note a">' + icon('i-out','s16') +
+            '<span>بدأت المهمة — لا انسحاب بعد بدايتها.</span></div>';
+          if (!reqWindowOpen(t)) return '<button class="btn l off" disabled>' +
+            icon('i-out','s16') + 'طلب الانسحاب من المهمة</button>' +
+            '<div class="tiny dim2 center">' + E(reqWindowWhy(t)) + '</div>';
           return '<button class="btn l" data-a="askwd" data-id="' + t.id + '">' +
-            icon('i-out','s16') + 'طلب الانسحاب من المهمة</button>';
+            icon('i-out','s16') + 'طلب الانسحاب من المهمة</button>' +
+            '<div class="tiny dim2 center">يُغلق ' + untilTxt(reqCloseAt(t)) +
+            ' — قبل المهمة بـ ' + AR(REQ_CLOSE_H) + ' ساعة</div>';
         })() : '') +
 
     taskPhotoSection(t, lead) +
@@ -3039,11 +3058,6 @@ function screenLeaderHome() {
   const live = activeTasks(u.id), upcoming = live.slice(0, 3);
   const rt = personRating(u.id);
   return bar('مُحسن ليدر') + '<div class="view">' + ground() +
-    '<div class="c gold"><div class="fl">' + avat(u, 'lg') +
-      '<div class="sp"><div class="row"><b style="font-size:16px">' + E(u.name) + '</b>' + pill(u.kt, 'gold') + '</div>' +
-      '<div class="sm dim">' + E(org.ar) + ' · ' + E(org.country) + '</div>' +
-      (rt.n ? '<div style="margin-top:6px">' + stars(rt.avg) + '</div>' : '') + '</div></div></div>' +
-
     runningCard() +
 
     '<div class="banner bgw-haram"><span class="bt">' +
@@ -3075,11 +3089,6 @@ function screenMuhsenHome() {
     : L ? 'فريق ' + L.name + ' · ' + L.kt : 'بلا فريق';
   const rt = personRating(u.id);
   return bar('المهمة الحالية') + '<div class="view">' + ground() +
-    '<div class="c gold"><div class="fl">' + avat(u, 'lg') +
-      '<div class="sp"><div class="row"><b style="font-size:16px">' + E(u.name) + '</b>' + pill(u.code, 'gold') + '</div>' +
-      '<div class="sm dim">' + E(u.specialty) + ' · ' + E(teamLine) + '</div>' +
-      (rt.n ? '<div style="margin-top:6px">' + stars(rt.avg) + '</div>' : '') + '</div></div></div>' +
-
     runningCard() +
     statusBoxes() +
 
@@ -4048,7 +4057,21 @@ const thumbAttr = p => seeded(p)
   ? 'class="__C__ bg-' + thumbKey(p) + '"'
   : 'class="__C__" style="background-image:url(' + p.src + ')"';
 /* المحسن يصوّر المهام الفرعية فقط · والليدر يرفع «ميموريز» للمهمة الرئيسية */
-const canShootSub = t => isLeader() || (t && !!slotOf(t, S.session.id));
+/* التصوير على المهام الفرعية: الليدر دائمًا، والمحسن إن أثبت حضوره فقط */
+function canShootSub(t) {
+  if (!t) return false;
+  if (actsAsLeader(t, S.session.id)) return true;
+  const a = slotOf(t, S.session.id);
+  return !!(a && a.req === 'accepted' && a.attendedAt);
+}
+function shootSubWhy(t) {
+  if (!t) return '';
+  if (actsAsLeader(t, S.session.id)) return '';
+  const a = slotOf(t, S.session.id);
+  if (!a || a.req !== 'accepted') return 'لستَ على هذه المهمة';
+  if (!a.attendedAt) return 'أثبت حضورك أولًا — التصوير لمن حضر';
+  return '';
+}
 const canMemories = () => isLeader();
 const canShoot = () => isLeader();
 /* اسم مختصر نظيف: نقطع عند أول فاصل ثم نقصّ إن طال */
@@ -5657,6 +5680,20 @@ function seedReports(st) {
 /* نافذة الطلبات: مفتوحة من الآن، وتُغلق قبل المهمة بـ ١٢ ساعة. وعمر الطلب ٤ ساعات.
    بعد إغلاقها لا يبقى للّيدر إلا طلب الدعم من الكنترول. */
 const REQ_CLOSE_H = 12, REQ_TTL_H = 4;
+/* طلب الدعم من الكنترول: آخر أبواب التسكين — يُغلق قبل المهمة بـ ٨ ساعات */
+const SUPPORT_CLOSE_H = 8;
+const supportCloseAt = t => t.start - SUPPORT_CLOSE_H * HR;
+const supportOpen = t => now() < supportCloseAt(t) && !lockedForAssign(t);
+function supportWhy(t) {
+  if (lockedForAssign(t)) return 'المهمة بدأت — لا تغيير في التسكين';
+  if (now() >= supportCloseAt(t))
+    return 'أُغلق طلب الدعم — لم يبقَ على المهمة إلا ' +
+      untilTxt(t.start).replace('بعد ', '') + '، والحد الأدنى ' + AR(SUPPORT_CLOSE_H) + ' ساعات';
+  return '';
+}
+/* كل تغيير في التسكين — تسكين واستبدال واستبعاد ودعم — لليدر الأصيل وحده:
+   لا للمحسن، ولا لمن أُسندت إليه صفة الليدر على المهمة */
+const canAssign = (t, id) => canDecide(t, id) && !isDelegate(t, id);
 const reqCloseAt = t => t.start - REQ_CLOSE_H * HR;
 /* مفتوحة ما دام يفصلنا عن المهمة أكثر من ١٢ ساعة */
 const reqWindowOpen = t => now() < reqCloseAt(t);
@@ -5722,6 +5759,7 @@ const EXCLUDE_KINDS = {
 
 /* طلب استبدال: لا يخرج الأول حتى يقبل الثاني */
 function requestReplace(t, outId, inId, why) {
+  if (!canAssign(t, S.session.id)) return false;
   if (lockedForAssign(t) || !reqWindowOpen(t)) return false;   /* لا تسكين بعد القفل */
   const a = t.assigned.find(x => x.muhsenId === outId && onTask(x));
   /* يُمنع طلب ثانٍ ما دام الأول معلّقًا فقط — أما المرفوض والمنتهي فيُعاد بعدهما */
@@ -5781,6 +5819,7 @@ function respondReplace(t, inId, ok, note_) {
 
 /* استبعاد لعدم الحاجة — بإقرار مسؤولية */
 function excludeNoNeed(t, muhsenId, why) {
+  if (!canAssign(t, S.session.id)) return false;
   if (lockedForAssign(t) || !reqWindowOpen(t)) return false;
   const a = t.assigned.find(x => x.muhsenId === muhsenId && onTask(x));
   if (!a) return false;
@@ -5838,6 +5877,8 @@ function expireRequests(t) {
 /* الليدر لا يعرف الفريق الاحتياطي ولا يختار منه — يطلب دعمًا، والكنترول يلبّي ويوضّح */
 const SUPPORT_STATE = { pending:['لدى الكنترول','wait'], done:['لُبّي','live'], denied:['غير متاح','no'] };
 function requestSupport(t, count, why) {
+  if (!canAssign(t, S.session.id)) return null;   /* المحسن لا يطلب دعمًا */
+  if (!supportOpen(t)) return null;
   S.support = S.support || [];
   const s = {
     id: uid('SP'), no: 'SP-' + AR(7100 + S.support.length),
@@ -5968,7 +6009,9 @@ function excludeSheet(t, muhsenId) {
     '<div class="grid2" style="margin-top:12px">' +
       '<button class="btn g" data-a="close">تراجع</button>' +
       (kind === 'swap' && !cands.length
-        ? '<button class="btn p" data-a="supportreq" data-id="' + t.id + '">طلب دعم من الكنترول</button>'
+        ? (supportOpen(t)
+          ? '<button class="btn p" data-a="supportsheet" data-id="' + t.id + '">طلب دعم من الكنترول</button>'
+          : '<button class="btn p off" disabled>' + E(supportWhy(t)) + '</button>')
         : '<button class="btn p" data-a="doexclude" data-id="' + t.id + '" data-u="' + muhsenId + '">' +
           (kind === 'swap' ? 'إرسال طلب الاستبدال' : 'استبعاد وأتحمّل المسؤولية') + '</button>') +
     '</div>';
@@ -6232,7 +6275,7 @@ document.addEventListener('click', ev => {
       buzz(); toast('أُثبت حضورك ' + t12(now())); break; }
 
     case 'send': { const t = T(); if (!t) break;
-      if (!canDecide(t, S.session.id)) { toast('التسكين للمفوَّض على هذه المهمة', 'r'); break; }
+      if (!canAssign(t, S.session.id)) { toast('التسكين من صلاحية الليدر', 'r'); break; }
       if (lockedForAssign(t)) { toast('التسكين مقفل — بدأت المهمة', 'r'); break; }
       if (!reqWindowOpen(t)) { toast(reqWindowWhy(t), 'r'); break; }
       const mu = userById(uid_);
@@ -6450,7 +6493,7 @@ document.addEventListener('click', ev => {
 
     /* ===== الاستبعاد: استبدال أو عدم حاجة ===== */
     case 'exclude': { const t = T();
-      if (!t || !canDecide(t, S.session.id)) { toast('ليست من صلاحيتك', 'r'); break; }
+      if (!t || !canAssign(t, S.session.id)) { toast('التغيير في التسكين من صلاحية الليدر', 'r'); break; }
       if (lockedForAssign(t)) { toast('التسكين مقفل', 'r'); break; }
       if (!reqWindowOpen(t)) { toast(reqWindowWhy(t), 'r'); break; }
       S.exKind = 'swap'; S.exTo = null; S.exFor = uid_;
@@ -6458,6 +6501,7 @@ document.addEventListener('click', ev => {
     case 'exkind': S.exKind = v; S.sheet = excludeSheet(taskById(S.route.id), S.exFor); break;
     case 'exto': S.exTo = v; S.sheet = excludeSheet(taskById(S.route.id), S.exFor); break;
     case 'doexclude': { const t = T();
+      if (!t || !canAssign(t, S.session.id)) { toast('التغيير في التسكين من صلاحية الليدر', 'r'); break; }
       if (!t || !canDecide(t, S.session.id)) { toast('ليست من صلاحيتك', 'r'); break; }
       if (!reqWindowOpen(t)) { toast(reqWindowWhy(t), 'r'); break; }
       const why = val('exwhy');
@@ -6484,11 +6528,13 @@ document.addEventListener('click', ev => {
 
     /* ===== طلب دعم من الكنترول ===== */
     case 'supportsheet': { const t = T(); if (!t) break;
-      if (!canDecide(t, S.session.id)) { toast('ليست من صلاحيتك', 'r'); break; }
+      if (!canAssign(t, S.session.id)) { toast('طلب الدعم من صلاحية الليدر', 'r'); break; }
+      if (!supportOpen(t)) { toast(supportWhy(t), 'r'); break; }
       S.spCount = 1; S.sheet = supportSheet(t); break; }
     case 'spcount': S.spCount = Number(v); S.sheet = supportSheet(taskById(S.route.id)); break;
     case 'dosupport': { const t = T();
-      if (!t || !canDecide(t, S.session.id)) { toast('ليست من صلاحيتك', 'r'); break; }
+      if (!t || !canAssign(t, S.session.id)) { toast('طلب الدعم من صلاحية الليدر', 'r'); break; }
+      if (!supportOpen(t)) { toast(supportWhy(t), 'r'); break; }
       const why = val('spwhy');
       if (!why || why.length < 6) { toast('اذكر سبب الطلب', 'r'); break; }
       if (openSupport(t.id).length) { toast('لديك طلب دعم قائم على هذه المهمة', 'r'); break; }
@@ -6502,9 +6548,12 @@ document.addEventListener('click', ev => {
       toast(v === '1' ? 'لُبّي طلب الدعم' : 'اعتذر الكنترول', v === '1' ? 'g' : 'r'); break; }
 
     /* ===== الانسحاب من مهمة ===== */
-    case 'askwd': S.sheet = textSheet('طلب الانسحاب من المهمة',
-      'السبب إلزامي ويصل الليدر — ولا ينفذ الانسحاب إلا بموافقته',
-      'data-a="doaskwd" data-id="' + id + '"', '', 'سبب الانسحاب'); break;
+    case 'askwd': { const t = T(); if (!t) break;
+      if (lockedForAssign(t)) { toast('المهمة بدأت — لا انسحاب بعد بدايتها', 'r'); break; }
+      if (!reqWindowOpen(t)) { toast(reqWindowWhy(t), 'r'); break; }
+      S.sheet = textSheet('طلب الانسحاب من المهمة',
+        'السبب إلزامي ويصل الليدر — ولا ينفذ الانسحاب إلا بموافقته',
+        'data-a="doaskwd" data-id="' + id + '"', '', 'سبب الانسحاب'); break; }
     case 'doaskwd': { const rr = val('txt');
       if (!rr || rr.length < 5) { toast('اذكر سببًا واضحًا', 'r'); break; }
       const t = T(); if (!t) break;

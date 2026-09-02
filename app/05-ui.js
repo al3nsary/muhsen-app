@@ -289,7 +289,7 @@ function alertsHTML() {
       'data-a="go" data-n="task" data-id="' + auto[0].id + '"'));
     const notAtt = myTasks().filter(t => ['running','assigned','pending_assign'].includes(t.status) && inPrep(t) && !t.leaderAttendedAt);
     if (notAtt.length) out.push(box('warn', 'i-target', 'أثبت حضورك',
-      '«' + notAtt[0].title + '» — التحضير مفتوح منذ بداية اليوم.',
+      '«' + notAtt[0].title + '»',
       'data-a="go" data-n="task" data-id="' + notAtt[0].id + '"'));
   }
   if (!out.length) return '';

@@ -225,7 +225,7 @@ document.addEventListener('click', ev => {
       buzz(); toast('أُثبت حضورك ' + t12(now())); break; }
 
     case 'send': { const t = T(); if (!t) break;
-      if (!canDecide(t, S.session.id)) { toast('التسكين للمفوَّض على هذه المهمة', 'r'); break; }
+      if (!canAssign(t, S.session.id)) { toast('التسكين من صلاحية الليدر', 'r'); break; }
       if (lockedForAssign(t)) { toast('التسكين مقفل — بدأت المهمة', 'r'); break; }
       if (!reqWindowOpen(t)) { toast(reqWindowWhy(t), 'r'); break; }
       const mu = userById(uid_);
@@ -443,7 +443,7 @@ document.addEventListener('click', ev => {
 
     /* ===== الاستبعاد: استبدال أو عدم حاجة ===== */
     case 'exclude': { const t = T();
-      if (!t || !canDecide(t, S.session.id)) { toast('ليست من صلاحيتك', 'r'); break; }
+      if (!t || !canAssign(t, S.session.id)) { toast('التغيير في التسكين من صلاحية الليدر', 'r'); break; }
       if (lockedForAssign(t)) { toast('التسكين مقفل', 'r'); break; }
       if (!reqWindowOpen(t)) { toast(reqWindowWhy(t), 'r'); break; }
       S.exKind = 'swap'; S.exTo = null; S.exFor = uid_;
@@ -451,6 +451,7 @@ document.addEventListener('click', ev => {
     case 'exkind': S.exKind = v; S.sheet = excludeSheet(taskById(S.route.id), S.exFor); break;
     case 'exto': S.exTo = v; S.sheet = excludeSheet(taskById(S.route.id), S.exFor); break;
     case 'doexclude': { const t = T();
+      if (!t || !canAssign(t, S.session.id)) { toast('التغيير في التسكين من صلاحية الليدر', 'r'); break; }
       if (!t || !canDecide(t, S.session.id)) { toast('ليست من صلاحيتك', 'r'); break; }
       if (!reqWindowOpen(t)) { toast(reqWindowWhy(t), 'r'); break; }
       const why = val('exwhy');
@@ -477,11 +478,13 @@ document.addEventListener('click', ev => {
 
     /* ===== طلب دعم من الكنترول ===== */
     case 'supportsheet': { const t = T(); if (!t) break;
-      if (!canDecide(t, S.session.id)) { toast('ليست من صلاحيتك', 'r'); break; }
+      if (!canAssign(t, S.session.id)) { toast('طلب الدعم من صلاحية الليدر', 'r'); break; }
+      if (!supportOpen(t)) { toast(supportWhy(t), 'r'); break; }
       S.spCount = 1; S.sheet = supportSheet(t); break; }
     case 'spcount': S.spCount = Number(v); S.sheet = supportSheet(taskById(S.route.id)); break;
     case 'dosupport': { const t = T();
-      if (!t || !canDecide(t, S.session.id)) { toast('ليست من صلاحيتك', 'r'); break; }
+      if (!t || !canAssign(t, S.session.id)) { toast('طلب الدعم من صلاحية الليدر', 'r'); break; }
+      if (!supportOpen(t)) { toast(supportWhy(t), 'r'); break; }
       const why = val('spwhy');
       if (!why || why.length < 6) { toast('اذكر سبب الطلب', 'r'); break; }
       if (openSupport(t.id).length) { toast('لديك طلب دعم قائم على هذه المهمة', 'r'); break; }
@@ -495,9 +498,12 @@ document.addEventListener('click', ev => {
       toast(v === '1' ? 'لُبّي طلب الدعم' : 'اعتذر الكنترول', v === '1' ? 'g' : 'r'); break; }
 
     /* ===== الانسحاب من مهمة ===== */
-    case 'askwd': S.sheet = textSheet('طلب الانسحاب من المهمة',
-      'السبب إلزامي ويصل الليدر — ولا ينفذ الانسحاب إلا بموافقته',
-      'data-a="doaskwd" data-id="' + id + '"', '', 'سبب الانسحاب'); break;
+    case 'askwd': { const t = T(); if (!t) break;
+      if (lockedForAssign(t)) { toast('المهمة بدأت — لا انسحاب بعد بدايتها', 'r'); break; }
+      if (!reqWindowOpen(t)) { toast(reqWindowWhy(t), 'r'); break; }
+      S.sheet = textSheet('طلب الانسحاب من المهمة',
+        'السبب إلزامي ويصل الليدر — ولا ينفذ الانسحاب إلا بموافقته',
+        'data-a="doaskwd" data-id="' + id + '"', '', 'سبب الانسحاب'); break; }
     case 'doaskwd': { const rr = val('txt');
       if (!rr || rr.length < 5) { toast('اذكر سببًا واضحًا', 'r'); break; }
       const t = T(); if (!t) break;

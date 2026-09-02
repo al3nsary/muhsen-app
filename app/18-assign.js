@@ -5,6 +5,20 @@
 /* نافذة الطلبات: مفتوحة من الآن، وتُغلق قبل المهمة بـ ١٢ ساعة. وعمر الطلب ٤ ساعات.
    بعد إغلاقها لا يبقى للّيدر إلا طلب الدعم من الكنترول. */
 const REQ_CLOSE_H = 12, REQ_TTL_H = 4;
+/* طلب الدعم من الكنترول: آخر أبواب التسكين — يُغلق قبل المهمة بـ ٨ ساعات */
+const SUPPORT_CLOSE_H = 8;
+const supportCloseAt = t => t.start - SUPPORT_CLOSE_H * HR;
+const supportOpen = t => now() < supportCloseAt(t) && !lockedForAssign(t);
+function supportWhy(t) {
+  if (lockedForAssign(t)) return 'المهمة بدأت — لا تغيير في التسكين';
+  if (now() >= supportCloseAt(t))
+    return 'أُغلق طلب الدعم — لم يبقَ على المهمة إلا ' +
+      untilTxt(t.start).replace('بعد ', '') + '، والحد الأدنى ' + AR(SUPPORT_CLOSE_H) + ' ساعات';
+  return '';
+}
+/* كل تغيير في التسكين — تسكين واستبدال واستبعاد ودعم — لليدر الأصيل وحده:
+   لا للمحسن، ولا لمن أُسندت إليه صفة الليدر على المهمة */
+const canAssign = (t, id) => canDecide(t, id) && !isDelegate(t, id);
 const reqCloseAt = t => t.start - REQ_CLOSE_H * HR;
 /* مفتوحة ما دام يفصلنا عن المهمة أكثر من ١٢ ساعة */
 const reqWindowOpen = t => now() < reqCloseAt(t);
@@ -70,6 +84,7 @@ const EXCLUDE_KINDS = {
 
 /* طلب استبدال: لا يخرج الأول حتى يقبل الثاني */
 function requestReplace(t, outId, inId, why) {
+  if (!canAssign(t, S.session.id)) return false;
   if (lockedForAssign(t) || !reqWindowOpen(t)) return false;   /* لا تسكين بعد القفل */
   const a = t.assigned.find(x => x.muhsenId === outId && onTask(x));
   /* يُمنع طلب ثانٍ ما دام الأول معلّقًا فقط — أما المرفوض والمنتهي فيُعاد بعدهما */
@@ -129,6 +144,7 @@ function respondReplace(t, inId, ok, note_) {
 
 /* استبعاد لعدم الحاجة — بإقرار مسؤولية */
 function excludeNoNeed(t, muhsenId, why) {
+  if (!canAssign(t, S.session.id)) return false;
   if (lockedForAssign(t) || !reqWindowOpen(t)) return false;
   const a = t.assigned.find(x => x.muhsenId === muhsenId && onTask(x));
   if (!a) return false;
@@ -186,6 +202,8 @@ function expireRequests(t) {
 /* الليدر لا يعرف الفريق الاحتياطي ولا يختار منه — يطلب دعمًا، والكنترول يلبّي ويوضّح */
 const SUPPORT_STATE = { pending:['لدى الكنترول','wait'], done:['لُبّي','live'], denied:['غير متاح','no'] };
 function requestSupport(t, count, why) {
+  if (!canAssign(t, S.session.id)) return null;   /* المحسن لا يطلب دعمًا */
+  if (!supportOpen(t)) return null;
   S.support = S.support || [];
   const s = {
     id: uid('SP'), no: 'SP-' + AR(7100 + S.support.length),
@@ -316,7 +334,9 @@ function excludeSheet(t, muhsenId) {
     '<div class="grid2" style="margin-top:12px">' +
       '<button class="btn g" data-a="close">تراجع</button>' +
       (kind === 'swap' && !cands.length
-        ? '<button class="btn p" data-a="supportreq" data-id="' + t.id + '">طلب دعم من الكنترول</button>'
+        ? (supportOpen(t)
+          ? '<button class="btn p" data-a="supportsheet" data-id="' + t.id + '">طلب دعم من الكنترول</button>'
+          : '<button class="btn p off" disabled>' + E(supportWhy(t)) + '</button>')
         : '<button class="btn p" data-a="doexclude" data-id="' + t.id + '" data-u="' + muhsenId + '">' +
           (kind === 'swap' ? 'إرسال طلب الاستبدال' : 'استبعاد وأتحمّل المسؤولية') + '</button>') +
     '</div>';

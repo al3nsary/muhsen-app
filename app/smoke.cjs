@@ -1124,7 +1124,7 @@ step('المحسن الاحتياطي يسجّل دخوله', () => {
 step('عدّاد الإجراءات يعدّ ما ينتظر ردًّا فقط', () => {
   const m = run('teamOf("L1")[0].id');
   const before = run('pendingCountFor("' + m + '")');
-  const t = run('S.tasks.filter(function(x){return x.leaderId==="L1"&&x.start>now()})[0]');
+  const t = run('S.tasks.filter(function(x){return x.leaderId==="L1"&&x.start>now()+13*HR&&["done","cancelled","running"].indexOf(x.status)<0})[0]');
   run('(function(){var a=slotOf(taskById("' + t.id + '"),"' + m + '"); if(a) a.attendedAt=null;})()');
   if (run('pendingCountFor("' + m + '")') !== before)
     throw new Error('عدّ ما لم يُطلب منه ردّ');
@@ -1176,7 +1176,10 @@ step('المحسن يرى زملاءه على المهمة الجارية', () =
   run('S.session={id:"L1",at:Date.now()}');
 });
 step('طلب الانسحاب له إجراء في مركز الطلبات', () => {
-  const t = run('S.tasks.filter(function(x){return x.leaderId==="L1"&&x.start>now()})[0]');
+  /* الانسحاب طلبٌ كبقيتها: مهمة يفصلنا عنها أكثر من ١٢ ساعة */
+  const t = run('S.tasks.filter(function(x){return x.leaderId==="L1" && x.start>now()+13*HR && ' +
+    '["done","cancelled","running"].indexOf(x.status)<0})[0]');
+  if (!t) throw new Error('لا توجد مهمة بعيدة');
   const mid = run('acceptedSlots(taskById("' + t.id + '")).find(function(a){return !isReserve(a.muhsenId)}).muhsenId');
   run('requestWithdraw(taskById("' + t.id + '"),"' + mid + '","عذر ميداني")');
   const r = run('S.requests.find(function(x){return x.kind==="انسحاب"&&x.state==="pending"})');
@@ -1184,6 +1187,27 @@ step('طلب الانسحاب له إجراء في مركز الطلبات', () 
   const card = run('reqCardFull(S.requests.find(function(x){return x.kind==="انسحاب"&&x.state==="pending"}), true)');
   if (card.indexOf('data-a="wdok"') < 0) throw new Error('بلا زر اعتماد');
   if (card.indexOf('data-a="wdno"') < 0) throw new Error('بلا زر رفض');
+});
+step('لا انسحاب داخل ١٢ ساعة ولا بعد بدء المهمة', () => {
+  const tid = run('S.tasks.filter(function(x){return x.leaderId==="L1" && x.start>now()+13*HR && ' +
+    '["done","cancelled","running"].indexOf(x.status)<0})[0].id');
+  const m = run('acceptedSlots(taskById("' + tid + '")).find(function(a){return !a.wd}).muhsenId');
+  /* داخل ١٢ ساعة */
+  run('S.clockOffset = Math.round((taskById("' + tid + '").start - 9*HR - Date.now())/60000)');
+  if (run('requestWithdraw(taskById("' + tid + '"),"' + m + '","محاولة")')) throw new Error('قُبل داخل ١٢ ساعة');
+  run('S.session={id:"' + m + '",at:Date.now()}');
+  const h = run('S.route={n:"task",id:"' + tid + '"}; screenTask()');
+  if (h.indexOf('data-a="askwd"') >= 0) throw new Error('الزر فعّال داخل ١٢ ساعة');
+  /* أثناء التشغيل */
+  run('S.session={id:"L1",at:Date.now()}');
+  run('taskById("' + tid + '").status="running"');
+  if (run('requestWithdraw(taskById("' + tid + '"),"' + m + '","محاولة أثناء التشغيل")'))
+    throw new Error('قُبل والمهمة جارية');
+  run('taskById("' + tid + '").status="assigned"');
+  run('S.clockOffset=0');
+  /* وقبل ذلك مسموح */
+  if (!run('requestWithdraw(taskById("' + tid + '"),"' + m + '","عذر مقبول")'))
+    throw new Error('مُنع رغم بُعد الموعد');
 });
 step('لا إغلاق لمهمة لم تبدأ', () => {
   const t = run('S.tasks.filter(function(x){return x.leaderId==="L1"&&x.start>now()&&x.status!=="running"})[0]');
@@ -1212,18 +1236,26 @@ step('الليدر يرفع ميموريز والمحسن لا', () => {
   if (run('canMemories()')) throw new Error('المحسن يرفع ميموريز');
   run('S.session={id:"L1",at:Date.now()}');
 });
-step('المحسن المسكَّن يصوّر الفرعية', () => {
-  const t = run('S.tasks.find(function(x){return acceptedSlots(x).length&&["done","cancelled"].indexOf(x.status)<0})');
+step('التصوير على الفرعية لمن حضر وحده', () => {
+  const t = run('myTasks().find(function(x){return acceptedSlots(x).length&&["done","cancelled"].indexOf(x.status)<0})');
   const m = run('acceptedSlots(taskById("' + t.id + '"))[0].muhsenId');
+  run('taskById("' + t.id + '").assigned.find(function(a){return a.muhsenId==="' + m + '"}).attendedAt = null');
   run('S.session={id:"' + m + '",at:Date.now()}');
-  if (!run('canShootSub(taskById("' + t.id + '"))')) throw new Error('مُنع من تصوير الفرعية');
+  if (run('canShootSub(taskById("' + t.id + '"))')) throw new Error('صوّر قبل إثبات حضوره');
+  if (run('shootSubWhy(taskById("' + t.id + '")).indexOf("أثبت حضورك")') < 0) throw new Error('لا يبيّن السبب');
+  /* بعد إثبات الحضور يُسمح له */
+  run('taskById("' + t.id + '").assigned.find(function(a){return a.muhsenId==="' + m + '"}).attendedAt = now()');
+  if (!run('canShootSub(taskById("' + t.id + '"))')) throw new Error('مُنع بعد حضوره');
+  /* ومن ليس على المهمة لا يصوّر أصلًا */
   const out = run('reserveTeam().find(function(r){return !taskById("' + t.id + '").assigned.some(function(a){return a.muhsenId===r.id})}).id');
   run('S.session={id:"' + out + '",at:Date.now()}');
   if (run('canShootSub(taskById("' + t.id + '"))')) throw new Error('من ليس على المهمة يصوّر');
+  /* والليدر يصوّر دائمًا */
   run('S.session={id:"L1",at:Date.now()}');
+  if (!run('canShootSub(taskById("' + t.id + '"))')) throw new Error('الليدر مُنع');
 });
 step('زر الكاميرا على الفرعية فقط', () => {
-  const t = run('S.tasks.find(function(x){return ["done","cancelled"].indexOf(x.status)<0})');
+  const t = run('myTasks().find(function(x){return ["done","cancelled"].indexOf(x.status)<0})');
   run('S.route={n:"task",id:"' + t.id + '"}');
   const h = run('screenTask()').split('<nav class="tabs"')[0];
   if (h.indexOf('ميموريز المهمة') < 0) throw new Error('لا يوجد قسم ميموريز');
@@ -1510,6 +1542,88 @@ step('انقضاء المهلة يُعيد الأول ويُسجَّل بلا ر
   if (!run('requestReplace(taskById("' + tid + '"),"' + outId + '","' + cand + '","بعد المهلة")'))
     throw new Error('لا يمكن طلب بديل بعد انقضاء المهلة');
   run('S.clockOffset=0');
+  run('S.session={id:"L1",at:Date.now()}');
+});
+console.log('\nطلب الدعم: صلاحيته ونافذته');
+run('S.session={id:"L1",at:Date.now()};S.clockOffset=0');
+step('نافذة الدعم تُغلق عند ٨ ساعات', () => {
+  if (run('SUPPORT_CLOSE_H') !== 8) throw new Error('الحدّ ليس ٨');
+  const tid = run('myTasks().filter(function(t){return t.start>now()+13*HR&&["done","cancelled","running"].indexOf(t.status)<0})[0].id');
+  sandbox.SP_ = tid;
+  if (!run('supportOpen(taskById("' + tid + '"))')) throw new Error('مغلقة رغم بُعد الموعد');
+  /* عند ٩ ساعات: الطلبات مغلقة والدعم مفتوح */
+  run('S.clockOffset = Math.round((taskById("' + tid + '").start - 9*HR - Date.now())/60000)');
+  if (run('reqWindowOpen(taskById("' + tid + '"))')) throw new Error('الطلبات مفتوحة عند ٩ ساعات');
+  if (!run('supportOpen(taskById("' + tid + '"))')) throw new Error('الدعم مغلق عند ٩ ساعات');
+  /* عند ٨ ساعات بالضبط: مغلق */
+  run('S.clockOffset = Math.round((taskById("' + tid + '").start - 8*HR - Date.now())/60000)');
+  if (run('supportOpen(taskById("' + tid + '"))')) throw new Error('مفتوح عند الحدّ تمامًا');
+  if (run('supportWhy(taskById("' + tid + '")).indexOf("أُغلق")') < 0) throw new Error('بلا سبب واضح');
+});
+step('لا يُقبل طلب دعم بعد إغلاق نافذته', () => {
+  const tid = sandbox.SP_;
+  const before = run('(S.support||[]).length');
+  sandbox.document.getElementById = i2 => Object.assign({}, el, { value: i2 === 'spwhy' ? 'نقص في العدد' : '' });
+  click({ a: 'dosupport', id: tid });
+  sandbox.document.getElementById = () => el;
+  if (run('(S.support||[]).length') !== before) throw new Error('قُبل بعد الإغلاق');
+  if (run('requestSupport(taskById("' + tid + '"),1,"محاولة مباشرة")')) throw new Error('نفذ من النواة');
+  run('S.clockOffset=0');
+});
+step('المحسن لا يطلب دعمًا ولا يغيّر التسكين', () => {
+  const tid = sandbox.SP_;
+  const m = run('acceptedSlots(taskById("' + tid + '"))[0].muhsenId');
+  run('S.session={id:"' + '' + '" + "' + m + '",at:Date.now()}');
+  run('S.session={id:"' + m + '",at:Date.now()}');
+  if (run('canAssign(taskById("' + tid + '"),"' + m + '")')) throw new Error('المحسن يملك التسكين');
+  const before = run('(S.support||[]).length');
+  sandbox.document.getElementById = i2 => Object.assign({}, el, { value: i2 === 'spwhy' ? 'أحتاج دعمًا' : '' });
+  click({ a: 'supportsheet', id: tid });
+  click({ a: 'dosupport', id: tid });
+  sandbox.document.getElementById = () => el;
+  if (run('(S.support||[]).length') !== before) throw new Error('رفع المحسن طلب دعم');
+  if (run('requestSupport(taskById("' + tid + '"),1,"من المحسن مباشرة")')) throw new Error('نفذ من النواة');
+  /* ولا يستبعد ولا يستبدل ولا يسكّن */
+  const other = run('acceptedSlots(taskById("' + tid + '"))[1].muhsenId');
+  if (run('excludeNoNeed(taskById("' + tid + '"),"' + '' + '" + "' + other + '","محاولة")')) throw new Error('استبعد');
+  if (run('requestReplace(taskById("' + tid + '"),"' + other + '","' + m + '","محاولة")')) throw new Error('استبدل');
+  const h = run('S.route={n:"task",id:"' + tid + '"}; screenTask()');
+  if (h.indexOf('data-a="supportsheet"') >= 0) throw new Error('زر الدعم ظاهر للمحسن');
+  if (h.indexOf('data-a="exclude"') >= 0) throw new Error('زر الاستبعاد ظاهر للمحسن');
+  run('S.session={id:"L1",at:Date.now()}');
+});
+step('المفوَّض بصفة الليدر لا يغيّر التسكين ولا يطلب دعمًا', () => {
+  const tid = run('myTasks().filter(function(t){return t.start>now()+13*HR&&["done","cancelled","running"].indexOf(t.status)<0&&orgOf(t).type==="شركة"})[0]');
+  if (!tid) return;
+  const id2 = tid.id;
+  const m = run('acceptedSlots(taskById("' + id2 + '"))[0].muhsenId');
+  run('sendDelegate(taskById("' + id2 + '"),"' + m + '",true)');
+  run('respondDelegate(taskById("' + id2 + '"),true)');
+  if (!run('canDecide(taskById("' + id2 + '"),"' + m + '")')) throw new Error('المفوَّض لا يقرّر');
+  if (run('canAssign(taskById("' + id2 + '"),"' + m + '")')) throw new Error('المفوَّض يملك التسكين');
+  run('S.session={id:"' + m + '",at:Date.now()}');
+  if (run('requestSupport(taskById("' + id2 + '"),1,"من المفوَّض")')) throw new Error('رفع المفوَّض طلب دعم');
+  run('S.session={id:"L1",at:Date.now()}');
+});
+step('الليدر يطلب الدعم داخل نافذته', () => {
+  const tid = sandbox.SP_;
+  run('S.clockOffset = Math.round((taskById("' + tid + '").start - 9*HR - Date.now())/60000)');
+  const before = run('(S.support||[]).length');
+  sandbox.document.getElementById = i2 => Object.assign({}, el, { value: i2 === 'spwhy' ? 'نقص بعد الاستبعاد' : '' });
+  run('S.spCount=2');
+  click({ a: 'dosupport', id: tid });
+  sandbox.document.getElementById = () => el;
+  if (run('(S.support||[]).length') !== before + 1) throw new Error('لم يُرفع الطلب');
+  run('S.clockOffset=0');
+});
+step('بطاقة الحساب أُزيلت من الرئيسية', () => {
+  const h = run('S.route={n:"home"}; screenLeaderHome()').split('<nav class="tabs"')[0];
+  if (h.indexOf('c gold') >= 0 && h.indexOf(run('me().name')) >= 0)
+    throw new Error('ما زالت بطاقة الحساب في رئيسية الليدر');
+  const m = run('teamOf("L1")[0].id');
+  run('S.session={id:"' + m + '",at:Date.now()}');
+  const h2 = run('S.route={n:"mhome"}; screenMuhsenHome()').split('<nav class="tabs"')[0];
+  if (h2.indexOf(run('me().specialty')) >= 0) throw new Error('ما زالت بطاقة الحساب في رئيسية المحسن');
   run('S.session={id:"L1",at:Date.now()}');
 });
 console.log('\n' + (fail ? '✗ فشل ' + fail : '✓ نجحت كل الاختبارات'));

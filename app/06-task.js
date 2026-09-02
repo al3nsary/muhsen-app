@@ -109,8 +109,10 @@ function screenTask() {
     guideChip(t, 1) +
 
     '<div class="lbl">المهام الفرعية<small>' + AR(doneSubs) + ' من ' + AR(t.subs.length) + '</small></div>' +
-    (!act && !closed ? '<div class="note b">' + icon('i-info','s16') +
-      '<span>الليدر هو من يؤشّر على الإنجاز — ولك توثيق كل خطوة بالكاميرا.</span></div>' : '') +
+    (!act && !closed ? '<div class="note ' + (canShootSub(t) ? 'b' : 'a') + '">' + icon('i-info','s16') +
+      '<span>' + (canShootSub(t)
+        ? 'الليدر هو من يؤشّر على الإنجاز — ولك توثيق كل خطوة بالكاميرا.'
+        : 'الليدر هو من يؤشّر على الإنجاز. ' + E(shootSubWhy(t)) + '.') + '</span></div>' : '') +
     '<div class="c">' + t.subs.map((s, i2) => subRow(t, s, i2, running)).join('') + '</div>' +
 
     (t.rating ? '<button class="c gold" data-a="go" data-n="taskrating" data-id="' + t.id + '" style="width:100%;text-align:right">' +
@@ -123,19 +125,27 @@ function screenTask() {
           : '<div class="c center dim sm" style="padding:20px">لا يوجد أحد على المهمة</div>'),
       'i-users') : '') +
 
-    /* نافذة الطلبات وطلب الدعم: ظاهران دائمًا للّيدر — لا يُطويان */
-    (lead ? (locked
+    /* نوافذ التسكين: مشروحة للّيدر الأصيل وحده */
+    (canAssign(t, u.id) ? (locked
       ? '<div class="note a">' + icon('i-info','s16') +
         '<span>' + (running || closed ? 'المهمة بدأت — التسكين مقفل.' : 'حان وقت المهمة — التسكين مقفل.') + '</span></div>'
-      : act ? (reqWindowOpen(t)
+      : (reqWindowOpen(t)
         ? '<div class="note b">' + icon('i-clock','s16') +
           '<span>الطلبات مفتوحة — تُغلق ' + untilTxt(reqCloseAt(t)) + '. ومهلة كل طلب ' + AR(REQ_TTL_H) + ' ساعات.</span></div>'
-        : '<div class="note a">' + icon('i-clock','s16') + '<span>' + E(reqWindowWhy(t)) + '</span></div>') : '') +
-      (act && !closed ? '<button class="btn l" data-a="supportsheet" data-id="' + t.id + '">' +
-        icon('i-send','s16') + 'طلب دعم من الكنترول</button>' : '') +
-      (taskSupport(t.id).length ? '<div class="lbl">طلبات الدعم<small>' +
+        : '<div class="note a">' + icon('i-clock','s16') + '<span>' + E(reqWindowWhy(t)) +
+          (supportOpen(t) ? ' — ولم يبقَ إلا طلب الدعم.' : '') + '</span></div>')) : '') +
+      (canAssign(t, u.id) && !closed
+        ? (supportOpen(t)
+          ? '<button class="btn l" data-a="supportsheet" data-id="' + t.id + '">' +
+            icon('i-send','s16') + 'طلب دعم من الكنترول</button>' +
+            '<div class="tiny dim2 center">يُغلق ' + untilTxt(supportCloseAt(t)) +
+            ' — قبل المهمة بـ ' + AR(SUPPORT_CLOSE_H) + ' ساعات</div>'
+          : '<button class="btn l off" disabled>' + icon('i-send','s16') +
+            'طلب دعم من الكنترول</button>' +
+            '<div class="tiny dim2 center">' + E(supportWhy(t)) + '</div>') : '') +
+      (lead && taskSupport(t.id).length ? '<div class="lbl">طلبات الدعم<small>' +
         AR(taskSupport(t.id).length) + '</small></div>' +
-        taskSupport(t.id).map(s2 => supportCard(s2)).join('') : '') : '') +
+        taskSupport(t.id).map(s2 => supportCard(s2)).join('') : '') +
 
     (lead && hasDocs(t)
       ? fold('docs', 'مستندات المهمة', 'عقد النقل وعقد السكن', docButtons(t), 'i-file') : '') +
@@ -147,8 +157,15 @@ function screenTask() {
             '<span><b>طلب انسحابك قيد المراجعة</b><br>' + E(w.reason) + '</span></div>';
           if (w && w.state === 'rejected') return '<div class="note r">' + icon('i-xc','s16') +
             '<span><b>رُفض طلب انسحابك</b>' + (w.respNote ? '<br>' + E(w.respNote) : '') + '</span></div>';
+          if (lockedForAssign(t)) return '<div class="note a">' + icon('i-out','s16') +
+            '<span>بدأت المهمة — لا انسحاب بعد بدايتها.</span></div>';
+          if (!reqWindowOpen(t)) return '<button class="btn l off" disabled>' +
+            icon('i-out','s16') + 'طلب الانسحاب من المهمة</button>' +
+            '<div class="tiny dim2 center">' + E(reqWindowWhy(t)) + '</div>';
           return '<button class="btn l" data-a="askwd" data-id="' + t.id + '">' +
-            icon('i-out','s16') + 'طلب الانسحاب من المهمة</button>';
+            icon('i-out','s16') + 'طلب الانسحاب من المهمة</button>' +
+            '<div class="tiny dim2 center">يُغلق ' + untilTxt(reqCloseAt(t)) +
+            ' — قبل المهمة بـ ' + AR(REQ_CLOSE_H) + ' ساعة</div>';
         })() : '') +
 
     taskPhotoSection(t, lead) +

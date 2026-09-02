@@ -18,7 +18,21 @@ const thumbAttr = p => seeded(p)
   ? 'class="__C__ bg-' + thumbKey(p) + '"'
   : 'class="__C__" style="background-image:url(' + p.src + ')"';
 /* المحسن يصوّر المهام الفرعية فقط · والليدر يرفع «ميموريز» للمهمة الرئيسية */
-const canShootSub = t => isLeader() || (t && !!slotOf(t, S.session.id));
+/* التصوير على المهام الفرعية: الليدر دائمًا، والمحسن إن أثبت حضوره فقط */
+function canShootSub(t) {
+  if (!t) return false;
+  if (actsAsLeader(t, S.session.id)) return true;
+  const a = slotOf(t, S.session.id);
+  return !!(a && a.req === 'accepted' && a.attendedAt);
+}
+function shootSubWhy(t) {
+  if (!t) return '';
+  if (actsAsLeader(t, S.session.id)) return '';
+  const a = slotOf(t, S.session.id);
+  if (!a || a.req !== 'accepted') return 'لستَ على هذه المهمة';
+  if (!a.attendedAt) return 'أثبت حضورك أولًا — التصوير لمن حضر';
+  return '';
+}
 const canMemories = () => isLeader();
 const canShoot = () => isLeader();
 /* اسم مختصر نظيف: نقطع عند أول فاصل ثم نقصّ إن طال */
