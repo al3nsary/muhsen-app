@@ -235,16 +235,4 @@ function addTaskSheet() {
       '<button class="btn g" data-a="close">إلغاء</button>' +
       '<button class="btn p" data-a="createtask">إضافة</button></div>';
 }
-function slotMenuSheet(t, muhsenId) {
-  const u = userById(muhsenId), a = slotOf(t, muhsenId);
-  return '<div class="grip"></div><h3>' + E(u.name) + '</h3>' +
-    '<div class="tiny dim2" style="margin-bottom:12px">' + E(t.title) + '</div>' +
-    '<div class="col">' +
-      (a && a.req === 'pending' ? '<button class="prow" data-a="withdraw" data-id="' + t.id + '" data-u="' + muhsenId + '">' +
-        '<span class="sp b">سحب الطلب</span>' + icon('i-x','s16') + '</button>' : '') +
-      (a && a.req === 'accepted' ? '<button class="prow" data-a="removeasg" data-id="' + t.id + '" data-u="' + muhsenId + '">' +
-        '<span class="sp b">إزالة من المهمة</span>' + icon('i-x','s16') + '</button>' : '') +
-      '<button class="prow" data-a="go" data-n="profile" data-id="' + muhsenId + '"><span class="sp b">الملف الشخصي</span>' + icon('i-user','s16') + '</button>' +
-      '<a class="prow" href="tel:' + u.phone.replace(/[^0-9]/g,'') + '"><span class="sp b">اتصال</span>' + icon('i-phone','s16') + '</a>' +
-    '</div><button class="btn g" style="margin-top:12px" data-a="close">إغلاق</button>';
-}
+

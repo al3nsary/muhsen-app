@@ -220,20 +220,11 @@ document.addEventListener('click', ev => {
       if (sendRequest(t, uid_)) { S.sheet = null; toast('أُرسل الطلب إلى ' + userById(uid_).name); }
       else toast('تعذّر الإرسال — الطلب قائم بالفعل', 'r');
       break; }
-    case 'withdraw': { const t = T(); if (!t || lockedForAssign(t)) { toast('التسكين مقفل', 'r'); break; }
+    case 'withdraw': { const t = T();
+      if (!t || lockedForAssign(t)) { toast('التسكين مقفل', 'r'); break; }
+      if (!canDecide(t, S.session.id)) { toast('ليست من صلاحيتك', 'r'); break; }
+      if (!reqWindowOpen(t)) { toast(reqWindowWhy(t), 'r'); break; }
       withdrawRequest(t, uid_); S.sheet = null; toast('سُحب الطلب'); break; }
-    case 'removeasg': { const t = T(); if (!t || lockedForAssign(t)) { toast('التسكين مقفل', 'r'); break; }
-      S.pendingExcuse = null;
-      S.sheet = reasonSheet('سبب الإزالة من التسكين', userById(uid_).name,
-        'data-a="doremove" data-id="' + id + '" data-u="' + uid_ + '"', 'سبب الإزالة', 'remove', id, uid_); break; }
-    case 'doremove': { const rr = val('txt');
-      if (!rr || rr.length < 4) { toast('اذكر سبب الإزالة', 'r'); break; }
-      { const t2 = T();
-        if (!t2 || !canDecide(t2, S.session.id)) { toast('ليست من صلاحيتك', 'r'); break; }
-        if (lockedForAssign(t2)) { toast('التسكين مقفل', 'r'); break; } }
-      removeAssignee(T(), uid_, rr, S.pendingExcuse); S.pendingExcuse = null;
-      S.sheet = null; toast('أُزيل من المهمة'); break; }
-    case 'smenu': S.sheet = slotMenuSheet(T(), uid_); break;
 
     case 'resp': { const t = T(); if (!t) break;
       if (v === '1') { respondRequest(t, S.session.id, true); buzz(); toast('قبلت التسكين'); }

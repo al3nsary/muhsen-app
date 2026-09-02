@@ -118,7 +118,7 @@ function screenTask() {
         '<span>' + (running || closed ? 'المهمة بدأت — التسكين مقفل.' : 'حان وقت المهمة — التسكين مقفل.') + '</span></div>'
         : act ? (reqWindowOpen(t)
           ? '<div class="note b">' + icon('i-clock','s16') +
-            '<span>نافذة الطلبات مفتوحة — تُغلق ' + untilTxt(reqCloseAt(t)) + '. وكل طلب مهلته ' +
+            '<span>الطلبات مفتوحة — تُغلق ' + untilTxt(reqCloseAt(t)) + ' (قبل المهمة بـ ' + AR(REQ_CLOSE_H) + ' ساعة). وكل طلب مهلته ' +
             AR(REQ_TTL_H) + ' ساعات.</span></div>' +
             '<button class="btn l" data-a="supportsheet" data-id="' + t.id + '">' +
               icon('i-send','s16') + 'طلب دعم من الكنترول</button>'
@@ -212,19 +212,7 @@ function attendCard(t, u, lead) {
     '<div class="tiny dim2 center" style="margin-top:7px">وضع التجربة: الحضور متاح من أي موقع — والبُعد يُسجَّل ملاحظةً</div></div>';
 }
 
-function slotRow(t, a, canManage) {
-  const u = userById(a.muhsenId);
-  let right = '', sub = E(u.code) + ' · ' + E(u.specialty);
-  if (a.req === 'pending') { right = pill('بانتظار الرد', 'wait'); sub = 'أُرسل ' + ago(a.reqAt); }
-  else if (a.attendedAt) {
-    right = '<span class="att">' + icon('i-checkc','s16') + '<span>حاضر<span>' + t12(a.attendedAt) + '</span></span></span>';
-    if (a.farKm > RADIUS_KM) sub = 'حضّر من ' + a.farKm + ' كم — خارج النطاق';
-  } else right = pill('قبِل', 'live');
-  return '<div class="prow">' + avat(u) +
-    '<span class="nm sp"><b>' + E(u.name) + '</b><span>' + sub + '</span></span>' + right +
-    (canManage ? '<button data-a="smenu" data-id="' + t.id + '" data-u="' + a.muhsenId + '" class="vdots">' +
-      icon('i-vdots','s16') + '</button>' : '') + '</div>';
-}
+
 
 function subRow(t, s, i, running) {
   const nextIdx = t.subs.findIndex(x => !x.done);

@@ -1,6 +1,6 @@
 /* ============================ الحالة ============================ */
 const KEY = 'muhsen_app_v1';
-const APP_VER = 'نسخة ٣٫٠';
+const APP_VER = 'نسخة ٣٫١';
 const SCHEMA = 18;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
@@ -392,15 +392,7 @@ function withdrawRequest(t, muhsenId) {
   notify(muhsenId, 'i-x', 'سُحب طلب التسكين', 'سحب الليدر طلب تسكينك في «' + t.title + '».', { n: 'requests' });
   recomputeStatus(t);
 }
-function removeAssignee(t, muhsenId, why, excuse) {
-  const a = slotOf(t, muhsenId); if (!a) return;
-  a.out = { kind: 'excluded', why: why || 'أزاله الليدر', by: S.session.id, at: now() };
-  if (excuse) a.removePhoto = attachExcuse(t.id, excuse, 'مرفق قرار الإزالة', S.session.id);
-  hist(t, 'أُزيل ' + userById(muhsenId).name + ' من المهمة — ' + a.removedWhy);
-  note(t, 'أُزيل ' + userById(muhsenId).name + ' من التسكين — ' + a.removedWhy);
-  notify(muhsenId, 'i-xc', 'أُزلت من المهمة', '«' + t.title + '» — ' + a.removedWhy, { n: 'tasks' });
-  recomputeStatus(t);
-}
+
 function respondRequest(t, muhsenId, ok, note_, excuse) {
   const a = t.assigned.find(x => x.muhsenId === muhsenId && x.req === 'pending' && !x.out);
   if (!a) return;
@@ -713,10 +705,17 @@ function autoTick() {
         '«' + t.title + '» — ' + hijri(t.start) + ' وما زالت بلا تسكين مكتمل.', { n: 'assign', id: t.id });
       t._f.w7 = 1;
     }
-    if (empty && t0 >= t.start - 12 * HR && !t._f.w12) {
+    /* تحذير والنافذة ما زالت مفتوحة — يستطيع التصرّف */
+    if (empty && t0 >= reqCloseAt(t) - 6 * HR && t0 < reqCloseAt(t) && !t._f.w18) {
       notify(t.leaderId, 'i-warn', 'تحذير: تسكين متأخر',
-        'بقي أقل من ١٢ ساعة على «' + t.title + '» والتسكين غير مكتمل.', { n: 'assign', id: t.id });
-      t._f.w12 = 1;
+        '«' + t.title + '» بلا تسكين، وتُغلق الطلبات ' + untilTxt(reqCloseAt(t)) + '.', { n: 'assign', id: t.id });
+      t._f.w18 = 1;
+    }
+    /* أُغلقت النافذة — لم يبقَ إلا طلب الدعم من الكنترول */
+    if (empty && t0 >= reqCloseAt(t) && !t._f.wclose) {
+      notify(t.leaderId, 'i-warn', 'أُغلقت الطلبات والمهمة بلا تسكين',
+        '«' + t.title + '» — لم يبقَ إلا طلب دعم من الكنترول.', { n: 'task', id: t.id });
+      t._f.wclose = 1;
     }
     if (t0 >= prepOpen(t) && !t._f.prep) {
       acceptedSlots(t).forEach(a => notify(a.muhsenId, 'i-clock', 'فُتحت نافذة التحضير',
@@ -725,15 +724,25 @@ function autoTick() {
         '«' + t.title + '» تبدأ ' + t12(t.start) + ' — أثبت حضورك.', { n: 'task', id: t.id });
       t._f.prep = 1;
     }
-    if (t0 >= t.start - HR && !t._f.h1) {
+    /* قبل إغلاق التحضير بربع ساعة — وما زال ممكنًا */
+    if (t0 >= prepDeadline(t) - 15 * MIN && t0 < prepDeadline(t) && !t._f.plast) {
       acceptedSlots(t).filter(a => !a.attendedAt).forEach(a =>
-        notify(a.muhsenId, 'i-warn', 'بقيت ساعة على المهمة', 'لم تثبت حضورك في «' + t.title + '».', { n: 'mhome' }));
-      t._f.h1 = 1;
+        notify(a.muhsenId, 'i-warn', 'ربع ساعة على إغلاق التحضير',
+          'أثبت حضورك في «' + t.title + '» قبل الإغلاق.', { n: 'mhome' }));
+      t._f.plast = 1;
+    }
+    /* بعد الإغلاق: إخبار بما وقع لا مطالبة بما لا يُستطاع */
+    if (t0 >= prepDeadline(t) && !t._f.pclose) {
+      acceptedSlots(t).filter(a => !a.attendedAt).forEach(a =>
+        notify(a.muhsenId, 'i-xc', 'أُغلق التحضير ولم تثبت حضورك',
+          '«' + t.title + '» — تُسجَّل ملاحظة وتؤثر في تقييمك.', { n: 'mhome' }));
+      t._f.pclose = 1;
     }
     const pend = pendingSlots(t).length;
-    if (pend && t0 >= t.start - 3 * HR && !t._f.noresp) {
+    if (pend && t0 >= reqCloseAt(t) - 2 * HR && t0 < reqCloseAt(t) && !t._f.noresp) {
       notify(t.leaderId, 'i-warn', 'طلبات بلا رد',
-        AR(pend) + ' طلب لم يُرد عليه في «' + t.title + '».', { n: 'lreq' });
+        AR(pend) + ' طلب لم يُرد عليه في «' + t.title + '» — تُغلق الطلبات ' +
+        untilTxt(reqCloseAt(t)) + ' وتنتهي كلها.', { n: 'lreq' });
       t._f.noresp = 1;
     }
   });

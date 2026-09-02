@@ -80,8 +80,9 @@ click({ a: 'login', id: 'L1' });
 console.log('\nالتسكين: نافذة الطلبات والاستبعاد والاستبدال');
 let TID;
 /* أداة: تنقل ساعة التطبيق إلى داخل نافذة الطلبات لمهمة بعينها */
-const intoWindow = id => run('S.clockOffset = Math.round((taskById("' + id + '").start - 10*HR - Date.now())/60000)');
-const afterWindow = id => run('S.clockOffset = Math.round((taskById("' + id + '").start - 7*HR - Date.now())/60000)');
+/* داخل النافذة: يفصلنا عن المهمة أكثر من ١٢ ساعة. بعدها: أقل منها */
+const intoWindow  = id => run('S.clockOffset = Math.round((taskById("' + id + '").start - 20*HR - Date.now())/60000)');
+const afterWindow = id => run('S.clockOffset = Math.round((taskById("' + id + '").start - 9*HR - Date.now())/60000)');
 
 step('فتح مهمة قادمة مسكَّنة تلقائيًّا', () => {
   run('S.clockOffset=0');
@@ -89,19 +90,38 @@ step('فتح مهمة قادمة مسكَّنة تلقائيًّا', () => {
   if (!TID) throw new Error('لا توجد مهمة بعيدة');
   if (!run('acceptedSlots(taskById("' + TID + '")).length')) throw new Error('غير مسكَّنة');
 });
-step('لا طلبات قبل ١٢ ساعة من المهمة', () => {
-  if (run('reqWindowOpen(taskById("' + TID + '"))')) throw new Error('النافذة مفتوحة مبكرًا');
+step('الطلبات مفتوحة ما دام يفصلنا أكثر من ١٢ ساعة', () => {
+  run('S.clockOffset=0');
+  if (!run('reqWindowOpen(taskById("' + TID + '"))')) throw new Error('مغلقة رغم بُعد الموعد');
+  intoWindow(TID);
+  if (!run('reqWindowOpen(taskById("' + TID + '"))')) throw new Error('مغلقة عند ٢٠ ساعة');
+});
+step('تُغلق نهائيًّا حين يبقى أقل من ١٢ ساعة', () => {
+  afterWindow(TID);
+  if (run('reqWindowOpen(taskById("' + TID + '"))')) throw new Error('ما زالت مفتوحة عند ٩ ساعات');
+  if (run('reqWindowWhy(taskById("' + TID + '")).indexOf("أُغلقت")') < 0) throw new Error('بلا سبب واضح');
+  /* الحدّ نفسه: عند ١٢ ساعة بالضبط تكون مغلقة */
+  run('S.clockOffset = Math.round((taskById("' + TID + '").start - 12*HR - Date.now())/60000)');
+  if (run('reqWindowOpen(taskById("' + TID + '"))')) throw new Error('مفتوحة عند الحدّ تمامًا');
+});
+step('لا يُقبل إرسال طلب بعد إغلاق النافذة', () => {
+  afterWindow(TID);
   const before = run('taskById("' + TID + '").assigned.length');
   const r = run('reserveTeam()[0].id');
   click({ a: 'send', id: TID, u: r });
-  if (run('taskById("' + TID + '").assigned.length') !== before) throw new Error('قُبل طلب قبل النافذة');
-});
-step('النافذة تفتح عند ١٢ ساعة وتُغلق عند ٨', () => {
+  if (run('taskById("' + TID + '").assigned.length') !== before) throw new Error('قُبل طلب بعد الإغلاق');
   intoWindow(TID);
-  if (!run('reqWindowOpen(taskById("' + TID + '"))')) throw new Error('لم تفتح');
+});
+step('زر الاستبعاد يظهر للّيدر ما دامت النافذة مفتوحة', () => {
+  run('S.clockOffset=0');
+  const t = run('taskById("' + TID + '")');
+  const sl = run('acceptedSlots(taskById("' + TID + '"))[0]');
+  const html = run('slotCard(taskById("' + TID + '"), acceptedSlots(taskById("' + TID + '"))[0], true)');
+  if (html.indexOf('data-a="exclude"') < 0) throw new Error('زر الاستبعاد غائب');
+  /* وبعد الإغلاق يختفي */
   afterWindow(TID);
-  if (run('reqWindowOpen(taskById("' + TID + '"))')) throw new Error('لم تُغلق');
-  if (run('reqWindowWhy(taskById("' + TID + '")).indexOf("أُغلقت")') < 0) throw new Error('بلا سبب واضح');
+  const h2 = run('slotCard(taskById("' + TID + '"), acceptedSlots(taskById("' + TID + '"))[0], true)');
+  if (h2.indexOf('data-a="exclude"') >= 0) throw new Error('ظهر بعد إغلاق النافذة');
   intoWindow(TID);
 });
 step('لا يُحذف أحد — تتغيّر حالته فقط', () => {
@@ -385,7 +405,7 @@ step('رفض التسكين بلا سبب مرفوض', () => {
   /* نستعمل محسنًا احتياطيًّا غير مسكَّن — لأن الفريق مسكَّن تلقائيًّا */
   run('S.clockOffset=0');
   sandbox.T_ = run('S.tasks.filter(x=>x.leaderId==="L1"&&x.start>now()+13*HR)[0].id');
-  run('S.clockOffset = Math.round((taskById("'+sandbox.T_+'").start - 10*HR - Date.now())/60000)');
+  run('S.clockOffset = Math.round((taskById("'+sandbox.T_+'").start - 20*HR - Date.now())/60000)');
   sandbox.M_ = run('reserveTeam().find(function(r){return !taskById("'+sandbox.T_+'").assigned.some(function(a){return a.muhsenId===r.id})}).id');
   run('sendRequest(taskById("'+sandbox.T_+'"),"'+sandbox.M_+'")');
   run('sendRequest(taskById("' + sandbox.T_ + '"),"' + sandbox.M_ + '")');
@@ -1262,6 +1282,49 @@ step('الرفض يوقف المسار', () => {
 step('كل تقرير له عنوان ومهمة', () => {
   const bad = run('S.reports.filter(function(r){return !r.title||!r.taskId}).length');
   if (bad) throw new Error(bad + ' تقرير بلا عنوان أو مهمة');
+});
+
+
+console.log('\nقاعدة النافذة والاستبعاد — حراسة الرجوع');
+run('S.session={id:"L1",at:Date.now()}');
+run('S.clockOffset=0');
+step('لا وجود لفتح متأخر للنافذة', () => {
+  const src = FILES.map(read).join('\n');
+  if (/REQ_OPEN_H/.test(src)) throw new Error('عاد فتح النافذة المتأخر');
+  if (run('typeof reqOpenAt') !== 'undefined') throw new Error('بقيت دالة الفتح');
+  if (run('REQ_CLOSE_H') !== 12) throw new Error('الإغلاق ليس ١٢ ساعة');
+});
+step('كل مهمة بعيدة نافذتها مفتوحة', () => {
+  const bad = run('myTasks().filter(function(t){return t.start > now()+13*HR && !reqWindowOpen(t)}).length');
+  if (bad) throw new Error(bad + ' مهمة بعيدة ونافذتها مغلقة');
+});
+step('كل مهمة دون ١٢ ساعة نافذتها مغلقة', () => {
+  const bad = run('myTasks().filter(function(t){return t.start-now() < 12*HR && reqWindowOpen(t)}).length');
+  if (bad) throw new Error(bad + ' مهمة قريبة ونافذتها مفتوحة');
+});
+step('الاستبعاد بسببه ونصّه يُسجَّل على المهمة', () => {
+  const tid = run('myTasks().filter(function(t){return t.start>now()+13*HR && acceptedSlots(t).length>1}).sort(function(a,b){return a.start-b.start})[0].id');
+  const mid = run('acceptedSlots(taskById("' + tid + '"))[0].muhsenId');
+  const n0 = run('taskById("' + tid + '").assigned.length');
+  run('excludeNoNeed(taskById("' + tid + '"),"' + mid + '","العدد المتبقي يكفي للفوج")');
+  if (run('taskById("' + tid + '").assigned.length') !== n0) throw new Error('حُذف بدل أن تتغيّر حالته');
+  const sl = run('taskById("' + tid + '").assigned.find(function(x){return x.muhsenId==="' + mid + '"})');
+  if (!sl.out || sl.out.kind !== 'excluded') throw new Error('الحالة خاطئة');
+  if (sl.out.why.indexOf('يكفي') < 0) throw new Error('لم يُحفظ نصّ السبب');
+  if (!run('taskById("' + tid + '").notes.some(function(n){return n.text.indexOf("مسؤوليته")>=0})'))
+    throw new Error('لم تُسجَّل مسؤولية الليدر');
+});
+step('لا مسار إزالة قديم يناقض «لا يخرج أحد»', () => {
+  const src = FILES.map(read).join('\n');
+  ['removeAssignee', 'removeasg', 'doremove', 'slotMenuSheet'].forEach(k => {
+    if (src.indexOf(k) >= 0) throw new Error('ما زال موجودًا: ' + k);
+  });
+});
+step('التنبيهات لا تطالب بما أُغلق بابه', () => {
+  const src = read('04-core.js');
+  if (/t.start - 12 * HR/.test(src)) throw new Error('تنبيه ١٢ ساعة ما زال معلّقًا بالبداية');
+  if (!/reqCloseAt\(t\) - 6 \* HR/.test(src)) throw new Error('لا تحذير قبل الإغلاق');
+  if (!/t0 >= reqCloseAt\(t\) && !t\._f\.wclose/.test(src)) throw new Error('لا إخبار عند الإغلاق');
 });
 
 console.log('\n' + (fail ? '✗ فشل ' + fail : '✓ نجحت كل الاختبارات'));

@@ -2,14 +2,16 @@
 /* لا يخرج محسن من المهمة أبدًا — تتغيّر حالته فقط، وتبقى أمام الليدر والكنترول.
    والمحسن لا يرى إلا إجراءه هو. */
 
-/* نافذة الطلبات: تُفتح قبل المهمة بـ ١٢ ساعة وتُغلق قبلها بـ ٨، وعمر الطلب ٤ ساعات */
-const REQ_OPEN_H = 12, REQ_CLOSE_H = 8, REQ_TTL_H = 4;
-const reqOpenAt = t => t.start - REQ_OPEN_H * HR;
+/* نافذة الطلبات: مفتوحة من الآن، وتُغلق قبل المهمة بـ ١٢ ساعة. وعمر الطلب ٤ ساعات.
+   بعد إغلاقها لا يبقى للّيدر إلا طلب الدعم من الكنترول. */
+const REQ_CLOSE_H = 12, REQ_TTL_H = 4;
 const reqCloseAt = t => t.start - REQ_CLOSE_H * HR;
-const reqWindowOpen = t => now() >= reqOpenAt(t) && now() < reqCloseAt(t);
+/* مفتوحة ما دام يفصلنا عن المهمة أكثر من ١٢ ساعة */
+const reqWindowOpen = t => now() < reqCloseAt(t);
 function reqWindowWhy(t) {
-  if (now() < reqOpenAt(t)) return 'تُفتح الطلبات قبل المهمة بـ ' + AR(REQ_OPEN_H) + ' ساعة — ' + untilTxt(reqOpenAt(t));
-  if (now() >= reqCloseAt(t)) return 'أُغلقت الطلبات قبل المهمة بـ ' + AR(REQ_CLOSE_H) + ' ساعات';
+  if (now() >= reqCloseAt(t))
+    return 'أُغلقت الطلبات — لم يبقَ على المهمة إلا ' + untilTxt(t.start).replace('بعد ', '') +
+      '، والحد الأدنى ' + AR(REQ_CLOSE_H) + ' ساعة';
   return '';
 }
 
