@@ -41,6 +41,13 @@ function render() {
   if (S.toast) html += '<div class="toast">' + icon(S.toast.kind === 'r' ? 'i-warn' : 'i-checkc', 's18') +
     '<span class="sp">' + E(S.toast.text) + '</span></div>';
 
+  /* ما يكتبه المستخدم في ورقة مفتوحة لا يضيع عند إعادة الرسم */
+  const typed = {};
+  try {
+    el.querySelectorAll('.sheet input, .sheet textarea, .sheet select').forEach(x => {
+      if (x.id) typed[x.id] = x.value;
+    });
+  } catch (e) {}
   const key = n + ':' + (S.route.id || '');
   const sameView = S._viewKey === key;
   const prev = el.querySelector('.view');
@@ -53,6 +60,12 @@ function render() {
   const kp = el.querySelector('.kpicker');
   if (kp) { const on = kp.querySelector('button.on');
     if (on) kp.scrollLeft = on.offsetLeft - (kp.clientWidth - on.offsetWidth) / 2; }
+  try {
+    Object.keys(typed).forEach(k2 => {
+      const x = document.getElementById(k2);
+      if (x && x.value !== typed[k2]) x.value = typed[k2];
+    });
+  } catch (e) {}
   const es = document.getElementById("envst");
   if (es) es.textContent = envStampNow();
   centerActiveTab();
@@ -181,6 +194,8 @@ document.addEventListener('click', ev => {
     case 'close': S.sheet = null; break;
     case 'dismiss': S.push = null; break;
     case 'seg': S.tab[b.dataset.k] = v; break;
+    case 'fold': { S.open = S.open || {};
+      const key = id + ':' + v; S.open[key] = !S.open[key]; break; }
     case 'tabpage': goTabPage(Number(v)); return;
     /* اختيار التصنيف يغلق القائمة فورًا ولا يعيد فتحها */
     case 'pickbucket': S.tab.tasks = v; S.sheet = null;
@@ -263,25 +278,22 @@ document.addEventListener('click', ev => {
       startTask(t, S.session.id); buzz(); toast('بدأت المهمة'); break; }
     case 'end': { const t = T();
       if (!t || t.status !== 'running') { toast('المهمة ليست جارية', 'r'); break; }
-      if (!canDecide(t, S.session.id)) { toast('الإغلاق للمفوَّض على هذه المهمة', 'r'); break; } }
-      S.sheet = confirmSheet('إنهاء المهمة',
-      'ستُسجَّل الملاحظات التلقائية ويُحتسب تقييم النظام.', 'data-a="doend" data-id="' + id + '"'); break;
+      if (!canDecide(t, S.session.id)) { toast('الإنهاء لصاحب القرار على المهمة', 'r'); break; }
+      S.sheet = endSheet(t); break; }
     case 'doend': { const t = T();
-      if (!canDecide(t, S.session.id)) { toast('القرار للمفوَّض على هذه المهمة', 'r'); break; }
+      if (!t || !canDecide(t, S.session.id)) { toast('القرار للمفوَّض على هذه المهمة', 'r'); break; }
+      if (t.status !== 'running') { toast('المهمة ليست جارية', 'r'); break; }
       endTask(t, S.session.id); S.sheet = null; buzz();
       toast('أُغلقت المهمة — التقييم ' + AR(avgRating(t.rating)) + ' من ٥'); break; }
-    case 'cancel': S.pendingExcuse = null;
-      S.sheet = reasonSheet('إلغاء المهمة', 'المبرر إلزامي ويصل كل المسكَّنين',
-        'data-a="docancel" data-id="' + id + '"', 'سبب الإلغاء', 'cancel', id); break;
-    case 'docancel': { const r = val('txt'); if (!r) { toast('المبرر إلزامي', 'r'); break; }
-      if (!canDecide(T(), S.session.id)) { toast('القرار للمفوَّض على هذه المهمة', 'r'); break; }
-      cancelTask(T(), S.session.id, r, S.pendingExcuse); S.pendingExcuse = null;
-      S.sheet = null; toast('أُلغيت المهمة', 'r'); break; }
     case 'sub': { const t = T(); if (!t) break;
       if (t.status !== 'running') { toast('المهمة لم تبدأ بعد', 'r'); break; }
-      if (!canDecide(t, S.session.id) && !slotOf(t, S.session.id))
-        { toast('لست مسكَّنًا على هذه المهمة', 'r'); break; }
-      const s = t.subs.find(x => x.id === b.dataset.s); toggleSub(t, s, S.session.id); buzz(); break; }
+      if (!canTickSub(t, S.session.id)) { toast('التأشير على الإنجاز من صلاحية الليدر', 'r'); break; }
+      const s = t.subs.find(x => x.id === b.dataset.s);
+      if (!s) break;
+      toggleSub(t, s, S.session.id); buzz();
+      /* اكتملت الفرعية كلها: تأكيد واحد لا خيار فيه إلا الإغلاق */
+      if (t.subs.every(x => x.done)) S.sheet = allDoneSheet(t);
+      break; }
     case 'note': if (!T()) break;
       S.sheet = textSheet('إضافة ملاحظة', 'تُسجَّل على المهمة',
       'data-a="donote" data-id="' + id + '"', '', 'اكتب ملاحظتك'); break;

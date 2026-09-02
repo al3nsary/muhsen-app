@@ -38,13 +38,18 @@ function reqCardFull(r, actionable) {
     (r.respNote ? '<div class="note ' + (r.state === 'rejected' ? 'r' : 'g') + '" style="margin-top:8px">' +
       icon('i-info','s16') + '<span>رد المستقبِل: ' + E(r.respNote) + '</span></div>' : '') +
     (r.respPhoto ? excuseChip(r.respPhoto) : '') +
-    (urgent ? '<div class="strip r">' + icon('i-warn','s16') + '<span>بقي أقل من ٣ ساعات على المهمة</span></div>' : '') +
+    (urgent ? '<div class="strip r">' + icon('i-warn','s16') +
+      '<span>اقترب إغلاق الطلبات على هذه المهمة</span></div>' : '') +
 
     (actionable && r.state === 'pending' && t ? (
       r.kind === 'انسحاب'
         ? '<div class="grid2" style="margin-top:10px">' +
           '<button class="btn d sm" data-a="wdno" data-id="' + t.id + '" data-u="' + r.from + '">رفض</button>' +
           '<button class="btn p sm" data-a="wdok" data-id="' + t.id + '" data-u="' + r.from + '">اعتماد الانسحاب</button></div>'
+        : r.kind === 'استبدال'
+        ? '<div class="grid2" style="margin-top:10px">' +
+          '<button class="btn d sm" data-a="rrepl" data-id="' + t.id + '" data-v="0">اعتذار</button>' +
+          '<button class="btn p sm" data-a="rrepl" data-id="' + t.id + '" data-v="1">قبول</button></div>'
         : r.kind === 'تسكين'
         ? '<div class="grid2" style="margin-top:10px">' +
           '<button class="btn d sm" data-a="resp" data-id="' + t.id + '" data-v="0">رفض</button>' +

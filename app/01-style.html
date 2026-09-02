@@ -1240,3 +1240,36 @@
   .mgroup .listitem + .listitem { border-top: 1px solid #F0F3EF }
   .mgroup .listitem:active { background: #F7F9F6 }
 </style>
+<style>
+  /* ===================== النسخة ٣٫٢ ===================== */
+  /* أقسام قابلة للطيّ */
+  .fold { background: #fff; border-radius: 18px; box-shadow: var(--card); overflow: hidden; }
+  .fold .fhead { display: flex; align-items: center; gap: 10px; width: 100%; padding: 13px; text-align: right; }
+  .fold .fhead .sp { flex: 1; min-width: 0; }
+  .fold .fhead b { display: block; font-size: 13.5px; line-height: 1.5; }
+  .fold .fhead span span { display: block; font-size: 10.5px; color: var(--dim2); }
+  .fold .fhead > .ic:first-child { color: var(--g); }
+  .fold .fhead > .ic:last-child { transition: transform .2s ease; color: var(--dim2); }
+  .fold.on .fhead > .ic:last-child { transform: rotate(180deg); }
+  .fold .fbody { padding: 0 11px 12px; display: flex; flex-direction: column; gap: 9px; }
+  .fold .fbody > * { flex: none; }
+
+  /* منطقة الإنهاء أسفل الصفحة */
+  .endzone { margin-top: 6px; padding-top: 14px; border-top: 1px dashed rgba(198,168,111,.55); }
+  .cta.stop { background: linear-gradient(150deg, #B23A2E, #8E2B21); }
+
+  /* عدّاد مهلة الطلب */
+  .cdown { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; }
+  .cdown.hot { color: #93261C; }
+  .cdown.out { color: #93261C; opacity: .8; }
+
+  /* المهمة الفرعية للقراءة فقط */
+  .sub.ro { opacity: .95; cursor: default; }
+  .sub.ro .tick { box-shadow: inset 0 0 0 1.5px #DDE3DD; }
+  .sub.ro .tick.on { box-shadow: none; }
+
+  /* بطاقة المهمة الجارية في الرئيسية */
+  .c.live { box-shadow: inset 0 0 0 1.5px rgba(11,138,75,.35), var(--card); }
+  .c.live .meter { height: 6px; border-radius: 99px; background: #EDF1EC; overflow: hidden; }
+  .c.live .meter i { display: block; height: 100%; background: var(--live); border-radius: 99px; }
+</style>

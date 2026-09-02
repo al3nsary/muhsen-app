@@ -51,6 +51,9 @@ function screenAdmin() {
           '<div class="tiny" style="opacity:.75;margin:4px 0 9px">' + E(L.name) + ' · ' + E(t.kt) + ' · ' + E(orgOf(t).type) +
             ' · ' + hijri(t.start) + ' ' + t12(t.start) + ' · ' + AR(acceptedSlots(t).length) + ' محسن</div>' +
           '<div class="grid3">' +
+            '<button class="btn l sm" data-a="shift" data-id="' + t.id + '" data-v="-15">‏−١٥ د</button>' +
+            '<button class="btn l sm" data-a="shift" data-id="' + t.id + '" data-v="15">+١٥ د</button></div>' +
+          '<div class="grid3" style="margin-top:6px">' +
             '<button class="btn l sm" data-a="shift" data-id="' + t.id + '" data-v="-60">‏−ساعة</button>' +
             '<button class="btn l sm" data-a="edittask" data-id="' + t.id + '">تعديل</button>' +
             '<button class="btn l sm" data-a="shift" data-id="' + t.id + '" data-v="60">+ساعة</button></div>' +
@@ -236,3 +239,42 @@ function addTaskSheet() {
       '<button class="btn p" data-a="createtask">إضافة</button></div>';
 }
 
+
+/* ---------- تأكيد إنهاء المهمة ---------- */
+function endSheet(t) {
+  const left = t.subs.filter(s => !s.done);
+  const done = t.subs.length - left.length;
+  const late = t.end < now() ? Math.round((now() - t.end) / MIN) : 0;
+  return '<div class="grip"></div><h3>إنهاء المهمة</h3>' +
+    '<div class="tiny dim2" style="margin-bottom:10px">' + E(t.title) + ' · ' + hijri(t.start) + '</div>' +
+    '<div class="c" style="padding:12px"><div class="row"><b class="sm">المهام الفرعية</b>' +
+      pill(AR(done) + ' من ' + AR(t.subs.length), left.length ? 'wait' : 'live') + '</div>' +
+      (late ? '<div class="row tiny dim" style="margin-top:7px"><span>تجاوزت وقتها</span>' +
+        '<b>' + AR(late) + ' دقيقة</b></div>' : '') + '</div>' +
+
+    (left.length
+      ? '<div class="note r" style="margin-top:11px">' + icon('i-warn','s16') +
+        '<span><b>تحذير: ' + AR(left.length) + ' مهمة فرعية لم تُنجز</b><br>' +
+        left.slice(0, 3).map(s => '· ' + E(s.name)).join('<br>') +
+        (left.length > 3 ? '<br>· وغيرها' : '') +
+        '<br>ستُسجَّل غير منجزة في ملاحظات المهمة وتؤثر في التقييم.</span></div>'
+      : '<div class="note g" style="margin-top:11px">' + icon('i-checkc','s16') +
+        '<span>كل المهام الفرعية منجزة.</span></div>') +
+
+    '<div class="grid2" style="margin-top:14px">' +
+      '<button class="btn g" data-a="close">تراجع</button>' +
+      '<button class="btn ' + (left.length ? 'd' : 'p') + '" data-a="doend" data-id="' + t.id + '">' +
+        (left.length ? 'إنهاء رغم النقص' : 'إنهاء المهمة') + '</button></div>';
+}
+
+/* ---------- اكتملت الفرعية: إغلاق بموافقة واحدة ---------- */
+function allDoneSheet(t) {
+  return '<div class="grip"></div>' +
+    '<div class="center" style="padding:4px 0 2px">' +
+      '<span class="askic">' + icon('i-checkc','s26') + '</span>' +
+      '<h3 style="margin:12px 0 4px">اكتملت المهام الفرعية</h3>' +
+      '<div class="sm dim" style="line-height:1.9">' + E(t.title) + '<br>' +
+      'أُنجزت ' + AR(t.subs.length) + ' مهمة فرعية كلها — تُغلق المهمة الآن.</div></div>' +
+    '<button class="btn p" style="margin-top:14px" data-a="doend" data-id="' + t.id + '">' +
+      icon('i-checkc','s16') + 'موافق — إغلاق المهمة</button>';
+}

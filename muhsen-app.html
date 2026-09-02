@@ -1240,6 +1240,39 @@
   .mgroup .listitem + .listitem { border-top: 1px solid #F0F3EF }
   .mgroup .listitem:active { background: #F7F9F6 }
 </style>
+<style>
+  /* ===================== النسخة ٣٫٢ ===================== */
+  /* أقسام قابلة للطيّ */
+  .fold { background: #fff; border-radius: 18px; box-shadow: var(--card); overflow: hidden; }
+  .fold .fhead { display: flex; align-items: center; gap: 10px; width: 100%; padding: 13px; text-align: right; }
+  .fold .fhead .sp { flex: 1; min-width: 0; }
+  .fold .fhead b { display: block; font-size: 13.5px; line-height: 1.5; }
+  .fold .fhead span span { display: block; font-size: 10.5px; color: var(--dim2); }
+  .fold .fhead > .ic:first-child { color: var(--g); }
+  .fold .fhead > .ic:last-child { transition: transform .2s ease; color: var(--dim2); }
+  .fold.on .fhead > .ic:last-child { transform: rotate(180deg); }
+  .fold .fbody { padding: 0 11px 12px; display: flex; flex-direction: column; gap: 9px; }
+  .fold .fbody > * { flex: none; }
+
+  /* منطقة الإنهاء أسفل الصفحة */
+  .endzone { margin-top: 6px; padding-top: 14px; border-top: 1px dashed rgba(198,168,111,.55); }
+  .cta.stop { background: linear-gradient(150deg, #B23A2E, #8E2B21); }
+
+  /* عدّاد مهلة الطلب */
+  .cdown { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; }
+  .cdown.hot { color: #93261C; }
+  .cdown.out { color: #93261C; opacity: .8; }
+
+  /* المهمة الفرعية للقراءة فقط */
+  .sub.ro { opacity: .95; cursor: default; }
+  .sub.ro .tick { box-shadow: inset 0 0 0 1.5px #DDE3DD; }
+  .sub.ro .tick.on { box-shadow: none; }
+
+  /* بطاقة المهمة الجارية في الرئيسية */
+  .c.live { box-shadow: inset 0 0 0 1.5px rgba(11,138,75,.35), var(--card); }
+  .c.live .meter { height: 6px; border-radius: 99px; background: #EDF1EC; overflow: hidden; }
+  .c.live .meter i { display: block; height: 100%; background: var(--live); border-radius: 99px; }
+</style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <symbol id="av-m" viewBox="0 0 44 44">
@@ -1521,7 +1554,7 @@ const REPORT_SEED = [
 
 /* ============================ الحالة ============================ */
 const KEY = 'muhsen_app_v1';
-const APP_VER = 'نسخة ٣٫١';
+const APP_VER = 'نسخة ٣٫٢';
 const SCHEMA = 18;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
@@ -1782,7 +1815,15 @@ function recomputeStatus(t) {
 function canStart(t, id) {
   if (!actsAsLeader(t, id) || !canDecide(t, id)) return false;
   if (['running', 'done', 'cancelled'].indexOf(t.status) >= 0) return false;
+  if (!t.leaderAttendedAt) return false;          /* لا بدء قبل إثبات الحضور */
   return now() >= prepOpen(t) && now() < prepDeadline(t);
+}
+function startWhy(t, id) {
+  if (!actsAsLeader(t, id) || !canDecide(t, id)) return 'البدء لصاحب القرار على المهمة';
+  if (now() < prepOpen(t)) return 'يُفتح البدء قبل الموعد بساعتين — ' + untilTxt(prepOpen(t));
+  if (now() >= prepDeadline(t)) return 'أُغلق البدء اليدوي — تبدأ تلقائيًّا ' + t12(t.start);
+  if (!t.leaderAttendedAt) return 'أثبت حضورك أولًا — لا تبدأ المهمة قبله';
+  return '';
 }
 
 const lockedForAssign = t => now() >= t.start || ['running', 'done', 'cancelled'].includes(t.status);
@@ -1796,7 +1837,9 @@ function notify(toId, icon, title, body, route) {
 const unread = () => S.notifs.filter(n => n.to === (S.session && S.session.id) && !n.read).length;
 const myNotifs = () => S.notifs.filter(n => n.to === (S.session && S.session.id));
 
-function hist(t, text) { t.history.unshift({ at: now(), text }); }
+/* kind: 'act' إجراء فعلي يبقى · 'req' طلب أو تنبيه عابر يختفي بانتهاء المهمة */
+function hist(t, text, kind) { t.history.unshift({ at: now(), text, kind: kind || 'act' }); }
+const histReq = (t, text) => hist(t, text, 'req');
 function note(t, text, kind) { t.notes.push({ at: now(), kind: kind || 'auto', text }); }
 
 /* ملاحظات تلقائية تُسجَّل على المهمة */
@@ -2013,7 +2056,7 @@ function attend(t, who) {
   hist(t, 'أثبت ' + u.name + ' حضوره داخل النطاق (' + AR(far) + ' كم)');
   if (now() > t.start) note(t, 'تأخر ' + u.name + ' في التحضير — أثبت حضوره بعد بداية المهمة');
   if (!actsAsLeader(t, who)) notify(ownerOf(t), 'i-checkc', 'إثبات حضور',
-    u.name + ' أثبت حضوره في «' + t.title + '».', { n: 'task', id: t.id });
+    u.name + ' — «' + t.title + '»', { n: 'task', id: t.id });
   return true;
 }
 function startTask(t, by) {
@@ -2038,19 +2081,17 @@ function endTask(t, by) {
   autoNote(t);
   rateTask(t);
   hist(t, 'أنهى ' + userById(by).name + ' المهمة');
+  /* ما كان قبل البدء من طلبات وتنبيهات لا يبقى في سجل المهمة بعد انتهائها */
+  t.history = t.history.filter(h => h.kind !== 'req');
+  t.notes = t.notes.filter(n => n.kind !== 'req');
   acceptedSlots(t).forEach(a => notify(a.muhsenId, 'i-star', 'أُغلقت المهمة',
-    '«' + t.title + '» انتهت — تقييم النظام ' + t.rating.system + ' من ٥.', { n: 'rating' }));
-  notify(t.leaderId, 'i-star', 'تقييم مهمة',
-    '«' + t.title + '» — النظام ' + t.rating.system + ' · المشرف ' + t.rating.supervisor + ' · الحجاج ' + t.rating.pilgrims, { n: 'rating' });
+    '«' + t.title + '»', { n: 'rating' }));
+  notify(t.leaderId, 'i-star', 'أُغلقت المهمة',
+    '«' + t.title + '» — التقييم ' + AR(avgRating(t.rating)) + ' من ٥', { n: 'rating' });
 }
-function cancelTask(t, by, reason, excuse) {
-  t.status = 'cancelled'; t.cancelReason = reason;
-  if (excuse) t.cancelPhoto = attachExcuse(t.id, excuse, 'مرفق مبرر الإلغاء', by);
-  hist(t, 'ألغى ' + userById(by).name + ' المهمة — «' + reason + '»');
-  acceptedSlots(t).forEach(a => notify(a.muhsenId, 'i-xc', 'أُلغيت المهمة',
-    '«' + t.title + '» أُلغيت — ' + reason, { n: 'tasks' }));
-}
+const canTickSub = (t, id) => canDecide(t, id) && t.status === 'running';
 function toggleSub(t, s, by) {
+  if (!canTickSub(t, by)) return false;   /* المحسن يرى ولا يؤشّر */
   s.done = !s.done; s.at = s.done ? now() : null; s.by = s.done ? by : null;
   hist(t, (s.done ? 'أنجز ' : 'أعاد فتح ') + userById(by).name + ' «' + s.name + '»');
   if (s.done && !actsAsLeader(t, by)) notify(ownerOf(t), 'i-check', 'إنجاز مهمة فرعية',
@@ -2186,7 +2227,11 @@ function myRequests() {
   const out = [];
   S.tasks.forEach(t => {
     if (lockedForAssign(t) && t.status !== 'running') return;
-    t.assigned.forEach(a => { if (a.muhsenId === u.id && a.req === 'pending' && !a.removed) out.push({ kind: 'assign', t }); });
+    t.assigned.forEach(a => {
+      if (a.muhsenId !== u.id || a.req !== 'pending' || a.removed) return;
+      /* البديل يردّ على طلب استبدال لا على تسكين — ولكلٍّ مساره */
+      out.push({ kind: a.standin ? 'replace' : 'assign', t, slot: a });
+    });
     if (t.delegate && t.delegate.muhsenId === u.id && t.delegate.state === 'pending') out.push({ kind: 'delegate', t });
   });
   return out;
@@ -2239,24 +2284,24 @@ function autoTick() {
       t._f.wclose = 1;
     }
     if (t0 >= prepOpen(t) && !t._f.prep) {
-      acceptedSlots(t).forEach(a => notify(a.muhsenId, 'i-clock', 'فُتحت نافذة التحضير',
-        '«' + t.title + '» تبدأ ' + t12(t.start) + ' — أثبت حضورك.', { n: 'mhome' }));
-      notify(ownerOf(t), 'i-clock', 'فُتحت نافذة التحضير',
-        '«' + t.title + '» تبدأ ' + t12(t.start) + ' — أثبت حضورك.', { n: 'task', id: t.id });
+      acceptedSlots(t).forEach(a => notify(a.muhsenId, 'i-target', 'أثبت حضورك',
+        '«' + t.title + '»', { n: 'mhome' }));
+      notify(ownerOf(t), 'i-target', 'أثبت حضورك',
+        '«' + t.title + '»', { n: 'task', id: t.id });
       t._f.prep = 1;
     }
     /* قبل إغلاق التحضير بربع ساعة — وما زال ممكنًا */
     if (t0 >= prepDeadline(t) - 15 * MIN && t0 < prepDeadline(t) && !t._f.plast) {
       acceptedSlots(t).filter(a => !a.attendedAt).forEach(a =>
         notify(a.muhsenId, 'i-warn', 'ربع ساعة على إغلاق التحضير',
-          'أثبت حضورك في «' + t.title + '» قبل الإغلاق.', { n: 'mhome' }));
+          '«' + t.title + '»', { n: 'task', id: t.id }));
       t._f.plast = 1;
     }
     /* بعد الإغلاق: إخبار بما وقع لا مطالبة بما لا يُستطاع */
     if (t0 >= prepDeadline(t) && !t._f.pclose) {
       acceptedSlots(t).filter(a => !a.attendedAt).forEach(a =>
         notify(a.muhsenId, 'i-xc', 'أُغلق التحضير ولم تثبت حضورك',
-          '«' + t.title + '» — تُسجَّل ملاحظة وتؤثر في تقييمك.', { n: 'mhome' }));
+          '«' + t.title + '»', { n: 'task', id: t.id }));
       t._f.pclose = 1;
     }
     const pend = pendingSlots(t).length;
@@ -2669,6 +2714,7 @@ function screenTask() {
   const closed = ['done','cancelled'].includes(t.status);
   const running = t.status === 'running';
   const locked = lockedForAssign(t);
+  const open = key => !!(S.open && S.open[t.id + ':' + key]);
 
   /* المحسن في مهمة غير منجزة: السبب فقط بلا تفاصيل تشغيلية */
   if (!lead && bucket === 'undone') {
@@ -2680,68 +2726,76 @@ function screenTask() {
       '</div>' + tabs();
   }
 
-  let cta = '';
-  if (running) {
-    cta = act
-      ? '<button class="cta" data-a="end" data-id="' + t.id + '">' + icon('i-stop','s26') +
-        '<span class="t"><b>إنهاء المهمة</b><span>' + AR(doneSubs) + ' من ' + AR(t.subs.length) + ' مهمة فرعية منجزة</span></span></button>'
-      : '<div class="note g">' + icon('i-play','s16') + '<span>المهمة جارية — نفّذ المهام الفرعية.</span></div>';
-  } else if (!closed && act) {
-    const can = canStart(t, u.id);
-    cta = '<button class="cta ' + (can ? '' : 'off') + '" ' + (can ? 'data-a="start" data-id="' + t.id + '"' : 'disabled') + '>' +
+  /* زر البدء: باهت خارج نافذته أو قبل إثبات الحضور، وسببه مكتوب */
+  let startCta = '';
+  if (!closed && !running && act) {
+    const can = canStart(t, u.id), why = startWhy(t, u.id);
+    startCta = '<button class="cta ' + (can ? '' : 'off') + '" ' +
+      (can ? 'data-a="start" data-id="' + t.id + '"' : 'disabled') + '>' +
       icon('i-play','s26 f') + '<span class="t"><b>بدء المهمة</b><span>' +
-      (can ? 'يمكنك بدؤها الآن — وتبدأ تلقائيًا ' + t12(t.start) + ' على كل حال'
-           : 'يُفتح البدء قبل الموعد بساعتين — ' + untilTxt(earlyStartFrom(t))) + '</span></span></button>';
+      (can ? 'وتبدأ تلقائيًّا ' + t12(t.start) + ' على كل حال' : E(why)) + '</span></span></button>';
   }
+
+  /* قسم قابل للطيّ */
+  const fold = (key, title, sub2, body, ic) =>
+    '<div class="fold' + (open(key) ? ' on' : '') + '">' +
+      '<button class="fhead" data-a="fold" data-id="' + t.id + '" data-v="' + key + '">' +
+        icon(ic || 'i-list','s18') +
+        '<span class="sp"><b>' + title + '</b>' + (sub2 ? '<span>' + sub2 + '</span>' : '') + '</span>' +
+        icon('i-down','s16') + '</button>' +
+      (open(key) ? '<div class="fbody">' + body + '</div>' : '') + '</div>';
 
   return bar('تفاصيل المهمة', { back: 1,
     right: lead ? '<button data-a="go" data-n="timeline" data-id="' + t.id + '" aria-label="سجل الإجراءات">' + icon('i-hist') + '</button>'
                 : '<button data-a="go" data-n="profile" class="avbtn">' + avat(u, 'sm') + '</button>' }) +
     '<div class="view">' + ground() +
     svcCard(t) + metaCard(t) +
-    guideChip(t, 1) +
 
     (t.autoStarted && lead ? '<div class="note r">' + icon('i-warn','s16') +
-      '<span><b>بدأها النظام تلقائيًا</b><br>حان وقتها ولم تبدأها. التسكين لم يعد متاحًا — يمكنك إغلاقها فقط، ويُحتسب ذلك في تقييمك.</span></div>' : '') +
+      '<span><b>بدأها النظام تلقائيًّا</b><br>حان وقتها ولم تبدأها — ويُحتسب ذلك في تقييمك.</span></div>' : '') +
     (watch ? '<div class="note b">' + icon('i-shield','s16') +
       '<span><b>الليدر على هذه المهمة: ' + E(userById(t.delegate.muhsenId).name) + '</b><br>' +
-      'أسندتَ صفتك إليه — تتابع التقدّم ولا تتخذ قرارات. يمكنك سحب الإسناد أدناه.</span></div>' : '') +
+      'أسندتَ صفتك إليه — تتابع التقدّم ولا تتخذ قرارات.</span></div>' : '') +
     (deleg ? '<div class="note b">' + icon('i-shield','s16') +
       '<span>تعمل بصلاحية ليدر لهذه المهمة فقط. التسكين والإسناد غير متاحين لك.</span></div>' : '') +
-    (t.status === 'cancelled' ? '<div class="note r">' + icon('i-xc','s16') +
-      '<span>أُلغيت المهمة — ' + E(t.cancelReason || '') + '</span></div>' : '') +
 
     (!closed ? attendCard(t, u, lead) : '') +
-    cta +
+    startCta +
+
+    guideChip(t, 1) +
+
+    '<div class="lbl">المهام الفرعية<small>' + AR(doneSubs) + ' من ' + AR(t.subs.length) + '</small></div>' +
+    (!act && !closed ? '<div class="note b">' + icon('i-info','s16') +
+      '<span>الليدر هو من يؤشّر على الإنجاز — ولك توثيق كل خطوة بالكاميرا.</span></div>' : '') +
+    '<div class="c">' + t.subs.map((s, i2) => subRow(t, s, i2, running)).join('') + '</div>' +
 
     (t.rating ? '<button class="c gold" data-a="go" data-n="taskrating" data-id="' + t.id + '" style="width:100%;text-align:right">' +
       '<div class="row"><b class="sm">تقييم المهمة</b>' + pill('التفاصيل', 'gold') + '</div>' +
       '<div class="fl" style="margin-top:10px;justify-content:center">' + stars(avgRating(t.rating), 'lg') + '</div></button>' : '') +
 
-    /* ===== التسكين: يراه الليدر والكنترول فقط ===== */
-    (lead ? '<div class="lbl">المحسنون على المهمة<small>' + AR(acc.length) + ' فعليًّا · ' +
-        AR(att) + ' أثبتوا حضورهم</small></div>' +
-      (allSlots(t).length ? allSlots(t).map(a2 => slotCard(t, a2, act && !deleg)).join('')
-        : '<div class="c center dim sm" style="padding:20px">لا يوجد أحد على المهمة</div>') +
+    (lead ? fold('team', 'المحسنون على المهمة',
+        AR(acc.length) + ' فعليًّا · ' + AR(att) + ' أثبتوا حضورهم',
+        (allSlots(t).length ? allSlots(t).map(a2 => slotCard(t, a2, act && !deleg)).join('')
+          : '<div class="c center dim sm" style="padding:20px">لا يوجد أحد على المهمة</div>'),
+      'i-users') : '') +
 
-      /* نافذة الطلبات */
-      (locked ? '<div class="note a">' + icon('i-info','s16') +
+    /* نافذة الطلبات وطلب الدعم: ظاهران دائمًا للّيدر — لا يُطويان */
+    (lead ? (locked
+      ? '<div class="note a">' + icon('i-info','s16') +
         '<span>' + (running || closed ? 'المهمة بدأت — التسكين مقفل.' : 'حان وقت المهمة — التسكين مقفل.') + '</span></div>'
-        : act ? (reqWindowOpen(t)
-          ? '<div class="note b">' + icon('i-clock','s16') +
-            '<span>الطلبات مفتوحة — تُغلق ' + untilTxt(reqCloseAt(t)) + ' (قبل المهمة بـ ' + AR(REQ_CLOSE_H) + ' ساعة). وكل طلب مهلته ' +
-            AR(REQ_TTL_H) + ' ساعات.</span></div>' +
-            '<button class="btn l" data-a="supportsheet" data-id="' + t.id + '">' +
-              icon('i-send','s16') + 'طلب دعم من الكنترول</button>'
-          : '<div class="note a">' + icon('i-clock','s16') + '<span>' + E(reqWindowWhy(t)) + '</span></div>' +
-            (now() >= reqCloseAt(t) ? '<button class="btn l" data-a="supportsheet" data-id="' + t.id + '">' +
-              icon('i-send','s16') + 'طلب دعم من الكنترول</button>' : '')) : '') +
-
+      : act ? (reqWindowOpen(t)
+        ? '<div class="note b">' + icon('i-clock','s16') +
+          '<span>الطلبات مفتوحة — تُغلق ' + untilTxt(reqCloseAt(t)) + '. ومهلة كل طلب ' + AR(REQ_TTL_H) + ' ساعات.</span></div>'
+        : '<div class="note a">' + icon('i-clock','s16') + '<span>' + E(reqWindowWhy(t)) + '</span></div>') : '') +
+      (act && !closed ? '<button class="btn l" data-a="supportsheet" data-id="' + t.id + '">' +
+        icon('i-send','s16') + 'طلب دعم من الكنترول</button>' : '') +
       (taskSupport(t.id).length ? '<div class="lbl">طلبات الدعم<small>' +
         AR(taskSupport(t.id).length) + '</small></div>' +
         taskSupport(t.id).map(s2 => supportCard(s2)).join('') : '') : '') +
 
-    /* المحسن: طلب انسحاب */
+    (lead && hasDocs(t)
+      ? fold('docs', 'مستندات المهمة', 'عقد النقل وعقد السكن', docButtons(t), 'i-file') : '') +
+
     (!lead && !closed && slotOf(t, u.id) && slotOf(t, u.id).req === 'accepted'
       ? (function () {
           const w = myWithdraw(t, u.id);
@@ -2753,11 +2807,10 @@ function screenTask() {
             icon('i-out','s16') + 'طلب الانسحاب من المهمة</button>';
         })() : '') +
 
-    (lead && hasDocs(t) ? '<div class="lbl">مستندات المهمة<small>عقود الاستقبال — للّيدر</small></div>' + docButtons(t) : '') +
     taskPhotoSection(t, lead) +
-    /* المحسن يرى من معه على المهمة ووسيلة الاتصال به — لا في «غير المنجزة» */
+
     (!lead && bucket !== 'undone' && acc.length > 1
-      ? '<div class="lbl">معك على المهمة<small>' + AR(acc.length - 1) + '</small></div>' +
+      ? fold('mates', 'معك على المهمة', AR(acc.length - 1) + ' زميلًا',
         acc.filter(a2 => a2.muhsenId !== u.id).map(a2 => {
           const mm = userById(a2.muhsenId); if (!mm) return '';
           const ph = String(mm.phone || '').replace(/[^0-9]/g, '');
@@ -2769,32 +2822,29 @@ function screenTask() {
               '<a class="btn l sm" href="tel:' + ph + '">' + icon('i-phone','s16') + 'اتصال</a>' +
               '<a class="btn l sm" href="https://wa.me/' + ph + '" target="_blank" rel="noopener">' +
                 icon('i-send','s16') + 'واتساب</a></div>' : '') + '</div>';
-        }).join('') : '') +
-
-    '<div class="lbl">المهام الفرعية<small>' + AR(doneSubs) + ' من ' + AR(t.subs.length) + '</small></div>' +
-    '<div class="c">' + t.subs.map((s, i) => subRow(t, s, i, running)).join('') + '</div>' +
-
-    (running && !act ? (function () {
-      const nx = t.subs.find(s => !s.done);
-      return nx ? '<button class="cta" data-a="sub" data-id="' + t.id + '" data-s="' + nx.id + '">' + icon('i-checkc','s26') +
-        '<span class="t"><b>تسجيل إنجاز «' + E(nx.name) + '»</b><span>الفرعية ' + AR(t.subs.indexOf(nx) + 1) + ' من ' + AR(t.subs.length) + '</span></span></button>'
-        : '<div class="note g">' + icon('i-checkc','s16') + '<span>أنجزت كل المهام الفرعية. الإغلاق من صلاحية الليدر.</span></div>';
-    })() : '') +
+        }).join(''), 'i-users') : '') +
 
     (lead && !deleg && !closed ? delegCard(t, isCo, !locked && act) : '') +
 
-    (t.notes.length && lead ? '<div class="lbl">ملاحظات المهمة<small>تُحتسب في التقييم</small></div>' +
+    (t.notes.length && lead ? fold('notes', 'ملاحظات المهمة', AR(t.notes.length) + ' ملاحظة',
       t.notes.map(n => '<div class="note ' + (n.kind === 'auto' ? 'a' : 'b') + '">' +
         icon(n.kind === 'auto' ? 'i-info' : 'i-edit','s16') +
-        '<span>' + E(n.text) + '<br><span class="tiny dim2">' + t12(n.at) + '</span></span></div>').join('') : '') +
+        '<span>' + E(n.text) + '<br><span class="tiny dim2">' + t12(n.at) + '</span></span></div>').join(''),
+      'i-edit') : '') +
 
     (!closed ? '<div class="grid2">' +
       '<button class="btn l sm" data-a="note" data-id="' + t.id + '">' + icon('i-edit','s16') + 'ملاحظة</button>' +
       '<button class="btn l sm" data-a="report" data-id="' + t.id + '">' + icon('i-flag','s16') + 'تقرير</button></div>' : '') +
-    (act && !closed && !running ? '<button class="btn d" data-a="cancel" data-id="' + t.id + '">' +
-      icon('i-cancel','s16') + 'إلغاء المهمة</button>' : '') +
+
+    (running ? (act
+      ? '<div class="endzone"><button class="cta stop" data-a="end" data-id="' + t.id + '">' +
+        icon('i-stop','s26') + '<span class="t"><b>إنهاء المهمة</b><span>' +
+        AR(doneSubs) + ' من ' + AR(t.subs.length) + ' مهمة فرعية منجزة</span></span></button></div>'
+      : '<div class="note g">' + icon('i-play','s16') +
+        '<span>المهمة جارية — الإنهاء من صلاحية الليدر.</span></div>') : '') +
     '</div>' + tabs();
 }
+
 
 /* بطاقة الحضور */
 function attendCard(t, u, lead) {
@@ -2805,7 +2855,13 @@ function attendCard(t, u, lead) {
   if (mine) return '<div class="note g">' + icon('i-checkc','s16') +
     '<span>حضورك مُثبَت ' + t12(mine) + '</span></div>';
   if (now() < prepOpen(t)) return '<div class="note a">' + icon('i-clock','s16') +
-    '<span>يفتح التحضير من بداية يوم المهمة — ' + hijri(t.start) + '</span></div>';
+    '<span>يُفتح التحضير قبل المهمة بساعتين — ' + untilTxt(prepOpen(t)) + '</span></div>';
+  /* أُغلقت النافذة: الزر باهت ومعطّل، والسبب مكتوب */
+  if (now() >= prepDeadline(t)) return '<div class="c">' +
+    '<div class="note r">' + icon('i-xc','s16') +
+      '<span><b>أُغلق التحضير</b><br>يُغلق قبل المهمة بساعة ونصف — ولم تثبت حضورك.</span></div>' +
+    '<button class="btn p sm off" style="margin-top:10px" disabled>' + icon('i-target','s16') +
+      'إثبات الحضور</button></div>';
   const late = now() >= t.start;
   const r = hms(Math.abs(t.start - now()));
   return '<div class="c gold"><div class="center">' +
@@ -2829,12 +2885,13 @@ function subRow(t, s, i, running) {
   const nextIdx = t.subs.findIndex(x => !x.done);
   const isNext = i === nextIdx && running;
   const shots = photosFor(t.id, s.id).length;
+  const canTick = canTickSub(t, S.session.id);   /* المحسن يرى ولا يؤشّر */
   return '<div class="subrow">' +
-    '<button class="sub ' + (isNext ? 'next' : '') + '" ' +
-      (running ? 'data-a="sub" data-id="' + t.id + '" data-s="' + s.id + '"' : 'disabled') + '>' +
+    '<button class="sub ' + (isNext && canTick ? 'next' : '') + (canTick ? '' : ' ro') + '" ' +
+      (canTick ? 'data-a="sub" data-id="' + t.id + '" data-s="' + s.id + '"' : 'disabled') + '>' +
       '<span class="tick ' + (s.done ? 'on' : '') + '">' + (s.done ? icon('i-check','s14') : '') + '</span>' +
       '<span class="t ' + (s.done ? '' : isNext ? 'b' : 'dim') + '">' + E(s.name) + '</span>' +
-      (s.done ? '<span class="tiny dim2">' + t12(s.at) + '</span>' : isNext ? pill('التالية','wait') : '') +
+      (s.done ? '<span class="tiny dim2">' + t12(s.at) + '</span>' : isNext && canTick ? pill('التالية','wait') : '') +
     '</button>' +
     (shots ? '<button class="sshot has" data-a="viewphoto" data-id="' + photosFor(t.id, s.id)[0].id + '" ' +
       'aria-label="إثباتات">' + icon('i-camera','s14') + '<i>' + AR(shots) + '</i></button>' : '') +
@@ -2911,6 +2968,32 @@ function screenTimeline() {
 }
 
 /* ============================ صناديق الوضع الآن ============================ */
+/* المهمة الجارية تتصدّر الرئيسية ببطاقتها كاملة */
+function runningCard() {
+  const t = myTasks().find(x => x.status === 'running');
+  if (!t) return '';
+  const done = t.subs.filter(s => s.done).length;
+  const ui = kindUI(t), me_ = me();
+  const mine = actsAsLeader(t, me_.id) ? t.leaderAttendedAt : ((slotOf(t, me_.id) || {}).attendedAt);
+  const late = now() > t.end ? Math.round((now() - t.end) / MIN) : 0;
+  return '<div class="lbl">المهمة الجارية الآن<small>' + t12(t.start) + ' — ' + t12(t.end) + '</small></div>' +
+    '<div class="c live" style="--kc:' + ui.c + '">' +
+      '<div class="fl" style="align-items:flex-start;gap:11px">' +
+        '<span class="tthumb bg-' + t.photo + '"><span class="kb">' + icon(ui.i,'s14') + '</span></span>' +
+        '<div class="sp"><div class="fl" style="align-items:flex-start;gap:8px">' +
+          '<b style="font-size:15px;line-height:1.5" class="sp">' + E(t.title) + '</b>' +
+          '<span class="bpill live">' + icon('i-play','s14') + 'جارية</span></div>' +
+          '<div class="tiny dim2" style="margin-top:4px">' + E(t.place) + '</div>' +
+          '<div class="fl" style="gap:6px;margin-top:7px;flex-wrap:wrap">' +
+            pill(AR(done) + ' من ' + AR(t.subs.length) + ' منجزة', done === t.subs.length ? 'live' : 'wait') +
+            (mine ? pill('حضورك مُثبَت', 'live') : pill('لم تثبت حضورك', 'no')) +
+            (late ? pill('تجاوزت ' + AR(late) + ' د', 'no') : '') + '</div></div></div>' +
+      '<div class="meter" style="margin-top:11px"><i style="width:' +
+        Math.round(done / Math.max(1, t.subs.length) * 100) + '%"></i></div>' +
+      '<button class="btn p sm" style="margin-top:11px" data-a="go" data-n="task" data-id="' + t.id + '">' +
+        icon('i-tasks','s16') + 'فتح المهمة الجارية</button></div>';
+}
+
 function statusBoxes() {
   const L = isLeader(), ts = myTasks();
   const running = ts.filter(t => t.status === 'running');
@@ -2961,6 +3044,8 @@ function screenLeaderHome() {
       '<div class="sm dim">' + E(org.ar) + ' · ' + E(org.country) + '</div>' +
       (rt.n ? '<div style="margin-top:6px">' + stars(rt.avg) + '</div>' : '') + '</div></div></div>' +
 
+    runningCard() +
+
     '<div class="banner bgw-haram"><span class="bt">' +
       '<b>' + E(dayName(now())) + ' · ' + hijri(now()) + '</b><span>' +
       AR(ts.filter(t => dayStart(t.start) === dayStart(now())).length) + ' مهمة اليوم</span></span></div>' +
@@ -2995,12 +3080,14 @@ function screenMuhsenHome() {
       '<div class="sm dim">' + E(u.specialty) + ' · ' + E(teamLine) + '</div>' +
       (rt.n ? '<div style="margin-top:6px">' + stars(rt.avg) + '</div>' : '') + '</div></div></div>' +
 
+    runningCard() +
     statusBoxes() +
 
+    (!t || t.status === 'running' ? '' : '') +
     (!t ? '<div class="c center" style="padding:30px 16px">' +
         '<div style="color:var(--dim2);margin-bottom:8px;display:flex;justify-content:center">' + icon('i-tasks','s26') + '</div>' +
         '<b>لا توجد مهمة حالية</b><div class="sm dim" style="margin-top:4px">ستظهر مهمتك هنا فور قبولك طلب تسكين.</div></div>'
-      : muhsenTaskCard(t, u)) +
+      : t.status === 'running' ? '' : muhsenTaskCard(t, u)) +
 
     (function () {
       const live = activeTasks(u.id).filter(x => !t || x.id !== t.id);
@@ -3054,9 +3141,14 @@ function screenRequests() {
 
 function reqActionCard(r) {
   const t = r.t;
-  if (r.kind === 'assign') {
-    const a = t.assigned.find(x => x.muhsenId === S.session.id && x.req === 'pending');
-    return '<div class="c gold"><div class="row"><b style="font-size:14.5px">طلب تسكين</b>' + pill('يحتاج ردًا', 'wait') + '</div>' +
+  if (r.kind === 'assign' || r.kind === 'replace') {
+    const a = r.slot || t.assigned.find(x => x.muhsenId === S.session.id && x.req === 'pending');
+    const rep = r.kind === 'replace';
+    const forU = rep && a ? userById(a.forId) : null;
+    return '<div class="c gold"><div class="row"><b style="font-size:14.5px">' +
+      (rep ? 'طلب حلول مكان زميل' : 'طلب تسكين') + '</b>' + pill('يحتاج ردًا', 'wait') + '</div>' +
+      (rep && forU ? '<div class="note b" style="margin-top:9px">' + icon('i-swap','s16') +
+        '<span>تحلّ مكان <b>' + E(forU.name) + '</b> — ولا يخرج من المهمة إلا بقبولك.</span></div>' : '') +
       '<div class="fl" style="gap:10px;background:#F8F6F0;border-radius:14px;padding:12px;margin:11px 0">' +
         '<span class="thumb bg-' + t.photo + '" style="width:52px;height:52px"></span>' +
         '<span class="sp"><b class="sm" style="display:block">' + E(t.title) + '</b>' +
@@ -3065,8 +3157,12 @@ function reqActionCard(r) {
       (a && a.reqNote ? '<div class="note a">' + icon('i-edit','s16') + '<span>' + E(a.reqNote) + '</span></div>' : '') +
       '<div class="fl tiny dim2" style="margin:10px 0">' + avat(userById(t.leaderId), 'sm') +
         '<span>من ' + E(userById(t.leaderId).name) + ' · ' + (a ? ago(a.reqAt) : '') + '</span></div>' +
-      '<div class="grid2"><button class="btn d sm" data-a="resp" data-id="' + t.id + '" data-v="0">رفض</button>' +
-      '<button class="btn p sm" data-a="resp" data-id="' + t.id + '" data-v="1">قبول</button></div></div>';
+      (a ? '<div class="strip a">' + reqCountdown(t, a) + '</div>' : '') +
+      '<div class="grid2" style="margin-top:10px">' +
+      '<button class="btn d sm" data-a="' + (rep ? 'rrepl' : 'resp') + '" data-id="' + t.id + '" data-v="0">' +
+        (rep ? 'اعتذار' : 'رفض') + '</button>' +
+      '<button class="btn p sm" data-a="' + (rep ? 'rrepl' : 'resp') + '" data-id="' + t.id + '" data-v="1">قبول</button>' +
+      '</div></div>';
   }
   const d = t.delegate;
   return '<div class="c gold"><div class="row"><b style="font-size:14.5px">إسناد صلاحية القيادة</b>' + pill('يحتاج ردًا', 'wait') + '</div>' +
@@ -3603,6 +3699,9 @@ function screenAdmin() {
           '<div class="tiny" style="opacity:.75;margin:4px 0 9px">' + E(L.name) + ' · ' + E(t.kt) + ' · ' + E(orgOf(t).type) +
             ' · ' + hijri(t.start) + ' ' + t12(t.start) + ' · ' + AR(acceptedSlots(t).length) + ' محسن</div>' +
           '<div class="grid3">' +
+            '<button class="btn l sm" data-a="shift" data-id="' + t.id + '" data-v="-15">‏−١٥ د</button>' +
+            '<button class="btn l sm" data-a="shift" data-id="' + t.id + '" data-v="15">+١٥ د</button></div>' +
+          '<div class="grid3" style="margin-top:6px">' +
             '<button class="btn l sm" data-a="shift" data-id="' + t.id + '" data-v="-60">‏−ساعة</button>' +
             '<button class="btn l sm" data-a="edittask" data-id="' + t.id + '">تعديل</button>' +
             '<button class="btn l sm" data-a="shift" data-id="' + t.id + '" data-v="60">+ساعة</button></div>' +
@@ -3789,6 +3888,45 @@ function addTaskSheet() {
 }
 
 
+/* ---------- تأكيد إنهاء المهمة ---------- */
+function endSheet(t) {
+  const left = t.subs.filter(s => !s.done);
+  const done = t.subs.length - left.length;
+  const late = t.end < now() ? Math.round((now() - t.end) / MIN) : 0;
+  return '<div class="grip"></div><h3>إنهاء المهمة</h3>' +
+    '<div class="tiny dim2" style="margin-bottom:10px">' + E(t.title) + ' · ' + hijri(t.start) + '</div>' +
+    '<div class="c" style="padding:12px"><div class="row"><b class="sm">المهام الفرعية</b>' +
+      pill(AR(done) + ' من ' + AR(t.subs.length), left.length ? 'wait' : 'live') + '</div>' +
+      (late ? '<div class="row tiny dim" style="margin-top:7px"><span>تجاوزت وقتها</span>' +
+        '<b>' + AR(late) + ' دقيقة</b></div>' : '') + '</div>' +
+
+    (left.length
+      ? '<div class="note r" style="margin-top:11px">' + icon('i-warn','s16') +
+        '<span><b>تحذير: ' + AR(left.length) + ' مهمة فرعية لم تُنجز</b><br>' +
+        left.slice(0, 3).map(s => '· ' + E(s.name)).join('<br>') +
+        (left.length > 3 ? '<br>· وغيرها' : '') +
+        '<br>ستُسجَّل غير منجزة في ملاحظات المهمة وتؤثر في التقييم.</span></div>'
+      : '<div class="note g" style="margin-top:11px">' + icon('i-checkc','s16') +
+        '<span>كل المهام الفرعية منجزة.</span></div>') +
+
+    '<div class="grid2" style="margin-top:14px">' +
+      '<button class="btn g" data-a="close">تراجع</button>' +
+      '<button class="btn ' + (left.length ? 'd' : 'p') + '" data-a="doend" data-id="' + t.id + '">' +
+        (left.length ? 'إنهاء رغم النقص' : 'إنهاء المهمة') + '</button></div>';
+}
+
+/* ---------- اكتملت الفرعية: إغلاق بموافقة واحدة ---------- */
+function allDoneSheet(t) {
+  return '<div class="grip"></div>' +
+    '<div class="center" style="padding:4px 0 2px">' +
+      '<span class="askic">' + icon('i-checkc','s26') + '</span>' +
+      '<h3 style="margin:12px 0 4px">اكتملت المهام الفرعية</h3>' +
+      '<div class="sm dim" style="line-height:1.9">' + E(t.title) + '<br>' +
+      'أُنجزت ' + AR(t.subs.length) + ' مهمة فرعية كلها — تُغلق المهمة الآن.</div></div>' +
+    '<button class="btn p" style="margin-top:14px" data-a="doend" data-id="' + t.id + '">' +
+      icon('i-checkc','s16') + 'موافق — إغلاق المهمة</button>';
+}
+
 /* ============================ مركز الطلبات — للدورين ============================ */
 const REQST = { pending:['بانتظار الرد','wait'], accepted:['مقبول','live'],
   rejected:['مرفوض','no'], withdrawn:['مسحوب','grey'] };
@@ -3829,13 +3967,18 @@ function reqCardFull(r, actionable) {
     (r.respNote ? '<div class="note ' + (r.state === 'rejected' ? 'r' : 'g') + '" style="margin-top:8px">' +
       icon('i-info','s16') + '<span>رد المستقبِل: ' + E(r.respNote) + '</span></div>' : '') +
     (r.respPhoto ? excuseChip(r.respPhoto) : '') +
-    (urgent ? '<div class="strip r">' + icon('i-warn','s16') + '<span>بقي أقل من ٣ ساعات على المهمة</span></div>' : '') +
+    (urgent ? '<div class="strip r">' + icon('i-warn','s16') +
+      '<span>اقترب إغلاق الطلبات على هذه المهمة</span></div>' : '') +
 
     (actionable && r.state === 'pending' && t ? (
       r.kind === 'انسحاب'
         ? '<div class="grid2" style="margin-top:10px">' +
           '<button class="btn d sm" data-a="wdno" data-id="' + t.id + '" data-u="' + r.from + '">رفض</button>' +
           '<button class="btn p sm" data-a="wdok" data-id="' + t.id + '" data-u="' + r.from + '">اعتماد الانسحاب</button></div>'
+        : r.kind === 'استبدال'
+        ? '<div class="grid2" style="margin-top:10px">' +
+          '<button class="btn d sm" data-a="rrepl" data-id="' + t.id + '" data-v="0">اعتذار</button>' +
+          '<button class="btn p sm" data-a="rrepl" data-id="' + t.id + '" data-v="1">قبول</button></div>'
         : r.kind === 'تسكين'
         ? '<div class="grid2" style="margin-top:10px">' +
           '<button class="btn d sm" data-a="resp" data-id="' + t.id + '" data-v="0">رفض</button>' +
@@ -5547,6 +5690,24 @@ function slotState(a) {
 }
 /* من يُحتسب فعلًا على المهمة */
 const onTask = a => !a.out && a.req === 'accepted';
+/* مهلة الطلب المعلّق: أربع ساعات أو إغلاق النافذة — أيّهما أقرب */
+const reqDeadline = (t, a) => Math.min((a.reqAt || now()) + REQ_TTL_H * HR, reqCloseAt(t));
+function replCountdown(t, a) {
+  const dl = (a.repl && a.repl.deadline) || 0;
+  const left = dl - now();
+  if (!dl) return '';
+  if (left <= 0) return 'انقضت المهلة.';
+  const h = Math.floor(left / HR), m = Math.floor((left % HR) / MIN);
+  return 'يتبقّى ' + (h ? AR(h) + ' س ' : '') + AR(m) + ' د.';
+}
+function reqCountdown(t, a) {
+  if (a.req !== 'pending') return '';
+  const left = reqDeadline(t, a) - now();
+  if (left <= 0) return '<span class="cdown out">انقضت المهلة</span>';
+  const h = Math.floor(left / HR), m = Math.floor((left % HR) / MIN);
+  return '<span class="cdown' + (left < HR ? ' hot' : '') + '">' + icon('i-clock','s14') +
+    'يتبقّى ' + (h ? AR(h) + ' س ' : '') + AR(m) + ' د للرد</span>';
+}
 const slotLabel = a => {
   const s = slotState(a), d = SLOT_STATE[s] || ['—', 'grey'];
   if (s === 'replaced' && a.out && a.out.byName) return ['مستبدل بـ ' + a.out.byName, 'grey'];
@@ -5561,11 +5722,16 @@ const EXCLUDE_KINDS = {
 
 /* طلب استبدال: لا يخرج الأول حتى يقبل الثاني */
 function requestReplace(t, outId, inId, why) {
+  if (lockedForAssign(t) || !reqWindowOpen(t)) return false;   /* لا تسكين بعد القفل */
   const a = t.assigned.find(x => x.muhsenId === outId && onTask(x));
-  if (!a || a.repl) return false;
+  /* يُمنع طلب ثانٍ ما دام الأول معلّقًا فقط — أما المرفوض والمنتهي فيُعاد بعدهما */
+  if (!a || (a.repl && a.repl.state === 'pending')) return false;
+  a.tries = (a.tries || 0) + 1;
   const inU = userById(inId), outU = userById(outId);
   if (!inU || !outU) return false;
-  a.repl = { toId: inId, state: 'pending', at: now(), why: why || '' };
+  /* أي بديل سابق اعتذر أو انقضت مهلته يُنحّى من القائمة حتى لا تتكدّس الصفوف */
+  t.assigned = t.assigned.filter(x => !(x.standin && x.forId === outId && x.req !== 'accepted'));
+  a.repl = { toId: inId, state: 'pending', at: now(), why: why || '', deadline: now() + REQ_TTL_H * HR };
   /* البديل يدخل بحالة «بانتظار ردّه» ولا يُحتسب إلا بعد القبول */
   t.assigned.push({
     muhsenId: inId, req: 'pending', standin: true, forId: outId,
@@ -5573,7 +5739,7 @@ function requestReplace(t, outId, inId, why) {
     attendedAt: null, farKm: 0
   });
   addReq('استبدال', t.leaderId, inId, t.id, 'بديلًا عن ' + outU.name + (why ? ' — ' + why : ''));
-  hist(t, 'طلب استبدال ' + outU.name + ' بـ ' + inU.name + (why ? ' — «' + why + '»' : ''));
+  histReq(t, 'طلب استبدال ' + outU.name + ' بـ ' + inU.name + (why ? ' — «' + why + '»' : ''));
   notify(inId, 'i-swap', 'طلب حلول مكان زميل',
     'يُطلب حلولك مكان ' + outU.name + ' في «' + t.title + '».', { n: 'requests' });
   notify(outId, 'i-info', 'طلب استبدالك',
@@ -5615,6 +5781,7 @@ function respondReplace(t, inId, ok, note_) {
 
 /* استبعاد لعدم الحاجة — بإقرار مسؤولية */
 function excludeNoNeed(t, muhsenId, why) {
+  if (lockedForAssign(t) || !reqWindowOpen(t)) return false;
   const a = t.assigned.find(x => x.muhsenId === muhsenId && onTask(x));
   if (!a) return false;
   a.out = { kind: 'excluded', why: why || 'عدم الحاجة', by: S.session.id, at: now(), owned: true };
@@ -5645,11 +5812,18 @@ function expireRequests(t) {
     a.respNote = 'انتهت مهلة الرد (' + AR(REQ_TTL_H) + ' ساعات)';
     if (a.standin) {
       const src = t.assigned.find(x => x.muhsenId === a.forId && x.repl && x.repl.state === 'pending');
-      if (src) { src.repl.state = 'expired'; src.repl.respAt = now(); }
+      if (src) {
+        src.repl.state = 'expired'; src.repl.respAt = now();
+        /* الأول يبقى على المهمة كما كان — ولم يتغيّر شيء في حالته */
+        const on = userById(src.muhsenId);
+        hist(t, 'قُدّم طلب استبدال ' + (on ? on.name : '') + ' ولم يُرد عليه — بقي على المهمة');
+        notify(t.leaderId, 'i-clock', 'انتهت مهلة الاستبدال',
+          '«' + t.title + '» — يمكنك طلب بديل آخر.', { n: 'task', id: t.id });
+      }
     }
     closeReq(t.id, a.muhsenId, a.standin ? 'استبدال' : 'تسكين', 'expired', a.respNote);
     const nm = (userById(a.muhsenId) || {}).name || '';
-    hist(t, 'انتهت مهلة طلب ' + nm + ' بلا رد');
+    histReq(t, 'انتهت مهلة طلب ' + nm + ' بلا رد');
     notify(t.leaderId, 'i-clock', 'انتهت مهلة طلب',
       'لم يردّ ' + nm + ' على «' + t.title + '» خلال ' + AR(REQ_TTL_H) + ' ساعات.', { n: 'task', id: t.id });
     notify(a.muhsenId, 'i-clock', 'انتهت مهلة طلبك',
@@ -5717,9 +5891,12 @@ function slotCard(t, a, canAct) {
   return '<div class="c slot s-' + st + '">' +
     '<div class="fl">' + avat(m) +
       '<span class="nm sp"><b>' + E(m.name) + '</b><span>' + E(m.code) + ' · ' + E(m.specialty) +
-        (a.bySupport ? ' · دعم من الكنترول' : a.standin ? ' · بديل' : '') + '</span></span>' +
+        (a.bySupport ? ' · دعم من الكنترول'
+          : a.standin ? ' · بديل عن ' + E(((userById(a.forId) || {}).name || '').split(' ')[0]) : '') +
+        '</span></span>' +
       pill(lab[0], lab[1]) + '</div>' +
 
+    (a.req === 'pending' ? '<div class="strip a" style="margin-top:9px">' + reqCountdown(t, a) + '</div>' : '') +
     (a.attendedAt ? '<div class="strip a" style="margin-top:9px">' + icon('i-check','s16') +
       '<span>أثبت حضوره ' + t12(a.attendedAt) + '</span></div>' : '') +
     (a.out ? '<div class="note ' + (a.out.kind === 'excluded' ? 'r' : 'a') + '" style="margin-top:9px">' +
@@ -5727,9 +5904,13 @@ function slotCard(t, a, canAct) {
       (a.out.kind === 'replaced' ? 'استُبدل بـ ' + E(a.out.byName || '') : SLOT_STATE[a.out.kind][0]) +
       ' — ' + E(a.out.why) + '</span></div>' : '') +
     (a.repl && a.repl.state === 'pending' ? '<div class="note a" style="margin-top:9px">' + icon('i-swap','s16') +
-      '<span>بانتظار قبول ' + E((userById(a.repl.toId) || {}).name) + ' — يبقى على المهمة حتى ذلك</span></div>' : '') +
+      '<span><b>بانتظار قبول ' + E((userById(a.repl.toId) || {}).name) + '</b><br>' +
+      'يبقى على المهمة حتى يقبل البديل. ' + E(replCountdown(t, a)) + '</span></div>' : '') +
     (a.repl && a.repl.state === 'rejected' ? '<div class="note r" style="margin-top:9px">' + icon('i-xc','s16') +
-      '<span>اعتذر البديل — بقي على المهمة' + (a.repl.respNote ? ' · ' + E(a.repl.respNote) : '') + '</span></div>' : '') +
+      '<span>اعتذر ' + E((userById(a.repl.toId) || {}).name || 'البديل') + ' — بقي على المهمة' +
+      (a.repl.respNote ? ' · ' + E(a.repl.respNote) : '') + '. يمكنك طلب بديل آخر.</span></div>' : '') +
+    (a.repl && a.repl.state === 'expired' ? '<div class="note a" style="margin-top:9px">' + icon('i-clock','s16') +
+      '<span>لم يُرد على طلب الاستبدال خلال المهلة — بقي على المهمة، ويمكنك طلب بديل آخر.</span></div>' : '') +
     (a.respNote && a.req === 'rejected' ? '<div class="note r" style="margin-top:9px">' + icon('i-info','s16') +
       '<span>' + E(a.respNote) + '</span></div>' : '') +
     (a.wd && a.wd.state === 'pending' ? '<div class="note a" style="margin-top:9px">' + icon('i-out','s16') +
@@ -5867,6 +6048,13 @@ function render() {
   if (S.toast) html += '<div class="toast">' + icon(S.toast.kind === 'r' ? 'i-warn' : 'i-checkc', 's18') +
     '<span class="sp">' + E(S.toast.text) + '</span></div>';
 
+  /* ما يكتبه المستخدم في ورقة مفتوحة لا يضيع عند إعادة الرسم */
+  const typed = {};
+  try {
+    el.querySelectorAll('.sheet input, .sheet textarea, .sheet select').forEach(x => {
+      if (x.id) typed[x.id] = x.value;
+    });
+  } catch (e) {}
   const key = n + ':' + (S.route.id || '');
   const sameView = S._viewKey === key;
   const prev = el.querySelector('.view');
@@ -5879,6 +6067,12 @@ function render() {
   const kp = el.querySelector('.kpicker');
   if (kp) { const on = kp.querySelector('button.on');
     if (on) kp.scrollLeft = on.offsetLeft - (kp.clientWidth - on.offsetWidth) / 2; }
+  try {
+    Object.keys(typed).forEach(k2 => {
+      const x = document.getElementById(k2);
+      if (x && x.value !== typed[k2]) x.value = typed[k2];
+    });
+  } catch (e) {}
   const es = document.getElementById("envst");
   if (es) es.textContent = envStampNow();
   centerActiveTab();
@@ -6007,6 +6201,8 @@ document.addEventListener('click', ev => {
     case 'close': S.sheet = null; break;
     case 'dismiss': S.push = null; break;
     case 'seg': S.tab[b.dataset.k] = v; break;
+    case 'fold': { S.open = S.open || {};
+      const key = id + ':' + v; S.open[key] = !S.open[key]; break; }
     case 'tabpage': goTabPage(Number(v)); return;
     /* اختيار التصنيف يغلق القائمة فورًا ولا يعيد فتحها */
     case 'pickbucket': S.tab.tasks = v; S.sheet = null;
@@ -6089,25 +6285,22 @@ document.addEventListener('click', ev => {
       startTask(t, S.session.id); buzz(); toast('بدأت المهمة'); break; }
     case 'end': { const t = T();
       if (!t || t.status !== 'running') { toast('المهمة ليست جارية', 'r'); break; }
-      if (!canDecide(t, S.session.id)) { toast('الإغلاق للمفوَّض على هذه المهمة', 'r'); break; } }
-      S.sheet = confirmSheet('إنهاء المهمة',
-      'ستُسجَّل الملاحظات التلقائية ويُحتسب تقييم النظام.', 'data-a="doend" data-id="' + id + '"'); break;
+      if (!canDecide(t, S.session.id)) { toast('الإنهاء لصاحب القرار على المهمة', 'r'); break; }
+      S.sheet = endSheet(t); break; }
     case 'doend': { const t = T();
-      if (!canDecide(t, S.session.id)) { toast('القرار للمفوَّض على هذه المهمة', 'r'); break; }
+      if (!t || !canDecide(t, S.session.id)) { toast('القرار للمفوَّض على هذه المهمة', 'r'); break; }
+      if (t.status !== 'running') { toast('المهمة ليست جارية', 'r'); break; }
       endTask(t, S.session.id); S.sheet = null; buzz();
       toast('أُغلقت المهمة — التقييم ' + AR(avgRating(t.rating)) + ' من ٥'); break; }
-    case 'cancel': S.pendingExcuse = null;
-      S.sheet = reasonSheet('إلغاء المهمة', 'المبرر إلزامي ويصل كل المسكَّنين',
-        'data-a="docancel" data-id="' + id + '"', 'سبب الإلغاء', 'cancel', id); break;
-    case 'docancel': { const r = val('txt'); if (!r) { toast('المبرر إلزامي', 'r'); break; }
-      if (!canDecide(T(), S.session.id)) { toast('القرار للمفوَّض على هذه المهمة', 'r'); break; }
-      cancelTask(T(), S.session.id, r, S.pendingExcuse); S.pendingExcuse = null;
-      S.sheet = null; toast('أُلغيت المهمة', 'r'); break; }
     case 'sub': { const t = T(); if (!t) break;
       if (t.status !== 'running') { toast('المهمة لم تبدأ بعد', 'r'); break; }
-      if (!canDecide(t, S.session.id) && !slotOf(t, S.session.id))
-        { toast('لست مسكَّنًا على هذه المهمة', 'r'); break; }
-      const s = t.subs.find(x => x.id === b.dataset.s); toggleSub(t, s, S.session.id); buzz(); break; }
+      if (!canTickSub(t, S.session.id)) { toast('التأشير على الإنجاز من صلاحية الليدر', 'r'); break; }
+      const s = t.subs.find(x => x.id === b.dataset.s);
+      if (!s) break;
+      toggleSub(t, s, S.session.id); buzz();
+      /* اكتملت الفرعية كلها: تأكيد واحد لا خيار فيه إلا الإغلاق */
+      if (t.subs.every(x => x.done)) S.sheet = allDoneSheet(t);
+      break; }
     case 'note': if (!T()) break;
       S.sheet = textSheet('إضافة ملاحظة', 'تُسجَّل على المهمة',
       'data-a="donote" data-id="' + id + '"', '', 'اكتب ملاحظتك'); break;

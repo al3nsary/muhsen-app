@@ -1,6 +1,6 @@
 /* ============================ الحالة ============================ */
 const KEY = 'muhsen_app_v1';
-const APP_VER = 'نسخة ٣٫١';
+const APP_VER = 'نسخة ٣٫٢';
 const SCHEMA = 18;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
@@ -261,7 +261,15 @@ function recomputeStatus(t) {
 function canStart(t, id) {
   if (!actsAsLeader(t, id) || !canDecide(t, id)) return false;
   if (['running', 'done', 'cancelled'].indexOf(t.status) >= 0) return false;
+  if (!t.leaderAttendedAt) return false;          /* لا بدء قبل إثبات الحضور */
   return now() >= prepOpen(t) && now() < prepDeadline(t);
+}
+function startWhy(t, id) {
+  if (!actsAsLeader(t, id) || !canDecide(t, id)) return 'البدء لصاحب القرار على المهمة';
+  if (now() < prepOpen(t)) return 'يُفتح البدء قبل الموعد بساعتين — ' + untilTxt(prepOpen(t));
+  if (now() >= prepDeadline(t)) return 'أُغلق البدء اليدوي — تبدأ تلقائيًّا ' + t12(t.start);
+  if (!t.leaderAttendedAt) return 'أثبت حضورك أولًا — لا تبدأ المهمة قبله';
+  return '';
 }
 
 const lockedForAssign = t => now() >= t.start || ['running', 'done', 'cancelled'].includes(t.status);
@@ -275,7 +283,9 @@ function notify(toId, icon, title, body, route) {
 const unread = () => S.notifs.filter(n => n.to === (S.session && S.session.id) && !n.read).length;
 const myNotifs = () => S.notifs.filter(n => n.to === (S.session && S.session.id));
 
-function hist(t, text) { t.history.unshift({ at: now(), text }); }
+/* kind: 'act' إجراء فعلي يبقى · 'req' طلب أو تنبيه عابر يختفي بانتهاء المهمة */
+function hist(t, text, kind) { t.history.unshift({ at: now(), text, kind: kind || 'act' }); }
+const histReq = (t, text) => hist(t, text, 'req');
 function note(t, text, kind) { t.notes.push({ at: now(), kind: kind || 'auto', text }); }
 
 /* ملاحظات تلقائية تُسجَّل على المهمة */
@@ -492,7 +502,7 @@ function attend(t, who) {
   hist(t, 'أثبت ' + u.name + ' حضوره داخل النطاق (' + AR(far) + ' كم)');
   if (now() > t.start) note(t, 'تأخر ' + u.name + ' في التحضير — أثبت حضوره بعد بداية المهمة');
   if (!actsAsLeader(t, who)) notify(ownerOf(t), 'i-checkc', 'إثبات حضور',
-    u.name + ' أثبت حضوره في «' + t.title + '».', { n: 'task', id: t.id });
+    u.name + ' — «' + t.title + '»', { n: 'task', id: t.id });
   return true;
 }
 function startTask(t, by) {
@@ -517,19 +527,17 @@ function endTask(t, by) {
   autoNote(t);
   rateTask(t);
   hist(t, 'أنهى ' + userById(by).name + ' المهمة');
+  /* ما كان قبل البدء من طلبات وتنبيهات لا يبقى في سجل المهمة بعد انتهائها */
+  t.history = t.history.filter(h => h.kind !== 'req');
+  t.notes = t.notes.filter(n => n.kind !== 'req');
   acceptedSlots(t).forEach(a => notify(a.muhsenId, 'i-star', 'أُغلقت المهمة',
-    '«' + t.title + '» انتهت — تقييم النظام ' + t.rating.system + ' من ٥.', { n: 'rating' }));
-  notify(t.leaderId, 'i-star', 'تقييم مهمة',
-    '«' + t.title + '» — النظام ' + t.rating.system + ' · المشرف ' + t.rating.supervisor + ' · الحجاج ' + t.rating.pilgrims, { n: 'rating' });
+    '«' + t.title + '»', { n: 'rating' }));
+  notify(t.leaderId, 'i-star', 'أُغلقت المهمة',
+    '«' + t.title + '» — التقييم ' + AR(avgRating(t.rating)) + ' من ٥', { n: 'rating' });
 }
-function cancelTask(t, by, reason, excuse) {
-  t.status = 'cancelled'; t.cancelReason = reason;
-  if (excuse) t.cancelPhoto = attachExcuse(t.id, excuse, 'مرفق مبرر الإلغاء', by);
-  hist(t, 'ألغى ' + userById(by).name + ' المهمة — «' + reason + '»');
-  acceptedSlots(t).forEach(a => notify(a.muhsenId, 'i-xc', 'أُلغيت المهمة',
-    '«' + t.title + '» أُلغيت — ' + reason, { n: 'tasks' }));
-}
+const canTickSub = (t, id) => canDecide(t, id) && t.status === 'running';
 function toggleSub(t, s, by) {
+  if (!canTickSub(t, by)) return false;   /* المحسن يرى ولا يؤشّر */
   s.done = !s.done; s.at = s.done ? now() : null; s.by = s.done ? by : null;
   hist(t, (s.done ? 'أنجز ' : 'أعاد فتح ') + userById(by).name + ' «' + s.name + '»');
   if (s.done && !actsAsLeader(t, by)) notify(ownerOf(t), 'i-check', 'إنجاز مهمة فرعية',
@@ -665,7 +673,11 @@ function myRequests() {
   const out = [];
   S.tasks.forEach(t => {
     if (lockedForAssign(t) && t.status !== 'running') return;
-    t.assigned.forEach(a => { if (a.muhsenId === u.id && a.req === 'pending' && !a.removed) out.push({ kind: 'assign', t }); });
+    t.assigned.forEach(a => {
+      if (a.muhsenId !== u.id || a.req !== 'pending' || a.removed) return;
+      /* البديل يردّ على طلب استبدال لا على تسكين — ولكلٍّ مساره */
+      out.push({ kind: a.standin ? 'replace' : 'assign', t, slot: a });
+    });
     if (t.delegate && t.delegate.muhsenId === u.id && t.delegate.state === 'pending') out.push({ kind: 'delegate', t });
   });
   return out;
@@ -718,24 +730,24 @@ function autoTick() {
       t._f.wclose = 1;
     }
     if (t0 >= prepOpen(t) && !t._f.prep) {
-      acceptedSlots(t).forEach(a => notify(a.muhsenId, 'i-clock', 'فُتحت نافذة التحضير',
-        '«' + t.title + '» تبدأ ' + t12(t.start) + ' — أثبت حضورك.', { n: 'mhome' }));
-      notify(ownerOf(t), 'i-clock', 'فُتحت نافذة التحضير',
-        '«' + t.title + '» تبدأ ' + t12(t.start) + ' — أثبت حضورك.', { n: 'task', id: t.id });
+      acceptedSlots(t).forEach(a => notify(a.muhsenId, 'i-target', 'أثبت حضورك',
+        '«' + t.title + '»', { n: 'mhome' }));
+      notify(ownerOf(t), 'i-target', 'أثبت حضورك',
+        '«' + t.title + '»', { n: 'task', id: t.id });
       t._f.prep = 1;
     }
     /* قبل إغلاق التحضير بربع ساعة — وما زال ممكنًا */
     if (t0 >= prepDeadline(t) - 15 * MIN && t0 < prepDeadline(t) && !t._f.plast) {
       acceptedSlots(t).filter(a => !a.attendedAt).forEach(a =>
         notify(a.muhsenId, 'i-warn', 'ربع ساعة على إغلاق التحضير',
-          'أثبت حضورك في «' + t.title + '» قبل الإغلاق.', { n: 'mhome' }));
+          '«' + t.title + '»', { n: 'task', id: t.id }));
       t._f.plast = 1;
     }
     /* بعد الإغلاق: إخبار بما وقع لا مطالبة بما لا يُستطاع */
     if (t0 >= prepDeadline(t) && !t._f.pclose) {
       acceptedSlots(t).filter(a => !a.attendedAt).forEach(a =>
         notify(a.muhsenId, 'i-xc', 'أُغلق التحضير ولم تثبت حضورك',
-          '«' + t.title + '» — تُسجَّل ملاحظة وتؤثر في تقييمك.', { n: 'mhome' }));
+          '«' + t.title + '»', { n: 'task', id: t.id }));
       t._f.pclose = 1;
     }
     const pend = pendingSlots(t).length;

@@ -1,4 +1,30 @@
 /* ============================ صناديق الوضع الآن ============================ */
+/* المهمة الجارية تتصدّر الرئيسية ببطاقتها كاملة */
+function runningCard() {
+  const t = myTasks().find(x => x.status === 'running');
+  if (!t) return '';
+  const done = t.subs.filter(s => s.done).length;
+  const ui = kindUI(t), me_ = me();
+  const mine = actsAsLeader(t, me_.id) ? t.leaderAttendedAt : ((slotOf(t, me_.id) || {}).attendedAt);
+  const late = now() > t.end ? Math.round((now() - t.end) / MIN) : 0;
+  return '<div class="lbl">المهمة الجارية الآن<small>' + t12(t.start) + ' — ' + t12(t.end) + '</small></div>' +
+    '<div class="c live" style="--kc:' + ui.c + '">' +
+      '<div class="fl" style="align-items:flex-start;gap:11px">' +
+        '<span class="tthumb bg-' + t.photo + '"><span class="kb">' + icon(ui.i,'s14') + '</span></span>' +
+        '<div class="sp"><div class="fl" style="align-items:flex-start;gap:8px">' +
+          '<b style="font-size:15px;line-height:1.5" class="sp">' + E(t.title) + '</b>' +
+          '<span class="bpill live">' + icon('i-play','s14') + 'جارية</span></div>' +
+          '<div class="tiny dim2" style="margin-top:4px">' + E(t.place) + '</div>' +
+          '<div class="fl" style="gap:6px;margin-top:7px;flex-wrap:wrap">' +
+            pill(AR(done) + ' من ' + AR(t.subs.length) + ' منجزة', done === t.subs.length ? 'live' : 'wait') +
+            (mine ? pill('حضورك مُثبَت', 'live') : pill('لم تثبت حضورك', 'no')) +
+            (late ? pill('تجاوزت ' + AR(late) + ' د', 'no') : '') + '</div></div></div>' +
+      '<div class="meter" style="margin-top:11px"><i style="width:' +
+        Math.round(done / Math.max(1, t.subs.length) * 100) + '%"></i></div>' +
+      '<button class="btn p sm" style="margin-top:11px" data-a="go" data-n="task" data-id="' + t.id + '">' +
+        icon('i-tasks','s16') + 'فتح المهمة الجارية</button></div>';
+}
+
 function statusBoxes() {
   const L = isLeader(), ts = myTasks();
   const running = ts.filter(t => t.status === 'running');
@@ -49,6 +75,8 @@ function screenLeaderHome() {
       '<div class="sm dim">' + E(org.ar) + ' · ' + E(org.country) + '</div>' +
       (rt.n ? '<div style="margin-top:6px">' + stars(rt.avg) + '</div>' : '') + '</div></div></div>' +
 
+    runningCard() +
+
     '<div class="banner bgw-haram"><span class="bt">' +
       '<b>' + E(dayName(now())) + ' · ' + hijri(now()) + '</b><span>' +
       AR(ts.filter(t => dayStart(t.start) === dayStart(now())).length) + ' مهمة اليوم</span></span></div>' +
@@ -83,12 +111,14 @@ function screenMuhsenHome() {
       '<div class="sm dim">' + E(u.specialty) + ' · ' + E(teamLine) + '</div>' +
       (rt.n ? '<div style="margin-top:6px">' + stars(rt.avg) + '</div>' : '') + '</div></div></div>' +
 
+    runningCard() +
     statusBoxes() +
 
+    (!t || t.status === 'running' ? '' : '') +
     (!t ? '<div class="c center" style="padding:30px 16px">' +
         '<div style="color:var(--dim2);margin-bottom:8px;display:flex;justify-content:center">' + icon('i-tasks','s26') + '</div>' +
         '<b>لا توجد مهمة حالية</b><div class="sm dim" style="margin-top:4px">ستظهر مهمتك هنا فور قبولك طلب تسكين.</div></div>'
-      : muhsenTaskCard(t, u)) +
+      : t.status === 'running' ? '' : muhsenTaskCard(t, u)) +
 
     (function () {
       const live = activeTasks(u.id).filter(x => !t || x.id !== t.id);
@@ -142,9 +172,14 @@ function screenRequests() {
 
 function reqActionCard(r) {
   const t = r.t;
-  if (r.kind === 'assign') {
-    const a = t.assigned.find(x => x.muhsenId === S.session.id && x.req === 'pending');
-    return '<div class="c gold"><div class="row"><b style="font-size:14.5px">طلب تسكين</b>' + pill('يحتاج ردًا', 'wait') + '</div>' +
+  if (r.kind === 'assign' || r.kind === 'replace') {
+    const a = r.slot || t.assigned.find(x => x.muhsenId === S.session.id && x.req === 'pending');
+    const rep = r.kind === 'replace';
+    const forU = rep && a ? userById(a.forId) : null;
+    return '<div class="c gold"><div class="row"><b style="font-size:14.5px">' +
+      (rep ? 'طلب حلول مكان زميل' : 'طلب تسكين') + '</b>' + pill('يحتاج ردًا', 'wait') + '</div>' +
+      (rep && forU ? '<div class="note b" style="margin-top:9px">' + icon('i-swap','s16') +
+        '<span>تحلّ مكان <b>' + E(forU.name) + '</b> — ولا يخرج من المهمة إلا بقبولك.</span></div>' : '') +
       '<div class="fl" style="gap:10px;background:#F8F6F0;border-radius:14px;padding:12px;margin:11px 0">' +
         '<span class="thumb bg-' + t.photo + '" style="width:52px;height:52px"></span>' +
         '<span class="sp"><b class="sm" style="display:block">' + E(t.title) + '</b>' +
@@ -153,8 +188,12 @@ function reqActionCard(r) {
       (a && a.reqNote ? '<div class="note a">' + icon('i-edit','s16') + '<span>' + E(a.reqNote) + '</span></div>' : '') +
       '<div class="fl tiny dim2" style="margin:10px 0">' + avat(userById(t.leaderId), 'sm') +
         '<span>من ' + E(userById(t.leaderId).name) + ' · ' + (a ? ago(a.reqAt) : '') + '</span></div>' +
-      '<div class="grid2"><button class="btn d sm" data-a="resp" data-id="' + t.id + '" data-v="0">رفض</button>' +
-      '<button class="btn p sm" data-a="resp" data-id="' + t.id + '" data-v="1">قبول</button></div></div>';
+      (a ? '<div class="strip a">' + reqCountdown(t, a) + '</div>' : '') +
+      '<div class="grid2" style="margin-top:10px">' +
+      '<button class="btn d sm" data-a="' + (rep ? 'rrepl' : 'resp') + '" data-id="' + t.id + '" data-v="0">' +
+        (rep ? 'اعتذار' : 'رفض') + '</button>' +
+      '<button class="btn p sm" data-a="' + (rep ? 'rrepl' : 'resp') + '" data-id="' + t.id + '" data-v="1">قبول</button>' +
+      '</div></div>';
   }
   const d = t.delegate;
   return '<div class="c gold"><div class="row"><b style="font-size:14.5px">إسناد صلاحية القيادة</b>' + pill('يحتاج ردًا', 'wait') + '</div>' +
