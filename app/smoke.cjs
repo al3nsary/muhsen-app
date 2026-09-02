@@ -1760,5 +1760,87 @@ step('التنقّل بين التذاكر والتقارير يثبت', () => {
   if (h2.indexOf('التذاكر ترد إليك') < 0) throw new Error('لم تعد للتذاكر');
 });
 
+console.log('\nالخروج من المهمة ينقلها إلى «غير المنجزة»');
+run('S.session={id:"L1",at:Date.now()};S.clockOffset=0');
+step('الاستبعاد بموافقته ينقلها لغير المنجزة ولو لم تبدأ', () => {
+  const tid = run('myTasks().filter(function(t){return t.start>now()+13*HR && acceptedSlots(t).length>2 && ' +
+    '["done","cancelled","running"].indexOf(t.status)<0})[0].id');
+  const mid = run('acceptedSlots(taskById("' + tid + '")).find(function(a){return !a.ex && !a.repl}).muhsenId');
+  /* قبل الاستبعاد: مهمة قائمة له */
+  const b0 = run('taskBucket(taskById("' + tid + '"),"' + mid + '")');
+  if (b0 === 'undone') throw new Error('كانت غير منجزة قبل الاستبعاد');
+  run('excludeNoNeed(taskById("' + tid + '"),"' + mid + '","العدد يكفي")');
+  /* وهي معلّقة: لا تنتقل بعد */
+  if (run('taskBucket(taskById("' + tid + '"),"' + mid + '")') === 'undone')
+    throw new Error('انتقلت قبل موافقته');
+  run('S.session={id:"' + '' + mid + '",at:Date.now()}');
+  run('respondExclude(taskById("' + tid + '"),"' + mid + '",true)');
+  run('S.session={id:"L1",at:Date.now()}');
+  if (run('taskBucket(taskById("' + tid + '"),"' + mid + '")') !== 'undone')
+    throw new Error('لم تنتقل بعد موافقته والمهمة لم تبدأ');
+  if (run('undoneReason(taskById("' + tid + '"),"' + mid + '").indexOf("استُبعدت")') < 0)
+    throw new Error('السبب غير واضح');
+  /* وتبقى «غير منجزة» له بعد بدء المهمة وبعد انتهائها */
+  run('taskById("' + tid + '").status="running"');
+  if (run('taskBucket(taskById("' + tid + '"),"' + mid + '")') !== 'undone')
+    throw new Error('تغيّرت بعد بدء المهمة');
+  run('taskById("' + tid + '").status="done"');
+  if (run('taskBucket(taskById("' + tid + '"),"' + mid + '")') !== 'undone')
+    throw new Error('تغيّرت بعد انتهاء المهمة');
+  run('taskById("' + tid + '").status="assigned"');
+  /* ولا تتغيّر لزميله ما دامت المهمة قائمة */
+  const other = run('acceptedSlots(taskById("' + tid + '"))[0].muhsenId');
+  if (run('taskBucket(taskById("' + tid + '"),"' + '' + other + '")') === 'undone')
+    throw new Error('انتقلت لزميله أيضًا');
+});
+step('الاستبدال ينقلها للمستبدَل وحده', () => {
+  const pick = run('(function(){' +
+    'var ts = myTasks().filter(function(t){' +
+      'return t.start>now()+13*HR && acceptedSlots(t).length>2 && ' +
+      '["done","cancelled","running"].indexOf(t.status)<0; });' +
+    'if (!ts.length) return null;' +
+    'var t = ts[0];' +
+    'var free = acceptedSlots(t)[2].muhsenId;' +
+    'excludeNoNeed(t, free, "تفريغ");' +
+    'var keep = S.session; S.session = {id: free, at: Date.now()};' +
+    'respondExclude(t, free, true); S.session = keep;' +
+    'return {t:t.id, out:acceptedSlots(t)[0].muhsenId, cand:free}; })()');
+  if (!pick) throw new Error('لا توجد مهمة صالحة');
+  run('requestReplace(taskById("' + pick.t + '"),"' + pick.out + '","' + pick.cand + '","تعارض")');
+  if (run('taskBucket(taskById("' + pick.t + '"),"' + pick.out + '")') === 'undone')
+    throw new Error('انتقلت قبل قبول البديل');
+  run('respondReplace(taskById("' + pick.t + '"),"' + pick.cand + '",true)');
+  if (run('taskBucket(taskById("' + pick.t + '"),"' + pick.out + '")') !== 'undone')
+    throw new Error('لم تنتقل للمستبدَل');
+  if (run('undoneReason(taskById("' + pick.t + '"),"' + pick.out + '").indexOf("استُبدلت")') < 0)
+    throw new Error('السبب غير واضح');
+  /* والبديل عليها لا في غير المنجزة */
+  if (run('taskBucket(taskById("' + pick.t + '"),"' + pick.cand + '")') === 'undone')
+    throw new Error('البديل صُنّفت له غير منجزة');
+});
+step('الانسحاب المعتمد ينقلها له بسببه', () => {
+  const tid = run('myTasks().filter(function(t){return t.start>now()+13*HR && acceptedSlots(t).length>1 && ' +
+    '["done","cancelled","running"].indexOf(t.status)<0})[0].id');
+  const mid = run('acceptedSlots(taskById("' + tid + '")).find(function(a){return !a.wd && !a.ex && !a.repl}).muhsenId');
+  run('requestWithdraw(taskById("' + tid + '"),"' + mid + '","ظرف عائلي")');
+  if (run('taskBucket(taskById("' + tid + '"),"' + mid + '")') === 'undone')
+    throw new Error('انتقلت قبل اعتماد الليدر');
+  run('respondWithdraw(taskById("' + tid + '"),"' + mid + '",true)');
+  if (run('taskBucket(taskById("' + tid + '"),"' + mid + '")') !== 'undone')
+    throw new Error('لم تنتقل بعد الاعتماد');
+  if (run('undoneReason(taskById("' + tid + '"),"' + mid + '").indexOf("انسحبتَ")') < 0)
+    throw new Error('السبب غير واضح');
+});
+step('من عاد إلى المهمة لا تبقى غير منجزة له', () => {
+  const tid = run('myTasks().filter(function(t){return t.start>now()+13*HR && ' +
+    '["done","cancelled","running"].indexOf(t.status)<0 && ' +
+    't.assigned.some(function(a){return a.out && a.out.kind==="excluded"})})[0].id');
+  const mid = run('taskById("' + tid + '").assigned.find(function(a){return a.out && a.out.kind==="excluded"}).muhsenId');
+  if (run('taskBucket(taskById("' + tid + '"),"' + mid + '")') !== 'undone') throw new Error('ليست غير منجزة');
+  /* الكنترول يُعيده دعمًا: يصير عليها من جديد */
+  run('taskById("' + tid + '").assigned.push({muhsenId:"' + mid + '",req:"accepted",bySupport:true,reqAt:now(),reqNote:"دعم",respAt:now(),respNote:"",attendedAt:null,farKm:0})');
+  if (run('taskBucket(taskById("' + tid + '"),"' + mid + '")') === 'undone')
+    throw new Error('بقيت غير منجزة رغم عودته');
+});
 console.log('\n' + (fail ? '✗ فشل ' + fail : '✓ نجحت كل الاختبارات'));
 process.exitCode = fail ? 1 : 0;

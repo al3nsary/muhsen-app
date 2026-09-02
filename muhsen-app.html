@@ -1554,7 +1554,7 @@ const REPORT_SEED = [
 
 /* ============================ الحالة ============================ */
 const KEY = 'muhsen_app_v1';
-const APP_VER = 'نسخة ٣٫٥';
+const APP_VER = 'نسخة ٣٫٦';
 const SCHEMA = 18;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
@@ -2186,7 +2186,17 @@ function isBlamed(t, uid_) {
   return false;
 }
 
+/* خرج من المهمة فعلًا: له صفٌّ خارج ولا صفَّ قائمًا عليها */
+function isOutOfTask(t, uid_) {
+  const rows = t.assigned.filter(a => a.muhsenId === uid_);
+  if (!rows.length) return false;
+  return rows.some(a => a.out) && !rows.some(a => !a.out && a.req !== 'rejected' && a.req !== 'expired');
+}
 function taskBucket(t, uid_) {
+  const u = userById(uid_);
+  /* الاستبعاد والاستبدال والانسحاب: تنتقل إلى «غير المنجزة» له وحده،
+     ولو لم تبدأ المهمة أو كانت قد انتهت */
+  if (u && u.role === 'muhsen' && isOutOfTask(t, uid_)) return 'undone';
   if (t.status === 'cancelled') return 'cancelled';
   if (isBlamed(t, uid_)) return 'undone';
   if (t.status === 'running') return 'running';
@@ -2197,6 +2207,12 @@ function taskBucket(t, uid_) {
 
 function undoneReason(t, uid_) {
   const u = userById(uid_);
+  if (u.role === 'muhsen' && isOutOfTask(t, uid_)) {
+    const o = (t.assigned.filter(a => a.muhsenId === uid_ && a.out).slice(-1)[0] || {}).out || {};
+    if (o.kind === 'withdrawn') return 'انسحبتَ بموافقة الليدر — ' + reasonOr(o.why);
+    if (o.kind === 'replaced') return 'استُبدلت بـ ' + (o.byName || '') + ' — ' + reasonOr(o.why);
+    return 'استُبعدت من المهمة بموافقتك — ' + reasonOr(o.why);
+  }
   if (t.status === 'cancelled') return 'أُلغيت المهمة — ' + (t.cancelReason || '');
   if (u.role === 'muhsen') {
     const s = t.assigned.find(a => a.muhsenId === uid_) || {};
