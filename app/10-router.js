@@ -248,8 +248,7 @@ document.addEventListener('click', ev => {
         S.sheet = reasonSheet('سبب رفض التسكين', t.title, 'data-a="doresp" data-id="' + id + '"',
           'مثال: مرتبط بمهمة أخرى', 'resp', id); }
       break; }
-    case 'doresp': { const rr = val('txt');
-      if (!rr) { toast('سبب الرفض إلزامي — يصل الليدر', 'r'); break; }
+    case 'doresp': { const rr = reasonOr(val('txt'));
       respondRequest(T(), S.session.id, false, rr, S.pendingExcuse); S.pendingExcuse = null;
       S.sheet = null; toast('رُفض الطلب وأُبلغ الليدر', 'r'); break; }
 
@@ -268,8 +267,7 @@ document.addEventListener('click', ev => {
         S.sheet = reasonSheet('سبب رفض التفويض', t.title, 'data-a="dordeleg" data-id="' + id + '"',
           'اكتب سببك', 'rdeleg', id); }
       break; }
-    case 'dordeleg': { const rr = val('txt');
-      if (!rr) { toast('سبب الرفض إلزامي', 'r'); break; }
+    case 'dordeleg': { const rr = reasonOr(val('txt'));
       respondDelegate(T(), false, rr, S.pendingExcuse); S.pendingExcuse = null;
       S.sheet = null; toast('رُفض التفويض', 'r'); break; }
 
@@ -455,25 +453,33 @@ document.addEventListener('click', ev => {
       if (!t || !canAssign(t, S.session.id)) { toast('التغيير في التسكين من صلاحية الليدر', 'r'); break; }
       if (!t || !canDecide(t, S.session.id)) { toast('ليست من صلاحيتك', 'r'); break; }
       if (!reqWindowOpen(t)) { toast(reqWindowWhy(t), 'r'); break; }
-      const why = val('exwhy');
-      if (!why || why.length < 4) { toast('السبب إلزامي', 'r'); break; }
+      const why = reasonOr(val('exwhy'));
       if (S.exKind === 'swap') {
         if (!S.exTo) { toast('اختر البديل', 'r'); break; }
         if (busyIn(S.exTo, t)) { toast('البديل مرتبط بمهمة متداخلة', 'r'); break; }
         if (!requestReplace(t, uid_, S.exTo, why)) { toast('تعذّر إرسال الطلب', 'r'); break; }
         toast('أُرسل طلب الاستبدال — يبقى على المهمة حتى يقبل البديل');
       } else {
-        if (!excludeNoNeed(t, uid_, why)) { toast('تعذّر الاستبعاد', 'r'); break; }
-        toast('استُبعد — وسُجّلت مسؤوليتك عن القرار', 'r');
+        if (!excludeNoNeed(t, uid_, why)) { toast('تعذّر رفع الطلب', 'r'); break; }
+        toast('رُفع طلب الاستبعاد — ينتظر رده');
       }
       S.sheet = null; S.exFor = null; buzz(); break; }
+    case 'rex': { const t = T(); if (!t) break;
+      if (v === '1') {
+        if (!respondExclude(t, S.session.id, true)) { toast('تعذّر تنفيذ الطلب', 'r'); break; }
+        buzz(); toast('وافقت على الاستبعاد', 'r');
+      } else S.sheet = textSheet('رفض الاستبعاد', t.title,
+        'data-a="dorex" data-id="' + id + '"', '', 'سبب الرفض — اختياري');
+      break; }
+    case 'dorex': {
+      if (!respondExclude(T(), S.session.id, false, val('txt'))) { toast('تعذّر تنفيذ الطلب', 'r'); break; }
+      S.sheet = null; buzz(); toast('رفضت الاستبعاد — تبقى على المهمة'); break; }
     case 'rrepl': { const t = T(); if (!t) break;
       if (v === '1') { respondReplace(t, S.session.id, true); buzz(); toast('قبلت الحلول مكان زميلك'); }
       else S.sheet = textSheet('اعتذار عن الحلول', t.title,
         'data-a="dorrepl" data-id="' + id + '"', '', 'سبب الاعتذار');
       break; }
-    case 'dorrepl': { const rr = val('txt');
-      if (!rr) { toast('السبب إلزامي', 'r'); break; }
+    case 'dorrepl': { const rr = reasonOr(val('txt'));
       respondReplace(T(), S.session.id, false, rr); S.sheet = null;
       toast('اعتذرت — يبقى زميلك على المهمة', 'r'); break; }
 
@@ -486,8 +492,7 @@ document.addEventListener('click', ev => {
     case 'dosupport': { const t = T();
       if (!t || !canAssign(t, S.session.id)) { toast('طلب الدعم من صلاحية الليدر', 'r'); break; }
       if (!supportOpen(t)) { toast(supportWhy(t), 'r'); break; }
-      const why = val('spwhy');
-      if (!why || why.length < 6) { toast('اذكر سبب الطلب', 'r'); break; }
+      const why = reasonOr(val('spwhy'));
       if (openSupport(t.id).length) { toast('لديك طلب دعم قائم على هذه المهمة', 'r'); break; }
       requestSupport(t, S.spCount || 1, why); S.sheet = null; buzz();
       toast('رُفع طلب الدعم إلى الكنترول'); break; }
@@ -503,10 +508,9 @@ document.addEventListener('click', ev => {
       if (lockedForAssign(t)) { toast('المهمة بدأت — لا انسحاب بعد بدايتها', 'r'); break; }
       if (!reqWindowOpen(t)) { toast(reqWindowWhy(t), 'r'); break; }
       S.sheet = textSheet('طلب الانسحاب من المهمة',
-        'السبب إلزامي ويصل الليدر — ولا ينفذ الانسحاب إلا بموافقته',
+        'اكتب سببًا إن شئت — ولا ينفذ الانسحاب إلا بموافقة الليدر',
         'data-a="doaskwd" data-id="' + id + '"', '', 'سبب الانسحاب'); break; }
-    case 'doaskwd': { const rr = val('txt');
-      if (!rr || rr.length < 5) { toast('اذكر سببًا واضحًا', 'r'); break; }
+    case 'doaskwd': { const rr = reasonOr(val('txt'));
       const t = T(); if (!t) break;
       if (lockedForAssign(t)) { toast('المهمة بدأت — لا انسحاب بعد البدء', 'r'); break; }
       if (!reqWindowOpen(t)) { toast(reqWindowWhy(t), 'r'); break; }
@@ -519,8 +523,7 @@ document.addEventListener('click', ev => {
       if (!t || !canDecide(t, S.session.id)) { toast('ليست من صلاحيتك', 'r'); break; }
       S.sheet = textSheet('رفض طلب الانسحاب', userById(uid_).name,
         'data-a="dowdno" data-id="' + id + '" data-u="' + uid_ + '"', '', 'سبب الرفض'); break; }
-    case 'dowdno': { const rr = val('txt');
-      if (!rr) { toast('السبب إلزامي', 'r'); break; }
+    case 'dowdno': { const rr = reasonOr(val('txt'));
       respondWithdraw(T(), uid_, false, rr); S.sheet = null; toast('رُفض طلب الانسحاب', 'r'); break; }
 
     /* ===== التقارير ===== */
@@ -547,8 +550,7 @@ document.addEventListener('click', ev => {
       toast(rp.stage === 'done' ? 'حُدِّثت بيانات الغرفة' : 'اعتُمد وأُحيل للكنترول'); break; }
     case 'roomno': S.sheet = textSheet('رفض تعديل الغرفة', reportById(id).title,
       'data-a="doroomno" data-id="' + id + '"', '', 'سبب الرفض'); break;
-    case 'doroomno': { const rr = val('txt');
-      if (!rr) { toast('السبب إلزامي', 'r'); break; }
+    case 'doroomno': { const rr = reasonOr(val('txt'));
       roomAdvance(reportById(id), S.session.id, false, rr); S.sheet = null;
       toast('رُفض التعديل', 'r'); break; }
     case 'rreply': S.sheet = textSheet('رد على التقرير', reportById(id).title,
@@ -575,8 +577,7 @@ document.addEventListener('click', ev => {
     case 'swapto': S.swapTo = v; S.sheet = swapSheet(); break;
     case 'dosendswap': {
       const to = S.swapTo || Object.keys(SHIFTS).find(k => k !== shiftOf(S.session.id));
-      const rsn = val('swr'), dy = val('swd');
-      if (!rsn || rsn.length < 6) { toast('اذكر سببًا واضحًا للتبديل', 'r'); break; }
+      const rsn = reasonOr(val('swr')), dy = val('swd');
       if (!dy) { toast('اختر اليوم المطلوب', 'r'); break; }
       const dts = new Date(dy + 'T00:00:00').getTime();
       if (isNaN(dts)) { toast('تاريخ غير صالح', 'r'); break; }
@@ -590,10 +591,9 @@ document.addEventListener('click', ev => {
       swapAct(s, 'approve'); buzz(); toast('اعتُمد التبديل'); break; }
     case 'swapno': { const s = S.swaps.find(x => x.id === id);
       if (!s || s.leaderId !== S.session.id) { toast('ليست من صلاحيتك', 'r'); break; }
-      S.sheet = textSheet('رفض طلب التبديل', 'السبب إلزامي ويصل مقدّم الطلب',
+      S.sheet = textSheet('رفض طلب التبديل', 'اكتب سببًا إن شئت — يصل مقدّم الطلب',
         'data-a="doswapno" data-id="' + id + '"', '', 'سبب الرفض'); break; }
-    case 'doswapno': { const s = S.swaps.find(x => x.id === id), rr = val('txt');
-      if (!rr) { toast('السبب إلزامي', 'r'); break; }
+    case 'doswapno': { const s = S.swaps.find(x => x.id === id), rr = reasonOr(val('txt'));
       swapAct(s, 'reject', rr); S.sheet = null; toast('رُفض الطلب', 'r'); break; }
     case 'swapesc': { const s = S.swaps.find(x => x.id === id);
       if (!s || s.leaderId !== S.session.id) { toast('ليست من صلاحيتك', 'r'); break; }

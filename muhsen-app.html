@@ -1554,7 +1554,7 @@ const REPORT_SEED = [
 
 /* ============================ الحالة ============================ */
 const KEY = 'muhsen_app_v1';
-const APP_VER = 'نسخة ٣٫٤';
+const APP_VER = 'نسخة ٣٫٥';
 const SCHEMA = 18;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
@@ -1773,6 +1773,9 @@ const taskById = id => S.tasks.find(t => t.id === id);
 const teamOf = leaderId => S.users.filter(u => u.role === 'muhsen' && u.leaderId === leaderId && !u.reserve);
 /* فريق احتياطي مشترك — يطلب منه الليدر تعزيزًا لأي مهمة */
 const reserveTeam = () => S.users.filter(u => u.role === 'muhsen' && u.reserve);
+/* السبب اختياري دائمًا — وما يُترك يُسجَّل صراحةً لا يُطمس */
+const NO_REASON = 'بلا سبب مذكور';
+const reasonOr = x => (x && String(x).trim()) || NO_REASON;
 const isReserve = id => { const u = userById(id); return !!(u && u.reserve); };
 const pilgrimsOf = kt => S.pilgrims[kt] || [];
 const ktCount = kt => { const L = S.users.find(u => u.kt === kt); return L ? L.pilgrims : 0; };
@@ -2230,7 +2233,10 @@ function myRequests() {
   S.tasks.forEach(t => {
     if (lockedForAssign(t) && t.status !== 'running') return;
     t.assigned.forEach(a => {
-      if (a.muhsenId !== u.id || a.req !== 'pending' || a.removed) return;
+      if (a.muhsenId !== u.id || a.removed) return;
+      /* طلب استبعاد ينتظر ردّه */
+      if (a.ex && a.ex.state === 'pending') { out.push({ kind: 'exclude', t, slot: a }); return; }
+      if (a.req !== 'pending') return;
       /* البديل يردّ على طلب استبدال لا على تسكين — ولكلٍّ مساره */
       out.push({ kind: a.standin ? 'replace' : 'assign', t, slot: a });
     });
@@ -3150,12 +3156,16 @@ function screenRequests() {
 
 function reqActionCard(r) {
   const t = r.t;
-  if (r.kind === 'assign' || r.kind === 'replace') {
+  if (r.kind === 'assign' || r.kind === 'replace' || r.kind === 'exclude') {
     const a = r.slot || t.assigned.find(x => x.muhsenId === S.session.id && x.req === 'pending');
-    const rep = r.kind === 'replace';
+    const rep = r.kind === 'replace', exc = r.kind === 'exclude';
     const forU = rep && a ? userById(a.forId) : null;
     return '<div class="c gold"><div class="row"><b style="font-size:14.5px">' +
-      (rep ? 'طلب حلول مكان زميل' : 'طلب تسكين') + '</b>' + pill('يحتاج ردًا', 'wait') + '</div>' +
+      (exc ? 'طلب استبعادك من مهمة' : rep ? 'طلب حلول مكان زميل' : 'طلب تسكين') + '</b>' +
+      pill('يحتاج ردًا', 'wait') + '</div>' +
+      (exc && a && a.ex ? '<div class="note r" style="margin-top:9px">' + icon('i-xc','s16') +
+        '<span>يطلب الليدر استبعادك من هذه المهمة — ' + E(a.ex.why) + '<br>' +
+        '<b>تبقى عليها حتى توافق.</b> وإن رفضت بقيت، ويُسجَّل رفضك بوقته.</span></div>' : '') +
       (rep && forU ? '<div class="note b" style="margin-top:9px">' + icon('i-swap','s16') +
         '<span>تحلّ مكان <b>' + E(forU.name) + '</b> — ولا يخرج من المهمة إلا بقبولك.</span></div>' : '') +
       '<div class="fl" style="gap:10px;background:#F8F6F0;border-radius:14px;padding:12px;margin:11px 0">' +
@@ -3166,11 +3176,12 @@ function reqActionCard(r) {
       (a && a.reqNote ? '<div class="note a">' + icon('i-edit','s16') + '<span>' + E(a.reqNote) + '</span></div>' : '') +
       '<div class="fl tiny dim2" style="margin:10px 0">' + avat(userById(t.leaderId), 'sm') +
         '<span>من ' + E(userById(t.leaderId).name) + ' · ' + (a ? ago(a.reqAt) : '') + '</span></div>' +
-      (a ? '<div class="strip a">' + reqCountdown(t, a) + '</div>' : '') +
+      (a ? '<div class="strip a">' + (exc ? exCountdown(a) : reqCountdown(t, a)) + '</div>' : '') +
       '<div class="grid2" style="margin-top:10px">' +
-      '<button class="btn d sm" data-a="' + (rep ? 'rrepl' : 'resp') + '" data-id="' + t.id + '" data-v="0">' +
-        (rep ? 'اعتذار' : 'رفض') + '</button>' +
-      '<button class="btn p sm" data-a="' + (rep ? 'rrepl' : 'resp') + '" data-id="' + t.id + '" data-v="1">قبول</button>' +
+      '<button class="btn d sm" data-a="' + (exc ? 'rex' : rep ? 'rrepl' : 'resp') + '" data-id="' + t.id + '" data-v="0">' +
+        (exc ? 'رفض الاستبعاد' : rep ? 'اعتذار' : 'رفض') + '</button>' +
+      '<button class="btn p sm" data-a="' + (exc ? 'rex' : rep ? 'rrepl' : 'resp') + '" data-id="' + t.id + '" data-v="1">' +
+        (exc ? 'موافقة' : 'قبول') + '</button>' +
       '</div></div>';
   }
   const d = t.delegate;
@@ -3212,7 +3223,8 @@ function ticketsPane() {
 }
 
 /* التوافق: من يفتح «التذاكر» مباشرة يصل الشاشة المدمجة على تبويبها */
-function screenTickets() { S.tab.desk = 'tk'; return screenDesk(); }
+/* الشاشة المدمجة: لا نفرض التبويب في كل رسم — وإلا أُلغي اختيار المستخدم فورًا */
+function screenTickets() { return screenDesk(); }
 
 
 function ticketRow(k) {
@@ -3992,6 +4004,10 @@ function reqCardFull(r, actionable) {
         ? '<div class="grid2" style="margin-top:10px">' +
           '<button class="btn d sm" data-a="wdno" data-id="' + t.id + '" data-u="' + r.from + '">رفض</button>' +
           '<button class="btn p sm" data-a="wdok" data-id="' + t.id + '" data-u="' + r.from + '">اعتماد الانسحاب</button></div>'
+        : r.kind === 'استبعاد'
+        ? '<div class="grid2" style="margin-top:10px">' +
+          '<button class="btn d sm" data-a="rex" data-id="' + t.id + '" data-v="0">رفض الاستبعاد</button>' +
+          '<button class="btn p sm" data-a="rex" data-id="' + t.id + '" data-v="1">موافقة</button></div>'
         : r.kind === 'استبدال'
         ? '<div class="grid2" style="margin-top:10px">' +
           '<button class="btn d sm" data-a="rrepl" data-id="' + t.id + '" data-v="0">اعتذار</button>' +
@@ -4349,8 +4365,8 @@ function reopenReason() {
   const c = S.camCtx || {};
   const t = c.taskId ? taskById(c.taskId) : null;
   const nm = t ? t.title : '';
-  if (c.kind === 'resp')    return reasonSheet('سبب رفض التسكين', nm, 'data-a="doresp" data-id="' + c.taskId + '"', 'اذكر سببًا واضحًا', 'resp', c.taskId);
-  if (c.kind === 'rdeleg')  return reasonSheet('سبب رفض التفويض', nm, 'data-a="dordeleg" data-id="' + c.taskId + '"', 'اذكر سببًا واضحًا', 'rdeleg', c.taskId);
+  if (c.kind === 'resp')    return reasonSheet('سبب رفض التسكين', nm, 'data-a="doresp" data-id="' + c.taskId + '"', 'سبب مختصر — اختياري', 'resp', c.taskId);
+  if (c.kind === 'rdeleg')  return reasonSheet('سبب رفض التفويض', nm, 'data-a="dordeleg" data-id="' + c.taskId + '"', 'سبب مختصر — اختياري', 'rdeleg', c.taskId);
   if (c.kind === 'cancel')  return reasonSheet('إلغاء المهمة', 'المبرر إلزامي', 'data-a="docancel" data-id="' + c.taskId + '"', 'مبرر الإلغاء', 'cancel', c.taskId);
   return null;
 }
@@ -5164,7 +5180,7 @@ function swapSheet() {
     '<div class="lbl plain">اليوم المطلوب</div>' +
     '<div class="field" style="margin:8px 0"><input type="date" id="swd" value="' + isoDate(now() + DAY) + '"></div>' +
     '<div class="lbl plain">السبب</div>' +
-    '<div class="field" style="margin:8px 0"><input id="swr" maxlength="140" placeholder="اذكر سببًا واضحًا — يصل الليدر"></div>' +
+    '<div class="field" style="margin:8px 0"><input id="swr" maxlength="140" placeholder="سبب مختصر — اختياري"></div>' +
     '<div class="note a">' + icon('i-info','s16') +
       '<span>يصل الطلب إلى ليدرك، وله أن يعتمده أو يرفعه إلى الكنترول.</span></div>' +
     '<div class="grid2" style="margin-top:12px">' +
@@ -5720,12 +5736,14 @@ const SLOT_STATE = {
   expired:   ['انتهت مهلة الطلب',  'grey'],
   withdrawn: ['منسحب بموافقة',     'grey'],
   excluded:  ['مستبعد',            'no'],
+  excluding: ['طلب استبعاد',       'wait'],
   replacing: ['بانتظار البديل',    'wait'],
   replaced:  ['مستبدل',            'grey'],
   standin:   ['بديل',              'live']
 };
 function slotState(a) {
   if (a.out) return a.out.kind;
+  if (a.ex && a.ex.state === 'pending') return 'excluding';
   if (a.repl && a.repl.state === 'pending') return 'replacing';
   if (a.req === 'pending') return 'pending';
   if (a.req === 'rejected') return 'declined';
@@ -5740,6 +5758,14 @@ const freeForTask = (t, id) => !t.assigned.some(a =>
   a.muhsenId === id && !a.out && (a.req === 'accepted' || a.req === 'pending'));
 /* مهلة الطلب المعلّق: أربع ساعات أو إغلاق النافذة — أيّهما أقرب */
 const reqDeadline = (t, a) => Math.min((a.reqAt || now()) + REQ_TTL_H * HR, reqCloseAt(t));
+function exCountdown(a) {
+  const dl = (a.ex && a.ex.deadline) || 0;
+  if (!dl) return '';
+  const left = dl - now();
+  if (left <= 0) return 'انقضت المهلة';
+  const h = Math.floor(left / HR), m = Math.floor((left % HR) / MIN);
+  return 'يتبقّى ' + (h ? AR(h) + ' س ' : '') + AR(m) + ' د للرد';
+}
 function replCountdown(t, a) {
   const dl = (a.repl && a.repl.deadline) || 0;
   const left = dl - now();
@@ -5829,18 +5855,44 @@ function respondReplace(t, inId, ok, note_) {
   return true;
 }
 
-/* استبعاد لعدم الحاجة — بإقرار مسؤولية */
+/* طلب استبعاد لعدم الحاجة — لا ينفذ إلا بموافقة صاحبه */
 function excludeNoNeed(t, muhsenId, why) {
   if (!canAssign(t, S.session.id)) return false;
   if (lockedForAssign(t) || !reqWindowOpen(t)) return false;
   const a = t.assigned.find(x => x.muhsenId === muhsenId && onTask(x));
-  if (!a) return false;
-  a.out = { kind: 'excluded', why: why || 'عدم الحاجة', by: S.session.id, at: now(), owned: true };
+  if (!a || (a.ex && a.ex.state === 'pending') || (a.repl && a.repl.state === 'pending')) return false;
+  a.ex = { state: 'pending', why: reasonOr(why), by: S.session.id, at: now(),
+    deadline: Math.min(now() + REQ_TTL_H * HR, reqCloseAt(t)) };
   const nm = userById(muhsenId).name;
-  hist(t, 'استبعد ' + me().name + ' ' + nm + ' لعدم الحاجة — «' + a.out.why + '»');
-  note(t, 'استُبعد ' + nm + ' لعدم الحاجة بقرار الليدر ومسؤوليته — ' + a.out.why);
-  notify(muhsenId, 'i-xc', 'استُبعدت من مهمة',
-    '«' + t.title + '» — ' + a.out.why, { n: 'task', id: t.id });
+  addReq('استبعاد', S.session.id, muhsenId, t.id, a.ex.why);
+  histReq(t, 'رفع ' + me().name + ' طلب استبعاد ' + nm + ' — «' + a.ex.why + '»');
+  notify(muhsenId, 'i-xc', 'طلب استبعاد من مهمة',
+    '«' + t.title + '»', { n: 'requests' });
+  recomputeStatus(t);
+  return true;
+}
+
+/* رد المحسن: يقبل فيخرج، أو يرفض فيبقى ويُسجَّل رفضه بوقتيه */
+function respondExclude(t, muhsenId, ok, note_) {
+  const a = t.assigned.find(x => x.muhsenId === muhsenId && x.ex && x.ex.state === 'pending');
+  if (!a) return false;
+  const nm = (userById(muhsenId) || {}).name || '';
+  const askedAt = a.ex.at;
+  a.ex.state = ok ? 'accepted' : 'rejected';
+  a.ex.respAt = now(); a.ex.respNote = note_ ? String(note_).trim() : '';
+  closeReq(t.id, muhsenId, 'استبعاد', ok ? 'accepted' : 'rejected', a.ex.respNote);
+  if (ok) {
+    a.out = { kind: 'excluded', why: a.ex.why, by: a.ex.by, at: now(), owned: true };
+    hist(t, 'قبِل ' + nm + ' الاستبعاد من المهمة — ' + a.ex.why);
+    note(t, 'استُبعد ' + nm + ' بموافقته — ' + a.ex.why);
+    notify(t.leaderId, 'i-checkc', 'قبول الاستبعاد',
+      nm + ' — «' + t.title + '»', { n: 'task', id: t.id });
+  } else {
+    hist(t, 'رفض ' + nm + ' الاستبعاد من المهمة ' + t12(now()) + ' — وقُدّم الطلب ' + t12(askedAt) +
+      (a.ex.respNote ? ' — «' + a.ex.respNote + '»' : ''));
+    notify(t.leaderId, 'i-xc', 'رفض الاستبعاد',
+      nm + ' — «' + t.title + '»', { n: 'task', id: t.id });
+  }
   recomputeStatus(t);
   return true;
 }
@@ -5855,6 +5907,18 @@ function markWithdrawn(t, muhsenId) {
 /* ---------- انتهاء مهلة الطلبات ---------- */
 function expireRequests(t) {
   let n = 0;
+  /* طلبات الاستبعاد لها مهلتها — وانقضاؤها يُبقي صاحبها على المهمة */
+  t.assigned.forEach(a => {
+    if (!a.ex || a.ex.state !== 'pending') return;
+    if (now() < a.ex.deadline) return;
+    a.ex.state = 'expired'; a.ex.respAt = now();
+    const nm2 = (userById(a.muhsenId) || {}).name || '';
+    closeReq(t.id, a.muhsenId, 'استبعاد', 'expired', 'انتهت مهلة الرد');
+    hist(t, 'قُدّم طلب استبعاد ' + nm2 + ' ' + t12(a.ex.at) + ' ولم يُرد عليه — بقي على المهمة');
+    notify(t.leaderId, 'i-clock', 'انتهت مهلة الاستبعاد',
+      nm2 + ' — «' + t.title + '»', { n: 'task', id: t.id });
+    n++;
+  });
   t.assigned.forEach(a => {
     if (a.req !== 'pending') return;
     const dead = Math.min(a.reqAt + REQ_TTL_H * HR, reqCloseAt(t));
@@ -5956,6 +6020,14 @@ function slotCard(t, a, canAct) {
       icon('i-info','s16') + '<span>' +
       (a.out.kind === 'replaced' ? 'استُبدل بـ ' + E(a.out.byName || '') : SLOT_STATE[a.out.kind][0]) +
       ' — ' + E(a.out.why) + '</span></div>' : '') +
+    (a.ex && a.ex.state === 'pending' ? '<div class="note a" style="margin-top:9px">' + icon('i-xc','s16') +
+      '<span><b>طلب استبعاد بانتظار رده</b><br>' + E(a.ex.why) + ' · ' + E(exCountdown(a)) +
+      '<br>يبقى على المهمة حتى يوافق.</span></div>' : '') +
+    (a.ex && a.ex.state === 'rejected' ? '<div class="note r" style="margin-top:9px">' + icon('i-xc','s16') +
+      '<span><b>رفض الاستبعاد</b><br>قُدّم الطلب ' + t12(a.ex.at) + ' ورُفض ' + t12(a.ex.respAt) +
+      (a.ex.respNote ? ' — «' + E(a.ex.respNote) + '»' : '') + '<br>بقي على المهمة.</span></div>' : '') +
+    (a.ex && a.ex.state === 'expired' ? '<div class="note a" style="margin-top:9px">' + icon('i-clock','s16') +
+      '<span>قُدّم طلب استبعاد ' + t12(a.ex.at) + ' ولم يُرد عليه — بقي على المهمة.</span></div>' : '') +
     (a.repl && a.repl.state === 'pending' ? '<div class="note a" style="margin-top:9px">' + icon('i-swap','s16') +
       '<span><b>بانتظار قبول ' + E((userById(a.repl.toId) || {}).name) + '</b><br>' +
       'يبقى على المهمة حتى يقبل البديل. ' + E(replCountdown(t, a)) + '</span></div>' : '') +
@@ -5972,7 +6044,8 @@ function slotCard(t, a, canAct) {
         '<button class="btn d sm" data-a="wdno" data-id="' + t.id + '" data-u="' + m.id + '">رفض</button>' +
         '<button class="btn p sm" data-a="wdok" data-id="' + t.id + '" data-u="' + m.id + '">اعتماد الانسحاب</button></div>' : '') : '') +
 
-    (canReq && onTask(a) && !a.repl && !a.wd ?
+    (canReq && onTask(a) && !(a.repl && a.repl.state === 'pending') &&
+      !(a.ex && a.ex.state === 'pending') && !a.wd ?
       '<div class="grid3" style="margin-top:10px">' +
         (ph ? '<a class="btn l sm" href="tel:' + ph + '">' + icon('i-phone','s16') + 'اتصال</a>' : '') +
         '<button class="btn l sm" data-a="exclude" data-id="' + t.id + '" data-u="' + m.id + '">' +
@@ -6019,7 +6092,7 @@ function excludeSheet(t, muhsenId) {
         '<span><b>إقرار مسؤولية</b><br>باستبعاده لعدم الحاجة تتحمّل مسؤولية ما ينتج عن نقص العدد في هذه المهمة.</span></div>') +
 
     '<div class="lbl plain">ملاحظة</div>' +
-    '<div class="field" style="margin:8px 0"><input id="exwhy" maxlength="140" placeholder="سبب مختصر — إلزامي"></div>' +
+    '<div class="field" style="margin:8px 0"><input id="exwhy" maxlength="140" placeholder="سبب مختصر — اختياري"></div>' +
     '<div class="grid2" style="margin-top:12px">' +
       '<button class="btn g" data-a="close">تراجع</button>' +
       (kind === 'swap' && !cands.length
@@ -6312,8 +6385,7 @@ document.addEventListener('click', ev => {
         S.sheet = reasonSheet('سبب رفض التسكين', t.title, 'data-a="doresp" data-id="' + id + '"',
           'مثال: مرتبط بمهمة أخرى', 'resp', id); }
       break; }
-    case 'doresp': { const rr = val('txt');
-      if (!rr) { toast('سبب الرفض إلزامي — يصل الليدر', 'r'); break; }
+    case 'doresp': { const rr = reasonOr(val('txt'));
       respondRequest(T(), S.session.id, false, rr, S.pendingExcuse); S.pendingExcuse = null;
       S.sheet = null; toast('رُفض الطلب وأُبلغ الليدر', 'r'); break; }
 
@@ -6332,8 +6404,7 @@ document.addEventListener('click', ev => {
         S.sheet = reasonSheet('سبب رفض التفويض', t.title, 'data-a="dordeleg" data-id="' + id + '"',
           'اكتب سببك', 'rdeleg', id); }
       break; }
-    case 'dordeleg': { const rr = val('txt');
-      if (!rr) { toast('سبب الرفض إلزامي', 'r'); break; }
+    case 'dordeleg': { const rr = reasonOr(val('txt'));
       respondDelegate(T(), false, rr, S.pendingExcuse); S.pendingExcuse = null;
       S.sheet = null; toast('رُفض التفويض', 'r'); break; }
 
@@ -6519,25 +6590,33 @@ document.addEventListener('click', ev => {
       if (!t || !canAssign(t, S.session.id)) { toast('التغيير في التسكين من صلاحية الليدر', 'r'); break; }
       if (!t || !canDecide(t, S.session.id)) { toast('ليست من صلاحيتك', 'r'); break; }
       if (!reqWindowOpen(t)) { toast(reqWindowWhy(t), 'r'); break; }
-      const why = val('exwhy');
-      if (!why || why.length < 4) { toast('السبب إلزامي', 'r'); break; }
+      const why = reasonOr(val('exwhy'));
       if (S.exKind === 'swap') {
         if (!S.exTo) { toast('اختر البديل', 'r'); break; }
         if (busyIn(S.exTo, t)) { toast('البديل مرتبط بمهمة متداخلة', 'r'); break; }
         if (!requestReplace(t, uid_, S.exTo, why)) { toast('تعذّر إرسال الطلب', 'r'); break; }
         toast('أُرسل طلب الاستبدال — يبقى على المهمة حتى يقبل البديل');
       } else {
-        if (!excludeNoNeed(t, uid_, why)) { toast('تعذّر الاستبعاد', 'r'); break; }
-        toast('استُبعد — وسُجّلت مسؤوليتك عن القرار', 'r');
+        if (!excludeNoNeed(t, uid_, why)) { toast('تعذّر رفع الطلب', 'r'); break; }
+        toast('رُفع طلب الاستبعاد — ينتظر رده');
       }
       S.sheet = null; S.exFor = null; buzz(); break; }
+    case 'rex': { const t = T(); if (!t) break;
+      if (v === '1') {
+        if (!respondExclude(t, S.session.id, true)) { toast('تعذّر تنفيذ الطلب', 'r'); break; }
+        buzz(); toast('وافقت على الاستبعاد', 'r');
+      } else S.sheet = textSheet('رفض الاستبعاد', t.title,
+        'data-a="dorex" data-id="' + id + '"', '', 'سبب الرفض — اختياري');
+      break; }
+    case 'dorex': {
+      if (!respondExclude(T(), S.session.id, false, val('txt'))) { toast('تعذّر تنفيذ الطلب', 'r'); break; }
+      S.sheet = null; buzz(); toast('رفضت الاستبعاد — تبقى على المهمة'); break; }
     case 'rrepl': { const t = T(); if (!t) break;
       if (v === '1') { respondReplace(t, S.session.id, true); buzz(); toast('قبلت الحلول مكان زميلك'); }
       else S.sheet = textSheet('اعتذار عن الحلول', t.title,
         'data-a="dorrepl" data-id="' + id + '"', '', 'سبب الاعتذار');
       break; }
-    case 'dorrepl': { const rr = val('txt');
-      if (!rr) { toast('السبب إلزامي', 'r'); break; }
+    case 'dorrepl': { const rr = reasonOr(val('txt'));
       respondReplace(T(), S.session.id, false, rr); S.sheet = null;
       toast('اعتذرت — يبقى زميلك على المهمة', 'r'); break; }
 
@@ -6550,8 +6629,7 @@ document.addEventListener('click', ev => {
     case 'dosupport': { const t = T();
       if (!t || !canAssign(t, S.session.id)) { toast('طلب الدعم من صلاحية الليدر', 'r'); break; }
       if (!supportOpen(t)) { toast(supportWhy(t), 'r'); break; }
-      const why = val('spwhy');
-      if (!why || why.length < 6) { toast('اذكر سبب الطلب', 'r'); break; }
+      const why = reasonOr(val('spwhy'));
       if (openSupport(t.id).length) { toast('لديك طلب دعم قائم على هذه المهمة', 'r'); break; }
       requestSupport(t, S.spCount || 1, why); S.sheet = null; buzz();
       toast('رُفع طلب الدعم إلى الكنترول'); break; }
@@ -6567,10 +6645,9 @@ document.addEventListener('click', ev => {
       if (lockedForAssign(t)) { toast('المهمة بدأت — لا انسحاب بعد بدايتها', 'r'); break; }
       if (!reqWindowOpen(t)) { toast(reqWindowWhy(t), 'r'); break; }
       S.sheet = textSheet('طلب الانسحاب من المهمة',
-        'السبب إلزامي ويصل الليدر — ولا ينفذ الانسحاب إلا بموافقته',
+        'اكتب سببًا إن شئت — ولا ينفذ الانسحاب إلا بموافقة الليدر',
         'data-a="doaskwd" data-id="' + id + '"', '', 'سبب الانسحاب'); break; }
-    case 'doaskwd': { const rr = val('txt');
-      if (!rr || rr.length < 5) { toast('اذكر سببًا واضحًا', 'r'); break; }
+    case 'doaskwd': { const rr = reasonOr(val('txt'));
       const t = T(); if (!t) break;
       if (lockedForAssign(t)) { toast('المهمة بدأت — لا انسحاب بعد البدء', 'r'); break; }
       if (!reqWindowOpen(t)) { toast(reqWindowWhy(t), 'r'); break; }
@@ -6583,8 +6660,7 @@ document.addEventListener('click', ev => {
       if (!t || !canDecide(t, S.session.id)) { toast('ليست من صلاحيتك', 'r'); break; }
       S.sheet = textSheet('رفض طلب الانسحاب', userById(uid_).name,
         'data-a="dowdno" data-id="' + id + '" data-u="' + uid_ + '"', '', 'سبب الرفض'); break; }
-    case 'dowdno': { const rr = val('txt');
-      if (!rr) { toast('السبب إلزامي', 'r'); break; }
+    case 'dowdno': { const rr = reasonOr(val('txt'));
       respondWithdraw(T(), uid_, false, rr); S.sheet = null; toast('رُفض طلب الانسحاب', 'r'); break; }
 
     /* ===== التقارير ===== */
@@ -6611,8 +6687,7 @@ document.addEventListener('click', ev => {
       toast(rp.stage === 'done' ? 'حُدِّثت بيانات الغرفة' : 'اعتُمد وأُحيل للكنترول'); break; }
     case 'roomno': S.sheet = textSheet('رفض تعديل الغرفة', reportById(id).title,
       'data-a="doroomno" data-id="' + id + '"', '', 'سبب الرفض'); break;
-    case 'doroomno': { const rr = val('txt');
-      if (!rr) { toast('السبب إلزامي', 'r'); break; }
+    case 'doroomno': { const rr = reasonOr(val('txt'));
       roomAdvance(reportById(id), S.session.id, false, rr); S.sheet = null;
       toast('رُفض التعديل', 'r'); break; }
     case 'rreply': S.sheet = textSheet('رد على التقرير', reportById(id).title,
@@ -6639,8 +6714,7 @@ document.addEventListener('click', ev => {
     case 'swapto': S.swapTo = v; S.sheet = swapSheet(); break;
     case 'dosendswap': {
       const to = S.swapTo || Object.keys(SHIFTS).find(k => k !== shiftOf(S.session.id));
-      const rsn = val('swr'), dy = val('swd');
-      if (!rsn || rsn.length < 6) { toast('اذكر سببًا واضحًا للتبديل', 'r'); break; }
+      const rsn = reasonOr(val('swr')), dy = val('swd');
       if (!dy) { toast('اختر اليوم المطلوب', 'r'); break; }
       const dts = new Date(dy + 'T00:00:00').getTime();
       if (isNaN(dts)) { toast('تاريخ غير صالح', 'r'); break; }
@@ -6654,10 +6728,9 @@ document.addEventListener('click', ev => {
       swapAct(s, 'approve'); buzz(); toast('اعتُمد التبديل'); break; }
     case 'swapno': { const s = S.swaps.find(x => x.id === id);
       if (!s || s.leaderId !== S.session.id) { toast('ليست من صلاحيتك', 'r'); break; }
-      S.sheet = textSheet('رفض طلب التبديل', 'السبب إلزامي ويصل مقدّم الطلب',
+      S.sheet = textSheet('رفض طلب التبديل', 'اكتب سببًا إن شئت — يصل مقدّم الطلب',
         'data-a="doswapno" data-id="' + id + '"', '', 'سبب الرفض'); break; }
-    case 'doswapno': { const s = S.swaps.find(x => x.id === id), rr = val('txt');
-      if (!rr) { toast('السبب إلزامي', 'r'); break; }
+    case 'doswapno': { const s = S.swaps.find(x => x.id === id), rr = reasonOr(val('txt'));
       swapAct(s, 'reject', rr); S.sheet = null; toast('رُفض الطلب', 'r'); break; }
     case 'swapesc': { const s = S.swaps.find(x => x.id === id);
       if (!s || s.leaderId !== S.session.id) { toast('ليست من صلاحيتك', 'r'); break; }

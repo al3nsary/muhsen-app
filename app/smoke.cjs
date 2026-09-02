@@ -128,6 +128,14 @@ step('لا يُحذف أحد — تتغيّر حالته فقط', () => {
   const n0 = run('taskById("' + TID + '").assigned.length');
   const mid = run('acceptedSlots(taskById("' + TID + '"))[0].muhsenId');
   run('excludeNoNeed(taskById("' + TID + '"),"' + mid + '","العدد يكفي")');
+  /* لا يخرج بمجرّد الطلب — ينتظر رده */
+  if (run('slotState(taskById("' + TID + '").assigned.find(x=>x.muhsenId==="' + mid + '"))') !== 'excluding')
+    throw new Error('لم يُسجَّل كطلب استبعاد');
+  if (!run('acceptedSlots(taskById("' + TID + '")).some(x=>x.muhsenId==="' + mid + '")'))
+    throw new Error('خرج قبل موافقته');
+  run('S.session={id:"' + mid + '",at:Date.now()}');
+  run('respondExclude(taskById("' + TID + '"),"' + mid + '",true)');
+  run('S.session={id:"L1",at:Date.now()}');
   if (run('taskById("' + TID + '").assigned.length') !== n0) throw new Error('حُذف من القائمة');
   const sl = run('taskById("' + TID + '").assigned.find(x=>x.muhsenId==="' + mid + '")');
   if (!sl.out || sl.out.kind !== 'excluded') throw new Error('الحالة ' + JSON.stringify(sl.out));
@@ -137,8 +145,8 @@ step('لا يُحذف أحد — تتغيّر حالته فقط', () => {
     throw new Error('ما زال محتسبًا');
 });
 step('الاستبعاد لعدم الحاجة يُسجَّل بمسؤولية الليدر', () => {
-  const n = run('taskById("' + TID + '").notes.filter(x=>x.text.indexOf("مسؤوليته")>=0).length');
-  if (!n) throw new Error('بلا إقرار مسؤولية');
+  const n = run('taskById("' + TID + '").notes.filter(x=>x.text.indexOf("بموافقته")>=0).length');
+  if (!n) throw new Error('لم تُسجَّل موافقته على الاستبعاد');
 });
 step('الاستبدال يُبقي الأول حتى يقبل البديل', () => {
   const t = run('taskById("' + TID + '")');
@@ -401,7 +409,7 @@ step('الصورة تبقى بعد انتهاء المهمة', () => {
 });
 
 console.log('\nالمرفقات مع الرفض');
-step('رفض التسكين بلا سبب مرفوض', () => {
+step('الرفض بلا سبب مقبول ويُسجَّل «بلا سبب مذكور»', () => {
   /* نستعمل محسنًا احتياطيًّا غير مسكَّن — لأن الفريق مسكَّن تلقائيًّا */
   run('S.clockOffset=0');
   sandbox.T_ = run('S.tasks.filter(x=>x.leaderId==="L1"&&x.start>now()+13*HR)[0].id');
@@ -413,8 +421,14 @@ step('رفض التسكين بلا سبب مرفوض', () => {
   sandbox.document.getElementById = () => Object.assign({}, el, { value: '' });
   click({ a: 'doresp', id: sandbox.T_ });
   sandbox.document.getElementById = () => el;
-  const req = run('slotOf(taskById("' + sandbox.T_ + '"),"' + sandbox.M_ + '").req');
-  if (req === 'rejected') throw new Error('قُبل رفض بلا سبب');
+  const sl2 = run('taskById("' + sandbox.T_ + '").assigned.find(function(x){return x.muhsenId==="' + sandbox.M_ + '"})');
+  if (sl2.req !== 'rejected') throw new Error('رُفض الرفض بلا سبب');
+  if (sl2.respNote !== run('NO_REASON')) throw new Error('لم يُسجَّل «بلا سبب مذكور»: ' + sl2.respNote);
+  /* ونعيد الطلب لاختبار المرفق بعده */
+  run('S.session={id:"L1",at:Date.now()}');
+  run('taskById("' + sandbox.T_ + '").assigned = taskById("' + sandbox.T_ + '").assigned.filter(function(a){return a.muhsenId!=="' + sandbox.M_ + '"})');
+  run('sendRequest(taskById("' + sandbox.T_ + '"),"' + sandbox.M_ + '")');
+  run('S.session={id:"' + sandbox.M_ + '",at:Date.now()}');
 });
 step('رفض مع سبب ومرفق يُحفظ ويُعرض', () => {
   run('S.pendingExcuse="data:image/jpeg;base64,BBB"');
@@ -855,13 +869,20 @@ step('طلب بلا سبب أو بشِفت مطابق مرفوض', () => {
   run('S.session={id:"' + m + '",at:Date.now()}');
   const before = run('S.swaps.length');
   run('S.swapTo=Object.keys(SHIFTS).find(k=>k!==shiftOf(S.session.id))');
-  let vals = { swr: 'قصير', swd: run('isoDate(now()+DAY)') };
+  /* السبب اختياري — واليوم إلزامي */
+  let vals = { swr: '', swd: '' };
   sandbox.document.getElementById = i2 => (vals[i2] !== undefined ? Object.assign({}, el, { value: vals[i2] }) : el);
   click({ a: 'dosendswap' });
-  vals = { swr: 'سبب كافٍ وواضح للتبديل', swd: '' };
+  sandbox.document.getElementById = () => el;
+  if (run('S.swaps.length') !== before) throw new Error('قُبل طلب بلا يوم');
+  /* وبلا سبب مع يوم صحيح: يُقبل ويُسجَّل «بلا سبب مذكور» */
+  vals = { swr: '', swd: run('isoDate(now()+DAY)') };
+  sandbox.document.getElementById = i2 => (vals[i2] !== undefined ? Object.assign({}, el, { value: vals[i2] }) : el);
   click({ a: 'dosendswap' });
   sandbox.document.getElementById = () => el;
-  if (run('S.swaps.length') !== before) throw new Error('قُبل طلب ناقص');
+  if (run('S.swaps.length') !== before + 1) throw new Error('رُفض طلب بلا سبب');
+  if (run('S.swaps[0].reason') !== run('NO_REASON')) throw new Error('لم يُسجَّل «بلا سبب مذكور»');
+  run('S.swaps.shift()');
 });
 step('الطلب يصل الليدر', () => {
   const m = run('S.session.id');
@@ -1360,18 +1381,86 @@ step('كل مهمة دون ١٢ ساعة نافذتها مغلقة', () => {
   const bad = run('myTasks().filter(function(t){return t.start-now() < 12*HR && reqWindowOpen(t)}).length');
   if (bad) throw new Error(bad + ' مهمة قريبة ونافذتها مفتوحة');
 });
-step('الاستبعاد بسببه ونصّه يُسجَّل على المهمة', () => {
-  const tid = run('myTasks().filter(function(t){return t.start>now()+13*HR && acceptedSlots(t).length>1}).sort(function(a,b){return a.start-b.start})[0].id');
+step('الاستبعاد طلبٌ يصل صاحبه ولا ينفذ إلا بموافقته', () => {
+  run('S.session={id:"L1",at:Date.now()};S.clockOffset=0');
+  const tid = run('myTasks().filter(function(t){return t.start>now()+13*HR && acceptedSlots(t).length>1 && ' +
+    '["done","cancelled","running"].indexOf(t.status)<0})[0].id');
   const mid = run('acceptedSlots(taskById("' + tid + '"))[0].muhsenId');
   const n0 = run('taskById("' + tid + '").assigned.length');
-  run('excludeNoNeed(taskById("' + tid + '"),"' + mid + '","العدد المتبقي يكفي للفوج")');
-  if (run('taskById("' + tid + '").assigned.length') !== n0) throw new Error('حُذف بدل أن تتغيّر حالته');
-  const sl = run('taskById("' + tid + '").assigned.find(function(x){return x.muhsenId==="' + mid + '"})');
-  if (!sl.out || sl.out.kind !== 'excluded') throw new Error('الحالة خاطئة');
-  if (sl.out.why.indexOf('يكفي') < 0) throw new Error('لم يُحفظ نصّ السبب');
-  if (!run('taskById("' + tid + '").notes.some(function(n){return n.text.indexOf("مسؤوليته")>=0})'))
-    throw new Error('لم تُسجَّل مسؤولية الليدر');
+  if (!run('excludeNoNeed(taskById("' + tid + '"),"' + mid + '","العدد المتبقي يكفي للفوج")'))
+    throw new Error('لم يُرفع الطلب');
+  /* لا يخرج بمجرّد الطلب */
+  if (run('taskById("' + tid + '").assigned.find(function(x){return x.muhsenId==="' + mid + '"}).out'))
+    throw new Error('خرج قبل موافقته');
+  if (run('slotState(taskById("' + tid + '").assigned.find(function(x){return x.muhsenId==="' + mid + '"}))') !== 'excluding')
+    throw new Error('حالته ليست «طلب استبعاد»');
+  /* ويصله الطلب */
+  run('S.session={id:"' + mid + '",at:Date.now()}');
+  const mine = run('myRequests().map(function(r){return r.kind})');
+  if (mine.indexOf('exclude') < 0) throw new Error('لم يصله طلب الاستبعاد');
+  const card = run('reqActionCard(myRequests().find(function(r){return r.kind==="exclude"}))');
+  if (card.indexOf('data-a="rex"') < 0) throw new Error('بلا أزرار رد');
+  if (card.indexOf('يتبقّى') < 0) throw new Error('بلا عدّاد مهلة');
+  sandbox.EX_ = tid; sandbox.EXM_ = mid; sandbox.EXN_ = n0;
 });
+step('رفض الاستبعاد يُبقيه ويُسجَّل بوقتيه', () => {
+  const tid = sandbox.EX_, mid = sandbox.EXM_;
+  sandbox.document.getElementById = () => Object.assign({}, el, { value: 'ملتزم بالمهمة' });
+  click({ a: 'dorex', id: tid });
+  sandbox.document.getElementById = () => el;
+  run('S.session={id:"L1",at:Date.now()}');
+  const a = run('taskById("' + tid + '").assigned.find(function(x){return x.muhsenId==="' + mid + '"})');
+  if (a.out) throw new Error('خرج رغم رفضه');
+  if (a.ex.state !== 'rejected') throw new Error('الحالة ' + a.ex.state);
+  if (!run('acceptedSlots(taskById("' + tid + '")).some(function(x){return x.muhsenId==="' + mid + '"})'))
+    throw new Error('لم يبقَ محتسبًا على المهمة');
+  const h = run('taskById("' + tid + '").history.find(function(x){return x.text.indexOf("رفض")>=0 && x.text.indexOf("الاستبعاد")>=0})');
+  if (!h) throw new Error('لم يُسجَّل الرفض في سجل الإجراءات');
+  if (h.text.indexOf('وقُدّم الطلب') < 0) throw new Error('السجل بلا وقت تقديم الطلب');
+  const card = run('slotCard(taskById("' + tid + '"), taskById("' + tid + '").assigned.find(function(x){return x.muhsenId==="' + mid + '"}), true)');
+  if (card.indexOf('رفض الاستبعاد') < 0) throw new Error('لا تظهر حالة الرفض على البطاقة');
+});
+step('يمكن رفع طلب استبعاد جديد بعد الرفض', () => {
+  const tid = sandbox.EX_, mid = sandbox.EXM_;
+  if (!run('excludeNoNeed(taskById("' + tid + '"),"' + mid + '","")')) throw new Error('تعذّر طلب جديد');
+  const a = run('taskById("' + tid + '").assigned.find(function(x){return x.muhsenId==="' + mid + '"})');
+  if (a.ex.state !== 'pending') throw new Error('لم يُسجَّل كطلب جديد');
+  if (a.ex.why !== run('NO_REASON')) throw new Error('السبب الفارغ لم يُسجَّل صراحةً');
+});
+step('الموافقة تُخرجه وتُبقيه في القائمة', () => {
+  const tid = sandbox.EX_, mid = sandbox.EXM_;
+  run('S.session={id:"' + mid + '",at:Date.now()}');
+  click({ a: 'rex', id: tid, v: '1' });
+  run('S.session={id:"L1",at:Date.now()}');
+  const a = run('taskById("' + tid + '").assigned.find(function(x){return x.muhsenId==="' + mid + '"})');
+  if (!a.out || a.out.kind !== 'excluded') throw new Error('لم يُستبعد بعد موافقته');
+  if (run('taskById("' + tid + '").assigned.length') !== sandbox.EXN_) throw new Error('حُذف من القائمة');
+  if (run('acceptedSlots(taskById("' + tid + '")).some(function(x){return x.muhsenId==="' + mid + '"})'))
+    throw new Error('ما زال محتسبًا');
+});
+step('انقضاء مهلة الاستبعاد يُبقيه ويُسجَّل', () => {
+  run('S.clockOffset=0');
+  const tid = run('myTasks().filter(function(t){return t.start>now()+13*HR && acceptedSlots(t).length>1 && ' +
+    '["done","cancelled","running"].indexOf(t.status)<0})[0].id');
+  const mid = run('acceptedSlots(taskById("' + tid + '")).find(function(a){return !a.ex}).muhsenId');
+  run('excludeNoNeed(taskById("' + tid + '"),"' + mid + '","تجربة المهلة")');
+  run('S.clockOffset = S.clockOffset + REQ_TTL_H*60 + 5');
+  run('expireRequests(taskById("' + tid + '"))');
+  const a = run('taskById("' + tid + '").assigned.find(function(x){return x.muhsenId==="' + mid + '"})');
+  if (a.out) throw new Error('خرج رغم عدم الرد');
+  if (a.ex.state !== 'expired') throw new Error('الحالة ' + a.ex.state);
+  if (!run('taskById("' + tid + '").history.some(function(h){return h.text.indexOf("ولم يُرد عليه")>=0})'))
+    throw new Error('لم يُسجَّل في سجل الإجراءات');
+  run('S.clockOffset=0');
+});
+step('السبب اختياري في كل الطلبات', () => {
+  const src = FILES.map(read).join('\n');
+  [/سبب الرفض إلزامي/, /السبب إلزامي/, /اذكر سببًا واضحًا/, /اذكر سبب الطلب/].forEach(function (re) {
+    if (re.test(src)) throw new Error('ما زال هناك إلزام: ' + re);
+  });
+  if (src.indexOf('reasonOr') < 0) throw new Error('لا يوجد بديل يسجّل «بلا سبب مذكور»');
+});
+
 step('لا مسار إزالة قديم يناقض «لا يخرج أحد»', () => {
   const src = FILES.map(read).join('\n');
   ['removeAssignee', 'removeasg', 'doremove', 'slotMenuSheet'].forEach(k => {
@@ -1499,6 +1588,8 @@ step('طلب الاستبدال يصل البديل بمساره', () => {
     'var t = ts[0];' +
     'var free = acceptedSlots(t)[2].muhsenId;' +
     'excludeNoNeed(t, free, "تفريغ للاختبار");' +
+    'var keep = S.session; S.session = {id: free, at: Date.now()};' +
+    'respondExclude(t, free, true); S.session = keep;' +
     'return {t:t.id, out:acceptedSlots(t)[0].muhsenId, cand:free}; })()');
   if (!pick) throw new Error('لا توجد مهمة ببديل متاح');
   const tid = pick.t, outId = pick.out, cand = pick.cand;
@@ -1555,6 +1646,8 @@ step('انقضاء المهلة يُعيد الأول ويُسجَّل بلا ر
     'var t = ts[0];' +
     'var free = acceptedSlots(t)[2].muhsenId;' +
     'excludeNoNeed(t, free, "تفريغ للاختبار");' +
+    'var keep = S.session; S.session = {id: free, at: Date.now()};' +
+    'respondExclude(t, free, true); S.session = keep;' +
     'return {t:t.id, out:acceptedSlots(t)[0].muhsenId, cand:free}; })()');
   if (!pick2) throw new Error('لا توجد مهمة صالحة لاختبار المهلة');
   const tid = pick2.t, outId = pick2.out, cand = pick2.cand;
@@ -1654,5 +1747,18 @@ step('بطاقة الحساب أُزيلت من الرئيسية', () => {
   if (h2.indexOf(run('me().specialty')) >= 0) throw new Error('ما زالت بطاقة الحساب في رئيسية المحسن');
   run('S.session={id:"L1",at:Date.now()}');
 });
+step('التنقّل بين التذاكر والتقارير يثبت', () => {
+  run('S.session={id:"L1",at:Date.now()};S.route={n:"tickets"};S.tab.desk="tk"');
+  click({ a: 'seg', k: 'desk', v: 'rp' });
+  if (run('S.tab.desk') !== 'rp') throw new Error('لم يتغيّر التبويب');
+  /* الشاشة نفسها لا تُعيده إلى التذاكر عند الرسم */
+  const h = run('screenTickets()');
+  if (run('S.tab.desk') !== 'rp') throw new Error('أُعيد إلى التذاكر عند الرسم');
+  if (h.indexOf('التقارير ترفعها أنت') < 0) throw new Error('لم تُعرض لوحة التقارير');
+  click({ a: 'seg', k: 'desk', v: 'tk' });
+  const h2 = run('screenTickets()');
+  if (h2.indexOf('التذاكر ترد إليك') < 0) throw new Error('لم تعد للتذاكر');
+});
+
 console.log('\n' + (fail ? '✗ فشل ' + fail : '✓ نجحت كل الاختبارات'));
 process.exitCode = fail ? 1 : 0;

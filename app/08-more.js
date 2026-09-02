@@ -27,7 +27,8 @@ function ticketsPane() {
 }
 
 /* التوافق: من يفتح «التذاكر» مباشرة يصل الشاشة المدمجة على تبويبها */
-function screenTickets() { S.tab.desk = 'tk'; return screenDesk(); }
+/* الشاشة المدمجة: لا نفرض التبويب في كل رسم — وإلا أُلغي اختيار المستخدم فورًا */
+function screenTickets() { return screenDesk(); }
 
 
 function ticketRow(k) {

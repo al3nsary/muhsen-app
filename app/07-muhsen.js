@@ -162,12 +162,16 @@ function screenRequests() {
 
 function reqActionCard(r) {
   const t = r.t;
-  if (r.kind === 'assign' || r.kind === 'replace') {
+  if (r.kind === 'assign' || r.kind === 'replace' || r.kind === 'exclude') {
     const a = r.slot || t.assigned.find(x => x.muhsenId === S.session.id && x.req === 'pending');
-    const rep = r.kind === 'replace';
+    const rep = r.kind === 'replace', exc = r.kind === 'exclude';
     const forU = rep && a ? userById(a.forId) : null;
     return '<div class="c gold"><div class="row"><b style="font-size:14.5px">' +
-      (rep ? 'طلب حلول مكان زميل' : 'طلب تسكين') + '</b>' + pill('يحتاج ردًا', 'wait') + '</div>' +
+      (exc ? 'طلب استبعادك من مهمة' : rep ? 'طلب حلول مكان زميل' : 'طلب تسكين') + '</b>' +
+      pill('يحتاج ردًا', 'wait') + '</div>' +
+      (exc && a && a.ex ? '<div class="note r" style="margin-top:9px">' + icon('i-xc','s16') +
+        '<span>يطلب الليدر استبعادك من هذه المهمة — ' + E(a.ex.why) + '<br>' +
+        '<b>تبقى عليها حتى توافق.</b> وإن رفضت بقيت، ويُسجَّل رفضك بوقته.</span></div>' : '') +
       (rep && forU ? '<div class="note b" style="margin-top:9px">' + icon('i-swap','s16') +
         '<span>تحلّ مكان <b>' + E(forU.name) + '</b> — ولا يخرج من المهمة إلا بقبولك.</span></div>' : '') +
       '<div class="fl" style="gap:10px;background:#F8F6F0;border-radius:14px;padding:12px;margin:11px 0">' +
@@ -178,11 +182,12 @@ function reqActionCard(r) {
       (a && a.reqNote ? '<div class="note a">' + icon('i-edit','s16') + '<span>' + E(a.reqNote) + '</span></div>' : '') +
       '<div class="fl tiny dim2" style="margin:10px 0">' + avat(userById(t.leaderId), 'sm') +
         '<span>من ' + E(userById(t.leaderId).name) + ' · ' + (a ? ago(a.reqAt) : '') + '</span></div>' +
-      (a ? '<div class="strip a">' + reqCountdown(t, a) + '</div>' : '') +
+      (a ? '<div class="strip a">' + (exc ? exCountdown(a) : reqCountdown(t, a)) + '</div>' : '') +
       '<div class="grid2" style="margin-top:10px">' +
-      '<button class="btn d sm" data-a="' + (rep ? 'rrepl' : 'resp') + '" data-id="' + t.id + '" data-v="0">' +
-        (rep ? 'اعتذار' : 'رفض') + '</button>' +
-      '<button class="btn p sm" data-a="' + (rep ? 'rrepl' : 'resp') + '" data-id="' + t.id + '" data-v="1">قبول</button>' +
+      '<button class="btn d sm" data-a="' + (exc ? 'rex' : rep ? 'rrepl' : 'resp') + '" data-id="' + t.id + '" data-v="0">' +
+        (exc ? 'رفض الاستبعاد' : rep ? 'اعتذار' : 'رفض') + '</button>' +
+      '<button class="btn p sm" data-a="' + (exc ? 'rex' : rep ? 'rrepl' : 'resp') + '" data-id="' + t.id + '" data-v="1">' +
+        (exc ? 'موافقة' : 'قبول') + '</button>' +
       '</div></div>';
   }
   const d = t.delegate;

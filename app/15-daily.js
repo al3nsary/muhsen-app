@@ -245,7 +245,7 @@ function swapSheet() {
     '<div class="lbl plain">اليوم المطلوب</div>' +
     '<div class="field" style="margin:8px 0"><input type="date" id="swd" value="' + isoDate(now() + DAY) + '"></div>' +
     '<div class="lbl plain">السبب</div>' +
-    '<div class="field" style="margin:8px 0"><input id="swr" maxlength="140" placeholder="اذكر سببًا واضحًا — يصل الليدر"></div>' +
+    '<div class="field" style="margin:8px 0"><input id="swr" maxlength="140" placeholder="سبب مختصر — اختياري"></div>' +
     '<div class="note a">' + icon('i-info','s16') +
       '<span>يصل الطلب إلى ليدرك، وله أن يعتمده أو يرفعه إلى الكنترول.</span></div>' +
     '<div class="grid2" style="margin-top:12px">' +

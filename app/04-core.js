@@ -1,6 +1,6 @@
 /* ============================ الحالة ============================ */
 const KEY = 'muhsen_app_v1';
-const APP_VER = 'نسخة ٣٫٤';
+const APP_VER = 'نسخة ٣٫٥';
 const SCHEMA = 18;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
@@ -219,6 +219,9 @@ const taskById = id => S.tasks.find(t => t.id === id);
 const teamOf = leaderId => S.users.filter(u => u.role === 'muhsen' && u.leaderId === leaderId && !u.reserve);
 /* فريق احتياطي مشترك — يطلب منه الليدر تعزيزًا لأي مهمة */
 const reserveTeam = () => S.users.filter(u => u.role === 'muhsen' && u.reserve);
+/* السبب اختياري دائمًا — وما يُترك يُسجَّل صراحةً لا يُطمس */
+const NO_REASON = 'بلا سبب مذكور';
+const reasonOr = x => (x && String(x).trim()) || NO_REASON;
 const isReserve = id => { const u = userById(id); return !!(u && u.reserve); };
 const pilgrimsOf = kt => S.pilgrims[kt] || [];
 const ktCount = kt => { const L = S.users.find(u => u.kt === kt); return L ? L.pilgrims : 0; };
@@ -676,7 +679,10 @@ function myRequests() {
   S.tasks.forEach(t => {
     if (lockedForAssign(t) && t.status !== 'running') return;
     t.assigned.forEach(a => {
-      if (a.muhsenId !== u.id || a.req !== 'pending' || a.removed) return;
+      if (a.muhsenId !== u.id || a.removed) return;
+      /* طلب استبعاد ينتظر ردّه */
+      if (a.ex && a.ex.state === 'pending') { out.push({ kind: 'exclude', t, slot: a }); return; }
+      if (a.req !== 'pending') return;
       /* البديل يردّ على طلب استبدال لا على تسكين — ولكلٍّ مساره */
       out.push({ kind: a.standin ? 'replace' : 'assign', t, slot: a });
     });

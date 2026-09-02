@@ -37,12 +37,14 @@ const SLOT_STATE = {
   expired:   ['انتهت مهلة الطلب',  'grey'],
   withdrawn: ['منسحب بموافقة',     'grey'],
   excluded:  ['مستبعد',            'no'],
+  excluding: ['طلب استبعاد',       'wait'],
   replacing: ['بانتظار البديل',    'wait'],
   replaced:  ['مستبدل',            'grey'],
   standin:   ['بديل',              'live']
 };
 function slotState(a) {
   if (a.out) return a.out.kind;
+  if (a.ex && a.ex.state === 'pending') return 'excluding';
   if (a.repl && a.repl.state === 'pending') return 'replacing';
   if (a.req === 'pending') return 'pending';
   if (a.req === 'rejected') return 'declined';
@@ -57,6 +59,14 @@ const freeForTask = (t, id) => !t.assigned.some(a =>
   a.muhsenId === id && !a.out && (a.req === 'accepted' || a.req === 'pending'));
 /* مهلة الطلب المعلّق: أربع ساعات أو إغلاق النافذة — أيّهما أقرب */
 const reqDeadline = (t, a) => Math.min((a.reqAt || now()) + REQ_TTL_H * HR, reqCloseAt(t));
+function exCountdown(a) {
+  const dl = (a.ex && a.ex.deadline) || 0;
+  if (!dl) return '';
+  const left = dl - now();
+  if (left <= 0) return 'انقضت المهلة';
+  const h = Math.floor(left / HR), m = Math.floor((left % HR) / MIN);
+  return 'يتبقّى ' + (h ? AR(h) + ' س ' : '') + AR(m) + ' د للرد';
+}
 function replCountdown(t, a) {
   const dl = (a.repl && a.repl.deadline) || 0;
   const left = dl - now();
@@ -146,18 +156,44 @@ function respondReplace(t, inId, ok, note_) {
   return true;
 }
 
-/* استبعاد لعدم الحاجة — بإقرار مسؤولية */
+/* طلب استبعاد لعدم الحاجة — لا ينفذ إلا بموافقة صاحبه */
 function excludeNoNeed(t, muhsenId, why) {
   if (!canAssign(t, S.session.id)) return false;
   if (lockedForAssign(t) || !reqWindowOpen(t)) return false;
   const a = t.assigned.find(x => x.muhsenId === muhsenId && onTask(x));
-  if (!a) return false;
-  a.out = { kind: 'excluded', why: why || 'عدم الحاجة', by: S.session.id, at: now(), owned: true };
+  if (!a || (a.ex && a.ex.state === 'pending') || (a.repl && a.repl.state === 'pending')) return false;
+  a.ex = { state: 'pending', why: reasonOr(why), by: S.session.id, at: now(),
+    deadline: Math.min(now() + REQ_TTL_H * HR, reqCloseAt(t)) };
   const nm = userById(muhsenId).name;
-  hist(t, 'استبعد ' + me().name + ' ' + nm + ' لعدم الحاجة — «' + a.out.why + '»');
-  note(t, 'استُبعد ' + nm + ' لعدم الحاجة بقرار الليدر ومسؤوليته — ' + a.out.why);
-  notify(muhsenId, 'i-xc', 'استُبعدت من مهمة',
-    '«' + t.title + '» — ' + a.out.why, { n: 'task', id: t.id });
+  addReq('استبعاد', S.session.id, muhsenId, t.id, a.ex.why);
+  histReq(t, 'رفع ' + me().name + ' طلب استبعاد ' + nm + ' — «' + a.ex.why + '»');
+  notify(muhsenId, 'i-xc', 'طلب استبعاد من مهمة',
+    '«' + t.title + '»', { n: 'requests' });
+  recomputeStatus(t);
+  return true;
+}
+
+/* رد المحسن: يقبل فيخرج، أو يرفض فيبقى ويُسجَّل رفضه بوقتيه */
+function respondExclude(t, muhsenId, ok, note_) {
+  const a = t.assigned.find(x => x.muhsenId === muhsenId && x.ex && x.ex.state === 'pending');
+  if (!a) return false;
+  const nm = (userById(muhsenId) || {}).name || '';
+  const askedAt = a.ex.at;
+  a.ex.state = ok ? 'accepted' : 'rejected';
+  a.ex.respAt = now(); a.ex.respNote = note_ ? String(note_).trim() : '';
+  closeReq(t.id, muhsenId, 'استبعاد', ok ? 'accepted' : 'rejected', a.ex.respNote);
+  if (ok) {
+    a.out = { kind: 'excluded', why: a.ex.why, by: a.ex.by, at: now(), owned: true };
+    hist(t, 'قبِل ' + nm + ' الاستبعاد من المهمة — ' + a.ex.why);
+    note(t, 'استُبعد ' + nm + ' بموافقته — ' + a.ex.why);
+    notify(t.leaderId, 'i-checkc', 'قبول الاستبعاد',
+      nm + ' — «' + t.title + '»', { n: 'task', id: t.id });
+  } else {
+    hist(t, 'رفض ' + nm + ' الاستبعاد من المهمة ' + t12(now()) + ' — وقُدّم الطلب ' + t12(askedAt) +
+      (a.ex.respNote ? ' — «' + a.ex.respNote + '»' : ''));
+    notify(t.leaderId, 'i-xc', 'رفض الاستبعاد',
+      nm + ' — «' + t.title + '»', { n: 'task', id: t.id });
+  }
   recomputeStatus(t);
   return true;
 }
@@ -172,6 +208,18 @@ function markWithdrawn(t, muhsenId) {
 /* ---------- انتهاء مهلة الطلبات ---------- */
 function expireRequests(t) {
   let n = 0;
+  /* طلبات الاستبعاد لها مهلتها — وانقضاؤها يُبقي صاحبها على المهمة */
+  t.assigned.forEach(a => {
+    if (!a.ex || a.ex.state !== 'pending') return;
+    if (now() < a.ex.deadline) return;
+    a.ex.state = 'expired'; a.ex.respAt = now();
+    const nm2 = (userById(a.muhsenId) || {}).name || '';
+    closeReq(t.id, a.muhsenId, 'استبعاد', 'expired', 'انتهت مهلة الرد');
+    hist(t, 'قُدّم طلب استبعاد ' + nm2 + ' ' + t12(a.ex.at) + ' ولم يُرد عليه — بقي على المهمة');
+    notify(t.leaderId, 'i-clock', 'انتهت مهلة الاستبعاد',
+      nm2 + ' — «' + t.title + '»', { n: 'task', id: t.id });
+    n++;
+  });
   t.assigned.forEach(a => {
     if (a.req !== 'pending') return;
     const dead = Math.min(a.reqAt + REQ_TTL_H * HR, reqCloseAt(t));
@@ -273,6 +321,14 @@ function slotCard(t, a, canAct) {
       icon('i-info','s16') + '<span>' +
       (a.out.kind === 'replaced' ? 'استُبدل بـ ' + E(a.out.byName || '') : SLOT_STATE[a.out.kind][0]) +
       ' — ' + E(a.out.why) + '</span></div>' : '') +
+    (a.ex && a.ex.state === 'pending' ? '<div class="note a" style="margin-top:9px">' + icon('i-xc','s16') +
+      '<span><b>طلب استبعاد بانتظار رده</b><br>' + E(a.ex.why) + ' · ' + E(exCountdown(a)) +
+      '<br>يبقى على المهمة حتى يوافق.</span></div>' : '') +
+    (a.ex && a.ex.state === 'rejected' ? '<div class="note r" style="margin-top:9px">' + icon('i-xc','s16') +
+      '<span><b>رفض الاستبعاد</b><br>قُدّم الطلب ' + t12(a.ex.at) + ' ورُفض ' + t12(a.ex.respAt) +
+      (a.ex.respNote ? ' — «' + E(a.ex.respNote) + '»' : '') + '<br>بقي على المهمة.</span></div>' : '') +
+    (a.ex && a.ex.state === 'expired' ? '<div class="note a" style="margin-top:9px">' + icon('i-clock','s16') +
+      '<span>قُدّم طلب استبعاد ' + t12(a.ex.at) + ' ولم يُرد عليه — بقي على المهمة.</span></div>' : '') +
     (a.repl && a.repl.state === 'pending' ? '<div class="note a" style="margin-top:9px">' + icon('i-swap','s16') +
       '<span><b>بانتظار قبول ' + E((userById(a.repl.toId) || {}).name) + '</b><br>' +
       'يبقى على المهمة حتى يقبل البديل. ' + E(replCountdown(t, a)) + '</span></div>' : '') +
@@ -289,7 +345,8 @@ function slotCard(t, a, canAct) {
         '<button class="btn d sm" data-a="wdno" data-id="' + t.id + '" data-u="' + m.id + '">رفض</button>' +
         '<button class="btn p sm" data-a="wdok" data-id="' + t.id + '" data-u="' + m.id + '">اعتماد الانسحاب</button></div>' : '') : '') +
 
-    (canReq && onTask(a) && !a.repl && !a.wd ?
+    (canReq && onTask(a) && !(a.repl && a.repl.state === 'pending') &&
+      !(a.ex && a.ex.state === 'pending') && !a.wd ?
       '<div class="grid3" style="margin-top:10px">' +
         (ph ? '<a class="btn l sm" href="tel:' + ph + '">' + icon('i-phone','s16') + 'اتصال</a>' : '') +
         '<button class="btn l sm" data-a="exclude" data-id="' + t.id + '" data-u="' + m.id + '">' +
@@ -336,7 +393,7 @@ function excludeSheet(t, muhsenId) {
         '<span><b>إقرار مسؤولية</b><br>باستبعاده لعدم الحاجة تتحمّل مسؤولية ما ينتج عن نقص العدد في هذه المهمة.</span></div>') +
 
     '<div class="lbl plain">ملاحظة</div>' +
-    '<div class="field" style="margin:8px 0"><input id="exwhy" maxlength="140" placeholder="سبب مختصر — إلزامي"></div>' +
+    '<div class="field" style="margin:8px 0"><input id="exwhy" maxlength="140" placeholder="سبب مختصر — اختياري"></div>' +
     '<div class="grid2" style="margin-top:12px">' +
       '<button class="btn g" data-a="close">تراجع</button>' +
       (kind === 'swap' && !cands.length

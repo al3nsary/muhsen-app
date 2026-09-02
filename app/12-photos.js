@@ -302,8 +302,8 @@ function reopenReason() {
   const c = S.camCtx || {};
   const t = c.taskId ? taskById(c.taskId) : null;
   const nm = t ? t.title : '';
-  if (c.kind === 'resp')    return reasonSheet('سبب رفض التسكين', nm, 'data-a="doresp" data-id="' + c.taskId + '"', 'اذكر سببًا واضحًا', 'resp', c.taskId);
-  if (c.kind === 'rdeleg')  return reasonSheet('سبب رفض التفويض', nm, 'data-a="dordeleg" data-id="' + c.taskId + '"', 'اذكر سببًا واضحًا', 'rdeleg', c.taskId);
+  if (c.kind === 'resp')    return reasonSheet('سبب رفض التسكين', nm, 'data-a="doresp" data-id="' + c.taskId + '"', 'سبب مختصر — اختياري', 'resp', c.taskId);
+  if (c.kind === 'rdeleg')  return reasonSheet('سبب رفض التفويض', nm, 'data-a="dordeleg" data-id="' + c.taskId + '"', 'سبب مختصر — اختياري', 'rdeleg', c.taskId);
   if (c.kind === 'cancel')  return reasonSheet('إلغاء المهمة', 'المبرر إلزامي', 'data-a="docancel" data-id="' + c.taskId + '"', 'مبرر الإلغاء', 'cancel', c.taskId);
   return null;
 }

@@ -46,6 +46,10 @@ function reqCardFull(r, actionable) {
         ? '<div class="grid2" style="margin-top:10px">' +
           '<button class="btn d sm" data-a="wdno" data-id="' + t.id + '" data-u="' + r.from + '">رفض</button>' +
           '<button class="btn p sm" data-a="wdok" data-id="' + t.id + '" data-u="' + r.from + '">اعتماد الانسحاب</button></div>'
+        : r.kind === 'استبعاد'
+        ? '<div class="grid2" style="margin-top:10px">' +
+          '<button class="btn d sm" data-a="rex" data-id="' + t.id + '" data-v="0">رفض الاستبعاد</button>' +
+          '<button class="btn p sm" data-a="rex" data-id="' + t.id + '" data-v="1">موافقة</button></div>'
         : r.kind === 'استبدال'
         ? '<div class="grid2" style="margin-top:10px">' +
           '<button class="btn d sm" data-a="rrepl" data-id="' + t.id + '" data-v="0">اعتذار</button>' +
