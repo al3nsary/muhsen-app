@@ -714,6 +714,32 @@ step('«لاحقًا» يغلق ولا يمنع التفعيل من التحكم
   if (box.indexOf('إرسال إشعار لفئة') < 0) throw new Error('اختفى صندوق البثّ');
 });
 
+step('الليدر لا يرى الفريق الاحتياطي ولا يُسنده', () => {
+  run('S.session={id:"L1",at:Date.now()};S.clockOffset=0');
+  const h = run('S.route={n:"muhsens"}; screenMuhsens()').split('<nav class="tabs"')[0];
+  if (h.indexOf('الفريق الاحتياطي') >= 0) throw new Error('قائمة الاحتياط ظاهرة للّيدر');
+  run('reserveTeam()').forEach(function (m) {
+    if (h.indexOf(m.name) >= 0) throw new Error('اسم احتياطي ظاهر: ' + m.name);
+  });
+  if (h.indexOf('طلب دعم من الكنترول') < 0) throw new Error('لا يوجد توجيه لطلب الدعم');
+  const tid = run('myTasks().filter(function(x){return x.start>now()+13*HR&&["done","cancelled","running"].indexOf(x.status)<0})[0].id');
+  const rs = run('reserveTeam().find(function(r){return !taskById("' + tid + '").assigned.some(function(a){return a.muhsenId===r.id})}).id');
+  const before = run('taskById("' + tid + '").assigned.length');
+  click({ a: 'send', id: tid, u: rs });
+  if (run('taskById("' + tid + '").assigned.length') !== before) throw new Error('سكّن الليدر احتياطيًّا مباشرة');
+  const out = run('acceptedSlots(taskById("' + tid + '"))[0].muhsenId');
+  if (run('requestReplace(taskById("' + tid + '"),"' + out + '","' + rs + '","محاولة")'))
+    throw new Error('طلب الليدر احتياطيًّا بديلًا');
+});
+step('الاحتياطي يرى فريقه، والكنترول هو من يُسنده', () => {
+  const rs = run('reserveTeam()[0].id');
+  run('S.session={id:"' + rs + '",at:Date.now()}');
+  const h = run('S.route={n:"muhsens"}; screenMuhsens()').split('<nav class="tabs"')[0];
+  if (h.indexOf('الفريق الاحتياطي') < 0) throw new Error('الاحتياطي لا يرى فريقه');
+  run('S.session={id:"L1",at:Date.now()}');
+  if (read('18-assign.js').indexOf('u.reserve') < 0) throw new Error('الكنترول لا يختار من الاحتياط');
+});
+
 console.log('\nترتيب الإشعارات');
 step('لكل إشعار تصنيف ولون ووسم', () => {
   const bad = run('myNotifs().filter(function(n){var k=nkind(n);return !k||!k.c||!k.t}).length');
@@ -1463,15 +1489,17 @@ step('التصنيف بعد الانتهاء يتبع الحضور لكل شخص
 console.log('\nورك-فلو الاستبدال');
 step('طلب الاستبدال يصل البديل بمساره', () => {
   run('S.clockOffset=0');
-  /* نختار مهمة يوجد لها بديل متاح فعلًا */
+  /* الفريق مسكَّن كاملًا، والاحتياط للكنترول وحده —
+     فالبديل من داخل الفريق لا يتوفّر إلا بعد خروج أحد. نُفرّغ واحدًا كما يقع في الواقع. */
   const pick = run('(function(){' +
-    'var pool = teamOf("L1").concat(reserveTeam());' +
-    'var ts = myTasks().filter(function(t){return t.start>now()+13*HR && acceptedSlots(t).length>1 && ["done","cancelled","running"].indexOf(t.status)<0});' +
-    'for (var i=0;i<ts.length;i++){' +
-      'var t=ts[i];' +
-      'var c=pool.filter(function(x){return !t.assigned.some(function(a){return a.muhsenId===x.id})})[0];' +
-      'if (c) return {t:t.id, out:acceptedSlots(t)[0].muhsenId, cand:c.id};' +
-    '} return null; })()');
+    'var ts = myTasks().filter(function(t){' +
+      'return t.start>now()+13*HR && acceptedSlots(t).length>2 && ' +
+      '["done","cancelled","running"].indexOf(t.status)<0; });' +
+    'if (!ts.length) return null;' +
+    'var t = ts[0];' +
+    'var free = acceptedSlots(t)[2].muhsenId;' +
+    'excludeNoNeed(t, free, "تفريغ للاختبار");' +
+    'return {t:t.id, out:acceptedSlots(t)[0].muhsenId, cand:free}; })()');
   if (!pick) throw new Error('لا توجد مهمة ببديل متاح');
   const tid = pick.t, outId = pick.out, cand = pick.cand;
   sandbox.XT_ = tid; sandbox.XO_ = outId; sandbox.XC_ = cand;
@@ -1498,7 +1526,7 @@ step('اعتذار البديل يُعيده ويسمح بطلب آخر', () => 
   if (a.out) throw new Error('خرج رغم اعتذار البديل');
   if (run('slotState(taskById("' + sandbox.XT_ + '").assigned.find(function(x){return x.muhsenId==="' + sandbox.XO_ + '"}))') !== 'active')
     throw new Error('لم يعد إلى «على المهمة»');
-  const c2 = run('teamOf("L1").concat(reserveTeam()).filter(function(x){return !taskById("' + sandbox.XT_ + '").assigned.some(function(a){return a.muhsenId===x.id})})[0].id');
+  const c2 = run('teamOf("L1").filter(function(x){return !taskById("' + sandbox.XT_ + '").assigned.some(function(a){return a.muhsenId===x.id && !a.out && (a.req==="accepted"||a.req==="pending")})})[0].id');
   sandbox.XC2_ = c2;
   if (!run('requestReplace(taskById("' + sandbox.XT_ + '"),"' + sandbox.XO_ + '","' + c2 + '","محاولة ثانية")'))
     throw new Error('لا يمكن تقديم طلب آخر');
@@ -1509,9 +1537,9 @@ step('القبول يُظهر بديلًا عمّن ومستبدلًا بمن', 
   if (!a.out || a.out.kind !== 'replaced') throw new Error('لم تتغيّر حالته إلى مستبدل');
   const lab = run('slotLabel(taskById("' + sandbox.XT_ + '").assigned.find(function(x){return x.muhsenId==="' + sandbox.XO_ + '"}))[0]');
   if (lab.indexOf('مستبدل بـ') < 0) throw new Error('لا يظهر بمن استُبدل: ' + lab);
-  const b2 = run('taskById("' + sandbox.XT_ + '").assigned.find(function(x){return x.muhsenId==="' + sandbox.XC2_ + '"})');
+  const b2 = run('taskById("' + sandbox.XT_ + '").assigned.find(function(x){return x.muhsenId==="' + sandbox.XC2_ + '" && x.standin})');
   if (!b2 || !b2.standin || b2.req !== 'accepted') throw new Error('البديل غير مثبَّت');
-  const card = run('slotCard(taskById("' + sandbox.XT_ + '"), taskById("' + sandbox.XT_ + '").assigned.find(function(x){return x.muhsenId==="' + sandbox.XC2_ + '"}), true)');
+  const card = run('slotCard(taskById("' + sandbox.XT_ + '"), taskById("' + sandbox.XT_ + '").assigned.find(function(x){return x.muhsenId==="' + sandbox.XC2_ + '" && x.standin}), true)');
   if (card.indexOf('بديل عن') < 0) throw new Error('لا يظهر بديلًا عمّن');
 });
 step('انقضاء المهلة يُعيد الأول ويُسجَّل بلا رد', () => {

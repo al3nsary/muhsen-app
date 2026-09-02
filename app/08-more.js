@@ -287,13 +287,21 @@ function screenMuhsens() {
         '<div class="row tiny dim2" style="margin-top:8px"><span>' + AR(r.n) + ' مهمة مقيَّمة</span>' +
         (notes ? '<span style="color:var(--amber)">' + AR(notes) + ' ملاحظة</span>' : '<span>بلا ملاحظات</span>') + '</div></button>';
     }).join('') +
-    '<div class="lbl">الفريق الاحتياطي<small>مشترك بين الليدرز · يُطلب من داخل المهمة</small></div>' +
-    reserveTeam().map(m2 => {
-      const n2 = S.tasks.filter(t => acceptedSlots(t).some(a2 => a2.muhsenId === m2.id)).length;
-      return '<button class="prow" data-a="go" data-n="profile" data-id="' + m2.id + '">' +
-        avat(m2) + '<span class="nm sp"><b>' + E(m2.name) + '</b><span>' + E(m2.specialty) + ' · احتياط</span></span>' +
-        pill(n2 ? AR(n2) + ' مهمة' : 'متاح', n2 ? 'live' : 'grey') + icon('i-back','s16') + '</button>';
-    }).join('') + '</div>' + tabs();
+    /* الليدر لا يرى الفريق الاحتياطي ولا يختار منه — الدعم يُطلب من الكنترول وهو من يُسند.
+       ويراه المحسن الاحتياطي وحده لأنه فريقه. */
+    (isLeader()
+      ? '<div class="note b">' + icon('i-shield','s16') +
+        '<span>إن نقص العدد على مهمة، ارفع <b>طلب دعم من الكنترول</b> من داخل المهمة — ' +
+        'وهو من يختار ويُسند.</span></div>'
+      : u.reserve
+      ? '<div class="lbl">الفريق الاحتياطي<small>زملاؤك — مشترك بين الليدرز</small></div>' +
+        reserveTeam().filter(m2 => m2.id !== u.id).map(m2 => {
+          const n2 = S.tasks.filter(t => acceptedSlots(t).some(a2 => a2.muhsenId === m2.id)).length;
+          return '<button class="prow" data-a="go" data-n="profile" data-id="' + m2.id + '">' +
+            avat(m2) + '<span class="nm sp"><b>' + E(m2.name) + '</b><span>' + E(m2.specialty) + ' · احتياط</span></span>' +
+            pill(n2 ? AR(n2) + ' مهمة' : 'متاح', n2 ? 'live' : 'grey') + icon('i-back','s16') + '</button>';
+        }).join('')
+      : '') + '</div>' + tabs();
 }
 
 /* ============================ الملف الشخصي ============================ */

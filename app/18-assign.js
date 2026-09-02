@@ -52,6 +52,9 @@ function slotState(a) {
 }
 /* من يُحتسب فعلًا على المهمة */
 const onTask = a => !a.out && a.req === 'accepted';
+/* متاح للتسكين: من لا صفَّ له قائمًا — ومن اعتذر أو انقضت مهلته يعود متاحًا */
+const freeForTask = (t, id) => !t.assigned.some(a =>
+  a.muhsenId === id && !a.out && (a.req === 'accepted' || a.req === 'pending'));
 /* مهلة الطلب المعلّق: أربع ساعات أو إغلاق النافذة — أيّهما أقرب */
 const reqDeadline = (t, a) => Math.min((a.reqAt || now()) + REQ_TTL_H * HR, reqCloseAt(t));
 function replCountdown(t, a) {
@@ -85,6 +88,7 @@ const EXCLUDE_KINDS = {
 /* طلب استبدال: لا يخرج الأول حتى يقبل الثاني */
 function requestReplace(t, outId, inId, why) {
   if (!canAssign(t, S.session.id)) return false;
+  if (isReserve(inId)) return false;   /* الاحتياط يُسنده الكنترول وحده */
   if (lockedForAssign(t) || !reqWindowOpen(t)) return false;   /* لا تسكين بعد القفل */
   const a = t.assigned.find(x => x.muhsenId === outId && onTask(x));
   /* يُمنع طلب ثانٍ ما دام الأول معلّقًا فقط — أما المرفوض والمنتهي فيُعاد بعدهما */
@@ -301,8 +305,10 @@ function slotCard(t, a, canAct) {
 function excludeSheet(t, muhsenId) {
   const m = userById(muhsenId);
   const kind = S.exKind || 'swap';
+  /* من فريق الليدر وحده — والاحتياط يُسنده الكنترول.
+     ومن اعتذر عن استبدال سابق يعود مرشّحًا. */
   const cands = teamOf(t.leaderId).filter(x =>
-    x.id !== muhsenId && !t.assigned.some(a => a.muhsenId === x.id && !a.out) && !busyIn(x.id, t));
+    x.id !== muhsenId && freeForTask(t, x.id) && !busyIn(x.id, t));
   const pick = S.exTo && cands.some(c => c.id === S.exTo) ? S.exTo : (cands[0] || {}).id;
   return '<div class="grip"></div><h3>استبعاد من المهمة</h3>' +
     '<div class="tiny dim2" style="margin-bottom:10px">' + E(m.name) + ' · ' + E(t.title) + '</div>' +

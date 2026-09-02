@@ -230,7 +230,8 @@ document.addEventListener('click', ev => {
       if (!reqWindowOpen(t)) { toast(reqWindowWhy(t), 'r'); break; }
       const mu = userById(uid_);
       if (!mu || mu.role !== 'muhsen') { toast('لا يُسكَّن إلا محسن', 'r'); break; }
-      if (!mu.reserve && mu.leaderId !== t.leaderId) { toast('هذا المحسن ليس من فريقك ولا من الاحتياط', 'r'); break; }
+      if (mu.reserve) { toast('الاحتياط يُسنده الكنترول — ارفع طلب دعم', 'r'); break; }
+      if (mu.leaderId !== t.leaderId) { toast('هذا المحسن ليس من فريقك', 'r'); break; }
       if (busyIn(uid_, t)) { toast('المحسن مرتبط بمهمة متداخلة', 'r'); break; }
       if (sendRequest(t, uid_)) { S.sheet = null; toast('أُرسل الطلب إلى ' + userById(uid_).name); }
       else toast('تعذّر الإرسال — الطلب قائم بالفعل', 'r');

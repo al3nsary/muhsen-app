@@ -1581,7 +1581,7 @@ const REPORT_SEED = [
 
 /* ============================ الحالة ============================ */
 const KEY = 'muhsen_app_v1';
-const APP_VER = 'نسخة ٣٫٣';
+const APP_VER = 'نسخة ٣٫٤';
 const SCHEMA = 18;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
@@ -3499,13 +3499,21 @@ function screenMuhsens() {
         '<div class="row tiny dim2" style="margin-top:8px"><span>' + AR(r.n) + ' مهمة مقيَّمة</span>' +
         (notes ? '<span style="color:var(--amber)">' + AR(notes) + ' ملاحظة</span>' : '<span>بلا ملاحظات</span>') + '</div></button>';
     }).join('') +
-    '<div class="lbl">الفريق الاحتياطي<small>مشترك بين الليدرز · يُطلب من داخل المهمة</small></div>' +
-    reserveTeam().map(m2 => {
-      const n2 = S.tasks.filter(t => acceptedSlots(t).some(a2 => a2.muhsenId === m2.id)).length;
-      return '<button class="prow" data-a="go" data-n="profile" data-id="' + m2.id + '">' +
-        avat(m2) + '<span class="nm sp"><b>' + E(m2.name) + '</b><span>' + E(m2.specialty) + ' · احتياط</span></span>' +
-        pill(n2 ? AR(n2) + ' مهمة' : 'متاح', n2 ? 'live' : 'grey') + icon('i-back','s16') + '</button>';
-    }).join('') + '</div>' + tabs();
+    /* الليدر لا يرى الفريق الاحتياطي ولا يختار منه — الدعم يُطلب من الكنترول وهو من يُسند.
+       ويراه المحسن الاحتياطي وحده لأنه فريقه. */
+    (isLeader()
+      ? '<div class="note b">' + icon('i-shield','s16') +
+        '<span>إن نقص العدد على مهمة، ارفع <b>طلب دعم من الكنترول</b> من داخل المهمة — ' +
+        'وهو من يختار ويُسند.</span></div>'
+      : u.reserve
+      ? '<div class="lbl">الفريق الاحتياطي<small>زملاؤك — مشترك بين الليدرز</small></div>' +
+        reserveTeam().filter(m2 => m2.id !== u.id).map(m2 => {
+          const n2 = S.tasks.filter(t => acceptedSlots(t).some(a2 => a2.muhsenId === m2.id)).length;
+          return '<button class="prow" data-a="go" data-n="profile" data-id="' + m2.id + '">' +
+            avat(m2) + '<span class="nm sp"><b>' + E(m2.name) + '</b><span>' + E(m2.specialty) + ' · احتياط</span></span>' +
+            pill(n2 ? AR(n2) + ' مهمة' : 'متاح', n2 ? 'live' : 'grey') + icon('i-back','s16') + '</button>';
+        }).join('')
+      : '') + '</div>' + tabs();
 }
 
 /* ============================ الملف الشخصي ============================ */
@@ -5754,6 +5762,9 @@ function slotState(a) {
 }
 /* من يُحتسب فعلًا على المهمة */
 const onTask = a => !a.out && a.req === 'accepted';
+/* متاح للتسكين: من لا صفَّ له قائمًا — ومن اعتذر أو انقضت مهلته يعود متاحًا */
+const freeForTask = (t, id) => !t.assigned.some(a =>
+  a.muhsenId === id && !a.out && (a.req === 'accepted' || a.req === 'pending'));
 /* مهلة الطلب المعلّق: أربع ساعات أو إغلاق النافذة — أيّهما أقرب */
 const reqDeadline = (t, a) => Math.min((a.reqAt || now()) + REQ_TTL_H * HR, reqCloseAt(t));
 function replCountdown(t, a) {
@@ -5787,6 +5798,7 @@ const EXCLUDE_KINDS = {
 /* طلب استبدال: لا يخرج الأول حتى يقبل الثاني */
 function requestReplace(t, outId, inId, why) {
   if (!canAssign(t, S.session.id)) return false;
+  if (isReserve(inId)) return false;   /* الاحتياط يُسنده الكنترول وحده */
   if (lockedForAssign(t) || !reqWindowOpen(t)) return false;   /* لا تسكين بعد القفل */
   const a = t.assigned.find(x => x.muhsenId === outId && onTask(x));
   /* يُمنع طلب ثانٍ ما دام الأول معلّقًا فقط — أما المرفوض والمنتهي فيُعاد بعدهما */
@@ -6003,8 +6015,10 @@ function slotCard(t, a, canAct) {
 function excludeSheet(t, muhsenId) {
   const m = userById(muhsenId);
   const kind = S.exKind || 'swap';
+  /* من فريق الليدر وحده — والاحتياط يُسنده الكنترول.
+     ومن اعتذر عن استبدال سابق يعود مرشّحًا. */
   const cands = teamOf(t.leaderId).filter(x =>
-    x.id !== muhsenId && !t.assigned.some(a => a.muhsenId === x.id && !a.out) && !busyIn(x.id, t));
+    x.id !== muhsenId && freeForTask(t, x.id) && !busyIn(x.id, t));
   const pick = S.exTo && cands.some(c => c.id === S.exTo) ? S.exTo : (cands[0] || {}).id;
   return '<div class="grip"></div><h3>استبعاد من المهمة</h3>' +
     '<div class="tiny dim2" style="margin-bottom:10px">' + E(m.name) + ' · ' + E(t.title) + '</div>' +
@@ -6307,7 +6321,8 @@ document.addEventListener('click', ev => {
       if (!reqWindowOpen(t)) { toast(reqWindowWhy(t), 'r'); break; }
       const mu = userById(uid_);
       if (!mu || mu.role !== 'muhsen') { toast('لا يُسكَّن إلا محسن', 'r'); break; }
-      if (!mu.reserve && mu.leaderId !== t.leaderId) { toast('هذا المحسن ليس من فريقك ولا من الاحتياط', 'r'); break; }
+      if (mu.reserve) { toast('الاحتياط يُسنده الكنترول — ارفع طلب دعم', 'r'); break; }
+      if (mu.leaderId !== t.leaderId) { toast('هذا المحسن ليس من فريقك', 'r'); break; }
       if (busyIn(uid_, t)) { toast('المحسن مرتبط بمهمة متداخلة', 'r'); break; }
       if (sendRequest(t, uid_)) { S.sheet = null; toast('أُرسل الطلب إلى ' + userById(uid_).name); }
       else toast('تعذّر الإرسال — الطلب قائم بالفعل', 'r');
