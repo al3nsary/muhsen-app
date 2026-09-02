@@ -116,12 +116,15 @@ step('زر الاستبعاد يظهر للّيدر ما دامت النافذة
   run('S.clockOffset=0');
   const t = run('taskById("' + TID + '")');
   const sl = run('acceptedSlots(taskById("' + TID + '"))[0]');
+  const sid = run('acceptedSlots(taskById("' + TID + '"))[0].muhsenId');
+  run('S.open = S.open || {}; S.open["' + TID + ':s:' + sid + '"] = true');
   const html = run('slotCard(taskById("' + TID + '"), acceptedSlots(taskById("' + TID + '"))[0], true)');
   if (html.indexOf('data-a="exclude"') < 0) throw new Error('زر الاستبعاد غائب');
   /* وبعد الإغلاق يختفي */
   afterWindow(TID);
   const h2 = run('slotCard(taskById("' + TID + '"), acceptedSlots(taskById("' + TID + '"))[0], true)');
   if (h2.indexOf('data-a="exclude"') >= 0) throw new Error('ظهر بعد إغلاق النافذة');
+  run('delete S.open["' + TID + ':s:' + sid + '"]');
   intoWindow(TID);
 });
 step('لا يُحذف أحد — تتغيّر حالته فقط', () => {
@@ -752,6 +755,57 @@ step('الاحتياطي يرى فريقه، والكنترول هو من يُس
   if (h.indexOf('الفريق الاحتياطي') < 0) throw new Error('الاحتياطي لا يرى فريقه');
   run('S.session={id:"L1",at:Date.now()}');
   if (read('18-assign.js').indexOf('u.reserve') < 0) throw new Error('الكنترول لا يختار من الاحتياط');
+});
+
+step('بطاقة واحدة لكل محسن ولو تعدّدت صفوفه', () => {
+  run('S.session={id:"L1",at:Date.now()};S.clockOffset=0');
+  const tid = run('myTasks().find(function(x){return x.assigned.length > new Set(x.assigned.map(function(a){return a.muhsenId})).size}) ? ' +
+    'myTasks().find(function(x){return x.assigned.length > new Set(x.assigned.map(function(a){return a.muhsenId})).size}).id : ' +
+    'myTasks()[0].id');
+  const people = run('slotPeople(taskById("' + tid + '"))');
+  const uniq = run('new Set(slotPeople(taskById("' + tid + '"))).size');
+  if (people.length !== uniq) throw new Error('تكرّر محسن في القائمة');
+});
+step('من لم يُمسّ أولًا ومن اتُّخذ عليه إجراء أخيرًا', () => {
+  const tid = run('myTasks().filter(function(t){return t.start>now()+13*HR && acceptedSlots(t).length>2 && ' +
+    '["done","cancelled","running"].indexOf(t.status)<0})[0].id');
+  const m = run('acceptedSlots(taskById("' + tid + '"))[0].muhsenId');
+  run('excludeNoNeed(taskById("' + tid + '"),"' + m + '","تجربة الترتيب")');
+  run('S.session={id:"' + m + '",at:Date.now()}');
+  run('respondExclude(taskById("' + tid + '"),"' + m + '",true)');
+  run('S.session={id:"L1",at:Date.now()}');
+  const order = run('slotPeople(taskById("' + tid + '"))');
+  const idx = order.indexOf(m);
+  if (idx !== order.length - 1) throw new Error('المستبعَد ليس في آخر القائمة');
+  const first = order[0];
+  if (run('slotTouched(taskById("' + tid + '"),"' + '' + first + '")'))
+    throw new Error('أول القائمة اتُّخذ عليه إجراء');
+  sandbox.SO_ = tid; sandbox.SM_ = m;
+});
+step('سجل حركات المحسن مرتّب وكامل', () => {
+  const tid = sandbox.SO_, m = sandbox.SM_;
+  const ev = run('slotEvents(taskById("' + tid + '"),"' + m + '")');
+  if (ev.length < 3) throw new Error('السجل ناقص: ' + ev.length);
+  for (let i = 1; i < ev.length; i++)
+    if (ev[i].at < ev[i - 1].at) throw new Error('السجل غير مرتّب');
+  const txt = ev.map(function (e) { return e.text; }).join(' | ');
+  if (txt.indexOf('سُكِّن') < 0 && txt.indexOf('طلب تسكين') < 0) throw new Error('بلا حركة التسكين');
+  if (txt.indexOf('طُلب استبعاده') < 0) throw new Error('بلا حركة طلب الاستبعاد');
+  if (txt.indexOf('وافق على الاستبعاد') < 0) throw new Error('بلا حركة الموافقة');
+  if (!ev.every(function (e) { return !!e.state; })) throw new Error('حركة بلا حالة');
+});
+step('البطاقة مطويّة وتُفتح بزرها', () => {
+  const tid = sandbox.SO_, m = sandbox.SM_;
+  run('S.open = {}');
+  const closed = run('slotCard(taskById("' + tid + '"), primaryRow(taskById("' + tid + '"),"' + m + '"), true)');
+  if (closed.indexOf('data-a="fold"') < 0) throw new Error('بلا زر طيّ');
+  if (closed.indexOf('slog') >= 0) throw new Error('السجل ظاهر وهي مطويّة');
+  click({ a: 'fold', id: tid, v: 's:' + m });
+  const opened = run('slotCard(taskById("' + tid + '"), primaryRow(taskById("' + tid + '"),"' + m + '"), true)');
+  if (opened.indexOf('slog') < 0) throw new Error('السجل لم يظهر بعد الفتح');
+  if (opened.indexOf('سجل حركاته على المهمة') < 0) throw new Error('بلا عنوان السجل');
+  click({ a: 'fold', id: tid, v: 's:' + m });
+  if (run('!!(S.open && S.open["' + tid + ':s:' + m + '"])')) throw new Error('لم تُطوَ ثانيةً');
 });
 
 console.log('\nترتيب الإشعارات');
@@ -1417,8 +1471,10 @@ step('رفض الاستبعاد يُبقيه ويُسجَّل بوقتيه', () 
   const h = run('taskById("' + tid + '").history.find(function(x){return x.text.indexOf("رفض")>=0 && x.text.indexOf("الاستبعاد")>=0})');
   if (!h) throw new Error('لم يُسجَّل الرفض في سجل الإجراءات');
   if (h.text.indexOf('وقُدّم الطلب') < 0) throw new Error('السجل بلا وقت تقديم الطلب');
+  run('S.open = S.open || {}; S.open["' + tid + ':s:' + mid + '"] = true');
   const card = run('slotCard(taskById("' + tid + '"), taskById("' + tid + '").assigned.find(function(x){return x.muhsenId==="' + mid + '"}), true)');
   if (card.indexOf('رفض الاستبعاد') < 0) throw new Error('لا تظهر حالة الرفض على البطاقة');
+  run('delete S.open["' + tid + ':s:' + mid + '"]');
 });
 step('يمكن رفع طلب استبعاد جديد بعد الرفض', () => {
   const tid = sandbox.EX_, mid = sandbox.EXM_;

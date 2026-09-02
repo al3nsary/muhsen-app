@@ -121,7 +121,7 @@ function screenTask() {
 
     (lead ? fold('team', 'المحسنون على المهمة',
         AR(acc.length) + ' فعليًّا · ' + AR(att) + ' أثبتوا حضورهم',
-        (allSlots(t).length ? allSlots(t).map(a2 => slotCard(t, a2, act && !deleg)).join('')
+        (slotPeople(t).length ? slotPeople(t).map(pid => slotCard(t, primaryRow(t, pid), act && !deleg)).join('')
           : '<div class="c center dim sm" style="padding:20px">لا يوجد أحد على المهمة</div>'),
       'i-users') : '') +
 

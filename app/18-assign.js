@@ -301,46 +301,168 @@ const taskSupport = tid => (S.support || []).filter(s => s.taskId === tid);
 const openSupport = tid => taskSupport(tid).filter(s => s.state === 'pending');
 
 /* ---------- بطاقة محسن داخل المهمة (للّيدر والكنترول) ---------- */
+/* ---------- كل محسن بطاقة واحدة تُطوى وتُفتح، وفيها سجل حركاته ---------- */
+
+/* كل صفوف الشخص على المهمة — قد يكون له صفٌّ خرج منه وآخر عاد به */
+const personRows = (t, id) => t.assigned.filter(a => a.muhsenId === id);
+
+/* الصف المعتمد للعرض: القائم إن وُجد، وإلا آخر صفوفه */
+function primaryRow(t, id) {
+  const rows = personRows(t, id);
+  return rows.find(a => !a.out && a.req !== 'rejected' && a.req !== 'expired') ||
+    rows[rows.length - 1];
+}
+
+/* هل اتُّخذ عليه إجراء؟ — من اتُّخذ عليه شيء يُعرض أسفل القائمة */
+function slotTouched(t, id) {
+  return personRows(t, id).some(a =>
+    a.out || a.ex || a.repl || a.wd || a.req === 'rejected' || a.req === 'expired');
+}
+
+/* آخر وقت وقع فيه إجراء عليه — لترتيب المتَّخَذ عليهم بينهم */
+function lastActionAt(t, id) {
+  let m = 0;
+  personRows(t, id).forEach(a => {
+    [a.reqAt, a.respAt, a.attendedAt, a.out && a.out.at,
+     a.ex && a.ex.at, a.ex && a.ex.respAt,
+     a.repl && a.repl.at, a.repl && a.repl.respAt,
+     a.wd && a.wd.at, a.wd && a.wd.respAt].forEach(x => { if (x && x > m) m = x; });
+  });
+  return m;
+}
+
+/* أمرٌ ينتظر قرار الليدر على هذا المحسن */
+function slotNeedsAct(t, id) {
+  return personRows(t, id).some(a => a.wd && a.wd.state === 'pending');
+}
+
+/* ترتيب العرض: من لم يُمسّ أولًا بترتيب تسكينهم، ثم من اتُّخذ عليه إجراء */
+function slotPeople(t) {
+  const seen = [];
+  t.assigned.forEach(a => { if (seen.indexOf(a.muhsenId) < 0) seen.push(a.muhsenId); });
+  const rank = id => (slotTouched(t, id) ? 1 : 0);
+  return seen.slice().sort((x, y) => {
+    const rx = rank(x), ry = rank(y);
+    if (rx !== ry) return rx - ry;
+    if (rx === 0) {
+      const ax = primaryRow(t, x) || {}, ay = primaryRow(t, y) || {};
+      return (ax.reqAt || 0) - (ay.reqAt || 0);
+    }
+    return lastActionAt(t, x) - lastActionAt(t, y);
+  });
+}
+
+/* سجل حركات المحسن على هذه المهمة — مرتّبًا بوقته */
+function slotEvents(t, id) {
+  const ev = [];
+  const add = (at, ic, text, state) => { if (at) ev.push({ at, ic, text, state }); };
+  personRows(t, id).forEach(a => {
+    const forU = a.forId ? (userById(a.forId) || {}).name : '';
+    if (a.bySupport) add(a.reqAt, 'i-shield', 'أسنده الكنترول دعمًا للمهمة', 'على المهمة');
+    else if (a.standin) add(a.reqAt, 'i-swap', 'طُلب حلوله مكان ' + E(forU), 'بانتظار ردّه');
+    else if (a.auto) add(a.reqAt, 'i-assign', 'سُكِّن تلقائيًّا على المهمة', 'على المهمة');
+    else add(a.reqAt, 'i-assign', 'أُرسل إليه طلب تسكين', 'بانتظار ردّه');
+
+    if (a.req === 'accepted' && a.respAt && !a.auto && !a.bySupport)
+      add(a.respAt, 'i-checkc', a.standin ? 'قبِل الحلول مكان ' + E(forU) : 'قبِل التسكين', 'على المهمة');
+    if (a.req === 'rejected')
+      add(a.respAt, 'i-xc', (a.standin ? 'اعتذر عن الحلول' : 'رفض التسكين') +
+        (a.respNote ? ' — «' + E(a.respNote) + '»' : ''), 'اعتذر');
+    if (a.req === 'expired')
+      add(a.respAt, 'i-clock', 'انقضت مهلة ردّه على الطلب', 'انتهت مهلة الطلب');
+
+    if (a.attendedAt) add(a.attendedAt, 'i-target', 'أثبت حضوره', 'حاضر');
+
+    if (a.ex) {
+      add(a.ex.at, 'i-xc', 'طُلب استبعاده — ' + E(reasonOr(a.ex.why)), 'طلب استبعاد');
+      if (a.ex.state === 'accepted') add(a.ex.respAt, 'i-checkc', 'وافق على الاستبعاد', 'مستبعد');
+      if (a.ex.state === 'rejected')
+        add(a.ex.respAt, 'i-xc', 'رفض الاستبعاد' +
+          (a.ex.respNote ? ' — «' + E(a.ex.respNote) + '»' : '') + ' — وبقي على المهمة', 'على المهمة');
+      if (a.ex.state === 'expired')
+        add(a.ex.respAt, 'i-clock', 'لم يُرد على طلب الاستبعاد — وبقي على المهمة', 'على المهمة');
+    }
+    if (a.repl) {
+      const toU = (userById(a.repl.toId) || {}).name || '';
+      add(a.repl.at, 'i-swap', 'طُلب استبداله بـ ' + E(toU) +
+        (a.repl.why ? ' — ' + E(a.repl.why) : ''), 'بانتظار البديل');
+      if (a.repl.state === 'accepted')
+        add(a.repl.respAt, 'i-swap', 'قبِل ' + E(toU) + ' الحلول مكانه', 'مستبدل بـ ' + E(toU));
+      if (a.repl.state === 'rejected')
+        add(a.repl.respAt, 'i-xc', 'اعتذر ' + E(toU) + ' — وبقي على المهمة', 'على المهمة');
+      if (a.repl.state === 'expired')
+        add(a.repl.respAt, 'i-clock', 'لم يُرد البديل خلال المهلة — وبقي على المهمة', 'على المهمة');
+    }
+    if (a.wd) {
+      add(a.wd.at, 'i-out', 'طلب الانسحاب — ' + E(reasonOr(a.wd.reason)), 'طلب انسحاب');
+      if (a.wd.state === 'accepted') add(a.wd.respAt, 'i-checkc', 'اعتمد الليدر انسحابه', 'منسحب بموافقة');
+      if (a.wd.state === 'rejected') add(a.wd.respAt, 'i-xc', 'رفض الليدر الانسحاب — وبقي على المهمة', 'على المهمة');
+    }
+    if (a.out && a.out.kind === 'excluded' && !(a.ex && a.ex.state === 'accepted'))
+      add(a.out.at, 'i-xc', 'استُبعد من المهمة — ' + E(reasonOr(a.out.why)), 'مستبعد');
+  });
+  return ev.sort((x, y) => x.at - y.at);
+}
+
+function slotTimeline(t, id) {
+  const ev = slotEvents(t, id);
+  if (!ev.length) return '<div class="tiny dim2">لا توجد حركات مسجّلة.</div>';
+  return '<div class="tline">' + ev.map(e =>
+    '<div class="ti"><span class="d"></span>' +
+    '<span class="tiny"><b>' + e.text + '</b>' +
+    (e.state ? ' <span class="stg">' + E(e.state) + '</span>' : '') +
+    '<br><span class="dim2">' + hijri(e.at) + ' · ' + t12(e.at) + '</span></span></div>').join('') + '</div>';
+}
+
 function slotCard(t, a, canAct) {
   const m = userById(a.muhsenId); if (!m) return '';
   const st = slotState(a), lab = slotLabel(a);
   const ph = String(m.phone || '').replace(/[^0-9]/g, '');
   const canReq = canAct && reqWindowOpen(t) && !lockedForAssign(t);
-  return '<div class="c slot s-' + st + '">' +
-    '<div class="fl">' + avat(m) +
-      '<span class="nm sp"><b>' + E(m.name) + '</b><span>' + E(m.code) + ' · ' + E(m.specialty) +
-        (a.bySupport ? ' · دعم من الكنترول'
-          : a.standin ? ' · بديل عن ' + E(((userById(a.forId) || {}).name || '').split(' ')[0]) : '') +
-        '</span></span>' +
-      pill(lab[0], lab[1]) + '</div>' +
+  const key = 's:' + m.id;
+  const open = !!(S.open && S.open[t.id + ':' + key]);
+  const need = slotNeedsAct(t, m.id);
+  const n = slotEvents(t, m.id).length;
+
+  const head = '<button class="slothead" data-a="fold" data-id="' + t.id + '" data-v="' + key + '">' +
+    avat(m) +
+    '<span class="nm sp"><b>' + E(m.name) + '</b><span>' + E(m.code) + ' · ' + E(m.specialty) +
+      (a.bySupport ? ' · دعم من الكنترول'
+        : a.standin ? ' · بديل عن ' + E(((userById(a.forId) || {}).name || '').split(' ')[0]) : '') +
+      '</span></span>' +
+    (need && !open ? pill('يحتاج قرارك', 'no') : '') +
+    pill(lab[0], lab[1]) +
+    '<span class="xp">' + icon('i-down','s16') + '</span></button>';
+
+  if (!open) {
+    /* مطويّة: الاسم وحالته وعدد حركاته لا أكثر */
+    return '<div class="c slot s-' + st + '">' + head +
+      '<div class="row tiny dim2" style="margin-top:7px">' +
+        '<span>' + AR(n) + ' حركة على المهمة</span>' +
+        (a.attendedAt ? '<span style="color:var(--live)">حاضر ' + t12(a.attendedAt) + '</span>'
+          : a.req === 'pending' ? '<span style="color:var(--amber)">بانتظار ردّه</span>' : '<span>—</span>') +
+      '</div></div>';
+  }
+
+  return '<div class="c slot s-' + st + ' on">' + head +
+
+    '<div class="slog"><div class="row tiny dim2" style="margin-bottom:7px">' +
+      '<span>سجل حركاته على المهمة</span><b>' + AR(n) + '</b></div>' +
+      slotTimeline(t, m.id) + '</div>' +
 
     (a.req === 'pending' ? '<div class="strip a" style="margin-top:9px">' + reqCountdown(t, a) + '</div>' : '') +
-    (a.attendedAt ? '<div class="strip a" style="margin-top:9px">' + icon('i-check','s16') +
-      '<span>أثبت حضوره ' + t12(a.attendedAt) + '</span></div>' : '') +
     (a.out ? '<div class="note ' + (a.out.kind === 'excluded' ? 'r' : 'a') + '" style="margin-top:9px">' +
       icon('i-info','s16') + '<span>' +
       (a.out.kind === 'replaced' ? 'استُبدل بـ ' + E(a.out.byName || '') : SLOT_STATE[a.out.kind][0]) +
-      ' — ' + E(a.out.why) + '</span></div>' : '') +
+      ' — ' + E(reasonOr(a.out.why)) + '</span></div>' : '') +
     (a.ex && a.ex.state === 'pending' ? '<div class="note a" style="margin-top:9px">' + icon('i-xc','s16') +
       '<span><b>طلب استبعاد بانتظار رده</b><br>' + E(a.ex.why) + ' · ' + E(exCountdown(a)) +
       '<br>يبقى على المهمة حتى يوافق.</span></div>' : '') +
-    (a.ex && a.ex.state === 'rejected' ? '<div class="note r" style="margin-top:9px">' + icon('i-xc','s16') +
-      '<span><b>رفض الاستبعاد</b><br>قُدّم الطلب ' + t12(a.ex.at) + ' ورُفض ' + t12(a.ex.respAt) +
-      (a.ex.respNote ? ' — «' + E(a.ex.respNote) + '»' : '') + '<br>بقي على المهمة.</span></div>' : '') +
-    (a.ex && a.ex.state === 'expired' ? '<div class="note a" style="margin-top:9px">' + icon('i-clock','s16') +
-      '<span>قُدّم طلب استبعاد ' + t12(a.ex.at) + ' ولم يُرد عليه — بقي على المهمة.</span></div>' : '') +
     (a.repl && a.repl.state === 'pending' ? '<div class="note a" style="margin-top:9px">' + icon('i-swap','s16') +
       '<span><b>بانتظار قبول ' + E((userById(a.repl.toId) || {}).name) + '</b><br>' +
       'يبقى على المهمة حتى يقبل البديل. ' + E(replCountdown(t, a)) + '</span></div>' : '') +
-    (a.repl && a.repl.state === 'rejected' ? '<div class="note r" style="margin-top:9px">' + icon('i-xc','s16') +
-      '<span>اعتذر ' + E((userById(a.repl.toId) || {}).name || 'البديل') + ' — بقي على المهمة' +
-      (a.repl.respNote ? ' · ' + E(a.repl.respNote) : '') + '. يمكنك طلب بديل آخر.</span></div>' : '') +
-    (a.repl && a.repl.state === 'expired' ? '<div class="note a" style="margin-top:9px">' + icon('i-clock','s16') +
-      '<span>لم يُرد على طلب الاستبدال خلال المهلة — بقي على المهمة، ويمكنك طلب بديل آخر.</span></div>' : '') +
-    (a.respNote && a.req === 'rejected' ? '<div class="note r" style="margin-top:9px">' + icon('i-info','s16') +
-      '<span>' + E(a.respNote) + '</span></div>' : '') +
     (a.wd && a.wd.state === 'pending' ? '<div class="note a" style="margin-top:9px">' + icon('i-out','s16') +
-      '<span><b>طلب انسحاب</b> — ' + E(a.wd.reason) + '</span></div>' +
+      '<span><b>طلب انسحاب</b> — ' + E(reasonOr(a.wd.reason)) + '</span></div>' +
       (canAct ? '<div class="grid2" style="margin-top:9px">' +
         '<button class="btn d sm" data-a="wdno" data-id="' + t.id + '" data-u="' + m.id + '">رفض</button>' +
         '<button class="btn p sm" data-a="wdok" data-id="' + t.id + '" data-u="' + m.id + '">اعتماد الانسحاب</button></div>' : '') : '') +
@@ -357,6 +479,7 @@ function slotCard(t, a, canAct) {
         icon('i-x','s16') + 'سحب الطلب</button>' : '') +
   '</div>';
 }
+
 
 /* ---------- ورقة الاستبعاد ---------- */
 function excludeSheet(t, muhsenId) {

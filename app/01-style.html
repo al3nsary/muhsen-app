@@ -1273,3 +1273,20 @@
   .c.live .meter { height: 6px; border-radius: 99px; background: #EDF1EC; overflow: hidden; }
   .c.live .meter i { display: block; height: 100%; background: var(--live); border-radius: 99px; }
 </style>
+<style>
+  /* ===================== بطاقة المحسن داخل المهمة ===================== */
+  .slot { padding: 11px; }
+  .slothead { display: flex; align-items: center; gap: 10px; width: 100%; text-align: right; }
+  .slothead .nm { min-width: 0; }
+  .slothead .nm b { display: block; font-size: 13.5px; line-height: 1.5; }
+  .slothead .nm span { display: block; font-size: 10.5px; color: var(--dim2); }
+  .slothead .xp { display: grid; place-items: center; width: 26px; height: 26px; flex: none;
+    border-radius: 9px; background: #F2F5F1; color: var(--dim2); transition: transform .2s ease; }
+  .slot.on .slothead .xp { transform: rotate(180deg); color: var(--g); }
+  .slot.on { box-shadow: inset 0 0 0 1.5px rgba(20,89,63,.28), var(--card); }
+  .slog { margin-top: 10px; padding: 10px; border-radius: 14px; background: #F8FAF7; }
+  .stg { display: inline-block; font-size: 9.5px; font-weight: 800; border-radius: 99px;
+    padding: 1px 7px; background: rgba(20,89,63,.10); color: var(--g); margin-inline-start: 4px; }
+  /* شريط لوني لحالة كل محسن */
+  .slot.s-excluded, .slot.s-replaced, .slot.s-withdrawn { opacity: .92; }
+</style>
