@@ -99,13 +99,20 @@ function reportRow(r, seg) {
     ? 'إلى ' + (r.to === 'CONTROL' ? 'الكنترول' : (userById(r.to) || {}).name)
     : 'من ' + ((userById(r.from) || {}).name || '');
   return '<button class="c" data-a="go" data-n="report" data-id="' + r.id + '" style="width:100%;text-align:right">' +
-    '<div class="row"><b class="sm sp">' + E(r.title) + '</b>' + pill(r.cat, 'gold') + '</div>' +
+    '<div class="row"><b class="sm sp">' + E(r.title) + '</b>' +
+      (r.escSub ? pill(r.escSub, 'gold') : pill(r.cat, 'gold')) + '</div>' +
+    (r.escCat ? '<div class="tiny dim2" style="margin-top:4px">' + E(r.escCat) +
+      (r.escSub ? ' ← ' + E(r.escSub) : '') + '</div>' : '') +
     '<div class="sm dim" style="margin:7px 0;line-height:1.8">' + E(r.body) + '</div>' +
     (r.pilgrim ? '<div class="tiny dim2">بخصوص الحاج: ' + E(r.pilgrim) + '</div>' : '') +
     '<div class="row tiny dim2" style="margin-top:6px"><span>' + E(who) + ' · ' + E(r.no) + '</span>' +
       '<span>' + ago(r.at) + '</span></div>' +
     '<div class="fl" style="gap:6px;margin-top:8px;flex-wrap:wrap">' +
       pill(r.status, rStateColor(r)) +
+      (r.sla != null && r.status !== 'مغلق'
+        ? '<span class="rclk' + (repLate(r) ? ' late' : '') + '">' +
+          icon(repLate(r) ? 'i-warn' : 'i-clock','s12') + E(repClock(r)) + '</span>' : '') +
+      (r.escalated ? pill('صُعِّد إلى ' + (r.escTo || 'الكنترول'), 'red') : '') +
       (r.replies.length ? pill(AR(r.replies.length) + ' رد', 'grey') : '') +
       (t ? pill(t.title, 'blue') : '') + '</div></button>';
 }

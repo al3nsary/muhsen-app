@@ -262,6 +262,50 @@
   .listitem .ico{width:38px; height:38px; border-radius:12px; display:grid; place-items:center;
     background:#EFF4F0; color:var(--g); flex:none}
 
+  /* بلاغٌ على أربع خطوات: الخطوةُ تُرى قبل أن تُملأ */
+  .rsteps{display:flex; gap:6px; margin:4px 0 14px}
+  .rstep{flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;
+    font-size:11px; font-weight:700; color:var(--dim2)}
+  .rstep::before{content:''; display:block; width:100%; height:3px; border-radius:99px;
+    background:#E4EBE6}
+  .rstep{position:relative; padding-top:9px}
+  .rstep > i{font-style:normal; font-size:10px; font-weight:500; color:var(--dim2)}
+  .rstep.on{color:var(--g)}
+  .rstep.on::before{background:var(--g)}
+  .rstep.on > i{color:var(--g)}
+  .rstep.done::before{background:#9FCBB4}
+  .rstep.done{color:#4E8F6E}
+
+  /* بطاقاتُ التصنيف: يُنقر الاسمُ لا سطرٌ في قائمة */
+  .rgrid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:8px 0}
+  .rcard{display:flex; flex-direction:column; align-items:flex-start; gap:4px;
+    padding:13px 12px; background:#fff; border-radius:15px; box-shadow:var(--card);
+    border:1.5px solid transparent; text-align:start; width:100%}
+  .rcard b{font-size:12.5px; line-height:1.4; color:var(--ink)}
+  .rcard i{font-style:normal; font-size:10.5px; color:var(--dim2)}
+  .rcard.on{border-color:var(--g); background:#F2F9F5}
+
+  /* آليّةُ التصعيد كما ستقع — تُقرأ قبل الإرسال لا بعده */
+  .escbox{padding:14px; border-radius:16px; background:#fff; box-shadow:var(--card);
+    border-inline-start:4px solid var(--rc,var(--g)); margin:4px 0 14px}
+  .escline{display:flex; align-items:center; gap:9px; margin-bottom:11px}
+  .escline b{flex:1; font-size:13px; line-height:1.5; color:var(--ink)}
+  .escgrid{display:grid; grid-template-columns:1fr 1fr; gap:10px 12px;
+    padding-top:11px; border-top:1px solid #EDF2EE}
+  .escgrid span{display:block; min-width:0}
+  .escgrid i{display:block; font-style:normal; font-size:10px; color:var(--dim2);
+    margin-bottom:3px}
+  .escgrid b{display:block; font-size:11.5px; color:var(--ink); line-height:1.45;
+    overflow-wrap:anywhere}
+  .escrule{margin-top:12px; padding-top:11px; border-top:1px solid #EDF2EE;
+    font-size:11.5px; line-height:1.85; color:var(--dim)}
+
+  /* ساعةُ المهلة على صفّ البلاغ */
+  .rclk{display:inline-flex; align-items:center; gap:4px; flex:none;
+    padding:3px 8px; border-radius:8px; font-size:10px; font-weight:700;
+    color:#8A6A22; background:#FBF3E0}
+  .rclk.late{color:#B02A1E; background:#FBE9E7}
+
   /* ---------- sheet ---------- */
   .scrim{position:absolute; inset:0; background:rgba(9,24,18,.45); z-index:50; opacity:0;
     animation:fade .22s forwards}

@@ -12,6 +12,7 @@ const SCREENS = {
 };
 
 function render() {
+  if (typeof repAutoEscalate === 'function') repAutoEscalate();
   if (!S.session) S.route = { n: 'login' };
   if (S.session) { autoTick(); S.tasks.forEach(recomputeStatus); }
   const n = S.route.n;
@@ -527,7 +528,47 @@ document.addEventListener('click', ev => {
       respondWithdraw(T(), uid_, false, rr); S.sheet = null; toast('رُفض طلب الانسحاب', 'r'); break; }
 
     /* ===== التقارير ===== */
-    case 'report': S.rCat = null; S.rTask = id || null; S.sheet = reportSheet(id); break;
+    case 'report':
+      /* المهمّة رابطٌ اختياريّ لا شرط — والنافذةُ مستقلّةٌ عنها */
+      S.rTask = id || null;
+      S.rp = { step:1, cat:null, sub:null, escId:null, taskId:id || null };
+      S.sheet = escSheet(); break;
+    case 'rpcat':  S.rp.cat = v; S.rp.sub = null; S.rp.escId = null; S.sheet = escSheet(); break;
+    case 'rpsub':  S.rp.sub = v; S.rp.escId = null; S.sheet = escSheet(); break;
+    case 'rpcase': S.rp.escId = v; S.sheet = escSheet(); break;
+    case 'rpback': S.rp.step = Math.max(1, (S.rp.step || 1) - 1); S.sheet = escSheet(); break;
+    case 'rpnext': {
+      const d = S.rp || {};
+      if (d.step === 1 && !d.cat)   { toast('اختر التصنيف الشامل', 'r'); break; }
+      if (d.step === 2 && !d.sub)   { toast('اختر التصنيف التفصيلي', 'r'); break; }
+      if (d.step === 3 && !d.escId) { toast('اختر الحالة', 'r'); break; }
+      /* فرعٌ بلا حالاتٍ مسجّلة: يُقفز عنه بدل أن يُسدّ الطريق */
+      if (d.step === 2 && !escForMine(d.cat, d.sub).length) {
+        d.step = 4; S.sheet = escSheet(); break;
+      }
+      d.step = Math.min(4, (d.step || 1) + 1);
+      S.sheet = escSheet(); break;
+    }
+    case 'rpsend': {
+      const d = S.rp || {};
+      const e = d.escId ? escOf(d.escId) : null;
+      const ti = val('rti'), bo = val('rb'), tid = val('rt');
+      if (ti.length < 4) { toast('اكتب عنوانًا واضحًا للبلاغ', 'r'); break; }
+      if (bo.length < 10) { toast('اشرح التفاصيل — سطر واحد لا يكفي', 'r'); break; }
+      const to = (isLeader() || !me().leaderId) ? 'CONTROL' : me().leaderId;
+      const r = addReport(S.session.id, to, d.cat || 'أخرى', ti, bo, tid || null, null, null);
+      /* الآليّة تُلصق بالبلاغ: خطورتُه ومهلتُه ومسارُ تصعيده من الجدول */
+      r.escId = d.escId || null;
+      r.escCat = d.cat || null; r.escSub = d.sub || null;
+      r.risk = e ? e.risk : 'mid';
+      r.sla = e ? e.sla : null;
+      r.escTo = e ? e.escTo : null;
+      r.ownerRole = e ? e.owner : null;
+      S.sheet = null; S.rp = null; S.rTask = null; S.tab.desk = 'rp'; buzz();
+      toast(e && e.sla != null
+        ? 'رُفع البلاغ — مهلةُ معالجته ' + slaAr(e.sla)
+        : 'رُفع البلاغ'); break;
+    }
     case 'rcat': S.rCat = v; S.sheet = reportSheet(S.rTask || null); break;
     case 'sendreport': {
       const ti = val('rti'), bo = val('rb'), cat = val('rc') || S.rCat, tid = val('rt');
