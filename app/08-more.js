@@ -1,4 +1,4 @@
-/* ============================ التذاكر (تشمل ما كان يُسمّى تقارير) ============================ */
+/* ============================ التذاكر (تشمل ما كان يُسمّى بلاغات) ============================ */
 const PRI_C = { 'عاجلة':'no', 'متوسطة':'wait', 'عادية':'grey' };
 const ST_C  = { 'مفتوحة':'wait', 'مُسندة':'blue', 'قيد المعالجة':'blue', 'مُصعّدة':'no', 'مغلقة':'live' };
 const SRC_LBL = { 'حاج':'من حاج', 'كنترول':'من الكنترول', 'محسن':'من محسن', 'ليدر':'من الليدر' };
@@ -18,7 +18,7 @@ function ticketsPane() {
                  : [['open','المفتوحة'],['mine','المسندة إليّ'],['closed','المغلقة']];
 
   return '<div class="note b">' + icon('i-info','s16') +
-      '<span>التذاكر يرفعها <b>الحجاج</b> وحدهم — وتصل الليدر ليُسندها ويتابعها. وما ترفعه أنت يكون <b>تقريرًا</b>.</span></div>' +
+      '<span>التذاكر يرفعها <b>الحجاج</b> وحدهم — وتصل الليدر ليُسندها ويتابعها. وما ترفعه أنت يكون <b>بلاغًا</b>.</span></div>' +
     '<div class="seg">' + segs.map(x =>
       '<button class="' + (f === x[0] ? 'on' : '') + '" data-a="seg" data-k="tk" data-v="' + x[0] + '">' +
       x[1] + '</button>').join('') + '</div>' +
@@ -288,14 +288,14 @@ function screenMuhsens() {
         '<div class="row tiny dim2" style="margin-top:8px"><span>' + AR(r.n) + ' مهمة مقيَّمة</span>' +
         (notes ? '<span style="color:var(--amber)">' + AR(notes) + ' ملاحظة</span>' : '<span>بلا ملاحظات</span>') + '</div></button>';
     }).join('') +
-    /* الليدر لا يرى الفريق الاحتياطي ولا يختار منه — الدعم يُطلب من الكنترول وهو من يُسند.
+    /* الليدر لا يرى فريق امتثال ولا يختار منه — الدعم يُطلب من الكنترول وهو من يُسند.
        ويراه المحسن الاحتياطي وحده لأنه فريقه. */
     (isLeader()
       ? '<div class="note b">' + icon('i-shield','s16') +
         '<span>إن نقص العدد على مهمة، ارفع <b>طلب دعم من الكنترول</b> من داخل المهمة — ' +
         'وهو من يختار ويُسند.</span></div>'
       : u.reserve
-      ? '<div class="lbl">الفريق الاحتياطي<small>زملاؤك — مشترك بين الليدرز</small></div>' +
+      ? '<div class="lbl">فريق امتثال<small>زملاؤك — مشترك بين الليدرز</small></div>' +
         reserveTeam().filter(m2 => m2.id !== u.id).map(m2 => {
           const n2 = S.tasks.filter(t => acceptedSlots(t).some(a2 => a2.muhsenId === m2.id)).length;
           return '<button class="prow" data-a="go" data-n="profile" data-id="' + m2.id + '">' +
@@ -365,7 +365,7 @@ function screenMore() {
       ['tasks',   'i-tasks',  'المهام',        'الجارية والقادمة والمنجزة'],
       ['daily',   'i-check',  'التحضير اليومي','حضورك وشِفتك وطلب التبديل'],
       [L ? 'lreq' : 'requests', 'i-swap', 'الطلبات', 'المرسلة والمستقبلة'],
-      ['desk',    'i-ticket', 'التذاكر والتقارير', 'ما يَرِد إليك وما ترفعه']
+      ['desk',    'i-ticket', 'التذاكر والبلاغات', 'ما يَرِد إليك وما ترفعه']
     ] },
     { t: 'الفريق والحجاج', items: [
       ['muhsens', 'i-users',  L ? 'المحسنون' : 'الفريق', L ? 'فريقك وتقييماتهم' : 'زملاؤك'],
@@ -406,7 +406,7 @@ function screenMore() {
     /* اختصارات سريعة */
     '<div class="quick">' +
       '<button data-a="go" data-n="daily"><span class="qi">' + icon('i-check','s18') + '</span>التحضير</button>' +
-      '<button data-a="go" data-n="desk"><span class="qi">' + icon('i-flag','s18') + '</span>تقرير</button>' +
+      '<button data-a="go" data-n="desk"><span class="qi">' + icon('i-flag','s18') + '</span>بلاغ</button>' +
       '<button data-a="go" data-n="guide"><span class="qi">' + icon('i-guide','s18') + '</span>الدليل</button>' +
       '<button data-a="go" data-n="album"><span class="qi">' + icon('i-album','s18') + '</span>الصور</button>' +
     '</div>' +

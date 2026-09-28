@@ -98,8 +98,8 @@ chk('كل احتياطي بلا ليدر', 'reserveTeam().filter(u=>u.leaderId).
 chk('كل مهمة لها ليدر موجود', 'S.tasks.filter(t=>!userById(t.leaderId)).length', 0);
 chk('كل تسكين لمستخدم موجود', 'S.tasks.filter(t=>t.assigned.some(a=>!userById(a.muhsenId))).length', 0);
 chk('كل تذكرة لها ليدر', 'S.tickets.filter(k=>!userById(k.leaderId)).length', 0);
-chk('كل تقرير له مُرسِل موجود', 'S.reports.filter(r=>!userById(r.from)).length', 0);
-chk('كل تقرير له وجهة صالحة', 'S.reports.filter(r=>r.to!=="CONTROL"&&!userById(r.to)).length', 0);
+chk('كل بلاغ له مُرسِل موجود', 'S.reports.filter(r=>!userById(r.from)).length', 0);
+chk('كل بلاغ له وجهة صالحة', 'S.reports.filter(r=>r.to!=="CONTROL"&&!userById(r.to)).length', 0);
 chk('كل صورة لمهمة موجودة', 'S.photos.filter(p=>p.taskId&&!taskById(p.taskId)).length', 0);
 chk('كل طلب لمهمة موجودة', 'S.requests.filter(r=>r.taskId&&!taskById(r.taskId)).length', 0);
 chk('كل إشعار لمستخدم موجود', 'S.notifs.filter(n=>!userById(n.to)).length', 0);

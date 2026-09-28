@@ -53,7 +53,7 @@ function statusBoxes() {
   if (over.length)    { any = 1; out += box('urgent','i-clock',over.length,'مهمة تجاوزت وقتها','لم تُغلق بعد انتهاء مدتها','data-a="go" data-n="tasks"'); }
   if (running.length) { any = 1; out += box('','i-play',running.length,'مهمة جارية الآن',
     running.map(t => t.title).slice(0,2).join(' · ') + (running.length > 2 ? ' وغيرها' : ''),'data-a="go" data-n="tasks"'); }
-  if (un.length)      { any = 1; out += box('urgent','i-assign',un.length,'مهمة بلا محسنين','اطلب تعزيزًا من الفريق الاحتياطي','data-a="go" data-n="tasks"'); }
+  if (un.length)      { any = 1; out += box('urgent','i-assign',un.length,'مهمة بلا محسنين','اطلب تعزيزًا من فريق امتثال','data-a="go" data-n="tasks"'); }
   const wd = ts.reduce((n, t) => n + (L ? pendingWithdraws(t).length : 0), 0);
   if (wd)             { any = 1; out += box('soon','i-out',wd,'طلب انسحاب من مهمة','بانتظار موافقتك أو رفضك','data-a="go" data-n="tasks"'); }
   if (soon.length)    { any = 1; out += box('soon','i-clock',soon.length,'مهمة خلال ١٢ ساعة',

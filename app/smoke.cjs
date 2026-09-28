@@ -58,12 +58,12 @@ step('مهام منتهية مقيَّمة جاهزة', () => {
   const n = run('S.tasks.filter(t=>t.status==="done"&&t.rating).length');
   if (n < 5) throw new Error('فقط ' + n);
 });
-step('التذاكر والتقارير منفصلتان', () => {
-  if (!run('S.reports.length')) throw new Error('لا توجد تقارير');
+step('التذاكر والبلاغات منفصلتان', () => {
+  if (!run('S.reports.length')) throw new Error('لا توجد بلاغات');
   if (!run('S.tickets.length')) throw new Error('لا توجد تذاكر');
   if (!run('S.tickets.some(k=>k.src==="محسن")')) throw new Error('لا تذاكر من محسنين');
-  if (!run('S.reports.some(r=>r.to==="CONTROL")')) throw new Error('لا تقارير للكنترول');
-  if (!run('S.reports.some(r=>r.to!=="CONTROL")')) throw new Error('لا تقارير من محسنين');
+  if (!run('S.reports.some(r=>r.to==="CONTROL")')) throw new Error('لا بلاغات للكنترول');
+  if (!run('S.reports.some(r=>r.to!=="CONTROL")')) throw new Error('لا بلاغات من محسنين');
 });
 step('كل المهام مسكَّنة تلقائيًّا', () => {
   const bad = run('S.tasks.filter(function(t){return !acceptedSlots(t).length}).length');
@@ -192,7 +192,7 @@ step('انتهاء مهلة الطلب أربع ساعات', () => {
 });
 step('طلب الدعم يذهب للكنترول لا لاختيار الليدر', () => {
   const h = run('S.route={n:"task",id:"' + TID + '"}; screenTask()');
-  if (h.indexOf('الفريق الاحتياطي') >= 0) throw new Error('الليدر يرى الاحتياط');
+  if (h.indexOf('فريق امتثال') >= 0) throw new Error('الليدر يرى الاحتياط');
   if (h.indexOf('data-a="supportsheet"') < 0) throw new Error('لا يوجد طلب دعم');
   sandbox.document.getElementById = i2 => Object.assign({}, el, { value: i2 === 'spwhy' ? 'نقص بسبب استبعاد' : '' });
   run('S.spCount=2');
@@ -731,10 +731,10 @@ step('«لاحقًا» يغلق ولا يمنع التفعيل من التحكم
   if (box.indexOf('إرسال إشعار لفئة') < 0) throw new Error('اختفى صندوق البثّ');
 });
 
-step('الليدر لا يرى الفريق الاحتياطي ولا يُسنده', () => {
+step('الليدر لا يرى فريق امتثال ولا يُسنده', () => {
   run('S.session={id:"L1",at:Date.now()};S.clockOffset=0');
   const h = run('S.route={n:"muhsens"}; screenMuhsens()').split('<nav class="tabs"')[0];
-  if (h.indexOf('الفريق الاحتياطي') >= 0) throw new Error('قائمة الاحتياط ظاهرة للّيدر');
+  if (h.indexOf('فريق امتثال') >= 0) throw new Error('قائمة الاحتياط ظاهرة للّيدر');
   run('reserveTeam()').forEach(function (m) {
     if (h.indexOf(m.name) >= 0) throw new Error('اسم احتياطي ظاهر: ' + m.name);
   });
@@ -752,7 +752,7 @@ step('الاحتياطي يرى فريقه، والكنترول هو من يُس
   const rs = run('reserveTeam()[0].id');
   run('S.session={id:"' + rs + '",at:Date.now()}');
   const h = run('S.route={n:"muhsens"}; screenMuhsens()').split('<nav class="tabs"')[0];
-  if (h.indexOf('الفريق الاحتياطي') < 0) throw new Error('الاحتياطي لا يرى فريقه');
+  if (h.indexOf('فريق امتثال') < 0) throw new Error('الاحتياطي لا يرى فريقه');
   run('S.session={id:"L1",at:Date.now()}');
   if (read('18-assign.js').indexOf('u.reserve') < 0) throw new Error('الكنترول لا يختار من الاحتياط');
 });
@@ -1118,21 +1118,21 @@ step('التشغيل والإيقاف يعملان', () => {
   if (run('S.clipPaused')) throw new Error('لم يُستأنف');
 });
 
-console.log('\nالتذاكر والتقارير — مدمجتان في تاب ومنفصلتان في المحتوى');
+console.log('\nالتذاكر والبلاغات — مدمجتان في تاب ومنفصلتان في المحتوى');
 run('S.session={id:"L1",at:Date.now()}');
 step('شاشة واحدة بتبويبين', () => {
   run('S.route={n:"desk"}; S.tab.desk="tk"');
   const tk = run('screenDesk()').split('<nav class="tabs"')[0];
-  if (tk.indexOf('التذاكر والتقارير') < 0) throw new Error('بلا عنوان');
-  if (tk.indexOf('data-v="rp"') < 0) throw new Error('بلا تبويب تقارير');
+  if (tk.indexOf('التذاكر والبلاغات') < 0) throw new Error('بلا عنوان');
+  if (tk.indexOf('data-v="rp"') < 0) throw new Error('بلا تبويب بلاغات');
   if (tk.indexOf('data-a="newticket"') >= 0) throw new Error('الفريق يرفع تذاكر');
   if (tk.indexOf('يرفعها <b>الحجاج</b>') < 0) throw new Error('بلا توضيح أن التذاكر للحجاج');
   run('S.tab.desk="rp"');
   const rp = run('screenDesk()').split('<nav class="tabs"')[0];
-  if (rp.indexOf('data-a="report"') < 0) throw new Error('بلا زر تقرير');
+  if (rp.indexOf('data-a="report"') < 0) throw new Error('بلا زر بلاغ');
   if (rp.indexOf('data-a="report"') < 0) throw new Error('اختلط المحتوى');
 });
-step('التقرير كيان مستقل عن التذكرة', () => {
+step('البلاغ كيان مستقل عن التذكرة', () => {
   if (run('S.reports.some(function(r){return S.tickets.some(function(k){return k.id===r.id})})'))
     throw new Error('تداخل المعرّفات');
   const r = run('S.reports[0]');
@@ -1150,7 +1150,7 @@ step('المحسن يرفع لليدره والليدر للكنترول', () =>
   sandbox.document.getElementById = () => el;
   if (run('S.reports.length') !== before + 1) throw new Error('لم يُرفع');
   if (run('S.reports[0].to') !== 'L1') throw new Error('لم يصل الليدر');
-  if (!run('S.notifs.some(function(n){return n.to==="L1"&&n.title==="تقرير جديد"})')) throw new Error('بلا إشعار');
+  if (!run('S.notifs.some(function(n){return n.to==="L1"&&n.title==="بلاغ جديد"})')) throw new Error('بلا إشعار');
   sandbox.RP_ = run('S.reports[0].id');
 
   run('S.session={id:"L1",at:Date.now()}');
@@ -1160,7 +1160,7 @@ step('المحسن يرفع لليدره والليدر للكنترول', () =>
   sandbox.document.getElementById = () => el;
   if (run('S.reports[0].to') !== 'CONTROL') throw new Error('الليدر لم يرفع للكنترول');
 });
-step('تقرير بلا عنوان أو تفاصيل مرفوض', () => {
+step('بلاغ بلا عنوان أو تفاصيل مرفوض', () => {
   const before = run('S.reports.length');
   const v = { rti: 'اا', rb: 'تفاصيل كافية جدًّا هنا', rc: 'أخرى', rt: run('myTasks()[0].id') };
   sandbox.document.getElementById = i2 => (v[i2] !== undefined ? Object.assign({}, el, { value: v[i2] }) : el);
@@ -1169,11 +1169,11 @@ step('تقرير بلا عنوان أو تفاصيل مرفوض', () => {
   sandbox.document.getElementById = i2 => (v2[i2] !== undefined ? Object.assign({}, el, { value: v2[i2] }) : el);
   click({ a: 'sendreport' });
   sandbox.document.getElementById = () => el;
-  if (run('S.reports.length') !== before) throw new Error('قُبل تقرير ناقص');
+  if (run('S.reports.length') !== before) throw new Error('قُبل بلاغ ناقص');
 });
 step('الرد والتصعيد وتغيير الحالة والإغلاق', () => {
   const id = sandbox.RP_;
-  sandbox.document.getElementById = () => Object.assign({}, el, { value: 'استلمتُ التقرير وسأنسّق مع السكن.' });
+  sandbox.document.getElementById = () => Object.assign({}, el, { value: 'استلمتُ البلاغ وسأنسّق مع السكن.' });
   click({ a: 'dorreply', id: id });
   sandbox.document.getElementById = () => el;
   if (!run('reportById("' + id + '").replies.length')) throw new Error('لم يُسجَّل الرد');
@@ -1192,10 +1192,10 @@ step('الرد والتصعيد وتغيير الحالة والإغلاق', () 
   click({ a: 'rreopen', id: id });
   if (run('reportById("' + id + '").status') === 'مغلق') throw new Error('لم يُعد فتحه');
 });
-step('شاشة التقرير تفتح ولها إجراءات', () => {
+step('شاشة البلاغ تفتح ولها إجراءات', () => {
   run('S.route={n:"report",id:"' + sandbox.RP_ + '"}');
   const h = run('screenReport()').split('<nav class="tabs"')[0];
-  ['تفاصيل التقرير', 'المتابعة', 'إجراء'].forEach(k => {
+  ['تفاصيل البلاغ', 'المتابعة', 'إجراء'].forEach(k => {
     if (h.indexOf(k) < 0) throw new Error('ينقص: ' + k);
   });
 });
@@ -1317,7 +1317,7 @@ step('لا إغلاق لمهمة لم تبدأ', () => {
   click({ a: 'end', id: t.id });
   if (run('taskById("' + t.id + '").status') === 'done') throw new Error('أُغلقت قبل أن تبدأ');
 });
-step('تقرير الاحتياطي يذهب للكنترول', () => {
+step('بلاغ الاحتياطي يذهب للكنترول', () => {
   const r = run('reserveTeam()[0].id');
   run('S.session={id:"' + r + '",at:Date.now()}');
   const vals = { rti: 'ملاحظة من الاحتياط', rb: 'ملاحظة تشغيلية كافية الطول للاختبار.', rc: 'أخرى', rt: run('myTasks()[0]&&myTasks()[0].id||S.tasks[0].id') };
@@ -1412,9 +1412,9 @@ step('الرفض يوقف المسار', () => {
   sandbox.document.getElementById = () => el;
   if (run('reportById("' + id2 + '").stage') !== 'rejected') throw new Error('لم يُرفض');
 });
-step('كل تقرير له عنوان ومهمة', () => {
+step('كل بلاغ له عنوان ومهمة', () => {
   const bad = run('S.reports.filter(function(r){return !r.title||!r.taskId}).length');
-  if (bad) throw new Error(bad + ' تقرير بلا عنوان أو مهمة');
+  if (bad) throw new Error(bad + ' بلاغ بلا عنوان أو مهمة');
 });
 
 
@@ -1803,14 +1803,14 @@ step('بطاقة الحساب أُزيلت من الرئيسية', () => {
   if (h2.indexOf(run('me().specialty')) >= 0) throw new Error('ما زالت بطاقة الحساب في رئيسية المحسن');
   run('S.session={id:"L1",at:Date.now()}');
 });
-step('التنقّل بين التذاكر والتقارير يثبت', () => {
+step('التنقّل بين التذاكر والبلاغات يثبت', () => {
   run('S.session={id:"L1",at:Date.now()};S.route={n:"tickets"};S.tab.desk="tk"');
   click({ a: 'seg', k: 'desk', v: 'rp' });
   if (run('S.tab.desk') !== 'rp') throw new Error('لم يتغيّر التبويب');
   /* الشاشة نفسها لا تُعيده إلى التذاكر عند الرسم */
   const h = run('screenTickets()');
   if (run('S.tab.desk') !== 'rp') throw new Error('أُعيد إلى التذاكر عند الرسم');
-  if (h.indexOf('التقارير ترفعها أنت') < 0) throw new Error('لم تُعرض لوحة التقارير');
+  if (h.indexOf('البلاغات ترفعها أنت') < 0) throw new Error('لم تُعرض لوحة البلاغات');
   click({ a: 'seg', k: 'desk', v: 'tk' });
   const h2 = run('screenTickets()');
   if (h2.indexOf('التذاكر ترد إليك') < 0) throw new Error('لم تعد للتذاكر');

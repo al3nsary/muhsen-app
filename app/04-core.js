@@ -1,6 +1,6 @@
 /* ============================ الحالة ============================ */
 const KEY = 'muhsen_app_v1';
-const APP_VER = 'نسخة ٣٫٩';
+const APP_VER = 'نسخة ٤٫٠';
 const SCHEMA = 18;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
@@ -561,8 +561,8 @@ function toggleSub(t, s, by) {
     userById(by).name + ' أنجز «' + s.name + '» في «' + t.title + '».', { n: 'task', id: t.id });
 }
 
-/* ============================ التذاكر (تشمل التقارير) ============================ */
-/* التذاكر يرفعها الحجاج وحدهم — والفريق يرفع تقارير */
+/* ============================ التذاكر (تشمل البلاغات) ============================ */
+/* التذاكر يرفعها الحجاج وحدهم — والفريق يرفع بلاغات */
 function addTicket(fromId, title, body, cat, pri, taskId, pilgrimId) {
   const u = userById(fromId);
   const leaderId = u.role === 'leader' ? u.id : u.leaderId;

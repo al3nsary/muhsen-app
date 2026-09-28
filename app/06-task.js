@@ -195,7 +195,7 @@ function screenTask() {
 
     (!closed ? '<div class="grid2">' +
       '<button class="btn l sm" data-a="note" data-id="' + t.id + '">' + icon('i-edit','s16') + 'ملاحظة</button>' +
-      '<button class="btn l sm" data-a="report" data-id="' + t.id + '">' + icon('i-flag','s16') + 'تقرير</button></div>' : '') +
+      '<button class="btn l sm" data-a="report" data-id="' + t.id + '">' + icon('i-flag','s16') + 'بلاغ</button></div>' : '') +
 
     (running ? (act
       ? '<div class="endzone"><button class="cta stop" data-a="end" data-id="' + t.id + '">' +

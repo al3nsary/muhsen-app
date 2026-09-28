@@ -527,23 +527,24 @@ document.addEventListener('click', ev => {
     case 'dowdno': { const rr = reasonOr(val('txt'));
       respondWithdraw(T(), uid_, false, rr); S.sheet = null; toast('رُفض طلب الانسحاب', 'r'); break; }
 
-    /* ===== التقارير ===== */
+    /* ===== البلاغات ===== */
     case 'report':
       /* المهمّة رابطٌ اختياريّ لا شرط — والنافذةُ مستقلّةٌ عنها */
       S.rTask = id || null;
-      S.rp = { step:1, cat:null, sub:null, escId:null, taskId:id || null };
+      S.rp = { step:1, loc:null, sec:null, escId:null, taskId:id || null };
       S.sheet = escSheet(); break;
-    case 'rpcat':  S.rp.cat = v; S.rp.sub = null; S.rp.escId = null; S.sheet = escSheet(); break;
-    case 'rpsub':  S.rp.sub = v; S.rp.escId = null; S.sheet = escSheet(); break;
+    case 'rploc':  S.rp.loc = v; S.rp.sec = null; S.rp.escId = null; S.sheet = escSheet(); break;
+    case 'rpsec':  S.rp.sec = v; S.rp.escId = null; S.sheet = escSheet(); break;
     case 'rpcase': S.rp.escId = v; S.sheet = escSheet(); break;
+    case 'rpshot': S.rp.shot = v; S.sheet = escSheet(); break;
     case 'rpback': S.rp.step = Math.max(1, (S.rp.step || 1) - 1); S.sheet = escSheet(); break;
     case 'rpnext': {
       const d = S.rp || {};
-      if (d.step === 1 && !d.cat)   { toast('اختر التصنيف الشامل', 'r'); break; }
-      if (d.step === 2 && !d.sub)   { toast('اختر التصنيف التفصيلي', 'r'); break; }
+      if (d.step === 1 && !d.loc)   { toast('اختر الموقع', 'r'); break; }
+      if (d.step === 2 && !d.sec)   { toast('اختر القطاع', 'r'); break; }
       if (d.step === 3 && !d.escId) { toast('اختر الحالة', 'r'); break; }
       /* فرعٌ بلا حالاتٍ مسجّلة: يُقفز عنه بدل أن يُسدّ الطريق */
-      if (d.step === 2 && !escForMine(d.cat, d.sub).length) {
+      if (d.step === 2 && !escForMine(d.loc, d.sec).length) {
         d.step = 4; S.sheet = escSheet(); break;
       }
       d.step = Math.min(4, (d.step || 1) + 1);
@@ -555,11 +556,17 @@ document.addEventListener('click', ev => {
       const ti = val('rti'), bo = val('rb'), tid = val('rt');
       if (ti.length < 4) { toast('اكتب عنوانًا واضحًا للبلاغ', 'r'); break; }
       if (bo.length < 10) { toast('اشرح التفاصيل — سطر واحد لا يكفي', 'r'); break; }
+      /* المرفقُ الإلزاميّ شرطٌ لا تذكير: الجدول يقول أيَّ بلاغٍ لا يُقبل بلا صورة */
+      if (e && e.must === 'صورة' && !d.shot) {
+        toast('يلزم هذا البلاغَ صورة — ' + (e.hint || 'صوِّر موضع المشكلة'), 'r'); break; }
       const to = (isLeader() || !me().leaderId) ? 'CONTROL' : me().leaderId;
-      const r = addReport(S.session.id, to, d.cat || 'أخرى', ti, bo, tid || null, null, null);
-      /* الآليّة تُلصق بالبلاغ: خطورتُه ومهلتُه ومسارُ تصعيده من الجدول */
+      const r = addReport(S.session.id, to, (e ? e.sec : 'أخرى'), ti, bo, tid || null, null, null);
+      /* الآليّة تُلصق بالبلاغ: خطورتُه ومهلتاه ومسارُ تصعيده من الجدول */
       r.escId = d.escId || null;
-      r.escCat = d.cat || null; r.escSub = d.sub || null;
+      r.escLoc = d.loc || null; r.escSec = d.sec || null;
+      r.escName = e ? e.name : null;
+      r.shot = d.shot || null;
+      r.docs = e ? e.docs : '';
       r.risk = e ? e.risk : 'mid';
       r.sla = e ? e.sla : null;
       r.escTo = e ? e.escTo : null;
@@ -572,8 +579,8 @@ document.addEventListener('click', ev => {
     case 'rcat': S.rCat = v; S.sheet = reportSheet(S.rTask || null); break;
     case 'sendreport': {
       const ti = val('rti'), bo = val('rb'), cat = val('rc') || S.rCat, tid = val('rt');
-      if (ti.length < 4) { toast('اكتب عنوانًا واضحًا للتقرير', 'r'); break; }
-      if (!tid) { toast('اربط التقرير بمهمة', 'r'); break; }
+      if (ti.length < 4) { toast('اكتب عنوانًا واضحًا للبلاغ', 'r'); break; }
+      if (!tid) { toast('اربط البلاغ بمهمة', 'r'); break; }
       let room = null;
       if (cat === ROOM_CAT) {
         const no = val('rno');
@@ -584,7 +591,7 @@ document.addEventListener('click', ev => {
       const to = (isLeader() || !me().leaderId) ? 'CONTROL' : me().leaderId;
       addReport(S.session.id, to, cat, ti, bo || (room ? 'طلب تعديل بيانات غرفة' : ''), tid, null, room);
       S.sheet = null; S.rCat = null; S.tab.desk = 'rp'; buzz();
-      toast(room ? 'أُرسل الطلب إلى مشرف السكن' : 'رُفع التقرير'); break; }
+      toast(room ? 'أُرسل الطلب إلى مشرف السكن' : 'رُفع البلاغ'); break; }
     case 'roomok': { const rp = reportById(id);
       if (!isLeader()) { toast('الاعتماد لمشرف السكن والكنترول', 'r'); break; }
       roomAdvance(rp, S.session.id, true); buzz();
@@ -594,7 +601,7 @@ document.addEventListener('click', ev => {
     case 'doroomno': { const rr = reasonOr(val('txt'));
       roomAdvance(reportById(id), S.session.id, false, rr); S.sheet = null;
       toast('رُفض التعديل', 'r'); break; }
-    case 'rreply': S.sheet = textSheet('رد على التقرير', reportById(id).title,
+    case 'rreply': S.sheet = textSheet('رد على البلاغ', reportById(id).title,
       'data-a="dorreply" data-id="' + id + '"', '', 'اكتب ردك أو ملاحظتك'); break;
     case 'dorreply': { const x = val('txt');
       if (!x) { toast('اكتب الرد', 'r'); break; }
@@ -603,12 +610,12 @@ document.addEventListener('click', ev => {
     case 'resc': S.sheet = textSheet('تصعيد إلى الكنترول', reportById(id).title,
       'data-a="doresc" data-id="' + id + '"', '', 'سبب التصعيد (اختياري)'); break;
     case 'doresc': reportEscalate(reportById(id), S.session.id, val('txt'));
-      S.sheet = null; toast('صُعّد التقرير إلى الكنترول'); break;
+      S.sheet = null; toast('صُعّد البلاغ إلى الكنترول'); break;
     case 'rstate': S.sheet = reportStateSheet(reportById(id)); break;
     case 'dorstate': reportSetStatus(reportById(id), S.session.id, v);
       S.sheet = null; toast('صارت الحالة: ' + v); break;
-    case 'rclose': reportSetStatus(reportById(id), S.session.id, 'مغلق'); toast('أُغلق التقرير'); break;
-    case 'rreopen': reportSetStatus(reportById(id), S.session.id, 'قيد المعالجة'); toast('أُعيد فتح التقرير'); break;
+    case 'rclose': reportSetStatus(reportById(id), S.session.id, 'مغلق'); toast('أُغلق البلاغ'); break;
+    case 'rreopen': reportSetStatus(reportById(id), S.session.id, 'قيد المعالجة'); toast('أُعيد فتح البلاغ'); break;
 
     /* ===== التحضير اليومي ===== */
     case 'checkin': {
@@ -738,6 +745,16 @@ document.addEventListener('keydown', ev => {
 /* ============================ الكاميرا ============================ */
 document.addEventListener('change', ev => {
   const id2 = ev.target && ev.target.id;
+  /* صورةُ البلاغ: تُحفظ وصفًا لا محتوًى — والاسمُ يكفي للتوثيق هنا */
+  if (ev.target && ev.target.getAttribute && ev.target.getAttribute('data-shot')) {
+    const f = ev.target.files && ev.target.files[0];
+    if (f && S.rp) {
+      S.rp.shot = { name:f.name, size:f.size, at:now() };
+      S.sheet = escSheet(); render(); buzz();
+      toast('أُرفقت الصورة');
+    }
+    return;
+  }
   if (id2 === 'gal') return onMemories(ev);
   if (id2 === 'vid' || id2 === 'pdf') return onGuideMedia(ev, id2 === 'vid' ? 'video' : 'pdf');
   if (id2 === 'cam' && S.mediaCtx) return onGuideMedia(ev, 'photo');

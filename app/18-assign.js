@@ -253,7 +253,7 @@ function expireRequests(t) {
 }
 
 /* ---------- طلب دعم من الكنترول ---------- */
-/* الليدر لا يعرف الفريق الاحتياطي ولا يختار منه — يطلب دعمًا، والكنترول يلبّي ويوضّح */
+/* الليدر لا يعرف فريق امتثال ولا يختار منه — يطلب دعمًا، والكنترول يلبّي ويوضّح */
 const SUPPORT_STATE = { pending:['لدى الكنترول','wait'], done:['لُبّي','live'], denied:['غير متاح','no'] };
 function requestSupport(t, count, why) {
   if (!canAssign(t, S.session.id)) return null;   /* المحسن لا يطلب دعمًا */
