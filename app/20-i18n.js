@@ -141,10 +141,14 @@ function applyDir() {
 /* ---------- مبدّلُ اللغة ---------- */
 function langSwitch() {
   const cur = langOf();
-  return '<div class="langsw">' + Object.keys(LANGS).map(k =>
-    '<button class="langb' + (k === cur ? ' on' : '') + '" data-a="lang" data-v="' + k + '" ' +
-    'lang="' + k + '">' + E(LANGS[k].f) + '</button>').join('') + '</div>';
+  return '<div class="langsw">' +
+    '<span class="langi">' + icon('i-globe','s16') + '</span>' +
+    Object.keys(LANGS).map(k =>
+      '<button class="langb' + (k === cur ? ' on' : '') + '" data-a="lang" data-v="' + k + '" ' +
+      'aria-label="' + E(langName(k)) + '" lang="' + k + '">' + E(LANGS[k].f) + '</button>').join('') +
+  '</div>';
 }
+
 function setLang(k) {
   if (!LANGS[k]) return;
   S.lang = k;
