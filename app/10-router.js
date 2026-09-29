@@ -68,7 +68,8 @@ function render() {
     });
   } catch (e) {}
   const es = document.getElementById("envst");
-  if (es) es.textContent = envStampNow();
+  /* نصٌّ يُكتب مباشرةً — فيُمرَّر على الترجمة كغيره */
+  if (es) es.textContent = TT(envStampNow());
   centerActiveTab();
   save();
   if (S.toast) { const t = S.toast; setTimeout(() => { if (S.toast === t) { S.toast = null; render(); } }, 2600); }

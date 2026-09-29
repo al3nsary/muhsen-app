@@ -1360,4 +1360,8 @@
 :root[dir="ltr"] [class*="i-back"], :root[dir="ltr"] [class*="i-fwd"],
 :root[dir="ltr"] .listitem > svg:last-child, :root[dir="ltr"] .prow .end svg,
 :root[dir="ltr"] .nav > svg:last-child, :root[dir="ltr"] .pfback svg{transform:scaleX(-1)}
+
+/* نصٌّ عربيٌّ لم تصله الترجمةُ بعد: يُعزَل اتّجاهُه فيُقرأ صحيحًا
+   داخل تخطيطٍ لاتينيّ — لا تقفز نقطتاه ولا تنقلب أرقامُه. */
+.arx{unicode-bidi:isolate; direction:rtl; display:inline-block; text-align:start}
 </style>
