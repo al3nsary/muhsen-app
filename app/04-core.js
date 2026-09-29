@@ -11,23 +11,29 @@ const RADIUS_KM = 2;            /* نطاق إثبات الحضور */
 
 /* ============================ الوقت ============================ */
 const now = () => Date.now() + (S && S.clockOffset ? S.clockOffset : 0) * MIN;
-const AR = n => String(n).replace(/[0-9]/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
+/* الأصلُ العربيُّ يبقى باسمٍ صريح، والاسمُ العامُّ يسأل عن اللغة */
+const ARd = n => String(n).replace(/[0-9]/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
+const AR = n => (typeof NUM === 'function' ? NUM(n) : ARd(n));
 const two = n => (n < 10 ? '0' : '') + n;
 const dayStart = ts => { const d = new Date(ts); d.setHours(0, 0, 0, 0); return d.getTime(); };
 
-function t12(ts) {
+function t12Ar(ts) {
   const d = new Date(ts); let h = d.getHours(); const m = d.getMinutes();
   const s = h < 12 ? 'ص' : 'م'; h = h % 12 || 12;
   return AR(two(h) + ':' + two(m)) + ' ' + s;
 }
-function hijri(ts) {
+function hijriAr(ts) {
   try {
     return new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura-nu-arab',
       { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(ts)).replace(/\s*هـ?$/, '');
   } catch (e) { const d = new Date(ts); return AR(d.getFullYear() + '/' + two(d.getMonth() + 1) + '/' + two(d.getDate())); }
 }
 const greg = ts => { const d = new Date(ts); return AR(two(d.getDate()) + '/' + two(d.getMonth() + 1) + '/' + d.getFullYear()); };
-const dayName = ts => ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'][new Date(ts).getDay()];
+const dayNameAr = ts => ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'][new Date(ts).getDay()];
+/* الأسماءُ العامّة تُوجَّه بحسب اللغة */
+const t12     = ts => (typeof TIME === 'function' ? TIME(ts) : t12Ar(ts));
+const hijri   = ts => (typeof DATE === 'function' ? DATE(ts) : hijriAr(ts));
+const dayName = ts => (typeof DAYNAME === 'function' ? DAYNAME(ts) : dayNameAr(ts));
 const isoDate = ts => { const d = new Date(ts); return d.getFullYear() + '-' + two(d.getMonth() + 1) + '-' + two(d.getDate()); };
 
 function ago(ts) {
@@ -107,6 +113,7 @@ function newTask(L, kind, start, code) {
 }
 
 function seed() {
+  /* اللغةُ تُحفظ مع الحالة */
   const st = {
     v: SCHEMA, clockOffset: 0, myPlace: 'site', session: null, route: { n: 'login' },
     tab: {}, orgs: ORGS, users: USERS.concat(RESERVE), tasks: [], tickets: [], reports: [], notifs: [],
@@ -187,6 +194,7 @@ function load() {
     S = JSON.parse(localStorage.getItem(KEY));
     if (!S || S.v !== SCHEMA) S = seed();
   } catch (e) { S = seed(); }
+  S.lang = S.lang || 'ar';
   S.reminders = S.reminders || []; S.requests = S.requests || []; S.pilgrims = S.pilgrims || {};
   S.photos = S.photos || []; S.reports = S.reports || []; S.support = S.support || [];
   S.guides = S.guides || {};

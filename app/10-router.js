@@ -54,7 +54,7 @@ function render() {
   const prev = el.querySelector('.view');
   const keep = S._viewKey === key && prev ? prev.scrollTop : 0;
   el.className = (el.className || '').replace(/ ?nofx/, '') + (sameView ? ' nofx' : '');
-  el.innerHTML = html;
+  el.innerHTML = TR(html);
   const nv = el.querySelector('.view');
   if (nv && keep) nv.scrollTop = keep;
   S._viewKey = key;
@@ -192,6 +192,7 @@ document.addEventListener('click', ev => {
   switch (a) {
     case 'go': S.sheet = null; S.route = { n: b.dataset.n, id }; break;
     case 'back': S.sheet = null; S.route = { n: isLeader() ? 'home' : 'mhome' }; break;
+    case 'lang': setLang(v); break;
     case 'close': S.sheet = null; break;
     case 'dismiss': S.push = null; break;
     case 'seg': S.tab[b.dataset.k] = v; break;
@@ -832,6 +833,7 @@ function onGuideMedia(ev, mk) {
 
 /* ============================ إقلاع ============================ */
 load();
+applyDir();
 if (typeof flushPending === 'function') setTimeout(flushPending, 900);
 setTimeout(function () { if (typeof maybeAskPush === 'function' && maybeAskPush()) render(); }, 1800);
 if (!S.session) S.route = { n: 'login' };

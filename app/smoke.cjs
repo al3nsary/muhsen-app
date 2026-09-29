@@ -22,7 +22,7 @@ const sandbox = {
 sandbox.window.IMG = JSON.parse(fs.readFileSync(IMGP, 'utf8'));
 sandbox.globalThis = sandbox;
 
-const FILES = ['03-data.js','04-core.js','05-ui.js','06-task.js','07-muhsen.js','08-more.js','09-admin.js','11-reqcenter.js','12-photos.js','13-docs.js','14-guide.js','15-daily.js','16-push.js','17-reports.js','18-assign.js','10-router.js'];
+const FILES = ['20-i18n.js','21-dict.js','03-data.js','04-core.js','05-ui.js','06-task.js','07-muhsen.js','08-more.js','09-admin.js','11-reqcenter.js','12-photos.js','13-docs.js','14-guide.js','15-daily.js','16-push.js','17-reports.js','18-assign.js','10-router.js'];
 const js = FILES.map(read).join('\n');
 const ctx = vm.createContext(sandbox);
 
@@ -488,7 +488,8 @@ step('الكنترول لا الكونترول', () => {
   if (run('JSON.stringify(S).indexOf("كونترول")') >= 0) throw new Error('ما زالت «كونترول»');
 });
 step('لا كلمة «قائد» في الواجهة', () => {
-  const src = FILES.map(read).join('\n');
+  /* القاموسُ يحوي الكلمةَ مفتاحَ ترجمةٍ لا نصَّ واجهة — فيُستثنى */
+  const src = FILES.filter(function(f){return !/dict|i18n/.test(f);}).map(read).join('\n');
   if (/[^ل]قائد/.test(src.replace(/القائد/g, ''))) throw new Error('ما زالت «قائد»');
 });
 

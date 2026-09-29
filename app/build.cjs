@@ -36,6 +36,8 @@ const out =
   /* الجافاسكربت لا يحتاج إلا الصور الكاملة (عارض الصور والدليل) — الباقي في CSS */
   '<script>window.IMG={};</scr' + 'ipt>' + '\n' +
   '<script>\n' +
+  read('20-i18n.js') + '\n' +
+  read('21-dict.js') + '\n' +
   read('03-data.js') + '\n' +
   read('04-core.js') + '\n' +
   read('05-ui.js') + '\n' +
@@ -69,7 +71,7 @@ fs.writeFileSync(path.join(deploy, 'index.html'), pwa);
 console.log('docs/index.html:', Math.round(fs.statSync(path.join(deploy, 'index.html')).size / 1024) + 'KB');
 
 // فحص سريع للأخطاء النحوية في جزء الجافاسكربت
-const js = [ '03-data.js','04-core.js','05-ui.js','06-task.js','07-muhsen.js','08-more.js','09-admin.js','11-reqcenter.js','12-photos.js','13-docs.js','14-guide.js','15-daily.js','16-push.js','19-escal.js','17-reports.js','18-assign.js','10-router.js' ]
+const js = [ '20-i18n.js','21-dict.js','03-data.js','04-core.js','05-ui.js','06-task.js','07-muhsen.js','08-more.js','09-admin.js','11-reqcenter.js','12-photos.js','13-docs.js','14-guide.js','15-daily.js','16-push.js','19-escal.js','17-reports.js','18-assign.js','10-router.js' ]
   .map(read).join('\n');
 try { new Function(js); console.log('syntax: OK'); }
 catch (e) { console.log('SYNTAX ERROR:', e.message); process.exitCode = 1; }

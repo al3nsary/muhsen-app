@@ -12,10 +12,10 @@
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
   html,body{margin:0; height:100%}
-  body{direction:rtl; font-family:var(--f); background:#E8ECE8; color:var(--ink);
+  body{font-family:var(--f); background:#E8ECE8; color:var(--ink);
     font-size:14px; line-height:1.6; -webkit-font-smoothing:antialiased;
     display:flex; align-items:center; justify-content:center; padding:20px}
-  button{font:inherit; color:inherit; border:0; background:none; cursor:pointer; text-align:right}
+  button{font:inherit; color:inherit; border:0; background:none; cursor:pointer; text-align:start}
   :focus-visible{outline:2px solid var(--g); outline-offset:2px; border-radius:8px}
 
   /* ---------- device ---------- */
@@ -243,7 +243,7 @@
 
   .sub{display:flex; align-items:center; gap:10px; padding:11px 0; border-bottom:1px solid rgba(20,89,63,.08); width:100%}
   .sub:last-child{border-bottom:0}
-  .sub .t{flex:1; font-size:13px; text-align:right}
+  .sub .t{flex:1; font-size:13px; text-align:start}
   .sub.next{background:rgba(11,138,75,.08); margin:2px -8px; padding:11px 8px; border-radius:12px; border:0}
 
   .field{display:flex; align-items:center; gap:10px; border-radius:15px; padding:13px;
@@ -313,6 +313,19 @@
     font-size:12.5px; font-weight:600; color:var(--dim)}
   .shotpick.on{border-style:solid; border-color:var(--g); background:#F2F9F5; color:var(--g)}
 
+  /* مبدّلُ اللغة */
+  .langrow{display:flex; align-items:center; gap:12px; padding:14px}
+  .langsw{display:flex; gap:3px; flex:none; padding:3px; border-radius:11px;
+    background:#EFF4F0; border:1px solid #DCE6DF}
+  .langb{min-width:34px; height:28px; padding:0 9px; border-radius:8px; cursor:pointer;
+    background:transparent; border:0; color:var(--dim2);
+    font-size:11px; font-weight:700; letter-spacing:.3px}
+  .langb.on{background:#fff; color:var(--g); box-shadow:0 1px 3px rgba(0,0,0,.12)}
+  /* اللغاتُ اللاتينيّة تُقرأ يسارًا إلى يمين */
+  :root[dir="rtl"] body{direction:rtl}
+  :root[dir="ltr"] body{direction:ltr}
+  .num, .bdg, .n{unicode-bidi:isolate}
+
   /* ---------- sheet ---------- */
   .scrim{position:absolute; inset:0; background:rgba(9,24,18,.45); z-index:50; opacity:0;
     animation:fade .22s forwards}
@@ -329,7 +342,7 @@
   /* تنبيهات ثابتة أعلى الصفحة */
   .alerts{display:flex; flex-direction:column; gap:8px}
   .alert{display:flex; gap:11px; align-items:flex-start; width:100%; border-radius:16px; padding:12px 13px;
-    color:#fff; text-align:right; box-shadow:0 10px 24px -12px rgba(11,53,39,.6)}
+    color:#fff; text-align:start; box-shadow:0 10px 24px -12px rgba(11,53,39,.6)}
   .alert b{display:block; font-size:13.5px}
   .alert span span{display:block; font-size:11.5px; opacity:.9; line-height:1.6}
   .alert.warn{background:linear-gradient(150deg,#B8791A,#7A5512)}
@@ -537,7 +550,7 @@
   .pfull { width: 100%; border-radius: 20px; display: block;
     box-shadow: 0 12px 30px -16px rgba(11,53,39,.7), inset 0 0 0 1px rgba(198,168,111,.45); }
   .pgrid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
-  .pcard { display: block; border-radius: 18px; overflow: hidden; background: #fff; text-align: right;
+  .pcard { display: block; border-radius: 18px; overflow: hidden; background: #fff; text-align:start;
     box-shadow: var(--card); }
   .pcard .ph { display: block; height: 108px; background-size: cover; background-position: center; }
   .pcard .meta { display: block; padding: 9px 10px 11px; }
@@ -550,7 +563,7 @@
   /* أزرار العقود على المهمة */
   .docs { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 9px; }
   .docbtn { display: flex; align-items: center; gap: 9px; background: #fff; border-radius: 15px;
-    padding: 11px; box-shadow: var(--card); text-align: right; }
+    padding: 11px; box-shadow: var(--card); text-align:start; }
   .docbtn .fi { width: 34px; height: 42px; flex: none; border-radius: 6px; position: relative;
     background: linear-gradient(160deg,#FBF9F4,#F0EADC); box-shadow: inset 0 0 0 1px rgba(198,168,111,.6);
     display: grid; place-items: end center; padding-bottom: 5px; }
@@ -565,7 +578,7 @@
   /* عارض المستند */
   .docbar { display: flex; align-items: center; gap: 8px; background: #17211C; color: #fff;
     border-radius: 14px; padding: 9px 12px; font-size: 11px; font-weight: 700; }
-  .docbar .sp { text-align: right; }
+  .docbar .sp { text-align:start; }
   .docbar .pg { background: rgba(255,255,255,.12); border-radius: 99px; padding: 3px 9px;
     font-size: 10px; font-variant-numeric: tabular-nums; }
   .page { background: #fff; border-radius: 6px; padding: 24px 20px 28px; color: #1B2620;
@@ -592,7 +605,7 @@
 <style>
   /* تنبيه مضغوط خارج الرئيسية */
   .alerts.one { display: flex; flex-direction: row; align-items: center; gap: 9px; width: 100%; border-radius: 14px;
-    padding: 9px 12px; font-size: 12px; font-weight: 700; text-align: right; }
+    padding: 9px 12px; font-size: 12px; font-weight: 700; text-align:start; }
   .alerts.one.warn { background: #FCF3E3; color: #7A5512; box-shadow: inset 0 0 0 1px rgba(184,121,26,.28); }
   .alerts.one.bad { background: #FBEBE8; color: #93261C; box-shadow: inset 0 0 0 1px rgba(192,57,43,.28); }
   .alerts.one .sp { flex: 1; }
@@ -680,7 +693,7 @@
   /* --- قائمة منسدلة لتصنيف المهام --- */
   .drop {
     display: flex; align-items: center; gap: 10px; width: 100%; background: #fff;
-    border-radius: 16px; padding: 11px 13px; box-shadow: var(--card); text-align: right;
+    border-radius: 16px; padding: 11px 13px; box-shadow: var(--card); text-align:start;
   }
   .drop .sp { flex: 1; }
   .drop .sp b { display: block; font-size: 14px; line-height: 1.5; }
@@ -733,7 +746,7 @@
     width: 100%; font-size: 13px; padding: 12px 13px; border-radius: 16px; gap: 9px;
     background: linear-gradient(150deg, #FBF6EA, #F6EEDC); color: #6B4A10;
   }
-  .gchip.big span { flex: 1; text-align: right; }
+  .gchip.big span { flex: 1; text-align:start; }
   .gchip.big .ic { width: 18px; height: 18px; }
 
   /* --- شاشة الدليل --- */
@@ -794,7 +807,7 @@
 </style>
 <style>
   /* بطاقة المهمة عنصر قابل للنقر يحتضن أزرارًا */
-  .c.task { cursor: pointer; text-align: right; -webkit-tap-highlight-color: transparent; }
+  .c.task { cursor: pointer; text-align:start; -webkit-tap-highlight-color: transparent; }
   .c.task:active { transform: scale(.985); }
   .c.task:focus-visible { outline: 2px solid var(--g); outline-offset: 2px; }
 
@@ -1002,7 +1015,7 @@
   .nday i { flex: 1; height: 1px; background: linear-gradient(90deg, rgba(198,168,111,.55), transparent); }
 
   .nrow {
-    display: flex; align-items: flex-start; gap: 11px; width: 100%; text-align: right;
+    display: flex; align-items: flex-start; gap: 11px; width: 100%; text-align:start;
     background: #fff; border-radius: 17px; padding: 12px; box-shadow: var(--card);
     position: relative; overflow: hidden;
   }
@@ -1280,7 +1293,7 @@
 </style>
 <style>
   /* شاشة المزيد */
-  .mecard { text-align: right; width: 100% }
+  .mecard { text-align:start; width: 100% }
   .quick { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px }
   .quick button { background: #fff; border-radius: 16px; padding: 12px 4px; box-shadow: var(--card);
     display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 11px; font-weight: 700 }
@@ -1295,7 +1308,7 @@
   /* ===================== النسخة ٣٫٢ ===================== */
   /* أقسام قابلة للطيّ */
   .fold { background: #fff; border-radius: 18px; box-shadow: var(--card); overflow: hidden; }
-  .fold .fhead { display: flex; align-items: center; gap: 10px; width: 100%; padding: 13px; text-align: right; }
+  .fold .fhead { display: flex; align-items: center; gap: 10px; width: 100%; padding: 13px; text-align:start; }
   .fold .fhead .sp { flex: 1; min-width: 0; }
   .fold .fhead b { display: block; font-size: 13.5px; line-height: 1.5; }
   .fold .fhead span span { display: block; font-size: 10.5px; color: var(--dim2); }
@@ -1327,7 +1340,7 @@
 <style>
   /* ===================== بطاقة المحسن داخل المهمة ===================== */
   .slot { padding: 11px; }
-  .slothead { display: flex; align-items: center; gap: 10px; width: 100%; text-align: right; }
+  .slothead { display: flex; align-items: center; gap: 10px; width: 100%; text-align:start; }
   .slothead .nm { min-width: 0; }
   .slothead .nm b { display: block; font-size: 13.5px; line-height: 1.5; }
   .slothead .nm span { display: block; font-size: 10.5px; color: var(--dim2); }
@@ -1340,4 +1353,10 @@
     padding: 1px 7px; background: rgba(20,89,63,.10); color: var(--g); margin-inline-start: 4px; }
   /* شريط لوني لحالة كل محسن */
   .slot.s-excluded, .slot.s-replaced, .slot.s-withdrawn { opacity: .92; }
+
+/* الأيقوناتُ الاتّجاهيّة تنعكس مع اللغة — سهمُ الرجوع في الإنجليزيّة
+   يشير يسارًا لا يمينًا، وإلّا قاد العينَ إلى غير وجهتها. */
+:root[dir="ltr"] [class*="i-back"], :root[dir="ltr"] [class*="i-fwd"],
+:root[dir="ltr"] .listitem > svg:last-child, :root[dir="ltr"] .prow .end svg,
+:root[dir="ltr"] .nav > svg:last-child, :root[dir="ltr"] .pfback svg{transform:scaleX(-1)}
 </style>

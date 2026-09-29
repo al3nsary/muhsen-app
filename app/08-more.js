@@ -394,6 +394,10 @@ function screenMore() {
     icon('i-back','s16') + '</button>';
 
   return bar('المزيد') + '<div class="view">' + ground() +
+    /* اللغة: ثلاثُ لغاتٍ يُبدَّل بينها من هنا */
+    '<div class="c langrow"><span class="sp"><b style="font-size:13.5px">اللغة</b>' +
+      '<span class="tiny dim2">العربية · الإنجليزية · الماليزية</span></span>' +
+      langSwitch() + '</div>' +
     /* بطاقة الحساب */
     '<button class="c gold mecard" data-a="go" data-n="profile">' +
       '<div class="fl">' + avat(u, 'lg') +
