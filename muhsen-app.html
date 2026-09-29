@@ -59,6 +59,29 @@
   .nav .t{flex:1; text-align:center; font-size:17px; font-weight:700}
   .nav button{width:30px; height:30px; display:grid; place-items:center; color:#fff}
 
+
+  /* مبدّلُ اللغة داخل الترويسة الخضراء — نسخةٌ مصغَّرةٌ فاتحةُ النصّ */
+  .nav .langtop{flex:none; display:flex}
+  .nav .langsw{background:rgba(255,255,255,.14); border-color:rgba(255,255,255,.20);
+    padding:2px 3px; gap:1px; border-radius:10px}
+  .nav .langsw .langi{display:none}
+  .nav .langsw button{width:auto; min-width:27px; height:24px; padding:0 6px;
+    color:rgba(255,255,255,.74); font-size:11.5px; line-height:1; border-radius:7px; font-weight:700}
+  /* حرفُ «ع» أدقُّ من EN/MS فيُكبَّر قليلًا ليستوي الثلاثة */
+  .nav .langsw button[lang="ar"]{font-size:14px; font-family:"Almarai",var(--f)}
+  .nav .langsw button.on{background:rgba(255,255,255,.94); color:var(--g); box-shadow:none}
+
+  /* مبدّلُ اللغة فوق شاشة الدخول */
+  .loginlang{position:absolute; inset-block-start:calc(14px + env(safe-area-inset-top));
+    inset-inline-end:16px; z-index:4}
+  .loginlang .langsw{background:rgba(255,255,255,.14); border-color:rgba(255,255,255,.22);
+    padding:2px 3px; gap:1px; border-radius:11px}
+  .loginlang .langsw .langi{display:none}
+  .loginlang .langsw button{width:auto; min-width:30px; height:26px; padding:0 8px;
+    color:rgba(255,255,255,.78); font-size:12px; line-height:1; border-radius:8px; font-weight:700}
+  .loginlang .langsw button[lang="ar"]{font-size:15px; font-family:"Almarai",var(--f)}
+  .loginlang .langsw button.on{background:rgba(255,255,255,.95); color:var(--g); box-shadow:none}
+
   /* ---------- body ---------- */
   .view{position:relative; z-index:2; flex:1; min-height:0; overflow-y:auto; overflow-x:hidden;
     padding:14px 14px 24px; display:flex; flex-direction:column; gap:12px;
@@ -1525,7 +1548,7 @@ function dictKeys() {
   return _re;
 }
 /* يُنادى حين يتغيّر القاموس أو اللغة */
-function i18nReset() { _reLang = null; _re = null; _cache = null; }
+function i18nReset() { _reLang = null; _re = null; _cache = null; _tidx = null; }
 
 /* ترجمةُ قطعةٍ واحدة: بحثٌ كاملٌ أوّلًا، فإن أخفق فاستبدالٌ داخليّ */
 /* الأرقامُ تُستبدل بفجوةٍ قبل البحث ثم تُعاد — فـ«٥ مهام» و«٧ مهام»
@@ -1535,6 +1558,70 @@ const NUM_HOLE = /[٠-٩0-9]+(?:[.,٫][٠-٩0-9]+)?/g;
    البذرةُ تُولّد أسماءً جديدةً كلَّ مرّة، فلا يسعها قاموسٌ ساكن.
    وما كان مركّبًا من مفرداتٍ مترجَمة يُبنى هنا بدل أن يُخزَّن. */
 /* رموزُ الماليزيّة ونظائرُها: يُبحَث بالنظير ويُردُّ الجوابُ إلى أصله */
+/* رموزٌ تتبدّل بتبدّل اللغة: الأشهرُ وأسماءُ الأيّام ودلالةُ الوقت */
+const LOC_W = ['Sept','Sep','Jan','Feb','Mar','Mac','Apr','May','Mei','Jun','Jul',
+  'Aug','Ogo','Oct','Okt','Nov','Dec','Dis',
+  'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday',
+  'Isnin','Selasa','Rabu','Khamis','Jumaat','Sabtu','Ahad',
+  'am','pm','AM','PM','PG','PTG','MLM','TGH','pagi','petang','malam'];
+const LOC_RE = new RegExp('\\{n\\}|([\u0660-\u06690-9]+(?:[.,\u066B][\u0660-\u06690-9]+)?)|\\b(' +
+  LOC_W.join('|') + ')\\b|([ ·—])([صم])(?=[ ·—]|$)', 'g');
+
+/* يُقسَم النصُّ إلى مفتاحٍ مثقوبٍ وقائمةِ ما سُحب منه بترتيبه */
+function locSplit(s) {
+  const toks = [];
+  const key = String(s).replace(LOC_RE, function (m, num, w, sep, ar) {
+    if (num != null) { toks.push({ k:'n', v:num }); return '{n}'; }
+    if (w != null)   { toks.push({ k:'t', v:w });   return '{t}'; }
+    /* «ص» و«م» دلالتا الوقت بالعربيّة: تُثقَب كنظائرها اللاتينيّة،
+       ويُعاد الفاصلُ الذي ابتلعه المطابق لئلّا يلتصق ما قبله بما بعده. */
+    if (ar != null) { toks.push({ k:'t', v:ar }); return sep + '{t}'; }
+    toks.push({ k:'n', v:null });          /* «{n}» مخزَّنٌ أصلًا */
+    return '{n}';
+  });
+  return { key: key, toks: toks };
+}
+const locKinds = function (toks) {
+  let s = ''; for (let i = 0; i < toks.length; i++) s += toks[i].k; return s;
+};
+
+/* فهرسٌ يُبنى مرّةً لكلّ لغة: مفتاحٌ مثقوب ← قيمةٌ مثقوبة */
+let _tidx = null, _tidxL = null;
+function locIndex(d) {
+  const L = langOf();
+  if (_tidx && _tidxL === L) return _tidx;
+  const idx = {}, ks = Object.keys(d);
+  for (let i = 0; i < ks.length; i++) {
+    const k = ks[i];
+    if (k.indexOf('{t}') >= 0) continue;
+    const a = locSplit(k);
+    if (a.key === k) continue;             /* بلا رمزٍ محلّيّ */
+    const b = locSplit(d[k]);
+    /* لا يُركَّب إلّا إذا تطابق ترتيبُ الثقوب في المفتاح والقيمة */
+    if (locKinds(a.toks) !== locKinds(b.toks)) continue;
+    if (idx[a.key] == null) idx[a.key] = b.key;
+  }
+  _tidx = idx; _tidxL = L;
+  return idx;
+}
+
+/* البحثُ بالثقب ثمّ إعادةُ ما سُحب إلى مواضعه */
+function locLookup(d, t) {
+  const q = locSplit(t);
+  if (q.key === t) return null;
+  const tpl = locIndex(d)[q.key];
+  if (tpl == null) return null;
+  let i = 0, bad = false;
+  const out = tpl.replace(/\{n\}|\{t\}/g, function (m) {
+    const tk = q.toks[i++];
+    if (!tk) { bad = true; return ''; }
+    if (m === '{n}') { if (tk.k !== 'n') { bad = true; return ''; } return NUM(tk.v); }
+    if (tk.k !== 't') { bad = true; return ''; }
+    return tk.v;
+  });
+  return bad ? null : out;
+}
+
 const MS2EN = {
   'PG':'am', 'PTG':'pm', 'MLM':'pm', 'TGH':'pm',
   'Mac':'Mar', 'Mei':'May', 'Ogo':'Aug', 'Sep':'Sept', 'Okt':'Oct', 'Dis':'Dec',
@@ -1596,6 +1683,9 @@ function trLookup(d, t) {
       return v == null ? '' : NUM(v);
     });
   }
+  /* ثقبُ الرمز المحلّيّ: مفتاحٌ واحدٌ لكلّ صياغات الوقت والتاريخ */
+  const lk = locLookup(d, t);
+  if (lk != null) return lk;
   /* الماليزيّةُ تُبحَث بمفتاح الإنجليزيّة ثمّ يُردُّ جوابُها إلى رموزها */
   if (langOf() === 'ms') {
     const alt = t.replace(MS_RE, m => MS2EN[m]);
@@ -4849,6 +4939,7 @@ DICT.en = {
   "تبقى مسؤولًا عن المهمة": "You remain responsible for the task",
   "تُبنى مرّة وتُسنَد مرارًا": "Built once, granted many times",
   "تُتابَع مع البعثات": "Followed up with the missions",
+  "تثبيت": "Install",
   "تثبيت الحجاج في المخيم المحدّد": "Settling the pilgrims in the assigned camp",
   "تجاوز {n} دقائق دون بدء التوزيع أو معالجة التأخير": "More than {n} minutes without distribution starting or the delay being addressed",
   "تجاوز {n} دقائق دون توفير الكمية الناقصة": "More than {n} minutes without making up the shortfall",
@@ -5115,6 +5206,7 @@ DICT.en = {
   "تطبيق مُحسن ·": "Muhsen app ·",
   "تطبيق مُحسن · نسخة {n} ·": "Muhsen app · version {n} ·",
   "تطبيق مُحسن · نسخة ٤٫١": "Muhsen App · version 4.1",
+  "تطبيق مُحسن · نسخة ٤٫٢": "Muhsen App · version 4.2",
   "تطوير نُزلي · نسخة تجريبية": "Built by Nozoly · beta",
   "تُعاد من «إدارة الصلاحيات» بزرّ «استعادة الافتراضي».": "They are restored from “Manage permissions” with the “Restore defaults” button.",
   "تعارض": "Conflict",
@@ -5396,6 +5488,7 @@ DICT.en = {
   "ثانيًا: بيانات السكن": "Second: accommodation details",
   "ثانيًا: خط السير": "Second: the itinerary",
   "ثانية": "second",
+  "ثبّت «مُحسن» على شاشتك الرئيسية ليعمل كتطبيق بلا إنترنت": "Install “Muhsen” on your home screen to run it as an app without internet",
   "ثبت أن المعلومة مغلوطة — أُعيد التسجيل بالمعلومة الصحيحة": "The information proved wrong — it was re-recorded with the correct information",
   "ثبّت لوحة المجموعة على زجاج الحافلة الأمامي.": "Fix the group board to the bus windscreen.",
   "ثغرات التشكيل": "Formation gaps",
@@ -7033,6 +7126,7 @@ DICT.en = {
   "فهد بن سعيد الزهراني ·": "Fahd bin Saeed Al-Zahrani ·",
   "فهد بن عايض": "Fahd bin Ayedh",
   "فهد ناصر الدوسري": "Fahd Nasser Al-Dosari",
+  "فهمت": "Got it",
   "فوري عند حدوث الوفاة": "Immediate upon a death",
   "فوّض الكنترول قيادة المهمة إلى": "Control delegated the task’s leadership to",
   "فُوِّضت قيادة مهمة": "Task leadership delegated",
@@ -7454,6 +7548,7 @@ DICT.en = {
   "للاشتراطات الصادرة عن الهيئة العامة للنقل، وبسائقين مرخّصين لموسم الحج.": "with the requirements issued by the Transport General Authority, and drivers licensed for the Hajj season.",
   "للإغلاق": "to close",
   "للإغلاق ساعة واحدة و{n} دقيقة": "One hour and {n} minutes to close",
+  "للتثبيت على الآيفون: اضغط زر المشاركة ⬆ ثم «إضافة إلى الشاشة الرئيسية»": "To install on iPhone: tap the share button ⬆ then “Add to Home Screen”",
   "للتجربة وإعادة الضبط": "For testing and reset",
   "للشركات فقط · لهذه المهمة وحدها": "Companies only · for this task alone",
   "للقراءة فقط — لا يتغيّر شيء": "Read-only — nothing is changed",
@@ -8391,7 +8486,9 @@ DICT.en = {
   "نُسخت": "Copied",
   "نسخة {n}": "Version {n}",
   "نسخة ١٫٩": "version 1.9",
+  "نسخة ٢٫٠": "version 2.0",
   "نسخة ٤٫١": "version 4.1",
+  "نسخة ٤٫٢": "version 4.2",
   "نشاط حجّ": "Hajj activity",
   "نشاط حجّ · استقبال الحجاج من المطار": "Hajj activity · Pilgrim reception from the airport",
   "نشاط حجّ · استقبال الحجاج من المطار · ن{n}": "Hajj activity · Receiving pilgrims from the airport · v{n}",
@@ -8432,6 +8529,7 @@ DICT.en = {
   "نظام مُحسن · نُزلي ·": "Muhsen System · Nozoly ·",
   "نظام مُحسن · نُزلي · نسخة {n}": "Muhsen System · Nuzuli · version {n}",
   "نظام مُحسن · نُزلي · نسخة ١٫٩": "Muhsen System · Nuzuli · version 1.9",
+  "نظام مُحسن · نُزلي · نسخة ٢٫٠": "Muhsen System · Nuzuli · version 2.0",
   "نظّم الخروج من باب واحد فقط": "Organise the exit through one gate only",
   "نظيف": "Clean",
   "نعم": "Yes",
@@ -12070,6 +12168,7 @@ DICT.ms = {
   "تبقى مسؤولًا عن المهمة": "Anda kekal bertanggungjawab atas tugas",
   "تُبنى مرّة وتُسنَد مرارًا": "Dibina sekali, diberi berkali-kali",
   "تُتابَع مع البعثات": "Disusuli dengan misi",
+  "تثبيت": "Pasang",
   "تثبيت الحجاج في المخيم المحدّد": "Menempatkan jemaah di perkhemahan yang ditetapkan",
   "تجاوز {n} دقائق دون بدء التوزيع أو معالجة التأخير": "Melebihi {n} minit tanpa pengagihan bermula atau kelewatan ditangani",
   "تجاوز {n} دقائق دون توفير الكمية الناقصة": "Melebihi {n} minit tanpa melengkapkan kekurangan",
@@ -12336,6 +12435,7 @@ DICT.ms = {
   "تطبيق مُحسن ·": "Aplikasi Muhsin ·",
   "تطبيق مُحسن · نسخة {n} ·": "Aplikasi Muhsin · versi {n} ·",
   "تطبيق مُحسن · نسخة ٤٫١": "Aplikasi Muhsin · versi 4.1",
+  "تطبيق مُحسن · نسخة ٤٫٢": "Aplikasi Muhsin · versi 4.2",
   "تطوير نُزلي · نسخة تجريبية": "Dibangunkan Nozoly · beta",
   "تُعاد من «إدارة الصلاحيات» بزرّ «استعادة الافتراضي».": "Ia dipulihkan dari “Urus kebenaran” dengan butang “Pulihkan lalai”.",
   "تعارض": "Percanggahan",
@@ -12617,6 +12717,7 @@ DICT.ms = {
   "ثانيًا: بيانات السكن": "Kedua: butiran penginapan",
   "ثانيًا: خط السير": "Kedua: laluan perjalanan",
   "ثانية": "saat",
+  "ثبّت «مُحسن» على شاشتك الرئيسية ليعمل كتطبيق بلا إنترنت": "Pasang “Muhsin” pada skrin utama anda untuk menjalankannya sebagai aplikasi tanpa internet",
   "ثبت أن المعلومة مغلوطة — أُعيد التسجيل بالمعلومة الصحيحة": "Maklumat terbukti salah — direkod semula dengan maklumat yang betul",
   "ثبّت لوحة المجموعة على زجاج الحافلة الأمامي.": "Lekatkan papan kumpulan pada cermin hadapan bas.",
   "ثغرات التشكيل": "Jurang pembentukan",
@@ -14254,6 +14355,7 @@ DICT.ms = {
   "فهد بن سعيد الزهراني ·": "Fahd bin Saeed Al-Zahrani ·",
   "فهد بن عايض": "Fahd bin Ayedh",
   "فهد ناصر الدوسري": "Fahd Nasser Al-Dosari",
+  "فهمت": "Faham",
   "فوري عند حدوث الوفاة": "Serta-merta apabila berlaku kematian",
   "فوّض الكنترول قيادة المهمة إلى": "Kawalan mewakilkan kepimpinan tugas kepada",
   "فُوِّضت قيادة مهمة": "Kepimpinan tugas diwakilkan",
@@ -14675,6 +14777,7 @@ DICT.ms = {
   "للاشتراطات الصادرة عن الهيئة العامة للنقل، وبسائقين مرخّصين لموسم الحج.": "syarat yang dikeluarkan oleh Pihak Berkuasa Am Pengangkutan, dan pemandu berlesen bagi musim Haji.",
   "للإغلاق": "untuk ditutup",
   "للإغلاق ساعة واحدة و{n} دقيقة": "Satu jam {n} minit untuk ditutup",
+  "للتثبيت على الآيفون: اضغط زر المشاركة ⬆ ثم «إضافة إلى الشاشة الرئيسية»": "Untuk memasang pada iPhone: ketik butang kongsi ⬆ kemudian “Tambah ke Skrin Utama”",
   "للتجربة وإعادة الضبط": "Untuk ujian dan set semula",
   "للشركات فقط · لهذه المهمة وحدها": "Syarikat sahaja · bagi tugas ini sahaja",
   "للقراءة فقط — لا يتغيّر شيء": "Baca sahaja — tiada apa yang diubah",
@@ -15612,7 +15715,9 @@ DICT.ms = {
   "نُسخت": "Disalin",
   "نسخة {n}": "Versi {n}",
   "نسخة ١٫٩": "versi 1.9",
+  "نسخة ٢٫٠": "versi 2.0",
   "نسخة ٤٫١": "versi 4.1",
+  "نسخة ٤٫٢": "versi 4.2",
   "نشاط حجّ": "Aktiviti haji",
   "نشاط حجّ · استقبال الحجاج من المطار": "Aktiviti haji · Penyambutan jemaah dari lapangan terbang",
   "نشاط حجّ · استقبال الحجاج من المطار · ن{n}": "Aktiviti haji · Menyambut jemaah dari lapangan terbang · v{n}",
@@ -15653,6 +15758,7 @@ DICT.ms = {
   "نظام مُحسن · نُزلي ·": "Sistem Muhsin · Nozoly ·",
   "نظام مُحسن · نُزلي · نسخة {n}": "Sistem Muhsin · Nuzuli · versi {n}",
   "نظام مُحسن · نُزلي · نسخة ١٫٩": "Sistem Muhsin · Nuzuli · versi 1.9",
+  "نظام مُحسن · نُزلي · نسخة ٢٫٠": "Sistem Muhsin · Nuzuli · versi 2.0",
   "نظّم الخروج من باب واحد فقط": "Aturkan keluar melalui satu pintu sahaja",
   "نظيف": "Bersih",
   "نعم": "Ya",
@@ -16389,7 +16495,7 @@ const REPORT_SEED = [
 
 /* ============================ الحالة ============================ */
 const KEY = 'muhsen_app_v1';
-const APP_VER = 'نسخة ٤٫١';
+const APP_VER = 'نسخة ٤٫٢';
 const SCHEMA = 18;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
@@ -17232,9 +17338,13 @@ function bar(title, opt) {
     : (opt.left !== undefined ? opt.left
       : '<button data-a="go" data-n="notifs" aria-label="الإشعارات" class="wi">' + icon('i-bell') +
         (unread() ? '<span class="badge">' + AR(unread()) + '</span>' : '') + '</button>');
+  /* مبدّلُ اللغة في الترويسة: يُبلَغ من كلّ شاشةٍ بنقرة. وكان في
+     «المزيد» وحدها — وهي آخرُ تبويبٍ في الصفحة الثانية، فلا يكاد
+     يُعثر عليه. */
+  const lg = '<span class="langtop">' + langSwitch() + '</span>';
   return '<div class="top"><div class="sbar"><span>' + t12(now()) + '</span>' +
     '<svg class="ic s16 f" viewBox="0 0 44 16"><rect x="0" y="9" width="3" height="5" rx="1"/><rect x="5" y="6.5" width="3" height="7.5" rx="1"/><rect x="10" y="4" width="3" height="10" rx="1"/><rect x="15" y="1.5" width="3" height="12.5" rx="1"/><path d="M26.5 4.2a8 8 0 019 0l-4.5 6z"/><rect x="38" y="4" width="5.5" height="9" rx="1.6"/></svg></div>' +
-    '<div class="nav">' + left + '<span class="t">' + E(title) + '</span>' + right + '</div></div>';
+    '<div class="nav">' + left + '<span class="t">' + E(title) + '</span>' + lg + right + '</div></div>';
 }
 
 /* شريط سفلي — كل الوجهات، ثلاث عن يمين الرئيسية وثلاث عن يسارها،
@@ -17294,8 +17404,12 @@ function tabs() {
       for (let i = 0; i < TABS_SIDE; i++) cells += btn(items[base + i]);
       out += '<div class="tpage">' + cells + '</div>';
     }
-    return '<div class="tside"><div class="trail" style="transform:translateX(' + (pg * 100) + '%)">' +
-      out + '</div></div>';
+    /* الإزاحةُ ماديّةٌ لا منطقيّة: translateX يمينًا دائمًا. فالصفحةُ
+       الثانية تُطلب بإزاحةٍ سالبة في اللاتينيّة وموجبةٍ في العربيّة —
+       ولولا ذلك لخرجت التبويباتُ من الشاشة وبقي زرُّ الرئيسية وحده. */
+    const sgn = (typeof isRTL === 'function' ? isRTL() : true) ? 1 : -1;
+    return '<div class="tside"><div class="trail" style="transform:translateX(' +
+      (sgn * pg * 100) + '%)">' + out + '</div></div>';
   };
   const homeOn = ['home','mhome'].indexOf(r) >= 0;
 
@@ -17420,6 +17534,9 @@ function screenLogin() {
   const role = S.loginRole || 'leader';
   const list = S.users.filter(u => u.role === role);
   return '<div class="login"><i class="pat"></i>' +
+    /* اللغةُ تُختار قبل الدخول: من يفتح التطبيق أوّلَ مرّة لا يصل
+       إلى «المزيد» بعدُ، فلا يجد مبدّلًا. */
+    '<div class="loginlang">' + langSwitch() + '</div>' +
     '<div class="inner">' +
       '<i class="logo mlockup" role="img" aria-label="مُحسن"></i>' +
       '<div class="cap">تطبيق الميدان — موسم الحج ١٤٤٨ هـ</div>' +

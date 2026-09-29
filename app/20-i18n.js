@@ -44,7 +44,7 @@ function dictKeys() {
   return _re;
 }
 /* يُنادى حين يتغيّر القاموس أو اللغة */
-function i18nReset() { _reLang = null; _re = null; _cache = null; }
+function i18nReset() { _reLang = null; _re = null; _cache = null; _tidx = null; }
 
 /* ترجمةُ قطعةٍ واحدة: بحثٌ كاملٌ أوّلًا، فإن أخفق فاستبدالٌ داخليّ */
 /* الأرقامُ تُستبدل بفجوةٍ قبل البحث ثم تُعاد — فـ«٥ مهام» و«٧ مهام»
@@ -54,6 +54,70 @@ const NUM_HOLE = /[٠-٩0-9]+(?:[.,٫][٠-٩0-9]+)?/g;
    البذرةُ تُولّد أسماءً جديدةً كلَّ مرّة، فلا يسعها قاموسٌ ساكن.
    وما كان مركّبًا من مفرداتٍ مترجَمة يُبنى هنا بدل أن يُخزَّن. */
 /* رموزُ الماليزيّة ونظائرُها: يُبحَث بالنظير ويُردُّ الجوابُ إلى أصله */
+/* رموزٌ تتبدّل بتبدّل اللغة: الأشهرُ وأسماءُ الأيّام ودلالةُ الوقت */
+const LOC_W = ['Sept','Sep','Jan','Feb','Mar','Mac','Apr','May','Mei','Jun','Jul',
+  'Aug','Ogo','Oct','Okt','Nov','Dec','Dis',
+  'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday',
+  'Isnin','Selasa','Rabu','Khamis','Jumaat','Sabtu','Ahad',
+  'am','pm','AM','PM','PG','PTG','MLM','TGH','pagi','petang','malam'];
+const LOC_RE = new RegExp('\\{n\\}|([\u0660-\u06690-9]+(?:[.,\u066B][\u0660-\u06690-9]+)?)|\\b(' +
+  LOC_W.join('|') + ')\\b|([ ·—])([صم])(?=[ ·—]|$)', 'g');
+
+/* يُقسَم النصُّ إلى مفتاحٍ مثقوبٍ وقائمةِ ما سُحب منه بترتيبه */
+function locSplit(s) {
+  const toks = [];
+  const key = String(s).replace(LOC_RE, function (m, num, w, sep, ar) {
+    if (num != null) { toks.push({ k:'n', v:num }); return '{n}'; }
+    if (w != null)   { toks.push({ k:'t', v:w });   return '{t}'; }
+    /* «ص» و«م» دلالتا الوقت بالعربيّة: تُثقَب كنظائرها اللاتينيّة،
+       ويُعاد الفاصلُ الذي ابتلعه المطابق لئلّا يلتصق ما قبله بما بعده. */
+    if (ar != null) { toks.push({ k:'t', v:ar }); return sep + '{t}'; }
+    toks.push({ k:'n', v:null });          /* «{n}» مخزَّنٌ أصلًا */
+    return '{n}';
+  });
+  return { key: key, toks: toks };
+}
+const locKinds = function (toks) {
+  let s = ''; for (let i = 0; i < toks.length; i++) s += toks[i].k; return s;
+};
+
+/* فهرسٌ يُبنى مرّةً لكلّ لغة: مفتاحٌ مثقوب ← قيمةٌ مثقوبة */
+let _tidx = null, _tidxL = null;
+function locIndex(d) {
+  const L = langOf();
+  if (_tidx && _tidxL === L) return _tidx;
+  const idx = {}, ks = Object.keys(d);
+  for (let i = 0; i < ks.length; i++) {
+    const k = ks[i];
+    if (k.indexOf('{t}') >= 0) continue;
+    const a = locSplit(k);
+    if (a.key === k) continue;             /* بلا رمزٍ محلّيّ */
+    const b = locSplit(d[k]);
+    /* لا يُركَّب إلّا إذا تطابق ترتيبُ الثقوب في المفتاح والقيمة */
+    if (locKinds(a.toks) !== locKinds(b.toks)) continue;
+    if (idx[a.key] == null) idx[a.key] = b.key;
+  }
+  _tidx = idx; _tidxL = L;
+  return idx;
+}
+
+/* البحثُ بالثقب ثمّ إعادةُ ما سُحب إلى مواضعه */
+function locLookup(d, t) {
+  const q = locSplit(t);
+  if (q.key === t) return null;
+  const tpl = locIndex(d)[q.key];
+  if (tpl == null) return null;
+  let i = 0, bad = false;
+  const out = tpl.replace(/\{n\}|\{t\}/g, function (m) {
+    const tk = q.toks[i++];
+    if (!tk) { bad = true; return ''; }
+    if (m === '{n}') { if (tk.k !== 'n') { bad = true; return ''; } return NUM(tk.v); }
+    if (tk.k !== 't') { bad = true; return ''; }
+    return tk.v;
+  });
+  return bad ? null : out;
+}
+
 const MS2EN = {
   'PG':'am', 'PTG':'pm', 'MLM':'pm', 'TGH':'pm',
   'Mac':'Mar', 'Mei':'May', 'Ogo':'Aug', 'Sep':'Sept', 'Okt':'Oct', 'Dis':'Dec',
@@ -115,6 +179,9 @@ function trLookup(d, t) {
       return v == null ? '' : NUM(v);
     });
   }
+  /* ثقبُ الرمز المحلّيّ: مفتاحٌ واحدٌ لكلّ صياغات الوقت والتاريخ */
+  const lk = locLookup(d, t);
+  if (lk != null) return lk;
   /* الماليزيّةُ تُبحَث بمفتاح الإنجليزيّة ثمّ يُردُّ جوابُها إلى رموزها */
   if (langOf() === 'ms') {
     const alt = t.replace(MS_RE, m => MS2EN[m]);

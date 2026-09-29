@@ -30,9 +30,13 @@ function bar(title, opt) {
     : (opt.left !== undefined ? opt.left
       : '<button data-a="go" data-n="notifs" aria-label="الإشعارات" class="wi">' + icon('i-bell') +
         (unread() ? '<span class="badge">' + AR(unread()) + '</span>' : '') + '</button>');
+  /* مبدّلُ اللغة في الترويسة: يُبلَغ من كلّ شاشةٍ بنقرة. وكان في
+     «المزيد» وحدها — وهي آخرُ تبويبٍ في الصفحة الثانية، فلا يكاد
+     يُعثر عليه. */
+  const lg = '<span class="langtop">' + langSwitch() + '</span>';
   return '<div class="top"><div class="sbar"><span>' + t12(now()) + '</span>' +
     '<svg class="ic s16 f" viewBox="0 0 44 16"><rect x="0" y="9" width="3" height="5" rx="1"/><rect x="5" y="6.5" width="3" height="7.5" rx="1"/><rect x="10" y="4" width="3" height="10" rx="1"/><rect x="15" y="1.5" width="3" height="12.5" rx="1"/><path d="M26.5 4.2a8 8 0 019 0l-4.5 6z"/><rect x="38" y="4" width="5.5" height="9" rx="1.6"/></svg></div>' +
-    '<div class="nav">' + left + '<span class="t">' + E(title) + '</span>' + right + '</div></div>';
+    '<div class="nav">' + left + '<span class="t">' + E(title) + '</span>' + lg + right + '</div></div>';
 }
 
 /* شريط سفلي — كل الوجهات، ثلاث عن يمين الرئيسية وثلاث عن يسارها،
@@ -92,8 +96,12 @@ function tabs() {
       for (let i = 0; i < TABS_SIDE; i++) cells += btn(items[base + i]);
       out += '<div class="tpage">' + cells + '</div>';
     }
-    return '<div class="tside"><div class="trail" style="transform:translateX(' + (pg * 100) + '%)">' +
-      out + '</div></div>';
+    /* الإزاحةُ ماديّةٌ لا منطقيّة: translateX يمينًا دائمًا. فالصفحةُ
+       الثانية تُطلب بإزاحةٍ سالبة في اللاتينيّة وموجبةٍ في العربيّة —
+       ولولا ذلك لخرجت التبويباتُ من الشاشة وبقي زرُّ الرئيسية وحده. */
+    const sgn = (typeof isRTL === 'function' ? isRTL() : true) ? 1 : -1;
+    return '<div class="tside"><div class="trail" style="transform:translateX(' +
+      (sgn * pg * 100) + '%)">' + out + '</div></div>';
   };
   const homeOn = ['home','mhome'].indexOf(r) >= 0;
 
@@ -218,6 +226,9 @@ function screenLogin() {
   const role = S.loginRole || 'leader';
   const list = S.users.filter(u => u.role === role);
   return '<div class="login"><i class="pat"></i>' +
+    /* اللغةُ تُختار قبل الدخول: من يفتح التطبيق أوّلَ مرّة لا يصل
+       إلى «المزيد» بعدُ، فلا يجد مبدّلًا. */
+    '<div class="loginlang">' + langSwitch() + '</div>' +
     '<div class="inner">' +
       '<i class="logo mlockup" role="img" aria-label="مُحسن"></i>' +
       '<div class="cap">تطبيق الميدان — موسم الحج ١٤٤٨ هـ</div>' +

@@ -9,11 +9,15 @@ if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
 /* دعوة التثبيت — تظهر مرة واحدة */
 (function () {
   var deferred = null;
+  /* هذا الشريطُ يُبنى خارج مُحرّك الترجمة، فيُمرَّر عليه نصًّا.
+     وجهتُه تتبع اللغة كذلك، وإلّا قُرئ مقلوبًا في اللاتينيّة. */
+  function PT(t) { try { return typeof TT === 'function' ? TT(t) : t; } catch (e) { return t; } }
+  function PDIR() { try { return typeof isRTL === 'function' && !isRTL() ? 'ltr' : 'rtl'; } catch (e) { return 'rtl'; } }
   function banner(html, onclick) {
     var b = document.createElement('div');
     b.style.cssText = 'position:fixed;inset-inline:12px;bottom:12px;z-index:99999;background:#0E3F2C;' +
       'color:#fff;border-radius:16px;padding:13px 15px;font:13px "Almarai",system-ui,sans-serif;' +
-      'display:flex;gap:10px;align-items:center;box-shadow:0 18px 34px -14px rgba(0,0,0,.7);direction:rtl';
+      'display:flex;gap:10px;align-items:center;box-shadow:0 18px 34px -14px rgba(0,0,0,.7);direction:' + PDIR();
     b.innerHTML = html;
     document.body.appendChild(b);
     b.querySelector('[data-x]').onclick = function () { b.remove(); try { localStorage.setItem('muhsen_pwa_hint', '1'); } catch (e) {} };
@@ -27,17 +31,17 @@ if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
 
   window.addEventListener('beforeinstallprompt', function (e) {
     e.preventDefault(); deferred = e;
-    banner('<span style="flex:1">ثبّت «مُحسن» على شاشتك الرئيسية ليعمل كتطبيق بلا إنترنت</span>' +
-      '<button data-ok style="background:#fff;color:#0E3F2C;border:0;border-radius:10px;padding:8px 14px;font:inherit;font-weight:700">تثبيت</button>' +
-      '<button data-x style="background:none;border:0;color:#9FBBAC;font:inherit;padding:4px 6px">لاحقًا</button>',
+    banner('<span style="flex:1">' + PT('ثبّت «مُحسن» على شاشتك الرئيسية ليعمل كتطبيق بلا إنترنت') + '</span>' +
+      '<button data-ok style="background:#fff;color:#0E3F2C;border:0;border-radius:10px;padding:8px 14px;font:inherit;font-weight:700">' + PT('تثبيت') + '</button>' +
+      '<button data-x style="background:none;border:0;color:#9FBBAC;font:inherit;padding:4px 6px">' + PT('لاحقًا') + '</button>',
       function () { deferred.prompt(); });
   });
 
   /* آيفون: لا يوجد beforeinstallprompt — نشرح الخطوة يدويًا */
   var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   if (iOS) setTimeout(function () {
-    banner('<span style="flex:1">للتثبيت على الآيفون: اضغط زر المشاركة ⬆ ثم «إضافة إلى الشاشة الرئيسية»</span>' +
-      '<button data-x style="background:none;border:0;color:#9FBBAC;font:inherit;padding:4px 6px">فهمت</button>');
+    banner('<span style="flex:1">' + PT('للتثبيت على الآيفون: اضغط زر المشاركة ⬆ ثم «إضافة إلى الشاشة الرئيسية»') + '</span>' +
+      '<button data-x style="background:none;border:0;color:#9FBBAC;font:inherit;padding:4px 6px">' + PT('فهمت') + '</button>');
   }, 2500);
 })();
 </script>
