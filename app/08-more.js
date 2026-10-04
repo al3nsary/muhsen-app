@@ -1,6 +1,7 @@
 /* ============================ التذاكر (تشمل ما كان يُسمّى بلاغات) ============================ */
 const PRI_C = { 'عاجلة':'no', 'متوسطة':'wait', 'عادية':'grey' };
-const ST_C  = { 'مفتوحة':'wait', 'مُسندة':'blue', 'قيد المعالجة':'blue', 'مُصعّدة':'no', 'مغلقة':'live' };
+/* اللونُ للخطورة لا للمرحلة — والمغلقُ رماديٌّ دائمًا */
+const ST_C  = { 'مفتوحة':'wait', 'مُسندة':'wait', 'قيد المعالجة':'wait', 'مُصعّدة':'no', 'مغلقة':'grey' };
 const SRC_LBL = { 'حاج':'من حاج', 'كنترول':'من الكنترول', 'محسن':'من محسن', 'ليدر':'من الليدر' };
 
 function ticketsPane() {
@@ -413,6 +414,8 @@ function screenMore() {
       '<button data-a="go" data-n="desk"><span class="qi">' + icon('i-flag','s18') + '</span>بلاغ</button>' +
       '<button data-a="go" data-n="guide"><span class="qi">' + icon('i-guide','s18') + '</span>الدليل</button>' +
       '<button data-a="go" data-n="album"><span class="qi">' + icon('i-album','s18') + '</span>الصور</button>' +
+      /* الردود: يُفتح البابُ ولو لم يُسنَد ردٌّ اليوم — فيُقرأ سببُ خلوّه */
+      '<button data-a="go" data-n="rides"><span class="qi">' + icon('i-bus','s18') + '</span>الردود</button>' +
     '</div>' +
 
     groups.map(g => '<div class="lbl">' + g.t + '</div>' +

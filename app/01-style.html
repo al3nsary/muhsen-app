@@ -1387,4 +1387,42 @@
 /* نصٌّ عربيٌّ لم تصله الترجمةُ بعد: يُعزَل اتّجاهُه فيُقرأ صحيحًا
    داخل تخطيطٍ لاتينيّ — لا تقفز نقطتاه ولا تنقلب أرقامُه. */
 .arx{unicode-bidi:isolate; direction:rtl; display:inline-block; text-align:start}
+
+  /* عدّادُ التصعيد: أخضرُ متّسعٌ، أصفرُ يوشك، أحمرُ انقضى — كألوان الخطورة */
+  .cd{display:inline-flex; align-items:center; gap:4px; padding:2px 7px; border-radius:8px;
+    font-variant-numeric:tabular-nums; font-size:11px; line-height:1.6; white-space:nowrap;
+    unicode-bidi:isolate; flex:none}
+  .cd b{font-weight:700; letter-spacing:.2px}
+  .cd-ok{background:var(--pLiveB); color:var(--pLiveT)}
+  .cd-soon{background:var(--pWaitB); color:var(--pWaitT)}
+  .cd-over{background:var(--pNoB); color:var(--pNoT)}
+  .cd-over b{animation:cdpulse 1.6s ease-in-out infinite}
+  @keyframes cdpulse{0%,100%{opacity:1}50%{opacity:.55}}
+  @media (prefers-reduced-motion:reduce){ .cd-over b{animation:none} }
+
+
+  /* ══ الردود ══ */
+  .kpi3{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
+  .kc{background:#fff; border-radius:14px; padding:12px 10px; text-align:center; box-shadow:var(--card)}
+  .kc b{display:block; font-size:19px; color:var(--g); font-variant-numeric:tabular-nums}
+  .kc span{display:block; font-size:10.5px; color:var(--dim2); margin-top:3px}
+  .ridecard{display:flex; flex-direction:column; gap:10px}
+  .rdmark{width:38px; height:38px; border-radius:12px; display:grid; place-items:center; flex:none;
+    background:var(--pLiveB); color:var(--g)}
+  .rsteps{display:flex; gap:6px}
+  .rstep{flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:8px 4px;
+    border-radius:11px; background:#F3F6F3; color:var(--dim2)}
+  .rstep i{font-style:normal; width:20px; height:20px; border-radius:50%; display:grid;
+    place-items:center; font-size:11px; font-weight:700; background:#E2E8E3; color:var(--dim2)}
+  .rstep b{font-size:10.5px; font-weight:600}
+  .rstep.on{background:var(--pLiveB); color:var(--g)}
+  .rstep.on i{background:var(--g); color:#fff}
+  .rstep.done i{background:var(--live); color:#fff}
+  .rstep.done{color:var(--g)}
+  .rdline{display:flex; align-items:center; gap:10px}
+  .rdline .sp b{display:block; font-size:13.5px}
+  .rdline .sp span{display:block; margin-top:2px}
+  .rdn{width:26px; height:26px; border-radius:9px; flex:none; display:grid; place-items:center;
+    background:var(--pGoldB); color:var(--gold); font-weight:700; font-size:12px}
+
 </style>

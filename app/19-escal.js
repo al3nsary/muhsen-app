@@ -24,8 +24,8 @@ const ESC_SECS = ["نقل","إسكان","إعاشة","صحة ومساندة","م
 
 const ESC_RISK = {
   high: { ar:'مرتفع', p:'no',   c:'#C0392B', o:0, close:120  },
-  mid:  { ar:'متوسط', p:'wait', c:'#E67E22', o:1, close:360  },
-  low:  { ar:'منخفض', p:'grey', c:'#5A6C63', o:2, close:4320 }
+  mid:  { ar:'متوسط', p:'wait', c:'#D08C00', o:1, close:360  },
+  low:  { ar:'منخفض', p:'live', c:'#16A34A', o:2, close:4320 }
 };
 /* مهلةُ الإغلاق بالخطورة — من جدول العمليات: ساعتان · ستُّ ساعات · ٧٢ ساعة */
 const closeSla = risk => (ESC_RISK[risk] || ESC_RISK.mid).close;
@@ -220,3 +220,34 @@ function escSheet() {
         : '<button class="btn p" data-a="rpsend">رفع البلاغ</button>') +
     '</div>';
 }
+
+/* ============================================================
+   آليّةُ التذاكر — الجدولُ يحكمها كما يحكم البلاغات
+
+   كانت التذكرةُ بلا مهلةٍ ولا مسار: يفتحها الحاجّ ويعالجها الكنترول
+   بما يرى. فصار لها ما للبلاغ: خطورةٌ من تصنيفها، ومهلةُ استجابةٍ
+   يقع التصعيدُ عند تجاوزها، وجهةٌ تُصعَّد إليها.
+
+   والخطورةُ تُشتقّ من التصنيف لا تُختار — فتذكرتان متطابقتان
+   لا تختلفان باختلاف من استلمهما. */
+const TKT_RULE = {
+  'الصحة':     { risk:'high', sla:10,  to:'الخدمات المساندة' },
+  'المفقودات': { risk:'high', sla:30,  to:'فريق امتثال' },
+  'النقل':     { risk:'high', sla:30,  to:'إدارة الحركة' },
+  'السكن':     { risk:'mid',  sla:60,  to:'مشرف السكن' },
+  'الوجبات':   { risk:'mid',  sla:30,  to:'إدارة الإعاشة' },
+  'الشكاوى':   { risk:'mid',  sla:120, to:'الكنترول' },
+  'التطبيق':   { risk:'low',  sla:240, to:'الكنترول' },
+  'أخرى':      { risk:'low',  sla:240, to:'الكنترول' }
+};
+/* الأولويّةُ التي يختارها الحاجّ تُشدِّد ولا تُليّن */
+const tktRule = k => {
+  const base = TKT_RULE[k && k.cat] || TKT_RULE['أخرى'];
+  if (!k) return base;
+  if (k.pri === 'حرجة') return { risk:'high', sla:Math.min(base.sla, 10), to:base.to };
+  if (k.pri === 'عاجلة' && base.risk === 'low') return { risk:'mid', sla:Math.min(base.sla, 60), to:base.to };
+  return base;
+};
+const tktDue   = k => (!k || k.status === 'مغلقة') ? null : k.at + tktRule(k).sla * MIN;
+const tktLate  = k => { const d = tktDue(k); return !!(d && now() > d); };
+const tktRisk  = k => tktRule(k).risk;

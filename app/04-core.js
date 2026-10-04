@@ -1,7 +1,7 @@
 /* ============================ الحالة ============================ */
 const KEY = 'muhsen_app_v1';
-const APP_VER = 'نسخة ٤٫٢';
-const SCHEMA = 18;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
+const APP_VER = 'نسخة ٤٫٣';
+const SCHEMA = 19;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
 const uid = (p) => p + Math.random().toString(36).slice(2, 8);
@@ -118,7 +118,9 @@ function seed() {
     v: SCHEMA, clockOffset: 0, myPlace: 'site', session: null, route: { n: 'login' },
     tab: {}, orgs: ORGS, users: USERS.concat(RESERVE), tasks: [], tickets: [], reports: [], notifs: [],
     requests: [], reminders: [], pilgrims: {}, photos: [], guides: {}, support: [],
-    shifts: {}, attend: [], swaps: [], broadcasts: [], tabPage: 0, toast: null
+    shifts: {}, attend: [], swaps: [], broadcasts: [], tabPage: 0, toast: null,
+    /* الردود: حركةُ الكوسترات في المشاعر */
+    rides: []
   };
   S = st;   /* لتعمل الدوال المعتمِدة على S أثناء التهيئة */
 
@@ -186,6 +188,7 @@ function seed() {
   seedGuides(st);
   seedDaily(st);
   seedReports(st);
+  seedRides(st);
   return st;
 }
 
@@ -809,4 +812,59 @@ function autoTick() {
       t._f.over = 1;
     }
   });
+}
+
+/* ============================================================
+   عدٌّ تنازليٌّ حيٌّ حتّى التصعيد التلقائيّ
+
+   المهلةُ رقمٌ في السجلّ لا يُحسُّ. والعدُّ التنازليُّ يجعلها شيئًا
+   يُرى يتناقص، فيُعالَج البلاغُ قبل أن يُصعَّد لا بعده.
+
+   ويُرسم مرّةً ويُحدَّث في موضعه كلَّ ثانية — ولو أُعيد رسمُ الشاشة
+   كلَّ ثانية لضاع ما يكتبه الكنترولُ في الحقول. */
+const cdPad = n => (n < 10 ? '0' : '') + n;
+
+/* نصُّ العدّاد: «١:٠٤:٣٠» وما تجاوز مهلته يُسبق بـ«+» */
+function cdText(until) {
+  const diff = (until || 0) - now();
+  const over = diff < 0;
+  let s = Math.floor(Math.abs(diff) / 1000);
+  const h = Math.floor(s / 3600); s -= h * 3600;
+  const m = Math.floor(s / 60); const q = s - m * 60;
+  return (over ? '+' : '') + AR(cdPad(h) + ':' + cdPad(m) + ':' + cdPad(q));
+}
+/* حالةُ العدّاد تُلوَّن كما تُلوَّن الخطورة: أخضرُ متّسعٌ، أصفرُ يوشك،
+   أحمرُ انقضى. والخُمسُ الأخير هو «يوشك» — نسبةً إلى المهلة نفسها. */
+function cdState(until, slaMin) {
+  const left = (until || 0) - now();
+  if (left <= 0) return 'over';
+  const sla = Math.max(1, slaMin || 10) * 60000;
+  return left <= Math.max(120000, sla * 0.2) ? 'soon' : 'ok';
+}
+function cdown(until, opt) {
+  if (!until) return '';
+  opt = opt || {};
+  const st = cdState(until, opt.sla);
+  return '<span class="cd cd-' + st + (opt.cls ? ' ' + opt.cls : '') + '"' +
+    ' data-u="' + until + '" data-sla="' + (opt.sla || '') + '"' +
+    ' title="' + E(opt.ttl || 'الوقت المتبقّي حتى التصعيد التلقائي') + '">' +
+    (opt.bare ? '' : icon('i-hour', 's12')) +
+    '<b>' + cdText(until) + '</b></span>';
+}
+/* يُستدعى من نبضة الثانية — يُحدِّث كلَّ عدّادٍ معروضٍ في مكانه */
+function tickCountdowns() {
+  const els = document.querySelectorAll('.cd[data-u]');
+  for (let i = 0; i < els.length; i++) {
+    const e = els[i], u = +e.getAttribute('data-u');
+    if (!u) continue;
+    const b = e.querySelector('b');
+    const txt = cdText(u);
+    if (b) { if (b.textContent !== txt) b.textContent = txt; }
+    else if (e.textContent !== txt) e.textContent = txt;
+    const st = 'cd-' + cdState(u, +e.getAttribute('data-sla') || 0);
+    if (!e.classList.contains(st)) {
+      e.classList.remove('cd-ok', 'cd-soon', 'cd-over');
+      e.classList.add(st);
+    }
+  }
 }

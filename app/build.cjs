@@ -52,6 +52,7 @@ const out =
   read('15-daily.js') + '\n' +
   read('16-push.js') + '\n' +
   read('19-escal.js') + '\n' +
+  read('22-rides.js') + '\n' +
   read('17-reports.js') + '\n' +
   read('18-assign.js') + '\n' +
   read('10-router.js') + '\n' +
@@ -71,7 +72,7 @@ fs.writeFileSync(path.join(deploy, 'index.html'), pwa);
 console.log('docs/index.html:', Math.round(fs.statSync(path.join(deploy, 'index.html')).size / 1024) + 'KB');
 
 // فحص سريع للأخطاء النحوية في جزء الجافاسكربت
-const js = [ '20-i18n.js','21-dict.js','03-data.js','04-core.js','05-ui.js','06-task.js','07-muhsen.js','08-more.js','09-admin.js','11-reqcenter.js','12-photos.js','13-docs.js','14-guide.js','15-daily.js','16-push.js','19-escal.js','17-reports.js','18-assign.js','10-router.js' ]
+const js = [ '20-i18n.js','21-dict.js','03-data.js','04-core.js','05-ui.js','06-task.js','07-muhsen.js','08-more.js','09-admin.js','11-reqcenter.js','12-photos.js','13-docs.js','14-guide.js','15-daily.js','16-push.js','19-escal.js','22-rides.js','17-reports.js','18-assign.js','10-router.js' ]
   .map(read).join('\n');
 try { new Function(js); console.log('syntax: OK'); }
 catch (e) { console.log('SYNTAX ERROR:', e.message); process.exitCode = 1; }
@@ -94,3 +95,20 @@ const defined = new Set([...(js.match(/function\s+(screen[A-Za-z]+)/g) || [])].m
 const missing = [...new Set(routed)].filter(n => !defined.has(n));
 if (missing.length) { console.log('MISSING SCREENS:', missing.join(', ')); process.exitCode = 1; }
 else console.log('screens: OK (' + defined.size + ')');
+
+/* حارسٌ ثامن: أنماطٌ خارج <style> تظهر نصًّا خامًا في أعلى الصفحة.
+   وقعتُ فيه مرّتين — مرّةً بـ«+=» على ملفّ الأنماط — فصار يُفحص. */
+(function cssGuard() {
+  const files = ['01-style.html'];
+  files.forEach(f => {
+    let s; try { s = read(f); } catch (e) { return; }
+    const i = s.lastIndexOf('</style>');
+    if (i < 0) { console.log('!! لا وسمَ إغلاقٍ في ' + f); process.exitCode = 1; return; }
+    const tail = s.slice(i + 8).trim();
+    if (tail) {
+      console.log('CSS OUTSIDE STYLE: ' + f + ' — ' + tail.length + ' حرفًا بعد </style>');
+      process.exitCode = 1;
+    }
+  });
+  console.log('css: OK');
+})();

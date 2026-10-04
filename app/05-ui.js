@@ -52,6 +52,7 @@ function tabItems() {
     { k:'tasks',   i:'i-tasks',  l:'المهام',    on:['tasks','task','assign','timeline','doc'] },
     { k: L ? 'lreq' : 'requests', i:'i-swap', l:'الطلبات', b:inbox, on:['lreq','requests'] },
     { k:'daily',   i:'i-check',  l:'التحضير',   on:['daily'] },
+
     { k:'desk', i:'i-ticket', l:'التذاكر والبلاغات', b:openTk + openReports(),
       on:['desk','tickets','ticket','report'] },
     { k:'notifs',  i:'i-bell',   l:'الإشعارات', b:unread(), on:['notifs'] },
@@ -62,6 +63,10 @@ function tabItems() {
     { k:'pilgrims',i:'i-user',   l:'الحجاج',    on:['pilgrims'] }
   ];
   if (L) base.splice(3, 0, { k:'muhsens', i:'i-users', l:'المحسنون', on:['muhsens'] });
+  /* الردود: تبويبٌ لمحسني النقل وحدهم — من لا ردَّ له لا يراه */
+  const myRd = (S.rides || []).filter(r => r.userId === S.session.id);
+  if (myRd.length) base.splice(3, 0,
+    { k:'rides', i:'i-bus', l:'الردود', b:myRd.filter(r => !r.endedAt).length, on:['rides'] });
   base.push({ k:'more', i:'i-dots', l:'المزيد', on:['more','profile','admin'] });
   return base;
 }

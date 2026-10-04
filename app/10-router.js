@@ -8,7 +8,7 @@ const SCREENS = {
   rating: screenRating, taskrating: screenTaskRating,
   notifs: screenNotifs, pilgrims: screenPilgrims, muhsens: screenMuhsens,
   profile: screenProfile, more: screenMore, calendar: screenCalendar, admin: screenAdmin,
-  album: screenAlbum, photo: screenPhoto, doc: screenDoc, guide: screenGuide, daily: screenDaily
+  album: screenAlbum, photo: screenPhoto, doc: screenDoc, guide: screenGuide, daily: screenDaily, rides: screenRides
 };
 
 function render() {
@@ -166,6 +166,7 @@ function goTabPage(next) {
 /* عدّاد حي */
 setInterval(() => {
   if (!S || !S.session) return;
+  tickCountdowns();
   let due = false;
   document.querySelectorAll('.timer[data-deadline]').forEach(el => {
     const target = Number(el.dataset.deadline);
@@ -214,6 +215,12 @@ document.addEventListener('click', ev => {
       break; }
     case 'logout': S.session = null; S.route = { n: 'login' }; S.sheet = null; break;
 
+    /* ---------- الردود ---------- */
+    case 'rdstart':   rideStart(id); return;
+    case 'rdpax':     ridePaxSet(id); return;
+    case 'rdpaxedit': { const r = (S.rides || []).find(x => x.id === id);
+                        if (r) { r.pax = null; save(); render(); } return; }
+    case 'rdend':     rideEnd(id); return;
     case 'place': S.sheet = placeSheet(); break;
     case 'setplace': S.myPlace = v; S.sheet = null;
       toast(v === 'site' ? 'موقعك داخل موقع المهمة'
