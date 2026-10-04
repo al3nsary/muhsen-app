@@ -213,6 +213,7 @@ function trCompose(d, t, depth) {
   const hit = trLookup(d, t);
   if (hit != null) return hit;
   if (depth > 4) return null;
+  const d2 = depth + 1;
   const nm = trName(t);
   if (nm) return nm;
   for (let w = 0; w < TR_WRAP.length; w++) {
@@ -247,6 +248,21 @@ function trCompose(d, t, depth) {
       if (b == null) continue;
       return a + sep + b;
     }
+  }
+  /* طرفٌ لاتينيٌّ لاحق: «بلاغ SG-5» ← «بلاغ» ثمّ يُعاد « SG-5» */
+  if ((m = t.match(/^([\s\S]*[\u0600-\u06FF])([^\u0600-\u06FF]+)$/))) {
+    const a3 = trCompose(d, m[1], d2);
+    if (a3 != null) return a3 + m[2];
+  }
+  /* طرفٌ لاتينيٌّ سابق: «→ الإعاشة» */
+  if ((m = t.match(/^([^\u0600-\u06FF]+)([\s\S]*[\u0600-\u06FF][\s\S]*)$/))) {
+    const b3 = trCompose(d, m[2], d2);
+    if (b3 != null) return m[1] + b3;
+  }
+  /* «بـ» اللاصقة: تلتصق بما بعدها فتمنع مطابقته */
+  if ((m = t.match(/^([\s\S]+?)بـ([\s\S]+)$/))) {
+    const c3 = trCompose(d, m[1].trim(), d2), e3 = c3 != null ? trCompose(d, m[2], d2) : null;
+    if (c3 != null && e3 != null) return c3 + ' ' + e3;
   }
   return null;
 }
