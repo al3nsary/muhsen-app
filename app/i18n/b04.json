@@ -1,0 +1,110 @@
+{
+  "تطبيق الميدان": [
+    "Field app",
+    "Apl lapangan"
+  ],
+  "اسم المستخدم": [
+    "Username",
+    "Nama pengguna"
+  ],
+  "كلمة المرور": [
+    "Password",
+    "Kata laluan"
+  ],
+  "اختر اسمك": [
+    "Choose your name",
+    "Pilih nama anda"
+  ],
+  "اكتب الاسم": [
+    "Type a name",
+    "Taip nama"
+  ],
+  "تسجيل الدخول": [
+    "Sign in",
+    "Log masuk"
+  ],
+  "اختر اسمك لتُعبَّأ كلمةُ المرور": [
+    "Choose your name and the password fills in",
+    "Pilih nama anda dan kata laluan akan diisi"
+  ],
+  "تم تسجيل الحضور ٦:٠٦ ص": [
+    "Check-in recorded 6:06 am",
+    "Daftar masuk direkod 6:06 PG"
+  ],
+  "تم تسجيل الانصراف ٢:٤١ م": [
+    "Check-out recorded 2:41 pm",
+    "Daftar keluar direkod 2:41 PTG"
+  ],
+  "في الوقت": [
+    "on time",
+    "tepat masa"
+  ],
+  "متأخّرًا عن بداية الشِفت": [
+    "late for the shift start",
+    "lewat untuk mula syif"
+  ],
+  "مدّة الدوام": [
+    "Hours worked",
+    "Tempoh bertugas"
+  ],
+  "على رأس العمل الآن": [
+    "On duty now",
+    "Sedang bertugas"
+  ],
+  "اكتمل دوام اليوم": [
+    "Today’s shift is complete",
+    "Syif hari ini selesai"
+  ],
+  "مضى": [
+    "elapsed",
+    "berlalu"
+  ],
+  "تم تسجيل الانصراف اليوم بالفعل": [
+    "Check-out is already recorded for today",
+    "Daftar keluar sudah direkod hari ini"
+  ],
+  "سجّل الحضور أوّلًا": [
+    "Record check-in first",
+    "Rekod daftar masuk dahulu"
+  ],
+  "الرَّدُّ في الطريق": [
+    "Run in progress",
+    "Trip sedang berjalan"
+  ],
+  "جارٍ تحديد موقعك…": [
+    "Locating you…",
+    "Mengesan lokasi anda…"
+  ],
+  "جارٍ تأكيد وصولك…": [
+    "Confirming your arrival…",
+    "Mengesahkan ketibaan anda…"
+  ],
+  "منذ": [
+    "for",
+    "selama"
+  ],
+  "بدأ": [
+    "started",
+    "bermula"
+  ],
+  "مضى {n} س {n} د": [
+    "{n} h {n} m elapsed",
+    "{n} j {n} m berlalu"
+  ],
+  "منذ {n} س {n} د": [
+    "for {n} h {n} m",
+    "selama {n} j {n} m"
+  ],
+  "منذ {n} د": [
+    "for {n} m",
+    "selama {n} m"
+  ],
+  "مضى {n} د": [
+    "{n} m elapsed",
+    "{n} m berlalu"
+  ],
+  "مدّة الدوام {n} س {n} د": [
+    "Hours worked {n} h {n} m",
+    "Tempoh bertugas {n} j {n} m"
+  ]
+}

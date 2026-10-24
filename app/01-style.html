@@ -101,8 +101,6 @@
     -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 16px,#000 calc(100% - 16px),transparent 100%);
     mask-image:linear-gradient(90deg,transparent 0,#000 16px,#000 calc(100% - 16px),transparent 100%)}
   .tabs::-webkit-scrollbar{display:none}
-  .tabs.dragging{cursor:grabbing; scroll-behavior:auto; scroll-snap-type:none}
-  .tabs.dragging button{pointer-events:none}
   .tabs button{display:flex; flex-direction:column; align-items:center; gap:4px; font-size:10.5px;
     color:#8C9B92; width:64px; flex:none; text-align:center; padding:3px 0 0; scroll-snap-align:center;
     border-radius:14px; -webkit-user-select:none; user-select:none}
@@ -666,9 +664,6 @@
     box-shadow: 0 -1px 0 rgba(20,89,63,.07), 0 -16px 34px -26px rgba(11,53,39,.55);
     -webkit-mask-image: none; mask-image: none;
   }
-  .tabs.dragging { cursor: grabbing; }
-  .tabs.dragging button { pointer-events: none; }
-
   .tabs .tside {
     flex: 1 1 0; min-width: 0; display: flex; gap: 2px;
     overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
@@ -888,13 +883,10 @@
     touch-action: pan-y; -webkit-user-select: none; user-select: none;
     box-shadow: 0 -1px 0 rgba(20,89,63,.07), 0 -16px 34px -26px rgba(11,53,39,.55); }
   .tabs .tside { flex: 1 1 0; min-width: 0; overflow: hidden; }
-  .tabs .trail {
     display: flex; gap: 2px; justify-content: space-evenly;
     transition: transform .26s cubic-bezier(.32,.72,0,1), opacity .18s ease;
     will-change: transform;
   }
-  .tabs.sliding .trail { opacity: .35; }
-  .tabs .tpage { display: flex; gap: 2px; flex: none; justify-content: space-evenly; }
   .tabs button { display: flex; flex-direction: column; align-items: center; gap: 3px;
     font-size: 10px; color: #8C9B92; width: 62px; flex: none; text-align: center;
     padding: 2px 0 0; border-radius: 14px; }
@@ -910,10 +902,6 @@
   .tabs .home .hl { font-size: 10px; }
   .tabs .home.on .hb { box-shadow: 0 0 0 4px #fff, 0 0 0 5px var(--gold), 0 8px 20px -5px rgba(11,53,39,.8); }
   /* مؤشّر الصفحات */
-  .tabs .dots { position: absolute; inset-inline-start: 14px; top: 4px; display: flex; gap: 4px; z-index: 4; }
-  .tabs .dots i { width: 4px; height: 4px; border-radius: 50%; background: #D5DCD7; display: block; }
-  .tabs .dots i.on { background: var(--g); width: 12px; border-radius: 99px; }
-  @media (prefers-reduced-motion: reduce) { .tabs .trail { transition: none; } }
   .gimg, .pfull { background-size: cover; background-position: center; }
   div.pfull { aspect-ratio: 4 / 3; }
   div.gimg { aspect-ratio: 16 / 10; }
@@ -960,8 +948,6 @@
 </style>
 <style>
   /* كل صفحة بعرض جانبها بالضبط، فالانزلاق يساوي صفحة واحدة لا الشريط كله */
-  .tabs .trail { width: 100%; }
-  .tabs .tpage { flex: 0 0 100%; width: 100%; }
 </style>
 
 <style>
@@ -1111,27 +1097,18 @@
 <style>
   /* ===================== النسخة ١٫٧ — كتلة التابات ===================== */
   .tabs .tside { flex: 1 1 0; min-width: 0; overflow: hidden; display: block; }
-  .tabs .trail {
     display: flex; width: 100%;
     transition: transform .28s cubic-bezier(.32,.72,0,1);
     will-change: transform;
   }
-  .tabs .tpage { flex: 0 0 100%; width: 100%; display: flex; }
-  .tabs .tpage > button, .tabs .tpage > .tspacer { flex: 1 1 0; min-width: 0; }
   .tabs .tspacer { display: block; }
-  @media (prefers-reduced-motion: reduce) { .tabs .trail { transition: none; } }
-
   /* نقاط الصفحات — قابلة للنقر */
-  .tabs .dots {
     position: absolute; inset-inline-start: 12px; top: 3px;
     display: flex; gap: 5px; z-index: 4;
   }
-  .tabs .dots button {
     width: 6px; height: 6px; min-width: 0; padding: 0; border-radius: 50%;
     background: #D5DCD7; display: block; flex: none; transition: all .2s ease;
   }
-  .tabs .dots button.on { background: var(--g); width: 16px; border-radius: 99px; }
-
   /* حاجز يمنع تنفيذ نقرة بعد سحب */
   .tabs[data-dragged] button { pointer-events: none; }
 </style>
@@ -1172,7 +1149,6 @@
     .toast { bottom: 86px; }
   }
   /* انزلاق أسرع وأكثر حسمًا */
-  .tabs .trail { transition: transform .17s cubic-bezier(.22,.7,.2,1); }
 </style>
 <style>
   /* ===== الشرح المتحرك ===== */
@@ -1400,7 +1376,6 @@
   @keyframes cdpulse{0%,100%{opacity:1}50%{opacity:.55}}
   @media (prefers-reduced-motion:reduce){ .cd-over b{animation:none} }
 
-
   /* ══ الردود ══ */
   .kpi3{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
   .kc{background:#fff; border-radius:14px; padding:12px 10px; text-align:center; box-shadow:var(--card)}
@@ -1424,5 +1399,200 @@
   .rdline .sp span{display:block; margin-top:2px}
   .rdn{width:26px; height:26px; border-radius:9px; flex:none; display:grid; place-items:center;
     background:var(--pGoldB); color:var(--gold); font-weight:700; font-size:12px}
+
+  /* ══════════════════ الشريط v2 — خمسةٌ ثابتةٌ لا تنزلق ══════════════════
+     سقط معه: .trail و.tpage و.dots والسحبُ كلُّه. */
+  .tabs .tside{ flex:1 1 0; min-width:0; display:flex; justify-content:space-around;
+    gap:2px; overflow:visible; transform:none }
+  .tabs .tside button{ flex:1 1 0; min-width:0; min-height:48px }
+  .tabs .tl{ max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+  .tspacer{ flex:1 1 0 }
+
+  /* ══════════════════ لوحُ المزيد ══════════════════ */
+  .sheeth{ display:flex; align-items:center; gap:10px; margin-bottom:14px }
+  .sheeth b{ flex:1; font-size:16px; font-weight:800 }
+  .sx{ width:32px; height:32px; border-radius:10px; flex:none; display:grid; place-items:center;
+    background:var(--soft); color:var(--dim); border:0; cursor:pointer }
+  .sx:active{ transform:scale(.94) }
+  .mgrid{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px }
+  .mcell{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px;
+    min-height:76px; padding:10px 4px; border:1px solid var(--line); border-radius:15px;
+    background:#fff; color:var(--ink); cursor:pointer; text-align:center }
+  .mcell:active{ transform:scale(.96) }
+  .mcell .wi{ position:relative; color:var(--g) }
+  .mcell b{ font-size:11px; font-weight:600; line-height:1.4 }
+  .msep{ height:1px; background:var(--line); margin:14px 0 12px }
+  @media (max-width:360px){ .mgrid{ grid-template-columns:repeat(3,1fr) } }
+
+  /* ══════════════════ الدخول: بحثٌ بالاسم ══════════════════ */
+  .lsearch{ display:flex; align-items:center; gap:9px; background:var(--soft);
+    border:1px solid var(--line); border-radius:14px; padding:0 12px; min-height:48px;
+    margin-bottom:12px; color:var(--dim) }
+  .lsearch input{ flex:1; min-width:0; border:0; background:none; font:inherit; font-size:14px;
+    color:var(--ink); outline:none; padding:12px 0 }
+  .lsearch input::-webkit-search-cancel-button{ display:none }
+  .acc{ min-height:62px }
+  .lempty{ text-align:center; padding:30px 16px; color:var(--dim) }
+  .lempty b{ display:block; margin-top:10px; font-size:13px }
+
+  /* ══════════════════ الإعدادات: تخصيصُ الشريط ══════════════════ */
+  .tprevbar{ display:flex; gap:4px; background:var(--soft); border:1px solid var(--line);
+    border-radius:15px; padding:9px 7px; margin-bottom:4px }
+  .tprev{ flex:1 1 0; min-width:0; display:flex; flex-direction:column; align-items:center; gap:4px;
+    color:var(--dim); font-size:9.5px }
+  .tprev b{ font-weight:600; max-width:100%; overflow:hidden; text-overflow:ellipsis;
+    white-space:nowrap }
+  .tprev.h{ color:var(--g); font-weight:700 }
+  .tprev.h .mlogo{ width:30px; height:30px; border-radius:50%; background-color:var(--g);
+    background-size:16px; background-position:center; background-repeat:no-repeat; display:block }
+  .tpicks{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px }
+  .tpick{ display:flex; align-items:center; gap:9px; min-height:48px; padding:9px 12px;
+    border:1px solid var(--line); border-radius:13px; background:#fff; color:var(--ink);
+    cursor:pointer; text-align:start; position:relative }
+  .tpick b{ flex:1; min-width:0; font-size:12.5px; font-weight:600; overflow:hidden;
+    text-overflow:ellipsis; white-space:nowrap }
+  .tpick.on{ border-color:var(--g); background:var(--pGreenB); color:var(--g) }
+  .tpick.on b{ font-weight:700 }
+  .tpick .tn{ width:20px; height:20px; border-radius:7px; flex:none; display:grid; place-items:center;
+    background:var(--g); color:#fff; font-size:10.5px; font-weight:700; font-style:normal }
+  .tpick:active{ transform:scale(.97) }
+  .langrow{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px }
+  .lgbtn{ display:flex; flex-direction:column; align-items:center; gap:3px; min-height:58px;
+    justify-content:center; border:1px solid var(--line); border-radius:13px; background:#fff;
+    color:var(--ink); cursor:pointer }
+  .lgbtn b{ font-size:12.5px; font-weight:700 }
+  .lgbtn span{ font-size:10px; color:var(--dim) }
+  .lgbtn.on{ border-color:var(--g); background:var(--pGreenB); color:var(--g) }
+  .prow.danger b{ color:var(--red) }
+  .prow.danger .ic{ color:var(--red) }
+  .appver{ text-align:center; font-size:11px; color:var(--dim2); padding:14px 0 4px }
+
+  /* ══════════════════ التحضير: حضورٌ وانصراف ══════════════════ */
+  .cta.out{ background:var(--pGoldB); color:var(--gold); border-color:rgba(168,135,90,.4) }
+  .cta.done{ background:var(--pGreenB); color:var(--g); border-color:rgba(20,89,63,.3) }
+
+  /* ══════════════════ الردود v2 ══════════════════ */
+  .rdnew{ display:flex; flex-direction:column; align-items:center; gap:9px; text-align:center;
+    padding:26px 18px }
+  .rdnew b{ font-size:14.5px }
+  .rdnew .btn{ margin-top:5px; min-width:180px }
+  .rdmark.big{ width:54px; height:54px; border-radius:17px }
+  .legs{ display:grid; gap:6px; max-height:38vh; overflow:auto; -webkit-overflow-scrolling:touch }
+  .sheetbtns{ display:flex; gap:9px; margin-top:14px }
+  .sheetbtns .btn{ flex:1 }
+
+  /* ══════════════════ معايير اللمس: ٤٤px حدًّا أدنى ══════════════════ */
+  .tabs button, .btn, .listitem, .prow, .mcell, .tpick, .lgbtn{ min-height:44px }
+
+  /* ══════════════ مساحةُ اللمس: ٤٤px دون تكبير المرئيّ ══════════════
+     المعيارُ (iOS HIG · Material) أربعةٌ وأربعون. والأيقوناتُ الصغيرةُ
+     في الترويسة لا تُكبَّر — تُوسَّع منطقةُ لمسها بطبقةٍ شفّافة. */
+
+  .langb::after, .avbtn::after, .sx::after{
+    content:''; position:absolute; top:50%; inset-inline-start:50%;
+    transform:translate(50%,-50%); width:44px; height:44px; border-radius:12px }
+  html[dir=ltr] .langb::after, html[dir=ltr] .avbtn::after, html[dir=ltr] .sx::after{
+    transform:translate(-50%,-50%) }
+  .btn.sm{ min-height:44px }
+  .langsw{ min-height:44px; display:inline-flex; align-items:center }
+
+  /* مبدّلُ اللغة في الدخول: كان مطلقًا فوق الشعار فتصادما. وصار
+     صفًّا في المجرى فوقه — لكلٍّ موضعُه ولا تراكب. */
+  .loginlang{ position:static; inset:auto; z-index:4; display:flex; justify-content:flex-start;
+    padding:calc(10px + env(safe-area-inset-top)) 16px 0; flex:none }
+  .login .inner{ padding-top:6px }
+  .login .logo{ margin:10px auto 2px }
+
+  /* سطرُ الوصف داخل العناصر: كان inline فالتصق بالعنوان */
+  .listitem .sp > span, .legs .listitem .tiny{ display:block; margin-top:2px }
+  .tpick{ border-color:var(--line2,#E3E9E5) }
+  .tpick.on{ box-shadow:0 0 0 1px var(--g) inset }
+
+  /* ══════════════ «المزيد»: أزرارٌ عائمةٌ تصعد من الشريط ══════════════ */
+  .fabs{ position:absolute; inset-inline-end:12px; bottom:calc(var(--sab,14px) + 62px);
+    z-index:60; display:flex; flex-direction:column; align-items:flex-end; gap:9px;
+    max-height:calc(100% - 140px); overflow-y:auto; -webkit-overflow-scrolling:touch;
+    padding:4px 2px; scrollbar-width:none }
+  .fabs::-webkit-scrollbar{ display:none }
+  .fab{ display:flex; align-items:center; gap:11px; flex:none; min-height:48px;
+    padding:0 6px 0 18px; border:1px solid var(--line); border-radius:99px; background:#fff;
+    color:var(--ink); cursor:pointer; box-shadow:0 10px 24px -12px rgba(11,53,39,.45);
+    animation:fabUp .22s cubic-bezier(.2,.9,.3,1) both;
+    animation-delay:calc(var(--i,0) * 24ms) }
+  html[dir=ltr] .fab{ padding:0 18px 0 6px; flex-direction:row-reverse }
+  .fab b{ font-size:13.5px; font-weight:600; white-space:nowrap }
+  .fab .fi{ position:relative; width:36px; height:36px; border-radius:50%; flex:none;
+    display:grid; place-items:center; background:var(--pGreenB); color:var(--g) }
+  .fab:active{ transform:scale(.96) }
+  .fab.close{ background:var(--g); color:#fff; border-color:var(--g) }
+  .fab.close .fi{ background:rgba(255,255,255,.18); color:#fff }
+  @keyframes fabUp{ from{ opacity:0; transform:translateY(10px) scale(.96) } }
+  @media (prefers-reduced-motion:reduce){ .fab{ animation:none } }
+
+  /* ══════════════ الدخول: نموذجٌ بحقلين ══════════════ */
+  .lform{ flex:none; display:flex; flex-direction:column; gap:0 }
+  .lform .lbl{ margin:0 0 7px; font-size:12px }
+  .lwrap{ position:relative; margin-bottom:14px }
+  .lfield{ display:flex; align-items:center; gap:10px; min-height:52px; padding:0 14px;
+    background:var(--soft); border:1.5px solid var(--line); border-radius:14px;
+    color:var(--dim); cursor:pointer }
+  .lfield.on{ border-color:var(--g); background:#fff }
+  .lfield .lval{ flex:1; min-width:0; font-size:14px; font-weight:600; color:var(--ink);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+  .lfield .lval.ph{ font-weight:400; color:var(--dim) }
+  .lfield input{ flex:1; min-width:0; border:0; background:none; outline:none;
+    font:inherit; font-size:14px; color:var(--ink); padding:14px 0 }
+  .lfield.pw{ margin-bottom:16px; cursor:default }
+  .lfield.pw input{ letter-spacing:3px; cursor:default }
+  .lfield .lok{ color:var(--live); flex:none }
+  .lwrap.open .lfield .ic:last-child{ transform:rotate(180deg) }
+
+  .lmenu{ position:absolute; inset-inline:0; top:calc(100% + 6px); z-index:30;
+    background:#fff; border:1px solid var(--line); border-radius:16px; padding:6px;
+    max-height:46vh; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    box-shadow:0 22px 44px -18px rgba(11,53,39,.5) }
+  .lopt{ display:flex; align-items:center; gap:10px; width:100%; min-height:56px;
+    padding:8px 10px; border:0; border-radius:11px; background:none; color:var(--ink);
+    cursor:pointer; text-align:start }
+  .lopt + .lopt{ border-top:1px solid var(--line) }
+  .lopt .nm{ flex:1; min-width:0 }
+  .lopt .nm b{ display:block; font-size:13.5px; font-weight:700 }
+  .lopt .nm span{ display:block; font-size:11px; color:var(--dim); margin-top:2px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+  .lopt.on{ background:var(--pGreenB) }
+  .lopt:active{ background:var(--soft) }
+  .lempty{ text-align:center; padding:26px 14px; color:var(--dim) }
+  .lempty b{ display:block; margin-top:8px; font-size:13px }
+  .lgo{ width:100% }
+  .lgo:disabled{ opacity:.45; cursor:not-allowed }
+  .lhint{ margin-top:10px; min-height:16px }
+
+  /* ══════════════ الردود: في الطريق · الانتظار ══════════════ */
+  .rtransit{ display:flex; align-items:center; gap:10px; margin:10px 0;
+    padding:11px 13px; border-radius:14px; background:var(--pGoldB);
+    border:1px solid rgba(168,135,90,.34) }
+  .rtransit .sp{ flex:1; min-width:0 }
+  .rtransit b{ display:block; font-size:13px; color:var(--gold); font-weight:700 }
+  .rtransit span span{ display:block; font-size:11px; color:var(--dim); margin-top:2px;
+    line-height:1.6 }
+  .rpulse{ width:10px; height:10px; border-radius:50%; flex:none; background:var(--gold);
+    box-shadow:0 0 0 0 rgba(168,135,90,.6); animation:rpz 1.8s ease-out infinite }
+  @keyframes rpz{ 70%{ box-shadow:0 0 0 9px rgba(168,135,90,0) }
+                  100%{ box-shadow:0 0 0 0 rgba(168,135,90,0) } }
+  @media (prefers-reduced-motion:reduce){ .rpulse{ animation:none } }
+
+  .btn.wide{ width:100% }
+  .btn.busy{ opacity:.8 }
+  .rdsub{ display:flex; gap:9px; margin-top:9px }
+  .rdsub .btn{ flex:1 1 0; min-width:0 }
+  .spin{ width:15px; height:15px; border-radius:50%; flex:none; display:inline-block;
+    border:2px solid currentColor; border-top-color:transparent;
+    animation:spn .7s linear infinite }
+  @keyframes spn{ to{ transform:rotate(360deg) } }
+  @media (prefers-reduced-motion:reduce){ .spin{ animation:none } }
+
+  /* الحجابُ تحت الأزرار العائمة أخفُّ: لا لوحَ يحجب، وإنّما
+     ظلٌّ يُبرز الأزرارَ ويُغلق بالنقر خارجها. */
+  .scrim.soft{ background:rgba(11,53,39,.42) }
 
 </style>

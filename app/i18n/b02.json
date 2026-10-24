@@ -1,0 +1,270 @@
+{
+  "انتهت رحلة TR-{n} — فندق الحرم ← المسجد الحرام": [
+    "Trip TR-{n} ended — Al-Haram Hotel → The Grand Mosque",
+    "Perjalanan TR-{n} tamat — Hotel Al-Haram → Masjidil Haram"
+  ],
+  "انتهت رحلة TR-{n} — فندق الحرم ← مزارات مكة": [
+    "Trip TR-{n} ended — Al-Haram Hotel → Makkah Ziyarat",
+    "Perjalanan TR-{n} tamat — Hotel Al-Haram → Ziarah Makkah"
+  ],
+  "انتهت رحلة TR-{n} — فندق الحرم ← مطار الملك عبدالعزيز": [
+    "Trip TR-{n} ended — Al-Haram Hotel → King Abdulaziz Airport",
+    "Perjalanan TR-{n} tamat — Hotel Al-Haram → Lapangan Terbang King Abdulaziz"
+  ],
+  "انتهت رحلة TR-{n} — مزدلفة ← الجمرات": [
+    "Trip TR-{n} ended — Muzdalifah → Jamarat",
+    "Perjalanan TR-{n} tamat — Muzdalifah → Jamarat"
+  ],
+  "انتهت رحلة TR-{n} — مشعر عرفة ← مزدلفة": [
+    "Trip TR-{n} ended — Arafah → Muzdalifah",
+    "Perjalanan TR-{n} tamat — Arafah → Muzdalifah"
+  ],
+  "انتهت رحلة TR-{n} — مشعر منى ← مشعر عرفة": [
+    "Trip TR-{n} ended — Mina → Arafah",
+    "Perjalanan TR-{n} tamat — Mina → Arafah"
+  ],
+  "انتهت رحلة TR-{n} — مطار الملك عبدالعزيز ← فندق الحرم": [
+    "Trip TR-{n} ended — King Abdulaziz Airport → Al-Haram Hotel",
+    "Perjalanan TR-{n} tamat — Lapangan Terbang King Abdulaziz → Hotel Al-Haram"
+  ],
+  "انتهت رحلة TR-{n} — مكة المكرمة ← المدينة المنوّرة": [
+    "Trip TR-{n} ended — Makkah → Madinah",
+    "Perjalanan TR-{n} tamat — Makkah → Madinah"
+  ],
+  "انتهت رحلة TR-{n} — مكة المكرمة ← مشعر منى": [
+    "Trip TR-{n} ended — Makkah → Mina",
+    "Perjalanan TR-{n} tamat — Makkah → Mina"
+  ],
+  "بندر الصاعدي ← ماجد العسيري": [
+    "Bandar Al-Saedi → Majed Al-Asiri",
+    "Bandar Al-Saedi → Majed Al-Asiri"
+  ],
+  "زياد الحارثي ← أحمد الشهري": [
+    "Ziyad Al-Harthi → Ahmed Al-Shehri",
+    "Ziyad Al-Harthi → Ahmed Al-Shehri"
+  ],
+  "عرفة ← مزدلفة": [
+    "Arafah → Muzdalifah",
+    "Arafah → Muzdalifah"
+  ],
+  "فندق الحرم ← المسجد الحرام": [
+    "Al-Haram Hotel → The Grand Mosque",
+    "Hotel Al-Haram → Masjidil Haram"
+  ],
+  "فندق الحرم ← المسجد الحرام · {n}:{n} am": [
+    "Al-Haram Hotel → The Grand Mosque · {n}:{n} am",
+    "Hotel Al-Haram → Masjidil Haram · {n}:{n} am"
+  ],
+  "فندق الحرم ← المسجد الحرام · {n}:{n} pm": [
+    "Al-Haram Hotel → The Grand Mosque · {n}:{n} pm",
+    "Hotel Al-Haram → Masjidil Haram · {n}:{n} pm"
+  ],
+  "فندق الحرم ← المسجد الحرام · {n}:{n} ص": [
+    "Al-Haram Hotel → The Grand Mosque · {n}:{n} am",
+    "Hotel Al-Haram → Masjidil Haram · {n}:{n} pg"
+  ],
+  "فندق الحرم ← المسجد الحرام · {n}:{n} م": [
+    "Al-Haram Hotel → The Grand Mosque · {n}:{n} pm",
+    "Hotel Al-Haram → Masjidil Haram · {n}:{n} ptg"
+  ],
+  "فندق الحرم ← مزارات مكة": [
+    "Al-Haram Hotel → Makkah Ziyarat",
+    "Hotel Al-Haram → Ziarah Makkah"
+  ],
+  "فندق الحرم ← مزارات مكة · {n}:{n} am": [
+    "Al-Haram Hotel → Makkah Ziyarat · {n}:{n} am",
+    "Hotel Al-Haram → Ziarah Makkah · {n}:{n} am"
+  ],
+  "فندق الحرم ← مزارات مكة · {n}:{n} pm": [
+    "Al-Haram Hotel → Makkah Ziyarat · {n}:{n} pm",
+    "Hotel Al-Haram → Ziarah Makkah · {n}:{n} pm"
+  ],
+  "فندق الحرم ← مزارات مكة · {n}:{n} ص": [
+    "Al-Haram Hotel → Makkah Ziyarat · {n}:{n} am",
+    "Hotel Al-Haram → Ziarah Makkah · {n}:{n} pg"
+  ],
+  "فندق الحرم ← مزارات مكة · {n}:{n} م": [
+    "Al-Haram Hotel → Makkah Ziyarat · {n}:{n} pm",
+    "Hotel Al-Haram → Ziarah Makkah · {n}:{n} ptg"
+  ],
+  "فندق الحرم ← مطار الملك عبدالعزيز": [
+    "Al-Haram Hotel → King Abdulaziz Airport",
+    "Hotel Al-Haram → Lapangan Terbang King Abdulaziz"
+  ],
+  "فندق الحرم ← مطار الملك عبدالعزيز · {n}:{n} am": [
+    "Al-Haram Hotel → King Abdulaziz Airport · {n}:{n} am",
+    "Hotel Al-Haram → Lapangan Terbang King Abdulaziz · {n}:{n} am"
+  ],
+  "فندق الحرم ← مطار الملك عبدالعزيز · {n}:{n} pm": [
+    "Al-Haram Hotel → King Abdulaziz Airport · {n}:{n} pm",
+    "Hotel Al-Haram → Lapangan Terbang King Abdulaziz · {n}:{n} pm"
+  ],
+  "فندق الحرم ← مطار الملك عبدالعزيز · {n}:{n} ص": [
+    "Al-Haram Hotel → King Abdulaziz Airport · {n}:{n} am",
+    "Hotel Al-Haram → Lapangan Terbang King Abdulaziz · {n}:{n} pg"
+  ],
+  "فندق الحرم ← مطار الملك عبدالعزيز · {n}:{n} م": [
+    "Al-Haram Hotel → King Abdulaziz Airport · {n}:{n} pm",
+    "Hotel Al-Haram → Lapangan Terbang King Abdulaziz · {n}:{n} ptg"
+  ],
+  "فيصل الغامدي ← زياد الحارثي": [
+    "Faisal Al-Ghamdi → Ziyad Al-Harthi",
+    "Faisal Al-Ghamdi → Ziyad Al-Harthi"
+  ],
+  "لؤي الأحمدي ← بندر الجهني": [
+    "Luay Al-Ahmadi → Bandar Al-Juhani",
+    "Luay Al-Ahmadi → Bandar Al-Juhani"
+  ],
+  "مزدلفة ← الجمرات": [
+    "Muzdalifah → Jamarat",
+    "Muzdalifah → Jamarat"
+  ],
+  "مزدلفة ← الجمرات · {n}:{n} am": [
+    "Muzdalifah → Jamarat · {n}:{n} am",
+    "Muzdalifah → Jamarat · {n}:{n} am"
+  ],
+  "مزدلفة ← الجمرات · {n}:{n} pm": [
+    "Muzdalifah → Jamarat · {n}:{n} pm",
+    "Muzdalifah → Jamarat · {n}:{n} pm"
+  ],
+  "مزدلفة ← الجمرات · {n}:{n} ص": [
+    "Muzdalifah → Jamarat · {n}:{n} am",
+    "Muzdalifah → Jamarat · {n}:{n} pg"
+  ],
+  "مزدلفة ← الجمرات · {n}:{n} م": [
+    "Muzdalifah → Jamarat · {n}:{n} pm",
+    "Muzdalifah → Jamarat · {n}:{n} ptg"
+  ],
+  "مزدلفة ← منى": [
+    "Muzdalifah → Mina",
+    "Muzdalifah → Mina"
+  ],
+  "مشعر عرفة ← مزدلفة": [
+    "Arafah → Muzdalifah",
+    "Arafah → Muzdalifah"
+  ],
+  "مشعر عرفة ← مزدلفة · {n}:{n} am": [
+    "Arafah → Muzdalifah · {n}:{n} am",
+    "Arafah → Muzdalifah · {n}:{n} am"
+  ],
+  "مشعر عرفة ← مزدلفة · {n}:{n} pm": [
+    "Arafah → Muzdalifah · {n}:{n} pm",
+    "Arafah → Muzdalifah · {n}:{n} pm"
+  ],
+  "مشعر عرفة ← مزدلفة · {n}:{n} ص": [
+    "Arafah → Muzdalifah · {n}:{n} am",
+    "Arafah → Muzdalifah · {n}:{n} pg"
+  ],
+  "مشعر عرفة ← مزدلفة · {n}:{n} م": [
+    "Arafah → Muzdalifah · {n}:{n} pm",
+    "Arafah → Muzdalifah · {n}:{n} ptg"
+  ],
+  "مشعر منى ← مشعر عرفة": [
+    "Mina → Arafah",
+    "Mina → Arafah"
+  ],
+  "مشعر منى ← مشعر عرفة · {n}:{n} am": [
+    "Mina → Arafah · {n}:{n} am",
+    "Mina → Arafah · {n}:{n} am"
+  ],
+  "مشعر منى ← مشعر عرفة · {n}:{n} pm": [
+    "Mina → Arafah · {n}:{n} pm",
+    "Mina → Arafah · {n}:{n} pm"
+  ],
+  "مشعر منى ← مشعر عرفة · {n}:{n} ص": [
+    "Mina → Arafah · {n}:{n} am",
+    "Mina → Arafah · {n}:{n} pg"
+  ],
+  "مشعر منى ← مشعر عرفة · {n}:{n} م": [
+    "Mina → Arafah · {n}:{n} pm",
+    "Mina → Arafah · {n}:{n} ptg"
+  ],
+  "مطار الملك عبدالعزيز ← فندق الحرم": [
+    "King Abdulaziz Airport → Al-Haram Hotel",
+    "Lapangan Terbang King Abdulaziz → Hotel Al-Haram"
+  ],
+  "مطار الملك عبدالعزيز ← فندق الحرم · {n}:{n} am": [
+    "King Abdulaziz Airport → Al-Haram Hotel · {n}:{n} am",
+    "Lapangan Terbang King Abdulaziz → Hotel Al-Haram · {n}:{n} am"
+  ],
+  "مطار الملك عبدالعزيز ← فندق الحرم · {n}:{n} pm": [
+    "King Abdulaziz Airport → Al-Haram Hotel · {n}:{n} pm",
+    "Lapangan Terbang King Abdulaziz → Hotel Al-Haram · {n}:{n} pm"
+  ],
+  "مطار الملك عبدالعزيز ← فندق الحرم · {n}:{n} ص": [
+    "King Abdulaziz Airport → Al-Haram Hotel · {n}:{n} am",
+    "Lapangan Terbang King Abdulaziz → Hotel Al-Haram · {n}:{n} pg"
+  ],
+  "مطار الملك عبدالعزيز ← فندق الحرم · {n}:{n} م": [
+    "King Abdulaziz Airport → Al-Haram Hotel · {n}:{n} pm",
+    "Lapangan Terbang King Abdulaziz → Hotel Al-Haram · {n}:{n} ptg"
+  ],
+  "مكة المكرمة ← المدينة المنوّرة": [
+    "Makkah → Madinah",
+    "Makkah → Madinah"
+  ],
+  "مكة المكرمة ← المدينة المنوّرة · {n}:{n} am": [
+    "Makkah → Madinah · {n}:{n} am",
+    "Makkah → Madinah · {n}:{n} am"
+  ],
+  "مكة المكرمة ← المدينة المنوّرة · {n}:{n} pm": [
+    "Makkah → Madinah · {n}:{n} pm",
+    "Makkah → Madinah · {n}:{n} pm"
+  ],
+  "مكة المكرمة ← المدينة المنوّرة · {n}:{n} ص": [
+    "Makkah → Madinah · {n}:{n} am",
+    "Makkah → Madinah · {n}:{n} pg"
+  ],
+  "مكة المكرمة ← المدينة المنوّرة · {n}:{n} م": [
+    "Makkah → Madinah · {n}:{n} pm",
+    "Makkah → Madinah · {n}:{n} ptg"
+  ],
+  "مكة المكرمة ← مشعر منى": [
+    "Makkah → Mina",
+    "Makkah → Mina"
+  ],
+  "مكة المكرمة ← مشعر منى · {n}:{n} am": [
+    "Makkah → Mina · {n}:{n} am",
+    "Makkah → Mina · {n}:{n} am"
+  ],
+  "مكة المكرمة ← مشعر منى · {n}:{n} pm": [
+    "Makkah → Mina · {n}:{n} pm",
+    "Makkah → Mina · {n}:{n} pm"
+  ],
+  "مكة المكرمة ← مشعر منى · {n}:{n} ص": [
+    "Makkah → Mina · {n}:{n} am",
+    "Makkah → Mina · {n}:{n} pg"
+  ],
+  "مكة المكرمة ← مشعر منى · {n}:{n} م": [
+    "Makkah → Mina · {n}:{n} pm",
+    "Makkah → Mina · {n}:{n} ptg"
+  ],
+  "مكة ← منى": [
+    "Makkah → Mina",
+    "Makkah → Mina"
+  ],
+  "منى ← الجمرات": [
+    "Mina → Jamarat",
+    "Mina → Jamarat"
+  ],
+  "منى ← عرفة": [
+    "Mina → Arafah",
+    "Mina → Arafah"
+  ],
+  "موقعٌ ← قطاعٌ ← حالة — والموقعُ يغيّر المهلةَ ومسارَ التصعيد": [
+    "Location → sector → case — and the location changes both the deadline and the escalation path",
+    "Lokasi → sektor → kes — dan lokasi mengubah tempoh serta laluan eskalasi"
+  ],
+  "موقعٌ ← قطاعٌ ← حالة. ولكلّ حالةٍ خطورتُها ومهلتاها ومسارُ تصعيدها": [
+    "Location → sector → case. Each case has its severity, its two deadlines, and its escalation path",
+    "Lokasi → sektor → kes. Setiap kes mempunyai tahap keseriusan, dua tempohnya, dan laluan eskalasinya"
+  ],
+  "ناصر العنزي ← سعد الرشيدي": [
+    "Nasser Al-Anzi → Saad Al-Rashidi",
+    "Nasser Al-Anzi → Saad Al-Rashidi"
+  ],
+  "هشام الشريف ← سعود بن نافل": [
+    "Hisham Al-Sharif → Saud bin Nafel",
+    "Hisham Al-Sharif → Saud bin Nafel"
+  ]
+}

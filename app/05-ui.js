@@ -30,30 +30,43 @@ function bar(title, opt) {
     : (opt.left !== undefined ? opt.left
       : '<button data-a="go" data-n="notifs" aria-label="الإشعارات" class="wi">' + icon('i-bell') +
         (unread() ? '<span class="badge">' + AR(unread()) + '</span>' : '') + '</button>');
-  /* مبدّلُ اللغة في الترويسة: يُبلَغ من كلّ شاشةٍ بنقرة. وكان في
-     «المزيد» وحدها — وهي آخرُ تبويبٍ في الصفحة الثانية، فلا يكاد
-     يُعثر عليه. */
-  const lg = '<span class="langtop">' + langSwitch() + '</span>';
+  /* مبدّلُ اللغة خرج من الترويسة: كان يزاحم العنوانَ على عرض
+     الجوّال، وهو إعدادٌ لا أداةُ شاشة. وموضعُه الآن شاشةُ الدخول
+     (قبل أيّ حساب) والإعداداتُ — نقرتان من «المزيد». */
   return '<div class="top"><div class="sbar"><span>' + t12(now()) + '</span>' +
     '<svg class="ic s16 f" viewBox="0 0 44 16"><rect x="0" y="9" width="3" height="5" rx="1"/><rect x="5" y="6.5" width="3" height="7.5" rx="1"/><rect x="10" y="4" width="3" height="10" rx="1"/><rect x="15" y="1.5" width="3" height="12.5" rx="1"/><path d="M26.5 4.2a8 8 0 019 0l-4.5 6z"/><rect x="38" y="4" width="5.5" height="9" rx="1.6"/></svg></div>' +
-    '<div class="nav">' + left + '<span class="t">' + E(title) + '</span>' + lg + right + '</div></div>';
+    '<div class="nav">' + left + '<span class="t">' + E(title) + '</span>' + right + '</div></div>';
 }
 
-/* شريط سفلي — كل الوجهات، ثلاث عن يمين الرئيسية وثلاث عن يسارها،
-   والكتلة كلها تتبدّل صفحةً واحدة بالسحب أو بنقر النقاط */
-const TABS_SIDE = 3;
+/* ============================================================
+   الشريطُ السفليّ — خمسةُ مواضعَ ثابتةٍ لا تنزلق
 
-function tabItems() {
+   كان صفحتين تنزلقان بالسحب، فيختفي نصفُ الوجهات خلف نقطتين لا
+   تكادان تُريان، وتُقلَب الإزاحةُ في اللغات اللاتينيّة فتخرج
+   التبويباتُ من الشاشة. وصار خمسةً لا تتحرّك:
+     [مخصَّص] [مخصَّص] · الرئيسية · [مخصَّص] [المزيد]
+   و«المزيد» يفتح بقيّةَ الأبواب لوحًا عائمًا. والثلاثةُ المخصَّصة
+   يرتّبها المستخدمُ من الإعدادات.
+   ============================================================ */
+const TAB_SLOTS = 3;
+
+/* من يملك ردودًا: محسنو النقل — والليدرُ لا يركب */
+const mayRide = () => {
+  const u = me();
+  return !!u && u.role === 'muhsen' && u.specialty === 'نقل';
+};
+
+/* كلُّ وجهةٍ تصلح للشريط في هذا البناء */
+function tabCatalog() {
   const L = isLeader();
   const inbox = S.requests.filter(x => x.to === S.session.id && x.state === 'pending').length +
     pendingSwaps().length;
   const openTk = myTickets().filter(k => k.status !== 'مغلقة').length;
-  const base = [
+  const out = [
     { k:'tasks',   i:'i-tasks',  l:'المهام',    on:['tasks','task','assign','timeline','doc'] },
     { k: L ? 'lreq' : 'requests', i:'i-swap', l:'الطلبات', b:inbox, on:['lreq','requests'] },
     { k:'daily',   i:'i-check',  l:'التحضير',   on:['daily'] },
-
-    { k:'desk', i:'i-ticket', l:'التذاكر والبلاغات', b:openTk + openReports(),
+    { k:'desk',    i:'i-ticket', l:'البلاغات',  b:openTk + openReports(),
       on:['desk','tickets','ticket','report'] },
     { k:'notifs',  i:'i-bell',   l:'الإشعارات', b:unread(), on:['notifs'] },
     { k:'guide',   i:'i-guide',  l:'الدليل',    on:['guide'] },
@@ -62,28 +75,35 @@ function tabItems() {
     { k:'album',   i:'i-album',  l:'الصور',     on:['album','photo'] },
     { k:'pilgrims',i:'i-user',   l:'الحجاج',    on:['pilgrims'] }
   ];
-  if (L) base.splice(3, 0, { k:'muhsens', i:'i-users', l:'المحسنون', on:['muhsens'] });
-  /* الردود: تبويبٌ لمحسني النقل وحدهم — من لا ردَّ له لا يراه */
-  const myRd = (S.rides || []).filter(r => r.userId === S.session.id);
-  if (myRd.length) base.splice(3, 0,
-    { k:'rides', i:'i-bus', l:'الردود', b:myRd.filter(r => !r.endedAt).length, on:['rides'] });
-  base.push({ k:'more', i:'i-dots', l:'المزيد', on:['more','profile','admin'] });
-  return base;
-}
-const tabPer = () => TABS_SIDE * 2;
-const tabPageCount = () => Math.ceil(tabItems().length / tabPer());
-function tabPageOf(route) {
-  const it = tabItems();
-  for (let i = 0; i < it.length; i++) if (it[i].on.indexOf(route) >= 0) return Math.floor(i / tabPer());
-  return null;
+  if (L) out.splice(3, 0, { k:'muhsens', i:'i-users', l:'المحسنون', on:['muhsens'] });
+  if (mayRide()) out.splice(3, 0,
+    { k:'rides', i:'i-bus', l:'الردود', b:openRides(), on:['rides'] });
+  return out;
 }
 
+/* الافتراضيُّ: ما يُفتح كلَّ يوم. ولكلّ دورٍ يومُه. */
+const TAB_DEFAULT = () => isLeader()
+  ? ['tasks', 'lreq', 'desk']
+  : ['tasks', 'daily', 'desk'];
+
+/* المختارةُ ثلاثٌ دائمًا: اختيارُ المستخدم ثمّ الافتراضيُّ ثمّ ما بقي.
+   فلو حُذفت وجهةٌ من الكتالوج لم يبقَ في الشريط فراغ. */
+function tabChosen() {
+  const cat = tabCatalog(), has = k => cat.some(x => x.k === k);
+  const out = (S.tabs || []).filter(has).slice(0, TAB_SLOTS);
+  const fill = k => { if (out.length < TAB_SLOTS && has(k) && out.indexOf(k) < 0) out.push(k); };
+  TAB_DEFAULT().forEach(fill);
+  cat.forEach(x => fill(x.k));
+  return out;
+}
+const tabRest = () => {
+  const c = tabChosen();
+  return tabCatalog().filter(x => c.indexOf(x.k) < 0);
+};
+
 function tabs() {
-  const L = isLeader(), r = S.route.n;
-  const items = tabItems(), per = tabPer(), pages = tabPageCount();
-  const auto = tabPageOf(r);
-  if (auto !== null && S._tabAuto !== r) { S.tabPage = auto; S._tabAuto = r; }
-  const pg = Math.min(Math.max(S.tabPage || 0, 0), pages - 1);
+  const r = S.route.n, cat = tabCatalog();
+  const sel = tabChosen().map(k => cat.find(x => x.k === k));
 
   const btn = it => {
     if (!it) return '<span class="tspacer"></span>';
@@ -93,34 +113,54 @@ function tabs() {
       '<span class="wi">' + icon(it.i) + (it.b ? '<span class="badge">' + AR(it.b) + '</span>' : '') +
       '</span><span class="tl">' + it.l + '</span></button>';
   };
-  const rail = side => {
-    let out = '';
-    for (let p = 0; p < pages; p++) {
-      const base = p * per + (side === 'r' ? 0 : TABS_SIDE);
-      let cells = '';
-      for (let i = 0; i < TABS_SIDE; i++) cells += btn(items[base + i]);
-      out += '<div class="tpage">' + cells + '</div>';
-    }
-    /* الإزاحةُ ماديّةٌ لا منطقيّة: translateX يمينًا دائمًا. فالصفحةُ
-       الثانية تُطلب بإزاحةٍ سالبة في اللاتينيّة وموجبةٍ في العربيّة —
-       ولولا ذلك لخرجت التبويباتُ من الشاشة وبقي زرُّ الرئيسية وحده. */
-    const sgn = (typeof isRTL === 'function' ? isRTL() : true) ? 1 : -1;
-    return '<div class="tside"><div class="trail" style="transform:translateX(' +
-      (sgn * pg * 100) + '%)">' + out + '</div></div>';
-  };
-  const homeOn = ['home','mhome'].indexOf(r) >= 0;
 
-  return '<nav class="tabs" role="tablist" aria-label="التنقّل" data-pages="' + pages + '">' +
-    (pages > 1 ? '<span class="dots">' + Array.from({ length: pages }, (_, i) =>
-      '<button class="' + (i === pg ? 'on' : '') + '" data-a="tabpage" data-v="' + i + '" ' +
-      'aria-label="الصفحة ' + AR(i + 1) + '"></button>').join('') + '</span>' : '') +
-    rail('r') +
-    '<button class="home' + (homeOn ? ' on' : '') + '" role="tab"' + (homeOn ? ' aria-selected="true"' : '') +
-      ' data-a="go" data-n="' + (L ? 'home' : 'mhome') + '">' +
+  /* شارةُ «المزيد» تجمع ما خلفها — وإلّا اختفى العاجلُ بلا أثر */
+  const restN = tabRest().reduce((a, x) => a + (x.b || 0), 0);
+  const moreOn = ['profile','admin','settings'].indexOf(r) >= 0;
+  const more = '<button class="' + (moreOn ? 'on' : '') + '" role="tab" data-a="moresheet" ' +
+    'aria-haspopup="dialog">' +
+    '<span class="wi">' + icon('i-dots') +
+    (restN ? '<span class="badge">' + AR(restN) + '</span>' : '') +
+    '</span><span class="tl">المزيد</span></button>';
+
+  const homeOn = ['home','mhome'].indexOf(r) >= 0;
+  return '<nav class="tabs" role="tablist" aria-label="التنقّل">' +
+    '<div class="tside">' + btn(sel[0]) + btn(sel[1]) + '</div>' +
+    '<button class="home' + (homeOn ? ' on' : '') + '" role="tab"' +
+      (homeOn ? ' aria-selected="true"' : '') +
+      ' data-a="go" data-n="' + (isLeader() ? 'home' : 'mhome') + '">' +
       '<span class="wi hb"><i class="mlogo"></i></span>' +
       '<span class="hl">الرئيسية</span></button>' +
-    rail('l') +
+    '<div class="tside">' + btn(sel[2]) + more + '</div>' +
     '</nav>';
+}
+
+/* قائمةُ «المزيد» — أزرارٌ عائمةٌ تصعد من الشريط
+
+   كانت شبكةً في لوحٍ سفليّ: أربعةٌ في الصفّ والأسماءُ تحت
+   الأيقونات. وهي قائمةٌ لا شبكة — فصارت أزرارًا رأسيّةً فوق زرّ
+   «المزيد» نفسِه، مرتّبةً من الأعلى إلى الأسفل، لكلٍّ أيقونتُه
+   إلى جانب اسمه. وتصعد واحدًا بعد واحد. */
+function moreSheet() {
+  const btn = (x, i) =>
+    '<button class="fab" data-a="go" data-n="' + x[0] + '" style="--i:' + i + '">' +
+      '<b>' + x[2] + '</b>' +
+      '<span class="fi">' + icon(x[1], 's20') +
+      (x[3] ? '<span class="badge">' + AR(x[3]) + '</span>' : '') + '</span>' +
+    '</button>';
+
+  const rows = tabRest().map(x => [x.k, x.i, x.l, x.b]).concat([
+    ['profile',  'i-user', 'الملف الشخصي', 0],
+    ['settings', 'i-gear', 'الإعدادات',    0]
+  ]);
+
+  /* الأوّلُ في النصّ هو الأعلى في الشاشة، والأقربُ إلى الإبهام
+     يصعد آخرًا — فيُقرأ الترتيبُ من الأعلى ويُلمَس من الأسفل. */
+  return '<div class="fabs">' +
+    rows.map((x, i) => btn(x, rows.length - i)).join('') +
+    '<button class="fab close" data-a="close" style="--i:0">' +
+      '<b>إغلاق</b><span class="fi">' + icon('i-x', 's20') + '</span></button>' +
+  '</div>';
 }
 
 /* ختم بيئة الجهاز — يكشف سبب أي فراغ في الميدان بلا تخمين */
@@ -227,42 +267,103 @@ function taskRow(t) {
 }
 
 /* ============================ تسجيل الدخول ============================ */
+/* ============================================================
+   الدخول — نموذجٌ كما في التطبيقات، لا قائمةُ أسماءٍ مكشوفة
+
+   كانت الشاشةُ قائمةَ حساباتٍ مفتوحةً تملأ الشاشة، فبدت لوحةَ
+   اختيارٍ لا شاشةَ دخول. وصارت حقلين وزرًّا: اسمُ المستخدم يفتح
+   قائمةً منسدلةً تحته تُصفَّى بالكتابة، وكلمةُ المرور تمتلئ عند
+   اختيار الاسم.
+
+   ورابطٌ واحدٌ للجميع: الدورُ يُقرأ من الحساب بعد الدخول،
+   فالليدرُ يرى شاشاتِه والمُحسنُ يرى شاشاتِه.
+   ============================================================ */
+
+const loginPick = () => S.loginId ? userById(S.loginId) : null;
+const loginSub  = u => {
+  if (!u) return '';
+  const L2 = userById(u.leaderId);
+  return u.role === 'leader'
+    ? 'محسن ليدر · ' + u.kt
+    : 'مُحسن · ' + u.specialty +
+      (u.reserve ? ' · فريق امتثال' : L2 ? ' · فريق ' + L2.name.split(' ')[0] : '');
+};
+
+/* القائمةُ المنسدلة: الليدرزُ أوّلًا ثمّ المحسنون، وتُصفَّى بالكتابة */
+function loginList() {
+  const q = (S.loginQ || '').trim();
+  let list = S.users.slice().sort((a, b) =>
+    (a.role === 'leader' ? 0 : 1) - (b.role === 'leader' ? 0 : 1));
+  if (q) list = list.filter(u =>
+    (u.name + ' ' + (u.code || '') + ' ' + (u.kt || '') + ' ' + (u.specialty || ''))
+      .indexOf(q) >= 0);
+  return list;
+}
+
 function screenLogin() {
-  const role = S.loginRole || 'leader';
-  const list = S.users.filter(u => u.role === role);
+  const u = loginPick();
+  const open = !!S.loginOpen;
+
+  const opt = x =>
+    '<button class="lopt' + (u && u.id === x.id ? ' on' : '') + '" ' +
+      'data-a="loginsel" data-id="' + x.id + '" role="option">' +
+      avat(x, 'sm') +
+      '<span class="nm sp"><b>' + E(x.name) + '</b>' +
+        '<span>' + E(loginSub(x)) + '</span></span>' +
+      (u && u.id === x.id ? icon('i-checkc', 's18') : '') +
+    '</button>';
+
+  const list = loginList();
+
   return '<div class="login"><i class="pat"></i>' +
-    /* اللغةُ تُختار قبل الدخول: من يفتح التطبيق أوّلَ مرّة لا يصل
-       إلى «المزيد» بعدُ، فلا يجد مبدّلًا. */
     '<div class="loginlang">' + langSwitch() + '</div>' +
     '<div class="inner">' +
       '<i class="logo mlockup" role="img" aria-label="مُحسن"></i>' +
-      '<div class="cap">تطبيق الميدان — موسم الحج ١٤٤٨ هـ</div>' +
-      '<div class="panel">' +
-        '<div class="lbl plain" style="margin-bottom:8px">اختر دورك</div>' +
-        '<div class="rolebtns">' +
-          '<button class="rolebtn ' + (role === 'leader' ? 'on' : '') + '" data-a="role" data-r="leader">' +
-            '<span class="ci">' + icon('i-users','s26') + '</span><b>محسن ليدر</b><span>ليدر فريق KT</span></button>' +
-          '<button class="rolebtn ' + (role === 'muhsen' ? 'on' : '') + '" data-a="role" data-r="muhsen">' +
-            '<span class="ci">' + icon('i-user','s26') + '</span><b>مُحسن</b><span>عضو ميداني</span></button>' +
+      '<div class="cap">' +
+        'تطبيق الميدان' + '</div>' +
+
+      '<form class="panel lform" data-a="nosubmit">' +
+        '<div class="lbl plain">اسم المستخدم</div>' +
+
+        /* الحقلُ والقائمةُ في حاويةٍ واحدة: القائمةُ تنسدل تحته
+           مطلقةً، فلا تدفع ما بعدها ولا تُغيّر ارتفاع النموذج. */
+        '<div class="lwrap' + (open ? ' open' : '') + '">' +
+          '<div class="lfield' + (open ? ' on' : '') + '" data-a="loginopen" ' +
+            'role="combobox" aria-expanded="' + (open ? 'true' : 'false') + '">' +
+            (u && !open ? avat(u, 'sm') : icon('i-user', 's18')) +
+            (open
+              ? '<input id="lq" type="text" autocomplete="off" placeholder="اكتب الاسم" ' +
+                'value="' + E(S.loginQ || '') + '" data-a="loginq" aria-label="اسم المستخدم">'
+              : '<span class="lval' + (u ? '' : ' ph') + '">' +
+                (u ? E(u.name) : 'اختر اسمك') + '</span>') +
+            icon('i-down', 's16') +
+          '</div>' +
+
+          (open
+            ? '<div class="lmenu" role="listbox">' +
+                (list.length ? list.map(opt).join('')
+                  : '<div class="lempty">' + icon('i-search', 's22') +
+                    '<b>لا اسم يطابق</b></div>') +
+              '</div>'
+            : '') +
         '</div>' +
-        '<div class="lbl plain" style="margin:14px 0 7px">اختر الحساب<small style="font-weight:400;color:var(--dim2)">' + AR(list.length) + ' حساب متاح للتجربة</small></div>' +
-        '<div class="acclist">' + list.map(u => {
-          const L2 = userById(u.leaderId);
-          const sub = u.role === 'leader'
-            ? u.kt + ' · ' + ((ORGS.find(o => o.id === u.orgId) || {}).ar || '')
-            : u.code + ' · ' + u.specialty + ' · ' +
-              (u.reserve ? 'فريق احتياطي' : L2 ? 'فريق ' + L2.name.split(' ')[0] : 'بلا فريق');
-          const pc = pendingCountFor(u.id);
-          return '<button class="prow" data-a="login" data-id="' + u.id + '">' + avat(u) +
-            '<span class="nm sp"><b>' + E(u.name) + '</b><span>' + E(sub) + '</span></span>' +
-            (u.reserve ? pill('احتياط', 'gold') : '') +
-            (pc ? '<span class="pill no">' + AR(pc) + ' إجراء</span>' : '') +
-            icon('i-back','s16') + '</button>';
-        }).join('') + '</div>' +
-        '<div class="otp">' + ['٤','٨','١','٦'].map(d => '<div>' + d + '</div>').join('') + '</div>' +
-        '<div class="tiny dim2 center" style="margin-top:7px">رمز تجريبي — الدخول بالضغط على الحساب</div>' +
-      '</div>' +
-      '<div class="foot"><i class="mnozoly" role="img" aria-label="نُزلي"></i><div>تطوير نُزلي · نسخة تجريبية</div></div>' +
+
+        '<div class="lbl plain">كلمة المرور</div>' +
+        '<div class="lfield pw">' + icon('i-lock', 's18') +
+          '<input type="password" value="' + (u ? '48162048' : '') + '" readonly ' +
+            'autocomplete="current-password" aria-label="كلمة المرور" tabindex="-1">' +
+          (u ? '<span class="lok">' + icon('i-checkc', 's16') + '</span>' : '') +
+        '</div>' +
+
+        '<button class="btn p wide lgo" ' +
+          (u ? 'data-a="login" data-id="' + u.id + '"' : 'disabled') + '>' +
+          'تسجيل الدخول</button>' +
+
+        '<div class="tiny dim2 center lhint">' +
+          (u ? E(loginSub(u)) : 'اختر اسمك لتُعبَّأ كلمةُ المرور') + '</div>' +
+      '</form>' +
+
+      '<div class="foot"><i class="mnozoly" role="img" aria-label="نُزلي"></i></div>' +
     '</div></div>';
 }
 

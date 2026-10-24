@@ -1,0 +1,262 @@
+{
+  "مُحسن الميدان": [
+    "Muhsen Field",
+    "Muhsen Lapangan"
+  ],
+  "ابحث بالاسم": [
+    "Search by name",
+    "Cari nama"
+  ],
+  "لا اسم يطابق": [
+    "No matching name",
+    "Tiada nama sepadan"
+  ],
+  "نسخة الليدر": [
+    "Leader app",
+    "Apl Ketua"
+  ],
+  "نسخة المُحسن": [
+    "Muhsen app",
+    "Apl Muhsen"
+  ],
+  "فريق امتثال": [
+    "Imtithal Team",
+    "Pasukan Imtithal"
+  ],
+  "شريط التنقّل": [
+    "Navigation bar",
+    "Bar navigasi"
+  ],
+  "اختر ثلاثًا تظهر في الشريط. والباقي في «المزيد».": [
+    "Pick three for the bar. The rest stay under “More”.",
+    "Pilih tiga untuk bar. Selebihnya kekal di bawah “Lagi”."
+  ],
+  "الترتيب الأوّل": [
+    "Default order",
+    "Susunan asal"
+  ],
+  "المواضعُ ثلاثةٌ — أخرِج واحدةً أوّلًا": [
+    "Only three slots — remove one first",
+    "Hanya tiga slot — keluarkan satu dahulu"
+  ],
+  "لا بدّ من وجهةٍ واحدةٍ على الأقلّ": [
+    "At least one destination is required",
+    "Sekurang-kurangnya satu destinasi diperlukan"
+  ],
+  "أُعيد الشريطُ إلى ترتيبه الأوّل": [
+    "The bar is back to its default order",
+    "Bar kembali kepada susunan asalnya"
+  ],
+  "الحساب": [
+    "Account",
+    "Akaun"
+  ],
+  "في الموقع": [
+    "On site",
+    "Di lokasi"
+  ],
+  "تسجيل الحضور": [
+    "Check in",
+    "Daftar masuk"
+  ],
+  "تسجيل الانصراف": [
+    "Check out",
+    "Daftar keluar"
+  ],
+  "اكتمل يومك": [
+    "Your day is complete",
+    "Hari anda selesai"
+  ],
+  "في الدوام الآن": [
+    "On duty now",
+    "Bertugas sekarang"
+  ],
+  "بعد {n} س {n} د": [
+    "after {n}h {n}m",
+    "selepas {n}j {n}m"
+  ],
+  "{n} س {n} د": [
+    "{n} h {n} m",
+    "{n} j {n} m"
+  ],
+  "سجّل حضورك أوّلًا": [
+    "Check in first",
+    "Daftar masuk dahulu"
+  ],
+  "انصرفتَ اليوم بالفعل": [
+    "You already checked out today",
+    "Anda sudah mendaftar keluar hari ini"
+  ],
+  "انصراف": [
+    "Check-out",
+    "Daftar keluar"
+  ],
+  "إضافة رد": [
+    "Add a run",
+    "Tambah trip"
+  ],
+  "إضافة الرد": [
+    "Add run",
+    "Tambah trip"
+  ],
+  "رَدٌّ جديد": [
+    "New run",
+    "Trip baharu"
+  ],
+  "بدء الرد": [
+    "Start the run",
+    "Mulakan trip"
+  ],
+  "إنهاء الرد": [
+    "End run",
+    "Tamat trip"
+  ],
+  "متوسّطُ الرَّدّ": [
+    "Average run",
+    "Purata trip"
+  ],
+  "ردودُ اليوم": [
+    "Today’s runs",
+    "Trip hari ini"
+  ],
+  "ردودٌ وصلت": [
+    "Runs arrived",
+    "Trip tiba"
+  ],
+  "لم تبدأ ردودَ اليوم": [
+    "You haven’t started today’s runs",
+    "Anda belum mulakan trip hari ini"
+  ],
+  "أنهيتَ ردودَك حتّى الآن": [
+    "You’ve finished your runs so far",
+    "Anda telah selesaikan trip setakat ini"
+  ],
+  "أضِف رَدًّا حين تركب الحافلة.": [
+    "Add a run when you board the bus.",
+    "Tambah trip apabila anda menaiki bas."
+  ],
+  "أضِف الرَّدَّ {n} حين تركب الحافلةَ التالية.": [
+    "Add run {n} when you board the next bus.",
+    "Tambah trip {n} apabila anda menaiki bas seterusnya."
+  ],
+  "أنهِ الرَّدَّ المفتوحَ أوّلًا": [
+    "Finish the open run first",
+    "Tamatkan trip yang terbuka dahulu"
+  ],
+  "أُضيف الرَّدُّ {n} — {n} حاجًّا": [
+    "Run {n} added — {n} pilgrims",
+    "Trip {n} ditambah — {n} jemaah"
+  ],
+  "حُذف الرَّدّ": [
+    "Run deleted",
+    "Trip dipadam"
+  ],
+  "بدأ الرَّدُّ — وسُجّلت لقطةُ الموقع": [
+    "Run started — location captured",
+    "Trip bermula — lokasi direkod"
+  ],
+  "بدأ الرَّدُّ — وتعذّرت لقطةُ الموقع": [
+    "Run started — location unavailable",
+    "Trip bermula — lokasi tidak tersedia"
+  ],
+  "بدأ الرَّدُّ — لا يُعدَّل": [
+    "The run has started — it cannot be edited",
+    "Trip telah bermula — tidak boleh disunting"
+  ],
+  "بدأ الرَّدُّ — لا يُحذف": [
+    "The run has started — it cannot be deleted",
+    "Trip telah bermula — tidak boleh dipadam"
+  ],
+  "جارٍ تأكيد الوصول…": [
+    "Confirming arrival…",
+    "Mengesahkan ketibaan…"
+  ],
+  "وصل رَدّ": [
+    "Run arrived",
+    "Trip tiba"
+  ],
+  "لم يبدأ": [
+    "Not started",
+    "Belum bermula"
+  ],
+  "{n} دقيقة تقديرًا": [
+    "about {n} minutes",
+    "lebih kurang {n} minit"
+  ],
+  "عدد الحجّاج على متن الحافلة": [
+    "Pilgrims on board the bus",
+    "Jemaah dalam bas"
+  ],
+  "مثال: {n}": [
+    "Example: {n}",
+    "Contoh: {n}"
+  ],
+  "العدد أكبر من سعة الحافلة": [
+    "The count exceeds the bus capacity",
+    "Jumlah melebihi kapasiti bas"
+  ],
+  "المزيد": [
+    "More",
+    "Lagi"
+  ],
+  "الإعدادات": [
+    "Settings",
+    "Tetapan"
+  ],
+  "الملف الشخصي": [
+    "Profile",
+    "Profil"
+  ],
+  "شاشة التحكم": [
+    "Control screen",
+    "Skrin kawalan"
+  ],
+  "تسجيل الخروج": [
+    "Sign out",
+    "Log keluar"
+  ],
+  "موقعي": [
+    "My location",
+    "Lokasi saya"
+  ],
+  "البلاغات": [
+    "Reports",
+    "Laporan"
+  ],
+  "التحضير": [
+    "Check-in",
+    "Daftar"
+  ],
+  "الردود": [
+    "Runs",
+    "Trip"
+  ],
+  "الدليل": [
+    "Guide",
+    "Panduan"
+  ],
+  "الصور": [
+    "Photos",
+    "Foto"
+  ],
+  "الملف أكبر من {n}٫{n} ميغابايت": [
+    "The file is larger than {n}.{n} MB",
+    "Fail melebihi {n}.{n} MB"
+  ],
+  "حضرتَ ٦:٠٦ ص": [
+    "Checked in 6:06 am",
+    "Mendaftar masuk 6:06 PG"
+  ],
+  "انصرفتَ ٢:٤١ م": [
+    "Checked out 2:41 pm",
+    "Mendaftar keluar 2:41 PTG"
+  ],
+  "سُجّل حضورك ٦:٠٦ ص": [
+    "Check-in recorded 6:06 am",
+    "Pendaftaran masuk direkod 6:06 PG"
+  ],
+  "سُجّل انصرافك ٢:٤١ م": [
+    "Check-out recorded 2:41 pm",
+    "Pendaftaran keluar direkod 2:41 PTG"
+  ]
+}

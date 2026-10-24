@@ -1,5 +1,6 @@
+app/_*.html
+app/ph-*.png
+app/*.log
 node_modules/
-*.crdownload
-deploy/
+app/phone-*.html
 app/probe-*.html
-app/*.tmp

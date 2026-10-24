@@ -7,14 +7,25 @@ const SCREENS = {
   tickets: screenTickets, ticket: screenTicket, desk: screenDesk, report: screenReport,
   rating: screenRating, taskrating: screenTaskRating,
   notifs: screenNotifs, pilgrims: screenPilgrims, muhsens: screenMuhsens,
-  profile: screenProfile, more: screenMore, calendar: screenCalendar, admin: screenAdmin,
-  album: screenAlbum, photo: screenPhoto, doc: screenDoc, guide: screenGuide, daily: screenDaily, rides: screenRides
+  profile: screenProfile, calendar: screenCalendar, admin: screenAdmin,
+  album: screenAlbum, photo: screenPhoto, doc: screenDoc, guide: screenGuide,
+  daily: screenDaily, rides: screenRides, settings: screenSettings
 };
+
+/* وجهاتٌ لا تخصّ دورَ الداخل: مَن بلغها رُدَّ إلى رئيسيّته.
+   فالليدرُ لا يملك «طلباتي» ولا «الردود»، والمحسنُ لا يملك
+   مركزَ الطلبات ولا تسلسلَ الإجراءات ولا قائمةَ المحسنين. */
+const roleOut = () => isLeader()
+  ? ['requests', 'rides']
+  : ['lreq', 'timeline', 'muhsens'];
 
 function render() {
   if (typeof repAutoEscalate === 'function') repAutoEscalate();
   if (!S.session) S.route = { n: 'login' };
   if (S.session) { autoTick(); S.tasks.forEach(recomputeStatus); }
+  /* وجهةٌ لا تخصّ دورَه: تُردّ إلى رئيسيّته بلا شاشةٍ فارغة */
+  if (S.session && roleOut().indexOf(S.route.n) >= 0)
+    S.route = { n: isLeader() ? 'home' : 'mhome' };
   const n = S.route.n;
   const fn = SCREENS[n] || (isLeader() ? screenLeaderHome : screenMuhsenHome);
   const el = document.getElementById('screen');
@@ -38,7 +49,10 @@ function render() {
     }
   }
   if (pushHTML) html = html.replace('<div class="view">', '<div class="view">' + pushHTML);
-  if (S.sheet) html += '<div class="scrim" data-a="close"></div><div class="sheet">' + S.sheet + '</div>';
+  /* قائمةُ «المزيد» أزرارٌ عائمةٌ لا لوحٌ سفليّ، فتُرسم بلا غلافٍ
+     يحصرها — ولو لُفّت في .sheet لاختفت داخل صندوقه. */
+  if (S.sheet) html += '<div class="scrim' + (S.sheetBare ? ' soft' : '') + '" data-a="close"></div>' +
+    (S.sheetBare ? S.sheet : '<div class="sheet">' + S.sheet + '</div>');
   if (S.toast) html += '<div class="toast">' + icon(S.toast.kind === 'r' ? 'i-warn' : 'i-checkc', 's18') +
     '<span class="sp">' + E(S.toast.text) + '</span></div>';
 
@@ -81,74 +95,10 @@ function render() {
   }
 }
 
-/* ===== الشريط: الكتلة تتبدّل صفحةً واحدة ===== */
+/* الشريطُ لم يعد ينزلق: خمسةُ مواضعَ ثابتةٌ لا صفحتان. فسقط
+   السحبُ والعجلةُ والأسهمُ والنقاط، وسقطت معها علّةُ الإزاحة
+   الماديّة التي كانت تُخرج التبويباتِ من الشاشة في اللاتينيّة. */
 function centerActiveTab() {}
-
-function goTabPage(next) {
-  const nav = document.querySelector('.tabs'); if (!nav) return;
-  const pages = Number(nav.dataset.pages || 1);
-  const cur = Math.min(Math.max(S.tabPage || 0, 0), pages - 1);
-  const to = Math.min(Math.max(next, 0), pages - 1);
-  if (to === cur) return;
-  S.tabPage = to; S._tabAuto = null;
-  nav.querySelectorAll('.trail').forEach(t => { t.style.transform = 'translateX(' + (to * 100) + '%)'; });
-  nav.querySelectorAll('.dots button').forEach((d, i) => {
-    if (i === to) d.classList.add('on'); else d.classList.remove('on');
-  });
-  try { navigator.vibrate && navigator.vibrate(8); } catch (e) {}
-  save();
-}
-
-(function tabSwipe() {
-  let st = null;
-  const grab = t => {
-    const nav = t && t.closest ? t.closest('.tabs') : null;
-    if (!nav || t.closest('.home') || t.closest('.dots')) return null;
-    return nav;
-  };
-  function move(x) {
-    if (!st) return false;
-    const dx = x - st.x;
-    if (Math.abs(dx) < 26) return false;
-    st.moved = true;
-    goTabPage((S.tabPage || 0) + (dx > 0 ? 1 : -1));   /* الكتلة تتبع الإصبع */
-    const nav = st.nav; st = null;
-    nav.dataset.dragged = '1';
-    setTimeout(() => { delete nav.dataset.dragged; }, 140);
-    return true;
-  }
-  document.addEventListener('pointerdown', e => {
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
-    const nav = grab(e.target); if (!nav) return;
-    st = { nav, x: e.clientX, moved: false };
-  });
-  document.addEventListener('pointermove', e => { if (st) move(e.clientX); });
-  document.addEventListener('pointerup', () => { st = null; });
-  document.addEventListener('pointercancel', () => { st = null; });
-  document.addEventListener('touchstart', e => {
-    const nav = grab(e.target); if (!nav) return;
-    st = { nav, x: e.touches[0].clientX, moved: false };
-  }, { passive: true });
-  document.addEventListener('touchmove', e => {
-    if (!st) return;
-    if (move(e.touches[0].clientX) && e.cancelable) e.preventDefault();
-  }, { passive: false });
-  document.addEventListener('touchend', () => { st = null; });
-  let wl = 0;
-  document.addEventListener('wheel', e => {
-    const nav = e.target.closest && e.target.closest('.tabs'); if (!nav) return;
-    const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-    if (!d) return;
-    if (e.cancelable) e.preventDefault();
-    const t = Date.now(); if (t - wl < 320) return; wl = t;
-    goTabPage((S.tabPage || 0) + (d > 0 ? -1 : 1));
-  }, { passive: false });
-  document.addEventListener('keydown', e => {
-    if (!document.querySelector('.tabs')) return;
-    if (e.key === 'ArrowLeft') goTabPage((S.tabPage || 0) - 1);
-    else if (e.key === 'ArrowRight') goTabPage((S.tabPage || 0) + 1);
-  });
-})();
 
 /* ===== ملاءمة الشاشة ===== */
 (function fitScreen() {
@@ -192,37 +142,48 @@ document.addEventListener('click', ev => {
   const buzz = () => { try { navigator.vibrate && navigator.vibrate(18); } catch (e) {} };
 
   switch (a) {
-    case 'go': S.sheet = null; S.route = { n: b.dataset.n, id }; break;
-    case 'back': S.sheet = null; S.route = { n: isLeader() ? 'home' : 'mhome' }; break;
+    case 'go': S.sheet = null; S.sheetBare = false; S.route = { n: b.dataset.n, id }; break;
+    case 'back': S.sheet = null; S.sheetBare = false; S.route = { n: isLeader() ? 'home' : 'mhome' }; break;
     case 'lang': setLang(v); break;
-    case 'close': S.sheet = null; break;
+    case 'close': S.sheet = null; S.sheetBare = false; break;
     case 'dismiss': S.push = null; break;
     case 'seg': S.tab[b.dataset.k] = v; break;
     case 'fold': { S.open = S.open || {};
       const key = id + ':' + v; S.open[key] = !S.open[key]; break; }
-    case 'tabpage': goTabPage(Number(v)); return;
+    /* لوحُ المزيد — بقيّةُ الأبواب ومعها الإعدادات */
+    case 'moresheet': S.sheet = moreSheet(); S.sheetBare = true; break;
+    /* تخصيصُ الشريط: نقرُ وجهةٍ يُدخلها أو يُخرجها */
+    case 'tabpick': tabPick(v); break;
+    case 'tabreset': S.tabs = null; toast('أُعيد الشريطُ إلى ترتيبه الأوّل'); break;
     /* اختيار التصنيف يغلق القائمة فورًا ولا يعيد فتحها */
-    case 'pickbucket': S.tab.tasks = v; S.sheet = null;
+    case 'pickbucket': S.tab.tasks = v; S.sheet = null; S.sheetBare = false;
       if (S.route.n !== 'tasks') S.route = { n: 'tasks' };
       buzz(); break;
     case 'psearch': return;
 
-    case 'role': S.loginRole = b.dataset.r; break;
+    /* الدخول: البحثُ بالاسم، ومن اختار اسمًا من غير نسخته نُقل إلى رابطها */
+    /* ---------- الدخول ---------- */
+    case 'nosubmit': return;                  /* النموذجُ لا يُرسَل */
+    case 'loginq':   return;                  /* الكتابةُ يلتقطها LIVEQ */
+    case 'loginopen': S.loginOpen = !S.loginOpen; S.loginQ = ''; break;
+    case 'loginsel': S.loginId = id; S.loginOpen = false; S.loginQ = ''; break;
     case 'login': { const u = userById(id); S.session = { id: u.id, at: Date.now() };
       S.route = { n: u.role === 'leader' ? 'home' : 'mhome' };
       toast('مرحبًا ' + u.name, 'g'); buzz();
       setTimeout(function () { if (maybeAskPush()) render(); }, 1400);
       break; }
-    case 'logout': S.session = null; S.route = { n: 'login' }; S.sheet = null; break;
+    case 'logout': S.session = null; S.route = { n: 'login' }; S.sheet = null; S.sheetBare = false; break;
 
-    /* ---------- الردود ---------- */
-    case 'rdstart':   rideStart(id); return;
-    case 'rdpax':     ridePaxSet(id); return;
-    case 'rdpaxedit': { const r = (S.rides || []).find(x => x.id === id);
-                        if (r) { r.pax = null; save(); render(); } return; }
-    case 'rdend':     rideEnd(id); return;
-    case 'place': S.sheet = placeSheet(); break;
-    case 'setplace': S.myPlace = v; S.sheet = null;
+    /* ---------- الردود: إضافةٌ ← عددٌ ← بدءٌ ← إنهاء ---------- */
+    case 'rdnew':   S.rdLeg = 0; S.rdEdit = null; S.sheetBare = false; S.sheet = rideSheet(); break;
+    case 'rdleg':   S.rdLeg = Number(v); S.sheetBare = false; S.sheet = rideSheet(); break;
+    case 'rdadd':   rideAdd(); return;
+    case 'rdedit':  rideEdit(id); break;
+    case 'rddel':   rideDel(id); return;
+    case 'rdstart': rideStart(id); return;
+    case 'rdend':   rideEnd(id); return;
+    case 'place': S.sheetBare = false; S.sheet = placeSheet(); break;
+    case 'setplace': S.myPlace = v; S.sheet = null; S.sheetBare = false;
       toast(v === 'site' ? 'موقعك داخل موقع المهمة'
         : v === 'hq' ? 'موقعك داخل المقر — التحضير اليومي متاح'
         : 'موقعك خارج النطاق — لا يُقبل تحضير', v === 'away' ? 'r' : 'g'); break;
@@ -243,30 +204,30 @@ document.addEventListener('click', ev => {
       if (mu.reserve) { toast('الاحتياط يُسنده الكنترول — ارفع طلب دعم', 'r'); break; }
       if (mu.leaderId !== t.leaderId) { toast('هذا المحسن ليس من فريقك', 'r'); break; }
       if (busyIn(uid_, t)) { toast('المحسن مرتبط بمهمة متداخلة', 'r'); break; }
-      if (sendRequest(t, uid_)) { S.sheet = null; toast('أُرسل الطلب إلى ' + userById(uid_).name); }
+      if (sendRequest(t, uid_)) { S.sheet = null; S.sheetBare = false; toast('أُرسل الطلب إلى ' + userById(uid_).name); }
       else toast('تعذّر الإرسال — الطلب قائم بالفعل', 'r');
       break; }
     case 'withdraw': { const t = T();
       if (!t || lockedForAssign(t)) { toast('التسكين مقفل', 'r'); break; }
       if (!canDecide(t, S.session.id)) { toast('ليست من صلاحيتك', 'r'); break; }
       if (!reqWindowOpen(t)) { toast(reqWindowWhy(t), 'r'); break; }
-      withdrawRequest(t, uid_); S.sheet = null; toast('سُحب الطلب'); break; }
+      withdrawRequest(t, uid_); S.sheet = null; S.sheetBare = false; toast('سُحب الطلب'); break; }
 
     case 'resp': { const t = T(); if (!t) break;
       if (v === '1') { respondRequest(t, S.session.id, true); buzz(); toast('قبلت التسكين'); }
       else { S.pendingExcuse = null;
-        S.sheet = reasonSheet('سبب رفض التسكين', t.title, 'data-a="doresp" data-id="' + id + '"',
+        S.sheetBare = false; S.sheet = reasonSheet('سبب رفض التسكين', t.title, 'data-a="doresp" data-id="' + id + '"',
           'مثال: مرتبط بمهمة أخرى', 'resp', id); }
       break; }
     case 'doresp': { const rr = reasonOr(val('txt'));
       respondRequest(T(), S.session.id, false, rr, S.pendingExcuse); S.pendingExcuse = null;
-      S.sheet = null; toast('رُفض الطلب وأُبلغ الليدر', 'r'); break; }
+      S.sheet = null; S.sheetBare = false; toast('رُفض الطلب وأُبلغ الليدر', 'r'); break; }
 
-    case 'deleg': S.delegKeep = true; S.sheet = delegSheet(T()); break;
-    case 'dkeep': S.delegKeep = v === '1'; S.sheet = delegSheet(taskById(S.route.id) || T()); break;
+    case 'deleg': S.delegKeep = true; S.sheetBare = false; S.sheet = delegSheet(T()); break;
+    case 'dkeep': S.delegKeep = v === '1'; S.sheetBare = false; S.sheet = delegSheet(taskById(S.route.id) || T()); break;
     case 'dsend': { const t = T() || taskById(S.route.id); if (!t) break;
-      if (orgOf(t).type !== 'شركة') { toast('الإسناد للشركات فقط', 'r'); S.sheet = null; break; }
-      sendDelegate(t, uid_, S.delegKeep !== false); S.sheet = null;
+      if (orgOf(t).type !== 'شركة') { toast('الإسناد للشركات فقط', 'r'); S.sheet = null; S.sheetBare = false; break; }
+      sendDelegate(t, uid_, S.delegKeep !== false); S.sheet = null; S.sheetBare = false;
       toast('أُرسل الإسناد إلى ' + userById(uid_).name); break; }
     case 'undeleg': { const t = T(); if (!t || !t.delegate) break;
       notify(t.delegate.muhsenId, 'i-xc', 'أُلغي التفويض', 'سُحبت منك قيادة «' + t.title + '».', { n:'requests' });
@@ -274,12 +235,12 @@ document.addEventListener('click', ev => {
     case 'rdeleg': { const t = T(); if (!t) break;
       if (v === '1') { respondDelegate(t, true); buzz(); toast('قبلت قيادة المهمة'); }
       else { S.pendingExcuse = null;
-        S.sheet = reasonSheet('سبب رفض التفويض', t.title, 'data-a="dordeleg" data-id="' + id + '"',
+        S.sheetBare = false; S.sheet = reasonSheet('سبب رفض التفويض', t.title, 'data-a="dordeleg" data-id="' + id + '"',
           'اكتب سببك', 'rdeleg', id); }
       break; }
     case 'dordeleg': { const rr = reasonOr(val('txt'));
       respondDelegate(T(), false, rr, S.pendingExcuse); S.pendingExcuse = null;
-      S.sheet = null; toast('رُفض التفويض', 'r'); break; }
+      S.sheet = null; S.sheetBare = false; toast('رُفض التفويض', 'r'); break; }
 
     case 'start': { const t = T();
       if (!canDecide(t, S.session.id)) { toast('القرار للمفوَّض على هذه المهمة', 'r'); break; }
@@ -288,11 +249,11 @@ document.addEventListener('click', ev => {
     case 'end': { const t = T();
       if (!t || t.status !== 'running') { toast('المهمة ليست جارية', 'r'); break; }
       if (!canDecide(t, S.session.id)) { toast('الإنهاء لصاحب القرار على المهمة', 'r'); break; }
-      S.sheet = endSheet(t); break; }
+      S.sheetBare = false; S.sheet = endSheet(t); break; }
     case 'doend': { const t = T();
       if (!t || !canDecide(t, S.session.id)) { toast('القرار للمفوَّض على هذه المهمة', 'r'); break; }
       if (t.status !== 'running') { toast('المهمة ليست جارية', 'r'); break; }
-      endTask(t, S.session.id); S.sheet = null; buzz();
+      endTask(t, S.session.id); S.sheet = null; S.sheetBare = false; buzz();
       toast('أُغلقت المهمة — التقييم ' + AR(avgRating(t.rating)) + ' من ٥'); break; }
     case 'sub': { const t = T(); if (!t) break;
       if (t.status !== 'running') { toast('المهمة لم تبدأ بعد', 'r'); break; }
@@ -301,16 +262,16 @@ document.addEventListener('click', ev => {
       if (!s) break;
       toggleSub(t, s, S.session.id); buzz();
       /* اكتملت الفرعية كلها: تأكيد واحد لا خيار فيه إلا الإغلاق */
-      if (t.subs.every(x => x.done)) S.sheet = allDoneSheet(t);
+      if (t.subs.every(x => x.done)) S.sheetBare = false; S.sheet = allDoneSheet(t);
       break; }
     case 'note': if (!T()) break;
-      S.sheet = textSheet('إضافة ملاحظة', 'تُسجَّل على المهمة',
+      S.sheetBare = false; S.sheet = textSheet('إضافة ملاحظة', 'تُسجَّل على المهمة',
       'data-a="donote" data-id="' + id + '"', '', 'اكتب ملاحظتك'); break;
     case 'donote': { const t = T(), x = val('txt');
-      if (!t) { S.sheet = null; break; }
+      if (!t) { S.sheet = null; S.sheetBare = false; break; }
       if (x && x.length < 4) { toast('الملاحظة قصيرة', 'r'); break; }
       if (x) { note(t, x + ' — ' + me().name, 'user'); hist(t, 'أضاف ' + me().name + ' ملاحظة'); toast('أُضيفت الملاحظة'); }
-      S.sheet = null; break; }
+      S.sheet = null; S.sheetBare = false; break; }
 
     case 'rerate': { const t = T(); rateTask(t); toast('أُعيد الاحتساب — ' + AR(avgRating(t.rating)) + ' من ٥'); break; }
     case 'rateall': { let n2 = 0; S.tasks.filter(t => t.status === 'done').forEach(t => { rateTask(t); n2++; });
@@ -319,43 +280,43 @@ document.addEventListener('click', ev => {
       if (!t) { toast('لا توجد مهمة جارية', 'r'); break; }
       endTask(t, ownerOf(t)); toast('أُنهيت «' + t.title + '» — التقييم ' + AR(avgRating(t.rating))); break; }
 
-    case 'newticket': S.sheet = ticketSheet(id); break;
+    case 'newticket': S.sheetBare = false; S.sheet = ticketSheet(id); break;
     case 'kclosecheck': break;
     case 'sendticket': { const ti = val('kti'); if (!ti) { toast('العنوان مطلوب', 'r'); break; }
       const k = addTicket(S.session.id, ti, val('kb'), val('kc'), val('kp'), val('kt2') || null);
-      S.sheet = null; toast('رُفعت التذكرة ' + k.no); break; }
-    case 'kreply': S.sheet = textSheet('رد على التذكرة', K().title, 'data-a="dokreply" data-id="' + id + '"', '', 'اكتب ردك'); break;
+      S.sheet = null; S.sheetBare = false; toast('رُفعت التذكرة ' + k.no); break; }
+    case 'kreply': S.sheetBare = false; S.sheet = textSheet('رد على التذكرة', K().title, 'data-a="dokreply" data-id="' + id + '"', '', 'اكتب ردك'); break;
     case 'dokreply': { const x = val('txt'); if (x) { ticketReply(K(), S.session.id, x, 'قيد المعالجة'); toast('أُرسل الرد'); }
-      S.sheet = null; break; }
-    case 'kassign': S.sheet = ticketAssignSheet(K()); break;
-    case 'doassign': ticketAssign(K(), uid_, S.session.id); S.sheet = null;
+      S.sheet = null; S.sheetBare = false; break; }
+    case 'kassign': S.sheetBare = false; S.sheet = ticketAssignSheet(K()); break;
+    case 'doassign': ticketAssign(K(), uid_, S.session.id); S.sheet = null; S.sheetBare = false;
       toast('أُسندت إلى ' + userById(uid_).name); break;
-    case 'kstate': S.sheet = ticketStateSheet(K()); break;
-    case 'dostate': ticketState(K(), S.session.id, v); S.sheet = null; toast('صارت الحالة: ' + v); break;
-    case 'kesc': S.sheet = textSheet('تصعيد للّيدر', K().title, 'data-a="dokesc" data-id="' + id + '"', '', 'سبب التصعيد'); break;
-    case 'dokesc': ticketEscalate(K(), S.session.id, val('txt')); S.sheet = null; toast('صُعّدت التذكرة'); break;
+    case 'kstate': S.sheetBare = false; S.sheet = ticketStateSheet(K()); break;
+    case 'dostate': ticketState(K(), S.session.id, v); S.sheet = null; S.sheetBare = false; toast('صارت الحالة: ' + v); break;
+    case 'kesc': S.sheetBare = false; S.sheet = textSheet('تصعيد للّيدر', K().title, 'data-a="dokesc" data-id="' + id + '"', '', 'سبب التصعيد'); break;
+    case 'dokesc': ticketEscalate(K(), S.session.id, val('txt')); S.sheet = null; S.sheetBare = false; toast('صُعّدت التذكرة'); break;
     case 'kclose': ticketState(K(), S.session.id, 'مغلقة'); toast('أُغلقت التذكرة'); break;
     case 'kreopen': ticketState(K(), S.session.id, 'مفتوحة'); toast('أُعيد فتح التذكرة'); break;
 
     case 'pflag': { const kt = b.dataset.kt; const p = pilgrimsOf(kt).find(x => x.id === b.dataset.p);
-      S.sheet = flagSheet(kt, p); break; }
+      S.sheetBare = false; S.sheet = flagSheet(kt, p); break; }
     case 'doflag': { const kt = b.dataset.kt; const p = pilgrimsOf(kt).find(x => x.id === b.dataset.p);
       p.flag = v === 'بلا ملاحظة' ? null : v;
       if (p.flag) addTicket(S.session.id, 'بلاغ عن ' + p.name + ' — ' + v,
         'الحاج ' + p.name + ' · غرفة ' + p.room + ' · ' + p.pp, 'حالة صحية', 'عاجلة', null, p.id);
-      S.sheet = null; toast(p.flag ? 'سُجّل البلاغ كتذكرة' : 'أُزيلت الملاحظة'); break; }
-    case 'pnote': S.sheet = textSheet('ملاحظة عن حاج', '',
+      S.sheet = null; S.sheetBare = false; toast(p.flag ? 'سُجّل البلاغ كتذكرة' : 'أُزيلت الملاحظة'); break; }
+    case 'pnote': S.sheetBare = false; S.sheet = textSheet('ملاحظة عن حاج', '',
       'data-a="dopnote" data-kt="' + b.dataset.kt + '" data-p="' + b.dataset.p + '"', '', 'اكتب ملاحظتك'); break;
     case 'dopnote': { const kt = b.dataset.kt; const p = pilgrimsOf(kt).find(x => x.id === b.dataset.p);
       const x = val('txt');
       if (x) { p.note = x; addTicket(S.session.id, 'ملاحظة عن ' + p.name, x, 'ملاحظة تشغيلية', 'عادية', null, p.id);
         toast('سُجّلت الملاحظة كتذكرة'); }
-      S.sheet = null; break; }
+      S.sheet = null; S.sheetBare = false; break; }
 
     case 'opennotif': {
       const n2 = S.notifs.find(x => x.id === id);
       if (!n2) break;
-      n2.read = true; S.push = null; S.sheet = null;
+      n2.read = true; S.push = null; S.sheet = null; S.sheetBare = false;
       const rt = n2.route && SCREENS[n2.route.n] ? n2.route : null;
       /* وجهة صالحة أو الرئيسية — ولا يبقى المستخدم عالقًا في القائمة */
       const okId = !rt || !rt.id || taskById(rt.id) || S.tickets.some(k => k.id === rt.id) ||
@@ -367,7 +328,7 @@ document.addEventListener('click', ev => {
 
     case 'week': S.calWeek = v === '0' ? 0 : (S.calWeek || 0) + Number(v); break;
     case 'calday': S.calDay = Number(v); break;
-    case 'addrem': S.sheet = reminderSheet(); break;
+    case 'addrem': S.sheetBare = false; S.sheet = reminderSheet(); break;
     case 'dorem': {
       const d = val('qd'), tm = val('qtime'), tx = val('qtxt');
       if (!d || !tm) { toast('اختر التاريخ والوقت', 'r'); break; }
@@ -376,26 +337,26 @@ document.addEventListener('click', ev => {
       S.reminders.push({ id: uid('R'), who: S.session.id, at, text: tx || 'تذكير', fired: false });
       S.calDay = dayStart(at);
       S.calWeek = Math.round((dayStart(at) - dayStart(now())) / (7 * DAY));
-      S.sheet = null; toast('حُفظ التذكير ' + hijri(at) + ' ' + t12(at)); break;
+      S.sheet = null; S.sheetBare = false; toast('حُفظ التذكير ' + hijri(at) + ' ' + t12(at)); break;
     }
     case 'delrem': S.reminders = S.reminders.filter(r => r.id !== id); toast('حُذف التذكير'); break;
 
-    case 'assignto': S.sheet = assignToSheet(uid_); break;
+    case 'assignto': S.sheetBare = false; S.sheet = assignToSheet(uid_); break;
 
     case 'clock': S.clockOffset = v === '0' ? 0 : (S.clockOffset || 0) + Number(v);
       toast('الوقت الآن ' + t12(now())); break;
     case 'shift': { const t = T(), d = Number(v) * MIN; t.start += d; t.end += d; t._f = {};
       if (t.status === 'running' && t.start > now()) { t.status = 'assigned'; t.startedAt = null; t.autoStarted = false; }
       hist(t, 'عُدّل موعد المهمة'); toast('عُدّل الموعد'); break; }
-    case 'edittask': S.sheet = editTaskSheet(T()); break;
+    case 'edittask': S.sheetBare = false; S.sheet = editTaskSheet(T()); break;
     case 'savetask': { const t = T(); const d = val('ed'), tm = val('et'), h = Number(val('eh')) || t.durH;
       if (d && tm) { const nd = new Date(d + 'T' + tm).getTime();
         if (isNaN(nd)) { toast('تاريخ غير صالح', 'r'); break; }
         t.start = nd; t.durH = h; t.end = t.start + h * HR; t._f = {};
         if (t.start > now() && t.status === 'running') { t.status = 'assigned'; t.startedAt = null; t.autoStarted = false; }
         hist(t, 'عُدّلت المهمة من شاشة التحكم'); toast('حُفظت التعديلات'); }
-      S.sheet = null; break; }
-    case 'addtask': S.sheet = addTaskSheet(); break;
+      S.sheet = null; S.sheetBare = false; break; }
+    case 'addtask': S.sheetBare = false; S.sheet = addTaskSheet(); break;
     case 'createtask': {
       const k = val('ak'), lid = val('al'), d = val('ad'), tm = val('at2');
       const L = userById(lid);
@@ -404,7 +365,7 @@ document.addEventListener('click', ev => {
       const nt = newTask(L, k, start, 1900 + S.tasks.length);
       S.tasks.push(nt);
       notify(L.id, 'i-tasks', 'مهمة جديدة', '«' + nt.title + '» — ' + hijri(nt.start) + '. سكّن محسنيك.', { n:'assign', id: nt.id });
-      S.sheet = null; toast('أُضيفت المهمة'); break;
+      S.sheet = null; S.sheetBare = false; toast('أُضيفت المهمة'); break;
     }
     /* ===== الصور — التصوير من داخل التطبيق ===== */
     case 'shoot': {
@@ -425,7 +386,7 @@ document.addEventListener('click', ev => {
       S.camCtx = { mode: 'excuse', kind: b.dataset.k, taskId: id || null, extraId: uid_ || null };
       S.sheetDraft = val('txt');
       openCamera(S.camCtx); return; }
-    case 'dropexcuse': { S.pendingExcuse = null; const sh = reopenReason(); if (sh) S.sheet = sh; break; }
+    case 'dropexcuse': { S.pendingExcuse = null; const sh = reopenReason(); if (sh) S.sheetBare = false; S.sheet = sh; break; }
     case 'savephoto': {
       const ti = val('ftitle'), de = val('fdesc');
       if (!S.pendingPhoto) { toast('لا توجد صورة', 'r'); break; }
@@ -433,10 +394,10 @@ document.addEventListener('click', ev => {
       if (/^[0-9٠-٩s.-_]+$/.test(ti)) { toast('العنوان يجب أن يصف حدثًا لا رقمًا', 'r'); break; }
       if (de && de.length < 8) { toast('الوصف قصير — اشرح ما توثّقه الصورة', 'r'); break; }
       addPhoto(S.pendingPhoto, ti, de, S.camCtx || {});
-      S.pendingPhoto = null; S.camCtx = null; S.sheet = null; buzz();
+      S.pendingPhoto = null; S.camCtx = null; S.sheet = null; S.sheetBare = false; buzz();
       toast('حُفظت الصورة وارتبطت بالمهمة'); break; }
-    case 'cancelshot': S.pendingPhoto = null; S.camCtx = null; S.sheet = null; break;
-    case 'viewphoto': S.sheet = null; S.route = { n: 'photo', id }; break;
+    case 'cancelshot': S.pendingPhoto = null; S.camCtx = null; S.sheet = null; S.sheetBare = false; break;
+    case 'viewphoto': S.sheet = null; S.sheetBare = false; S.route = { n: 'photo', id }; break;
     case 'delphoto': {
       const p = photoById(id);
       if (!p) break;
@@ -446,9 +407,9 @@ document.addEventListener('click', ev => {
       S.route = back ? { n: 'task', id: back } : { n: 'album' }; break; }
     case 'picksub': { const t = T(); if (!t) break;
       if (!canShoot()) { toast('التصوير من صلاحية الليدر', 'r'); break; }
-      S.sheet = subPickSheet(t); break; }
+      S.sheetBare = false; S.sheet = subPickSheet(t); break; }
     /* ===== تصنيف المهام ===== */
-    case 'bucketmenu': S.sheet = bucketSheet(); break;
+    case 'bucketmenu': S.sheetBare = false; S.sheet = bucketSheet(); break;
 
     /* ===== الاستبعاد: استبدال أو عدم حاجة ===== */
     case 'exclude': { const t = T();
@@ -456,9 +417,9 @@ document.addEventListener('click', ev => {
       if (lockedForAssign(t)) { toast('التسكين مقفل', 'r'); break; }
       if (!reqWindowOpen(t)) { toast(reqWindowWhy(t), 'r'); break; }
       S.exKind = 'swap'; S.exTo = null; S.exFor = uid_;
-      S.sheet = excludeSheet(t, uid_); break; }
-    case 'exkind': S.exKind = v; S.sheet = excludeSheet(taskById(S.route.id), S.exFor); break;
-    case 'exto': S.exTo = v; S.sheet = excludeSheet(taskById(S.route.id), S.exFor); break;
+      S.sheetBare = false; S.sheet = excludeSheet(t, uid_); break; }
+    case 'exkind': S.exKind = v; S.sheetBare = false; S.sheet = excludeSheet(taskById(S.route.id), S.exFor); break;
+    case 'exto': S.exTo = v; S.sheetBare = false; S.sheet = excludeSheet(taskById(S.route.id), S.exFor); break;
     case 'doexclude': { const t = T();
       if (!t || !canAssign(t, S.session.id)) { toast('التغيير في التسكين من صلاحية الليدر', 'r'); break; }
       if (!t || !canDecide(t, S.session.id)) { toast('ليست من صلاحيتك', 'r'); break; }
@@ -473,38 +434,38 @@ document.addEventListener('click', ev => {
         if (!excludeNoNeed(t, uid_, why)) { toast('تعذّر رفع الطلب', 'r'); break; }
         toast('رُفع طلب الاستبعاد — ينتظر رده');
       }
-      S.sheet = null; S.exFor = null; buzz(); break; }
+      S.sheet = null; S.sheetBare = false; S.exFor = null; buzz(); break; }
     case 'rex': { const t = T(); if (!t) break;
       if (v === '1') {
         if (!respondExclude(t, S.session.id, true)) { toast('تعذّر تنفيذ الطلب', 'r'); break; }
         buzz(); toast('وافقت على الاستبعاد', 'r');
-      } else S.sheet = textSheet('رفض الاستبعاد', t.title,
+      } else S.sheetBare = false; S.sheet = textSheet('رفض الاستبعاد', t.title,
         'data-a="dorex" data-id="' + id + '"', '', 'سبب الرفض — اختياري');
       break; }
     case 'dorex': {
       if (!respondExclude(T(), S.session.id, false, val('txt'))) { toast('تعذّر تنفيذ الطلب', 'r'); break; }
-      S.sheet = null; buzz(); toast('رفضت الاستبعاد — تبقى على المهمة'); break; }
+      S.sheet = null; S.sheetBare = false; buzz(); toast('رفضت الاستبعاد — تبقى على المهمة'); break; }
     case 'rrepl': { const t = T(); if (!t) break;
       if (v === '1') { respondReplace(t, S.session.id, true); buzz(); toast('قبلت الحلول مكان زميلك'); }
-      else S.sheet = textSheet('اعتذار عن الحلول', t.title,
+      else S.sheetBare = false; S.sheet = textSheet('اعتذار عن الحلول', t.title,
         'data-a="dorrepl" data-id="' + id + '"', '', 'سبب الاعتذار');
       break; }
     case 'dorrepl': { const rr = reasonOr(val('txt'));
-      respondReplace(T(), S.session.id, false, rr); S.sheet = null;
+      respondReplace(T(), S.session.id, false, rr); S.sheet = null; S.sheetBare = false;
       toast('اعتذرت — يبقى زميلك على المهمة', 'r'); break; }
 
     /* ===== طلب دعم من الكنترول ===== */
     case 'supportsheet': { const t = T(); if (!t) break;
       if (!canAssign(t, S.session.id)) { toast('طلب الدعم من صلاحية الليدر', 'r'); break; }
       if (!supportOpen(t)) { toast(supportWhy(t), 'r'); break; }
-      S.spCount = 1; S.sheet = supportSheet(t); break; }
-    case 'spcount': S.spCount = Number(v); S.sheet = supportSheet(taskById(S.route.id)); break;
+      S.spCount = 1; S.sheetBare = false; S.sheet = supportSheet(t); break; }
+    case 'spcount': S.spCount = Number(v); S.sheetBare = false; S.sheet = supportSheet(taskById(S.route.id)); break;
     case 'dosupport': { const t = T();
       if (!t || !canAssign(t, S.session.id)) { toast('طلب الدعم من صلاحية الليدر', 'r'); break; }
       if (!supportOpen(t)) { toast(supportWhy(t), 'r'); break; }
       const why = reasonOr(val('spwhy'));
       if (openSupport(t.id).length) { toast('لديك طلب دعم قائم على هذه المهمة', 'r'); break; }
-      requestSupport(t, S.spCount || 1, why); S.sheet = null; buzz();
+      requestSupport(t, S.spCount || 1, why); S.sheet = null; S.sheetBare = false; buzz();
       toast('رُفع طلب الدعم إلى الكنترول'); break; }
     case 'ctrlsupport': { const s = (S.support || []).find(x => x.id === id);
       if (!s || s.state !== 'pending') break;
@@ -517,7 +478,7 @@ document.addEventListener('click', ev => {
     case 'askwd': { const t = T(); if (!t) break;
       if (lockedForAssign(t)) { toast('المهمة بدأت — لا انسحاب بعد بدايتها', 'r'); break; }
       if (!reqWindowOpen(t)) { toast(reqWindowWhy(t), 'r'); break; }
-      S.sheet = textSheet('طلب الانسحاب من المهمة',
+      S.sheetBare = false; S.sheet = textSheet('طلب الانسحاب من المهمة',
         'اكتب سببًا إن شئت — ولا ينفذ الانسحاب إلا بموافقة الليدر',
         'data-a="doaskwd" data-id="' + id + '"', '', 'سبب الانسحاب'); break; }
     case 'doaskwd': { const rr = reasonOr(val('txt'));
@@ -525,28 +486,28 @@ document.addEventListener('click', ev => {
       if (lockedForAssign(t)) { toast('المهمة بدأت — لا انسحاب بعد البدء', 'r'); break; }
       if (!reqWindowOpen(t)) { toast(reqWindowWhy(t), 'r'); break; }
       if (!requestWithdraw(t, S.session.id, rr)) { toast('تعذّر إرسال الطلب', 'r'); break; }
-      S.sheet = null; buzz(); toast('أُرسل طلب الانسحاب إلى ليدرك'); break; }
+      S.sheet = null; S.sheetBare = false; buzz(); toast('أُرسل طلب الانسحاب إلى ليدرك'); break; }
     case 'wdok': { const t = T();
       if (!t || !canDecide(t, S.session.id)) { toast('ليست من صلاحيتك', 'r'); break; }
       respondWithdraw(t, uid_, true); buzz(); toast('اعتُمد الانسحاب'); break; }
     case 'wdno': { const t = T();
       if (!t || !canDecide(t, S.session.id)) { toast('ليست من صلاحيتك', 'r'); break; }
-      S.sheet = textSheet('رفض طلب الانسحاب', userById(uid_).name,
+      S.sheetBare = false; S.sheet = textSheet('رفض طلب الانسحاب', userById(uid_).name,
         'data-a="dowdno" data-id="' + id + '" data-u="' + uid_ + '"', '', 'سبب الرفض'); break; }
     case 'dowdno': { const rr = reasonOr(val('txt'));
-      respondWithdraw(T(), uid_, false, rr); S.sheet = null; toast('رُفض طلب الانسحاب', 'r'); break; }
+      respondWithdraw(T(), uid_, false, rr); S.sheet = null; S.sheetBare = false; toast('رُفض طلب الانسحاب', 'r'); break; }
 
     /* ===== البلاغات ===== */
     case 'report':
       /* المهمّة رابطٌ اختياريّ لا شرط — والنافذةُ مستقلّةٌ عنها */
       S.rTask = id || null;
       S.rp = { step:1, loc:null, sec:null, escId:null, taskId:id || null };
-      S.sheet = escSheet(); break;
-    case 'rploc':  S.rp.loc = v; S.rp.sec = null; S.rp.escId = null; S.sheet = escSheet(); break;
-    case 'rpsec':  S.rp.sec = v; S.rp.escId = null; S.sheet = escSheet(); break;
-    case 'rpcase': S.rp.escId = v; S.sheet = escSheet(); break;
-    case 'rpshot': S.rp.shot = v; S.sheet = escSheet(); break;
-    case 'rpback': S.rp.step = Math.max(1, (S.rp.step || 1) - 1); S.sheet = escSheet(); break;
+      S.sheetBare = false; S.sheet = escSheet(); break;
+    case 'rploc':  S.rp.loc = v; S.rp.sec = null; S.rp.escId = null; S.sheetBare = false; S.sheet = escSheet(); break;
+    case 'rpsec':  S.rp.sec = v; S.rp.escId = null; S.sheetBare = false; S.sheet = escSheet(); break;
+    case 'rpcase': S.rp.escId = v; S.sheetBare = false; S.sheet = escSheet(); break;
+    case 'rpshot': S.rp.shot = v; S.sheetBare = false; S.sheet = escSheet(); break;
+    case 'rpback': S.rp.step = Math.max(1, (S.rp.step || 1) - 1); S.sheetBare = false; S.sheet = escSheet(); break;
     case 'rpnext': {
       const d = S.rp || {};
       if (d.step === 1 && !d.loc)   { toast('اختر الموقع', 'r'); break; }
@@ -554,10 +515,10 @@ document.addEventListener('click', ev => {
       if (d.step === 3 && !d.escId) { toast('اختر الحالة', 'r'); break; }
       /* فرعٌ بلا حالاتٍ مسجّلة: يُقفز عنه بدل أن يُسدّ الطريق */
       if (d.step === 2 && !escForMine(d.loc, d.sec).length) {
-        d.step = 4; S.sheet = escSheet(); break;
+        d.step = 4; S.sheetBare = false; S.sheet = escSheet(); break;
       }
       d.step = Math.min(4, (d.step || 1) + 1);
-      S.sheet = escSheet(); break;
+      S.sheetBare = false; S.sheet = escSheet(); break;
     }
     case 'rpsend': {
       const d = S.rp || {};
@@ -580,12 +541,12 @@ document.addEventListener('click', ev => {
       r.sla = e ? e.sla : null;
       r.escTo = e ? e.escTo : null;
       r.ownerRole = e ? e.owner : null;
-      S.sheet = null; S.rp = null; S.rTask = null; S.tab.desk = 'rp'; buzz();
+      S.sheet = null; S.sheetBare = false; S.rp = null; S.rTask = null; S.tab.desk = 'rp'; buzz();
       toast(e && e.sla != null
         ? 'رُفع البلاغ — مهلةُ معالجته ' + slaAr(e.sla)
         : 'رُفع البلاغ'); break;
     }
-    case 'rcat': S.rCat = v; S.sheet = reportSheet(S.rTask || null); break;
+    case 'rcat': S.rCat = v; S.sheetBare = false; S.sheet = reportSheet(S.rTask || null); break;
     case 'sendreport': {
       const ti = val('rti'), bo = val('rb'), cat = val('rc') || S.rCat, tid = val('rt');
       if (ti.length < 4) { toast('اكتب عنوانًا واضحًا للبلاغ', 'r'); break; }
@@ -599,39 +560,45 @@ document.addEventListener('click', ev => {
       } else if (bo.length < 10) { toast('اشرح التفاصيل — سطر واحد لا يكفي', 'r'); break; }
       const to = (isLeader() || !me().leaderId) ? 'CONTROL' : me().leaderId;
       addReport(S.session.id, to, cat, ti, bo || (room ? 'طلب تعديل بيانات غرفة' : ''), tid, null, room);
-      S.sheet = null; S.rCat = null; S.tab.desk = 'rp'; buzz();
+      S.sheet = null; S.sheetBare = false; S.rCat = null; S.tab.desk = 'rp'; buzz();
       toast(room ? 'أُرسل الطلب إلى مشرف السكن' : 'رُفع البلاغ'); break; }
     case 'roomok': { const rp = reportById(id);
       if (!isLeader()) { toast('الاعتماد لمشرف السكن والكنترول', 'r'); break; }
       roomAdvance(rp, S.session.id, true); buzz();
       toast(rp.stage === 'done' ? 'حُدِّثت بيانات الغرفة' : 'اعتُمد وأُحيل للكنترول'); break; }
-    case 'roomno': S.sheet = textSheet('رفض تعديل الغرفة', reportById(id).title,
+    case 'roomno': S.sheetBare = false; S.sheet = textSheet('رفض تعديل الغرفة', reportById(id).title,
       'data-a="doroomno" data-id="' + id + '"', '', 'سبب الرفض'); break;
     case 'doroomno': { const rr = reasonOr(val('txt'));
-      roomAdvance(reportById(id), S.session.id, false, rr); S.sheet = null;
+      roomAdvance(reportById(id), S.session.id, false, rr); S.sheet = null; S.sheetBare = false;
       toast('رُفض التعديل', 'r'); break; }
-    case 'rreply': S.sheet = textSheet('رد على البلاغ', reportById(id).title,
+    case 'rreply': S.sheetBare = false; S.sheet = textSheet('رد على البلاغ', reportById(id).title,
       'data-a="dorreply" data-id="' + id + '"', '', 'اكتب ردك أو ملاحظتك'); break;
     case 'dorreply': { const x = val('txt');
       if (!x) { toast('اكتب الرد', 'r'); break; }
       reportReply(reportById(id), S.session.id, x, 'قيد المعالجة');
-      S.sheet = null; toast('أُرسل الرد'); break; }
-    case 'resc': S.sheet = textSheet('تصعيد إلى الكنترول', reportById(id).title,
+      S.sheet = null; S.sheetBare = false; toast('أُرسل الرد'); break; }
+    case 'resc': S.sheetBare = false; S.sheet = textSheet('تصعيد إلى الكنترول', reportById(id).title,
       'data-a="doresc" data-id="' + id + '"', '', 'سبب التصعيد (اختياري)'); break;
     case 'doresc': reportEscalate(reportById(id), S.session.id, val('txt'));
-      S.sheet = null; toast('صُعّد البلاغ إلى الكنترول'); break;
-    case 'rstate': S.sheet = reportStateSheet(reportById(id)); break;
+      S.sheet = null; S.sheetBare = false; toast('صُعّد البلاغ إلى الكنترول'); break;
+    case 'rstate': S.sheetBare = false; S.sheet = reportStateSheet(reportById(id)); break;
     case 'dorstate': reportSetStatus(reportById(id), S.session.id, v);
-      S.sheet = null; toast('صارت الحالة: ' + v); break;
+      S.sheet = null; S.sheetBare = false; toast('صارت الحالة: ' + v); break;
     case 'rclose': reportSetStatus(reportById(id), S.session.id, 'مغلق'); toast('أُغلق البلاغ'); break;
     case 'rreopen': reportSetStatus(reportById(id), S.session.id, 'قيد المعالجة'); toast('أُعيد فتح البلاغ'); break;
 
     /* ===== التحضير اليومي ===== */
     case 'checkin': {
       if (!canCheckIn(S.session.id)) { toast(checkInReason(), 'r'); break; }
-      checkIn(S.session.id); buzz(); toast('سُجّل تحضيرك ' + t12(now())); break; }
-    case 'swapreq': S.swapTo = null; S.sheet = swapSheet(); break;
-    case 'swapto': S.swapTo = v; S.sheet = swapSheet(); break;
+      checkIn(S.session.id); buzz(); toast('تم تسجيل الحضور ' + t12(now()), 'g'); break; }
+    case 'checkout': {
+      if (!canCheckOut(S.session.id)) {
+        toast(attendedToday(S.session.id) ? 'تم تسجيل الانصراف اليوم بالفعل' : 'سجّل الحضور أوّلًا', 'r'); break; }
+      const rec = dayRec(S.session.id, now());
+      checkOut(S.session.id); buzz();
+      toast('تم تسجيل الانصراف ' + t12(now()) + ' · مدّة الدوام ' + workedTxt(rec), 'g'); break; }
+    case 'swapreq': S.swapTo = null; S.sheetBare = false; S.sheet = swapSheet(); break;
+    case 'swapto': S.swapTo = v; S.sheetBare = false; S.sheet = swapSheet(); break;
     case 'dosendswap': {
       const to = S.swapTo || Object.keys(SHIFTS).find(k => k !== shiftOf(S.session.id));
       const rsn = reasonOr(val('swr')), dy = val('swd');
@@ -642,26 +609,26 @@ document.addEventListener('click', ev => {
       if ((S.swaps || []).some(x => x.from === S.session.id && x.state === 'pending'))
         { toast('لديك طلب قائم بانتظار الرد', 'r'); break; }
       addSwap(S.session.id, to, dts, rsn);
-      S.sheet = null; S.tab.dl = 'swap'; buzz(); toast('أُرسل الطلب إلى ليدرك'); break; }
+      S.sheet = null; S.sheetBare = false; S.tab.dl = 'swap'; buzz(); toast('أُرسل الطلب إلى ليدرك'); break; }
     case 'swapok': { const s = S.swaps.find(x => x.id === id);
       if (!s || s.leaderId !== S.session.id) { toast('ليست من صلاحيتك', 'r'); break; }
       swapAct(s, 'approve'); buzz(); toast('اعتُمد التبديل'); break; }
     case 'swapno': { const s = S.swaps.find(x => x.id === id);
       if (!s || s.leaderId !== S.session.id) { toast('ليست من صلاحيتك', 'r'); break; }
-      S.sheet = textSheet('رفض طلب التبديل', 'اكتب سببًا إن شئت — يصل مقدّم الطلب',
+      S.sheetBare = false; S.sheet = textSheet('رفض طلب التبديل', 'اكتب سببًا إن شئت — يصل مقدّم الطلب',
         'data-a="doswapno" data-id="' + id + '"', '', 'سبب الرفض'); break; }
     case 'doswapno': { const s = S.swaps.find(x => x.id === id), rr = reasonOr(val('txt'));
-      swapAct(s, 'reject', rr); S.sheet = null; toast('رُفض الطلب', 'r'); break; }
+      swapAct(s, 'reject', rr); S.sheet = null; S.sheetBare = false; toast('رُفض الطلب', 'r'); break; }
     case 'swapesc': { const s = S.swaps.find(x => x.id === id);
       if (!s || s.leaderId !== S.session.id) { toast('ليست من صلاحيتك', 'r'); break; }
-      S.sheet = textSheet('رفع الطلب للكنترول', 'يصل غرفة العمليات مع ملاحظتك',
+      S.sheetBare = false; S.sheet = textSheet('رفع الطلب للكنترول', 'يصل غرفة العمليات مع ملاحظتك',
         'data-a="doswapesc" data-id="' + id + '"', '', 'ملاحظة للكنترول (اختياري)'); break; }
     case 'doswapesc': { const s = S.swaps.find(x => x.id === id);
-      swapAct(s, 'escalate', val('txt')); S.sheet = null; toast('رُفع الطلب للكنترول'); break; }
+      swapAct(s, 'escalate', val('txt')); S.sheet = null; S.sheetBare = false; toast('رُفع الطلب للكنترول'); break; }
 
     /* ===== الإشعارات الخارجية ===== */
-    case 'pushask': S.sheet = null; askPush(); return;
-    case 'pushlater': S.sheet = null; toast('يمكنك تفعيلها لاحقًا من شاشة التحكم'); break;
+    case 'pushask': S.sheet = null; S.sheetBare = false; askPush(); return;
+    case 'pushlater': S.sheet = null; S.sheetBare = false; toast('يمكنك تفعيلها لاحقًا من شاشة التحكم'); break;
     case 'pushtoggle': S.pushEnabled = !pushOn();
       toast(S.pushEnabled ? 'شُغّلت الإشعارات الخارجية' : 'أُوقفت الإشعارات الخارجية'); break;
     case 'pushbacklog': {
@@ -690,14 +657,14 @@ document.addEventListener('click', ev => {
       if (!canEditGuide()) { toast('التحرير من صلاحية الليدر', 'r'); break; }
       const k = b.dataset.k, mk = v;
       S.pendingMedia = null; S.pendingMediaName = null; S.pendingMediaSize = null;
-      S.sheet = mk === 'text' ? stepTextSheet(k) : stepMediaSheet(k, mk); break; }
+      S.sheetBare = false; S.sheet = mk === 'text' ? stepTextSheet(k) : stepMediaSheet(k, mk); break; }
     case 'pickmedia': {
       S.mediaCtx = { kind: b.dataset.k, mk: v };
       S.sheetDraft = val('gt'); S.sheetDraft2 = val('gb');
       const el2 = document.getElementById(v === 'pdf' ? 'pdf' : v === 'video' ? 'vid' : 'cam');
       if (!el2) { toast('غير متاح على هذا الجهاز', 'r'); break; }
       el2.value = ''; el2.click(); return; }
-    case 'cancelstep': S.pendingMedia = null; S.mediaCtx = null; S.sheet = null; break;
+    case 'cancelstep': S.pendingMedia = null; S.mediaCtx = null; S.sheet = null; S.sheetBare = false; break;
     case 'savestep': {
       if (!canEditGuide()) { toast('التحرير من صلاحية الليدر', 'r'); break; }
       const k = b.dataset.k, mk = v, ti = val('gt'), bo = val('gb');
@@ -707,7 +674,7 @@ document.addEventListener('click', ev => {
       addStep(k, { kind: mk, title: ti, body: bo, src: S.pendingMedia || null,
         file: S.pendingMediaName || null, size: S.pendingMediaSize || null });
       S.pendingMedia = null; S.pendingMediaName = null; S.pendingMediaSize = null; S.mediaCtx = null;
-      S.sheet = null; buzz(); toast('أُضيفت الخطوة إلى الدليل'); break; }
+      S.sheet = null; S.sheetBare = false; buzz(); toast('أُضيفت الخطوة إلى الدليل'); break; }
     case 'stepup': moveStep(b.dataset.k, id, -1); break;
     case 'stepdn': moveStep(b.dataset.k, id, 1); break;
     case 'stepdel': {
@@ -725,22 +692,25 @@ document.addEventListener('click', ev => {
       return; }
     case 'printdoc': try { window.print(); } catch (e) { toast('الطباعة غير متاحة', 'r'); } return;
 
-    case 'askreset': S.sheet = confirmSheet('إعادة ضبط كل شيء',
+    case 'askreset': S.sheetBare = false; S.sheet = confirmSheet('إعادة ضبط كل شيء',
       'ستُحذف كل التسكينات والردود والتنبيهات والتذاكر والتقييمات.', 'data-a="doreset"', true); break;
-    case 'doreset': S.sheet = null; reset(); return;
+    case 'doreset': S.sheet = null; S.sheetBare = false; reset(); return;
   }
   render();
 });
 
 /* بحث الحجاج */
-document.addEventListener('input', ev => {
-  if (ev.target && ev.target.id === 'pq') {
-    const v = ev.target.value;
-    S.tab.pq = v;
-    render();
-    const el = document.getElementById('pq');
-    if (el) { el.focus(); try { el.setSelectionRange(v.length, v.length); } catch (e) {} }
-  }
+/* البحثُ الحيُّ: الشاشةُ تُعاد رسمًا فيضيع التركيزُ ما لم يُعَد.
+   ويُعاد موضعُ المؤشّر معه، وإلّا قفز إلى الأوّل عند كلّ حرف. */
+const LIVEQ = { pq: function (v) { S.tab.pq = v; }, lq: function (v) { S.loginQ = v; } };
+document.addEventListener('input', function (ev) {
+  var id = ev.target && ev.target.id;
+  if (!id || !LIVEQ[id]) return;
+  var v = ev.target.value;
+  LIVEQ[id](v);
+  render();
+  var el = document.getElementById(id);
+  if (el) { el.focus(); try { el.setSelectionRange(v.length, v.length); } catch (e) {} }
 });
 
 /* لوحة المفاتيح: العناصر ذات role=button تعمل بالمسافة والإدخال */
@@ -759,7 +729,7 @@ document.addEventListener('change', ev => {
     const f = ev.target.files && ev.target.files[0];
     if (f && S.rp) {
       S.rp.shot = { name:f.name, size:f.size, at:now() };
-      S.sheet = escSheet(); render(); buzz();
+      S.sheetBare = false; S.sheet = escSheet(); render(); buzz();
       toast('أُرفقت الصورة');
     }
     return;
@@ -780,10 +750,10 @@ document.addEventListener('change', ev => {
     if (S.camCtx && S.camCtx.mode === 'excuse') {
       S.pendingExcuse = src;
       const sh = reopenReason();
-      if (sh) S.sheet = sh;
+      if (sh) S.sheetBare = false; S.sheet = sh;
     } else {
       S.pendingPhoto = src;
-      S.sheet = photoMetaSheet();
+      S.sheetBare = false; S.sheet = photoMetaSheet();
     }
     render();
     const d = S.sheetDraft; S.sheetDraft = null;
@@ -830,7 +800,7 @@ function onGuideMedia(ev, mk) {
     if (!src) { S.toast = null; toast('تعذّرت قراءة الملف', 'r'); render(); return; }
     S.toast = null;
     S.pendingMedia = src; S.pendingMediaName = nm; S.pendingMediaSize = sz;
-    S.sheet = stepMediaSheet(ctx.kind, ctx.mk);
+    S.sheetBare = false; S.sheet = stepMediaSheet(ctx.kind, ctx.mk);
     render();
     const a1 = document.getElementById('gt'), a2 = document.getElementById('gb');
     if (a1 && S.sheetDraft) a1.value = S.sheetDraft;

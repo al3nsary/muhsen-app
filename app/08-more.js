@@ -106,7 +106,7 @@ function screenRating() {
 
   let body = '';
   if (seg === 'mine') {
-    body = '<div class="score"><span class="tiny dim2">تقييمك التراكمي</span>' +
+    body = '<div class="score">' +
       '<b>' + AR(String(rt.avg || 0).replace(/\.0$/, '')) + '</b>' +
       '<div class="bigstars">' + stars(rt.avg || 0, 'lg') + '</div>' +
       '<span class="tiny dim">من ' + AR(rt.n) + ' مهمة مقيَّمة</span></div>' +
@@ -151,7 +151,7 @@ function screenTaskRating() {
   const t = taskById(S.route.id); if (!t || !t.rating) return screenRating();
   const v = avgRating(t.rating);
   return bar('تقييم المهمة', { back: 1 }) + '<div class="view">' + ground() + svcCard(t) +
-    '<div class="score"><span class="tiny dim2">تقييم هذه المهمة</span>' +
+    '<div class="score">' +
       '<b>' + AR(String(v).replace(/\.0$/, '')) + '</b>' +
       '<div class="bigstars">' + stars(v, 'lg') + '</div>' +
       '<span class="tiny dim">متوسط عام · ' + hijri(t.rating.at) + '</span></div>' +
@@ -311,7 +311,7 @@ const kv = (k, v) => '<div class="kv"><span>' + E(k) + '</span><b>' + E(v) + '</
 
 function screenProfile() {
   const id = S.route.id || S.session.id;
-  const u = userById(id); if (!u) return screenMore();
+  const u = userById(id); if (!u) return isLeader() ? screenLeaderHome() : screenMuhsenHome();
   const L = u.role === 'leader';
   const org = ORGS.find(o => o.id === (L ? u.orgId : (userById(u.leaderId) || {}).orgId)) || ORGS[0];
   const isMe = id === S.session.id;
@@ -358,77 +358,9 @@ function screenProfile() {
 }
 
 /* ============================ المزيد ============================ */
-function screenMore() {
-  const u = me(), L = isLeader();
-  const rt = personRating(u.id);
-  const groups = [
-    { t: 'العمل', items: [
-      ['tasks',   'i-tasks',  'المهام',        'الجارية والقادمة والمنجزة'],
-      ['daily',   'i-check',  'التحضير اليومي','حضورك وشِفتك وطلب التبديل'],
-      [L ? 'lreq' : 'requests', 'i-swap', 'الطلبات', 'المرسلة والمستقبلة'],
-      ['desk',    'i-ticket', 'التذاكر والبلاغات', 'ما يَرِد إليك وما ترفعه']
-    ] },
-    { t: 'الفريق والحجاج', items: [
-      ['muhsens', 'i-users',  L ? 'المحسنون' : 'الفريق', L ? 'فريقك وتقييماتهم' : 'زملاؤك'],
-      ['pilgrims','i-user',   'الحجاج',        'بيانات الـKT والبلاغات'],
-      ['rating',  'i-star',   'التقييم',       'تقييمك وترتيب الفريق']
-    ] },
-    { t: 'المرجع والتوثيق', items: [
-      ['guide',   'i-guide',  'دليل المهام',   'تعليمات كل نوع مهمة'],
-      ['album',   'i-album',  'ألبوم الصور',   'ميموريز وإثباتات الفرعية'],
-      ['calendar','i-cal',    'التقويم',       'أسبوعي مع التذكيرات']
-    ] },
-    { t: 'حسابك', items: [
-      ['notifs',  'i-bell',   'الإشعارات',     'كل التحديثات'],
-      ['profile', 'i-user',   'الملف الشخصي',  'تقييمك وملاحظاتك'],
-      ['admin',   'i-gear',   'شاشة التحكم',   'للتجربة وإعادة الضبط']
-    ] }
-  ];
-
-  const row = x => '<button class="listitem" data-a="go" data-n="' + x[0] + '">' +
-    '<span class="ico">' + icon(x[1], 's18') + '</span>' +
-    '<span class="sp"><b style="font-size:13.5px;display:block">' + x[2] + '</b>' +
-    '<span class="tiny dim2">' + x[3] + '</span></span>' +
-    (x[0] === 'notifs' && unread() ? pill(AR(unread()), 'no') : '') +
-    (x[0] === 'desk' && (myTickets().filter(k => k.status !== 'مغلقة').length + openReports())
-      ? pill(AR(myTickets().filter(k => k.status !== 'مغلقة').length + openReports()), 'wait') : '') +
-    icon('i-back','s16') + '</button>';
-
-  return bar('المزيد') + '<div class="view">' + ground() +
-    /* اللغة: ثلاثُ لغاتٍ يُبدَّل بينها من هنا */
-    '<div class="c langrow"><span class="sp"><b style="font-size:13.5px">اللغة</b>' +
-      '<span class="tiny dim2">العربية · الإنجليزية · الماليزية</span></span>' +
-      langSwitch() + '</div>' +
-    /* بطاقة الحساب */
-    '<button class="c gold mecard" data-a="go" data-n="profile">' +
-      '<div class="fl">' + avat(u, 'lg') +
-        '<span class="nm sp"><b style="font-size:15.5px">' + E(u.name) + '</b>' +
-        '<span class="tiny dim2">' + (L ? 'محسن ليدر · ' + E(u.kt)
-          : u.reserve ? 'مُحسن · فريق احتياطي' : 'مُحسن · ' + E(u.specialty)) + '</span>' +
-        (rt.n ? '<span style="display:block;margin-top:5px">' + stars(rt.avg) + '</span>' : '') + '</span>' +
-        icon('i-back','s16') + '</div></button>' +
-
-    /* اختصارات سريعة */
-    '<div class="quick">' +
-      '<button data-a="go" data-n="daily"><span class="qi">' + icon('i-check','s18') + '</span>التحضير</button>' +
-      '<button data-a="go" data-n="desk"><span class="qi">' + icon('i-flag','s18') + '</span>بلاغ</button>' +
-      '<button data-a="go" data-n="guide"><span class="qi">' + icon('i-guide','s18') + '</span>الدليل</button>' +
-      '<button data-a="go" data-n="album"><span class="qi">' + icon('i-album','s18') + '</span>الصور</button>' +
-      /* الردود: يُفتح البابُ ولو لم يُسنَد ردٌّ اليوم — فيُقرأ سببُ خلوّه */
-      '<button data-a="go" data-n="rides"><span class="qi">' + icon('i-bus','s18') + '</span>الردود</button>' +
-    '</div>' +
-
-    groups.map(g => '<div class="lbl">' + g.t + '</div>' +
-      '<div class="mgroup">' + g.items.map(row).join('') + '</div>').join('') +
-
-    '<button class="btn d" data-a="logout">' + icon('i-out','s16') + 'تسجيل الخروج</button>' +
-    '<button class="btn l sm" data-a="appupdate">' + icon('i-reset','s16') + 'تحديث التطبيق إلى آخر نسخة</button>' +
-    '<div class="tiny dim2 center" style="margin-top:6px;line-height:1.9">تطبيق مُحسن · ' + APP_VER +
-      ' · ' + envStamp() + ' · بنية ' + AR(SCHEMA) + '<br>' +
-      'مصادر الصور: ويكيميديا كومنز — Adli Wahid · Basheer Olakara · Omar Chatriwala · Shah134pk</div>' +
-    '<i class="mnozoly dark" role="img" aria-label="نُزلي"></i>' +
-    '</div>' + tabs();
-}
+/* screenMore حُذفت: لوحُ «المزيد» حلّ محلَّ قائمتها، وشاشةُ
+   الإعدادات حلّت محلَّ بطاقة الحساب واللغة فيها. وكانت كلُّ
+   وجهةٍ فيها تحمل سطرًا يشرحها — وهو الوصفُ الزائدُ بعينه. */
 
 
 /* ============================ التقويم ============================ */

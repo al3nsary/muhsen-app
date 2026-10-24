@@ -32,6 +32,26 @@ function checkInReason() {
   if (!inHQ()) return 'التحضير اليومي من داخل المقر فقط — بدّل موقعك إلى «داخل المقر»';
   return '';
 }
+/* الانصراف: لا يُفتح قبل الحضور، ولا يتكرّر. وبينهما المدّةُ تُقرأ،
+   فتُعرَف ساعاتُ اليوم لا حضورُه وحده. */
+const checkedOutToday = id => { const r = dayRec(id, now()); return !!(r && r.outAt); };
+function canCheckOut(id) { const r = dayRec(id, now()); return !!r && !r.outAt; }
+function checkOut(id) {
+  if (!canCheckOut(id)) return false;
+  const r = dayRec(id, now());
+  r.outAt = now();
+  const u = userById(id);
+  if (u.role === "muhsen" && u.leaderId) notify(u.leaderId, "i-out", "انصراف",
+    u.name + " انصرف " + t12(r.outAt) + " · " + workedTxt(r), { n: "daily" });
+  return true;
+}
+/* المدّةُ بين الطرفين — والجاريةُ تُقرأ حتّى اللحظة */
+const workedMin = r => r ? Math.round(((r.outAt || now()) - r.at) / MIN) : 0;
+function workedTxt(r) {
+  const m = workedMin(r);
+  return AR(Math.floor(m / 60)) + " س " + AR(m % 60) + " د";
+}
+
 function checkIn(id) {
   if (!canCheckIn(id)) return false;
   const sh = shiftOf(id), s = SHIFTS[sh];
@@ -146,14 +166,28 @@ function screenDaily() {
         '<span>' + shiftWindow(shiftOf(u.id)) + ' · ' + E(HQ) + '</span></span>' +
         (me_ ? '<span class="ok">' + icon('i-checkc','s18') + '</span>' : '') + '</div>' +
 
+      /* زرّان لا زرٌّ واحد: الحضورُ ثمّ الانصراف، وبينهما المدّةُ تُقرأ. */
       (me_
         ? '<div class="note g">' + icon('i-checkc','s16') +
-          '<span><b>حضّرت اليوم ' + t12(me_.at) + '</b>' + (me_.late ? ' — بعد بداية الشِفت' : ' — في الوقت') +
-          '<br>' + dayName(now()) + ' ' + hijri(now()) + '</span></div>'
-        : '<button class="cta ' + (canCheckIn(u.id) ? '' : 'off') + '" ' +
+          '<span><b>تم تسجيل الحضور ' + t12(me_.at) + '</b>' +
+          (me_.late ? ' · متأخّرًا عن بداية الشِفت' : ' · في الوقت') +
+          (me_.outAt ? '<br>تم تسجيل الانصراف ' + t12(me_.outAt) + ' · مدّة الدوام ' + workedTxt(me_)
+                     : '<br>على رأس العمل الآن · ' + workedTxt(me_)) + '</span></div>'
+        : '') +
+
+      (!me_
+        ? '<button class="cta ' + (canCheckIn(u.id) ? '' : 'off') + '" ' +
             (canCheckIn(u.id) ? 'data-a="checkin"' : 'disabled') + '>' + icon('i-check','s26') +
-            '<span class="t"><b>تحضير اليوم</b><span>' +
-            (canCheckIn(u.id) ? 'داخل المقر — ' + t12(now()) : E(checkInReason())) + '</span></span></button>') +
+            '<span class="t"><b>تسجيل الحضور</b><span>' +
+            (canCheckIn(u.id) ? 'داخل المقر — ' + t12(now()) : E(checkInReason())) +
+            '</span></span></button>'
+        : !me_.outAt
+        ? '<button class="cta out" data-a="checkout">' + icon('i-out','s26') +
+            '<span class="t"><b>تسجيل الانصراف</b><span>' + t12(now()) +
+            ' · مضى ' + workedTxt(me_) + '</span></span></button>'
+        : '<div class="cta off done">' + icon('i-checkc','s26') +
+            '<span class="t"><b>اكتمل دوام اليوم</b><span>مدّة الدوام ' + workedTxt(me_) +
+            ' · ' + dayName(now()) + ' ' + hijri(now()) + '</span></span></div>') +
 
       (!inHQ() ? '<button class="note a" data-a="place" style="width:100%">' + icon('i-pin','s16') +
         '<span class="sp" style="text-align:right">موقعك الآن: ' +

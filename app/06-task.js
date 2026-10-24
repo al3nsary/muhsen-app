@@ -15,7 +15,7 @@ function screenTasks() {
       'التسكين مطلوب فور استلام التطبيق — ولو كانت المهمة بعد أسابيع.</span></button>' : '') +
 
     '<button class="drop" data-a="bucketmenu">' + icon('i-filter','s18') +
-      '<span class="sp"><span class="tiny dim2">التصنيف المعروض</span><b>' + cur.l + '</b></span>' +
+      '<span class="sp"><b>' + cur.l + '</b></span>' +
       '<span class="cnt">' + AR(list.length) + '</span>' +
       icon('i-down','s16') + '</button>' +
 

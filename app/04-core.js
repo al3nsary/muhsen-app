@@ -1,7 +1,9 @@
 /* ============================ الحالة ============================ */
-const KEY = 'muhsen_app_v1';
+/* الأصلُ واحدٌ في GitHub Pages، فالمفتاحُ هو ما يفصل النسختين. */
+/* تطبيقٌ واحدٌ ورابطٌ واحد: الدورُ يُقرأ من الحساب بعد الدخول. */
+const KEY = 'muhsen_app_v3';
 const APP_VER = 'نسخة ٤٫٣';
-const SCHEMA = 19;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
+const SCHEMA = 21;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
 const uid = (p) => p + Math.random().toString(36).slice(2, 8);
@@ -118,7 +120,9 @@ function seed() {
     v: SCHEMA, clockOffset: 0, myPlace: 'site', session: null, route: { n: 'login' },
     tab: {}, orgs: ORGS, users: USERS.concat(RESERVE), tasks: [], tickets: [], reports: [], notifs: [],
     requests: [], reminders: [], pilgrims: {}, photos: [], guides: {}, support: [],
-    shifts: {}, attend: [], swaps: [], broadcasts: [], tabPage: 0, toast: null,
+    shifts: {}, attend: [], swaps: [], broadcasts: [], toast: null,
+    /* ترتيبُ الشريط: فارغٌ يعني الافتراضيّ — يملؤه المستخدمُ من الإعدادات */
+    tabs: null, sheet: null,
     /* الردود: حركةُ الكوسترات في المشاعر */
     rides: []
   };
