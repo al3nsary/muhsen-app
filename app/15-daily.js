@@ -46,7 +46,9 @@ function checkOut(id) {
   return true;
 }
 /* المدّةُ بين الطرفين — والجاريةُ تُقرأ حتّى اللحظة */
-const workedMin = r => r ? Math.round(((r.outAt || now()) - r.at) / MIN) : 0;
+/* لا تنقلب المدّةُ سالبةً: تقديمُ الساعة من شاشة التحكّم قد يجعل
+   «الآن» قبل وقت التسجيل، فتُقرأ «-٤ س -٢٣ د». */
+const workedMin = r => r ? Math.max(0, Math.round(((r.outAt || now()) - r.at) / MIN)) : 0;
 function workedTxt(r) {
   const m = workedMin(r);
   return AR(Math.floor(m / 60)) + " س " + AR(m % 60) + " د";

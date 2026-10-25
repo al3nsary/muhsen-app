@@ -82,6 +82,18 @@ const host = '<!doctype html><html><head><meta charset="utf-8"><style>' +
 '      " x=" + Math.round(r.left));\n' +
 '  });\n' +
 '\n' +
+'  var fb = d.querySelectorAll(".fab, .fabmain");\n' +
+'  if (fb.length) {\n' +
+'    o.push("— القائمة العائمة: " + fb.length + " —");\n' +
+'    [].forEach.call(fb, function (b, k) {\n' +
+'      var r = b.getBoundingClientRect();\n' +
+'      o.push("  " + k + " «" + b.textContent.trim().slice(0, 14) + "» w=" + Math.round(r.width) +\n' +
+'        " h=" + Math.round(r.height) + " x=" + Math.round(r.left) +\n' +
+'        (r.left < -1 || r.right > vw + 1 ? "  X خارج الشاشة" : "") +\n' +
+'        (r.height < 44 ? "  X لمسٌ دون ٤٤" : ""));\n' +
+'    });\n' +
+'  }\n' +
+'\n' +
 '  var bs = d.querySelectorAll(".tabs button");\n' +
 '  o.push("— أزرارُ الشريط: " + bs.length + " —");\n' +
 '  [].forEach.call(bs, function (b, k) {\n' +

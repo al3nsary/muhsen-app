@@ -58,6 +58,21 @@ function screenSettings() {
       }).join('') + '</div>' +
     '</div>' +
 
+    /* ---------- المراجع ----------
+       خرجت من القائمة العائمة، فلو لم يكن لها بابٌ هنا لصارت
+       شاشاتٍ لا تُبلَغ. */
+    '<div class="c">' +
+      '<div class="h"><b>المراجع</b></div>' +
+      [['guide',  'i-guide', 'دليل المهام'],
+       ['album',  'i-album', 'ألبوم الصور'],
+       ['rating', 'i-star',  'التقييم']].map(function (x) {
+        return '<button class="prow" data-a="go" data-n="' + x[0] + '">' +
+          icon(x[1], 's20') +
+          '<span class="nm sp"><b>' + x[2] + '</b></span>' +
+          icon('i-back', 's16') + '</button>';
+      }).join('') +
+    '</div>' +
+
     /* ---------- اللغة ---------- */
     '<div class="c">' +
       '<div class="h"><b>اللغة</b></div>' +

@@ -1509,25 +1509,66 @@
   .tpick.on{ box-shadow:0 0 0 1px var(--g) inset }
 
   /* ══════════════ «المزيد»: أزرارٌ عائمةٌ تصعد من الشريط ══════════════ */
-  .fabs{ position:absolute; inset-inline-end:12px; bottom:calc(var(--sab,14px) + 62px);
-    z-index:60; display:flex; flex-direction:column; align-items:flex-end; gap:9px;
-    max-height:calc(100% - 140px); overflow-y:auto; -webkit-overflow-scrolling:touch;
-    padding:4px 2px; scrollbar-width:none }
+  /* ══════════════════════════════════════════════════════════════
+     «المزيد» — أزرارٌ عائمةٌ متصاعدة
+
+     زرٌّ رئيسيٌّ في زاوية الإبهام، فوقه الأزرارُ الفرعيّةُ تصعد
+     واحدًا بعد واحد، وخلفَها حجابٌ ضبابيٌّ يُركّز النظر.
+     والزجاجيّةُ من لونِنا لا من رماديٍّ محايد.
+     ══════════════════════════════════════════════════════════════ */
+  .fabwrap{ position:absolute; inset-inline-end:14px;
+    bottom:calc(var(--sab,14px) + 60px); z-index:60;
+    display:flex; flex-direction:column; align-items:flex-end; gap:10px;
+    max-height:calc(100% - 128px) }
+
+  .fabs{ display:flex; flex-direction:column; align-items:flex-end; gap:9px;
+    overflow-y:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
+    padding:4px 2px; min-height:0 }
   .fabs::-webkit-scrollbar{ display:none }
-  .fab{ display:flex; align-items:center; gap:11px; flex:none; min-height:48px;
-    padding:0 6px 0 18px; border:1px solid var(--line); border-radius:99px; background:#fff;
-    color:var(--ink); cursor:pointer; box-shadow:0 10px 24px -12px rgba(11,53,39,.45);
-    animation:fabUp .22s cubic-bezier(.2,.9,.3,1) both;
-    animation-delay:calc(var(--i,0) * 24ms) }
-  html[dir=ltr] .fab{ padding:0 18px 0 6px; flex-direction:row-reverse }
-  .fab b{ font-size:13.5px; font-weight:600; white-space:nowrap }
+
+  /* زجاجيّةٌ خضراء: الأرضُ تُرى خلفها فتبدو طافيةً لا ملصقة */
+  .fab{ display:flex; align-items:center; gap:10px; flex:none; min-height:46px;
+    padding:0 5px 0 16px; border-radius:99px; cursor:pointer;
+    background:rgba(255,255,255,.82);
+    -webkit-backdrop-filter:blur(14px) saturate(150%);
+    backdrop-filter:blur(14px) saturate(150%);
+    border:1px solid rgba(255,255,255,.55); color:var(--g2,#0B3527);
+    box-shadow:0 10px 26px -14px rgba(11,53,39,.65), 0 1px 2px rgba(11,53,39,.12);
+    animation:fabUp .26s cubic-bezier(.2,.9,.3,1) both;
+    animation-delay:calc(var(--i,0) * 32ms) }
+  html[dir=ltr] .fab{ padding:0 16px 0 5px; flex-direction:row-reverse }
+  .fab b{ font-size:12.5px; font-weight:700; white-space:nowrap; letter-spacing:-.1px }
   .fab .fi{ position:relative; width:36px; height:36px; border-radius:50%; flex:none;
-    display:grid; place-items:center; background:var(--pGreenB); color:var(--g) }
+    display:grid; place-items:center; color:#fff;
+    background:linear-gradient(150deg,var(--g3,#1A6B4C),var(--g,#14593F));
+    box-shadow:0 4px 10px -4px rgba(11,53,39,.55) }
   .fab:active{ transform:scale(.96) }
-  .fab.close{ background:var(--g); color:#fff; border-color:var(--g) }
-  .fab.close .fi{ background:rgba(255,255,255,.18); color:#fff }
-  @keyframes fabUp{ from{ opacity:0; transform:translateY(10px) scale(.96) } }
-  @media (prefers-reduced-motion:reduce){ .fab{ animation:none } }
+  .fab:focus-visible{ outline:2px solid var(--gold); outline-offset:3px }
+
+  /* الزرُّ الرئيسيّ: دائريٌّ أخضرُ غامقٌ بظلٍّ قويّ */
+  .fabmain{ width:56px; height:56px; flex:none; border-radius:50%; cursor:pointer;
+    display:grid; place-items:center; color:#fff; border:0;
+    background:linear-gradient(150deg,var(--g3,#1A6B4C),var(--g2,#0B3527));
+    box-shadow:0 14px 30px -10px rgba(11,53,39,.75), 0 2px 6px rgba(11,53,39,.3);
+    animation:fabPop .24s cubic-bezier(.2,.9,.3,1) both }
+  .fabmain:active{ transform:scale(.94) }
+  .fabmain:focus-visible{ outline:2px solid var(--gold); outline-offset:3px }
+
+  @keyframes fabUp{ from{ opacity:0; transform:translateY(14px) scale(.94) } }
+  @keyframes fabPop{ from{ opacity:0; transform:rotate(-90deg) scale(.7) } }
+  @media (prefers-reduced-motion:reduce){
+    .fab, .fabmain{ animation:none }
+  }
+
+  /* الحجابُ خلف القائمة: ضبابٌ خفيفٌ لا عتمةٌ ثقيلة */
+  .scrim.soft{ background:rgba(11,53,39,.34);
+    -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px) }
+
+  /* الشاشاتُ القصيرة: الأزرارُ أنحفُ فلا تُزاحم الشريط */
+  @media (max-height:680px){
+    .fab{ min-height:42px } .fab .fi{ width:32px; height:32px }
+    .fabmain{ width:50px; height:50px } .fabs{ gap:7px }
+  }
 
   /* ══════════════ الدخول: نموذجٌ بحقلين ══════════════ */
   .lform{ flex:none; display:flex; flex-direction:column; gap:0 }
@@ -1665,15 +1706,7 @@
     .authlogo .logo{ width:136px; height:38px }
   }
 
-  /* ══════════ «المزيد»: خطٌّ أصغرُ وحجمٌ أهدأ ══════════
-     كان ١٣٫٥px بحشوةٍ واسعةٍ فبدا ثقيلًا على عرض الجوّال. */
-  .fabs{ gap:7px; bottom:calc(var(--sab,14px) + 60px) }
-  .fab{ min-height:42px; padding:0 5px 0 14px; gap:9px;
-    box-shadow:0 8px 20px -12px rgba(11,53,39,.4) }
-  html[dir=ltr] .fab{ padding:0 14px 0 5px }
-  .fab b{ font-size:12px; font-weight:600 }
-  .fab .fi{ width:32px; height:32px }
-  .fab .fi .ic{ width:17px; height:17px }
+
 
 
   /* الشعارُ فاتحٌ (أبيضُ وذهبيّ) فلا يُقرأ على بطاقةٍ بيضاء.

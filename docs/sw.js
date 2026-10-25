@@ -1,7 +1,7 @@
-/* عامل الخدمة — الشبكة أولًا للصفحة نفسها حتى تصل آخر نسخة فورًا،
-   والذاكرة أولًا للأيقونات والخطوط. */
-/* الذاكرةُ باسم النسخة — وإلّا تداخلت نسختان تحت أصلٍ واحد. */
-const CACHE = 'muhsen-v41';
+﻿/* ط¹ط§ظ…ظ„ ط§ظ„ط®ط¯ظ…ط© â€” ط§ظ„ط´ط¨ظƒط© ط£ظˆظ„ظ‹ط§ ظ„ظ„طµظپط­ط© ظ†ظپط³ظ‡ط§ ط­طھظ‰ طھطµظ„ ط¢ط®ط± ظ†ط³ط®ط© ظپظˆط±ظ‹ط§طŒ
+   ظˆط§ظ„ط°ط§ظƒط±ط© ط£ظˆظ„ظ‹ط§ ظ„ظ„ط£ظٹظ‚ظˆظ†ط§طھ ظˆط§ظ„ط®ط·ظˆط·. */
+/* ط§ظ„ط°ط§ظƒط±ط©ظڈ ط¨ط§ط³ظ… ط§ظ„ظ†ط³ط®ط© â€” ظˆط¥ظ„ظ‘ط§ طھط¯ط§ط®ظ„طھ ظ†ط³ط®طھط§ظ† طھط­طھ ط£طµظ„ظچ ظˆط§ط­ط¯. */
+const CACHE = 'muhsen-v42';
 const ASSETS = [
   './',
   './index.html',
@@ -32,7 +32,7 @@ self.addEventListener('message', e => {
   if (e.data === 'skipWaiting') self.skipWaiting();
 });
 
-/* فتح التطبيق عند النقر على إشعار النظام */
+/* ظپطھط­ ط§ظ„طھط·ط¨ظٹظ‚ ط¹ظ†ط¯ ط§ظ„ظ†ظ‚ط± ط¹ظ„ظ‰ ط¥ط´ط¹ط§ط± ط§ظ„ظ†ط¸ط§ظ… */
 self.addEventListener('notificationclick', e => {
   e.notification.close();
   e.waitUntil(
@@ -52,7 +52,7 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
 
-  /* الصفحة نفسها: الشبكة أولًا — لا نسخة قديمة عالقة بعد التحديث */
+  /* ط§ظ„طµظپط­ط© ظ†ظپط³ظ‡ط§: ط§ظ„ط´ط¨ظƒط© ط£ظˆظ„ظ‹ط§ â€” ظ„ط§ ظ†ط³ط®ط© ظ‚ط¯ظٹظ…ط© ط¹ط§ظ„ظ‚ط© ط¨ط¹ط¯ ط§ظ„طھط­ط¯ظٹط« */
   if (isPage(req)) {
     e.respondWith(
       fetch(req)
@@ -66,7 +66,7 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  /* الخطوط: الشبكة أولًا ثم الذاكرة */
+  /* ط§ظ„ط®ط·ظˆط·: ط§ظ„ط´ط¨ظƒط© ط£ظˆظ„ظ‹ط§ ط«ظ… ط§ظ„ط°ط§ظƒط±ط© */
   if (req.url.includes('fonts.googleapis.com') || req.url.includes('fonts.gstatic.com')) {
     e.respondWith(
       fetch(req).then(res => {
@@ -78,7 +78,7 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  /* الأيقونات وبقية الملفات: الذاكرة أولًا */
+  /* ط§ظ„ط£ظٹظ‚ظˆظ†ط§طھ ظˆط¨ظ‚ظٹط© ط§ظ„ظ…ظ„ظپط§طھ: ط§ظ„ط°ط§ظƒط±ط© ط£ظˆظ„ظ‹ط§ */
   e.respondWith(
     caches.match(req).then(hit => hit || fetch(req).then(res => {
       if (res && res.status === 200 && res.type === 'basic') {

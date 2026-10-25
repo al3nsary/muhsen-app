@@ -67,8 +67,13 @@ function geoDist(a, b) {
 }
 const distTxt = m => m == null ? '—'
   : m < 1000 ? AR(m) + ' م' : AR((m / 1000).toFixed(1)) + ' كم';
-const minTxt = m => m == null ? '—'
-  : m < 60 ? AR(m) + ' د' : AR(Math.floor(m / 60)) + ' س ' + AR(m % 60) + ' د';
+/* ولا تنقلب مدّةُ الرَّدّ سالبةً كذلك — تقديمُ الساعة يفعلها */
+function minTxt(m) {
+  if (m == null) return '—';
+  m = Math.max(0, Math.round(m));
+  return m < 60 ? AR(m) + ' د'
+    : AR(Math.floor(m / 60)) + ' س ' + AR(m % 60) + ' د';
+}
 
 /* لقطةُ الموقع: تُطلب من الجهاز، وإن رُفض الإذن سُجّل الرفضُ ولم يُختلق موقع */
 function grabLoc(cb) {

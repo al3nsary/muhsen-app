@@ -137,31 +137,47 @@ function tabs() {
     '</nav>';
 }
 
-/* قائمةُ «المزيد» — أزرارٌ عائمةٌ تصعد من الشريط
+/* ============================================================
+   قائمةُ «المزيد» — أزرارٌ عائمةٌ متصاعدة (Speed dial)
 
-   كانت شبكةً في لوحٍ سفليّ: أربعةٌ في الصفّ والأسماءُ تحت
-   الأيقونات. وهي قائمةٌ لا شبكة — فصارت أزرارًا رأسيّةً فوق زرّ
-   «المزيد» نفسِه، مرتّبةً من الأعلى إلى الأسفل، لكلٍّ أيقونتُه
-   إلى جانب اسمه. وتصعد واحدًا بعد واحد. */
+   زرٌّ رئيسيٌّ في زاوية الإبهام، ونقرُه يُخرج الأزرارَ الفرعيّةَ
+   عموديًّا فوقه واحدًا بعد واحد، وخلفَها حجابٌ ضبابيٌّ يُركّز
+   النظرَ عليها.
+
+   وما له موضعٌ آخرُ لا يُكرَّر هنا: الإشعاراتُ والملفُّ الشخصيُّ
+   زرّان في الترويسة، والدليلُ والصورُ والتقييمُ تحت الإعدادات.
+   ============================================================ */
+
+/* لا يظهر في القائمة العائمة: له بابٌ أقربُ منها */
+const FAB_OUT = ['notifs', 'profile', 'album', 'rating', 'guide'];
+
+function fabItems() {
+  return tabRest()
+    .filter(x => FAB_OUT.indexOf(x.k) < 0)
+    .map(x => [x.k, x.i, x.l, x.b])
+    .concat([['settings', 'i-gear', 'الإعدادات', 0]]);
+}
+
 function moreSheet() {
+  const rows = fabItems();
+  const n = rows.length;
+
+  /* الأوّلُ في النصّ أعلى الشاشة، والأقربُ إلى الإبهام يصعد آخرًا:
+     فيُقرأ الترتيبُ من الأعلى ويُلمَس من الأسفل. */
   const btn = (x, i) =>
-    '<button class="fab" data-a="go" data-n="' + x[0] + '" style="--i:' + i + '">' +
+    '<button class="fab" data-a="go" data-n="' + x[0] + '" ' +
+      'style="--i:' + (n - i) + '">' +
       '<b>' + x[2] + '</b>' +
-      '<span class="fi">' + icon(x[1], 's20') +
+      '<span class="fi">' + icon(x[1], 's19') +
       (x[3] ? '<span class="badge">' + AR(x[3]) + '</span>' : '') + '</span>' +
     '</button>';
 
-  const rows = tabRest().map(x => [x.k, x.i, x.l, x.b]).concat([
-    ['profile',  'i-user', 'الملف الشخصي', 0],
-    ['settings', 'i-gear', 'الإعدادات',    0]
-  ]);
-
-  /* الأوّلُ في النصّ هو الأعلى في الشاشة، والأقربُ إلى الإبهام
-     يصعد آخرًا — فيُقرأ الترتيبُ من الأعلى ويُلمَس من الأسفل. */
-  return '<div class="fabs">' +
-    rows.map((x, i) => btn(x, rows.length - i)).join('') +
-    '<button class="fab close" data-a="close" style="--i:0">' +
-      '<b>إغلاق</b><span class="fi">' + icon('i-x', 's20') + '</span></button>' +
+  return '<div class="fabwrap">' +
+    '<div class="fabs" role="menu" aria-label="المزيد">' +
+      rows.map(btn).join('') +
+    '</div>' +
+    '<button class="fabmain" data-a="close" aria-label="إغلاق القائمة" ' +
+      'aria-expanded="true">' + icon('i-x', 's22') + '</button>' +
   '</div>';
 }
 
