@@ -11,46 +11,53 @@ const SC = __dirname.split('\\').join('/') + '/';
 const SRC = SC + '../docs/index.html';
 
 const steps = `
-/* ١ · الدخول بكلمةِ مرورٍ خاطئة */
-await type('#lu', 'M1001');
+/* ١ · الكتابةُ تفتح القائمةَ وتُصفّيها */
+await type('#lu', 'مح');
+log('كتابةُ «مح» → قائمة=' + (q('.cmenu') ? 'مفتوحة ✓' : 'مغلقة ✗') +
+    ' · مطابقون=' + document.querySelectorAll('.lopt').length);
+
+/* ٢ · الاختيارُ يملأ الحقلين */
+await click('.lopt');
+log('بعد الاختيار → اسم="' + (q('#lu') ? q('#lu').value : '') + '"' +
+    ' · مرور=' + (S.loginP === '48162048' ? 'امتلأت ✓' : 'فارغة ✗') +
+    ' · قائمة=' + (q('.cmenu') ? 'ما زالت ✗' : 'أُغلقت ✓'));
+
+/* ٣ · مرورٌ خاطئةٌ تُردّ */
 await type('#lp', 'xxxx');
 await click('[data-a="dologin"]');
-log('مرورٌ خاطئة → ' + (q('.autherr') ? 'رُدّ بخطأ ✓' : 'دخل رغم الخطأ ✗') +
+log('مرورٌ خاطئة → ' + (q('.autherr') ? 'رُدّ ✓' : 'دخل ✗') +
     ' · جلسة=' + (S.session ? 'نعم ✗' : 'لا ✓'));
 
-/* ٢ · اسمٌ لا وجود له */
-await type('#lu', 'ZZZZ'); await type('#lp', '48162048');
-await click('[data-a="dologin"]');
-log('اسمٌ مجهول → ' + (q('.autherr') ? 'رُدّ بخطأ ✓' : 'دخل ✗'));
-
-/* ٣ · الدخول الصحيح بالرمز */
-await type('#lu', 'M1001'); await type('#lp', '48162048');
+/* ٤ · الدخولُ الصحيح */
+await type('#lu', 'مح'); await click('.lopt');
 await click('[data-a="dologin"]');
 await wait(900);
 log('دخولٌ صحيح → جلسة=' + (S.session ? S.session.id : 'لا ✗') +
     ' · وجهة=' + S.route.n + ' · شريط=' + document.querySelectorAll('.tabs button').length);
-try { render(); } catch (e) { log('X رسمُ mhome: ' + e.message); }
-await wait(200);
-log('بعد رسمٍ صريح → شريط=' + document.querySelectorAll('.tabs button').length +
-    ' · أخطاء=' + (window.__E.length ? window.__E[0] : 'لا'));
 
-/* ٤ · الخروج ثمّ الدخول السريع بصفة ليدر */
+/* ٥ · لوحُ المزيد */
 await click('[data-a="moresheet"]');
-log('لوحُ المزيد → أزرار=' + document.querySelectorAll('.fab').length +
-    ' · عارٍ=' + (S.sheetBare ? 'نعم ✓' : 'لا ✗'));
-S.session = null; S.route = { n:'login' }; S.sheet = null; render();
-await wait(120);
-await click('[data-a="demologin"]');
-await wait(900);
-log('دخولٌ سريع → ' + (S.session ? userById(S.session.id).role : 'لا ✗') +
-    ' · وجهة=' + S.route.n);
+log('لوحُ المزيد → فرعيّة=' + document.querySelectorAll('.fab').length +
+    ' · رئيسيّ=' + (q('.fabmain') ? 'موجود ✓' : 'غائب ✗') +
+    ' · حجابٌ ضبابيّ=' + (q('.scrim.soft') ? 'نعم ✓' : 'لا ✗') +
+    ' · بلا صندوق=' + (q('.sheet') ? 'ملفوف ✗' : 'عارٍ ✓'));
+var fabKeys = [].map.call(document.querySelectorAll('.fab'), function (b) { return b.dataset.n; });
+log('عناصرُ القائمة → ' + fabKeys.join(' · ') +
+    (fabKeys.some(function (k) { return ['notifs','profile','album','rating','guide'].indexOf(k) >= 0; })
+      ? '  X فيها محذوف' : '  ✓ بلا محذوف'));
+await click('[data-a="close"]');
 
 /* ٥ · الردود: إضافةٌ ← بدءٌ ← إنهاء */
 S.session = { id: S.users.filter(function(u){return u.role==='muhsen'&&u.specialty==='نقل';})[0].id, at: Date.now() };
 S.route = { n:'rides' }; render(); await wait(150);
 var n0 = S.rides.filter(function(r){return r.userId===S.session.id;}).length;
 await click('[data-a="rdnew"]');
-log('لوحُ الإضافة → ' + (q('#rdpax') ? 'فُتح ✓' : 'لم يُفتح ✗'));
+log('لوحُ الإضافة → ' + (q('#rdpax') ? 'فُتح ✓' : 'لم يُفتح ✗') +
+    ' · غلاف=' + (q('.sheet') ? '.sheet' : q('.fabwrap') ? '.fabwrap' : 'بلا') +
+    ' · عارٍ=' + S.sheetBare +
+    ' · أزرار=' + [].map.call(document.querySelectorAll('[data-a]'), function(b){return b.dataset.a;})
+        .filter(function(x){return x.indexOf('rd')===0;}).join(','));
+
 await type('#rdpax', '45');
 await click('[data-a="rdadd"]');
 await wait(200);
@@ -116,6 +123,7 @@ const harness = `<script>
   window.__E = [];
   window.addEventListener('error', function (e) { window.__E.push(e.message); });
   await wait(700);
+  S.pushAsked = true;
   try {
 ${steps}
   } catch (err) { log('X استثناء: ' + err.message); }

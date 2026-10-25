@@ -164,14 +164,19 @@ document.addEventListener('click', ev => {
 
     /* الدخول: البحثُ بالاسم، ومن اختار اسمًا من غير نسخته نُقل إلى رابطها */
     /* ---------- الدخول ---------- */
-    case 'nosubmit':   return;                 /* النموذجُ لا يُرسَل */
-    case 'loginu':     return;                 /* الكتابةُ يلتقطها LIVEQ */
-    case 'loginp':     return;
-    case 'loginshow':  S.loginShow = !S.loginShow; break;
+    case 'nosubmit':    return;                /* النموذجُ لا يُرسَل */
+    case 'loginp':      return;                /* الكتابةُ يلتقطها LIVEQ */
+    case 'loginopen':   S.loginOpen = true; break;
+    case 'logintoggle': S.loginOpen = !S.loginOpen; break;
+    case 'loginsel': {
+      /* الاختيارُ يملأ الحقلَ بالاسم وكلمةَ المرور معه، فتبقى خطوةٌ
+         واحدةٌ: الضغطُ على «تسجيل الدخول». */
+      const su = userById(id); if (!su) break;
+      S.loginId = su.id; S.loginU = su.name; S.loginP = DEMO_PW;
+      S.loginOpen = false; S.loginErr = null; break; }
+    case 'loginshow':   S.loginShow = !S.loginShow; break;
     case 'loginforgot': toast('راجع مشرفك لإعادة تعيين كلمة المرور', 'r'); break;
-    case 'dologin':    doLogin(); return;
-    case 'demologin':  enterAs(id); return;
-
+    case 'dologin':     doLogin(); return;
     case 'logout': S.session = null; S.route = { n: 'login' }; S.sheet = null; S.sheetBare = false; break;
 
     /* ---------- الردود: إضافةٌ ← عددٌ ← بدءٌ ← إنهاء ---------- */
@@ -704,7 +709,7 @@ document.addEventListener('click', ev => {
    ويُعاد موضعُ المؤشّر معه، وإلّا قفز إلى الأوّل عند كلّ حرف. */
 const LIVEQ = {
   pq: function (v) { S.tab.pq = v; },
-  lu: function (v) { S.loginU = v; S.loginErr = null; },
+  lu: function (v) { S.loginU = v; S.loginErr = null; S.loginId = null; S.loginOpen = true; },
   lp: function (v) { S.loginP = v; S.loginErr = null; }
 };
 document.addEventListener('input', function (ev) {

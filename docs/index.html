@@ -1751,6 +1751,67 @@
   /* زرُّ الصفة: الاسمُ يُقصَّر ولا يفيض، والأيقونةُ لا تُزاح */
   .rolebtn > span:last-child{ min-width:0; overflow:hidden; text-overflow:ellipsis }
 
+
+  /* ══════════════════════════════════════════════════════════════
+     الدخول — مراجعةُ المقاسات والترتيب
+
+     الشعارُ أكبرُ (١٩٠px) وبينه وبين شريط اللغة فراغٌ يفصلهما،
+     فلا يبدو ملتصقًا به. وسقطت أزرارُ الصفات: الكتابةُ في حقل
+     الاسم تفتح القائمةَ، والاختيارُ منها يملأ الحقلين معًا.
+     ══════════════════════════════════════════════════════════════ */
+  .loginlang{ padding-top:calc(12px + env(safe-area-inset-top)) }
+  .authmain{ gap:0; padding:0 16px 10px }
+  .authtop{ padding:26px 0 20px }
+  .authtop .logo{ width:190px; height:54px }
+  .authcard{ padding:24px 20px 20px; border-radius:24px }
+  .authhead{ margin-bottom:20px }
+  .authhead h1{ font-size:22px }
+  .authsub{ margin-top:5px; font-size:12.5px }
+  .authbody{ gap:15px }
+  .authfoot{ padding:16px 0 10px }
+  .demonote{ margin-top:16px; padding-top:14px; border-top:1px solid var(--line) }
+
+  /* حقلُ الاسم: صندوقٌ وقائمةٌ تنسدل تحته بلا دفعِ ما بعده */
+  .combo{ position:relative }
+  .cbox{ display:flex; align-items:center; gap:9px; min-height:48px; padding:0 6px 0 13px;
+    background:#fff; border:1px solid var(--line2,#D7E0D9); border-radius:12px;
+    color:var(--dim); transition:border-color .14s ease, box-shadow .14s ease }
+  .cbox.on, .cbox:focus-within{ border-color:var(--g);
+    box-shadow:0 0 0 3px rgba(20,89,63,.12) }
+  .cbox input{ flex:1; min-width:0; border:0; background:none; outline:none;
+    font:inherit; font-size:14px; color:var(--ink); padding:13px 0 }
+  .cbox input::placeholder{ color:var(--dim2); font-size:13px }
+  .cbtn{ width:38px; height:38px; flex:none; display:grid; place-items:center; border:0;
+    background:none; color:var(--dim); cursor:pointer; border-radius:10px }
+  .combo.open .cbtn{ transform:rotate(180deg); color:var(--g) }
+
+  .cmenu{ position:absolute; inset-inline:0; top:calc(100% + 6px); z-index:30;
+    background:#fff; border:1px solid var(--line); border-radius:16px; padding:5px;
+    max-height:44vh; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    box-shadow:0 22px 44px -18px rgba(11,53,39,.5) }
+  .lopt{ display:flex; align-items:center; gap:10px; width:100%; min-height:56px;
+    padding:8px 10px; border:0; border-radius:11px; background:none; color:var(--ink);
+    cursor:pointer; text-align:start }
+  .lopt + .lopt{ border-top:1px solid var(--line) }
+  .lopt .nm{ flex:1; min-width:0 }
+  .lopt .nm b{ display:block; font-size:13.5px; font-weight:700 }
+  .lopt .nm span{ display:block; font-size:11px; color:var(--dim); margin-top:2px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+  .lopt.on{ background:var(--pGreenB) }
+  .cempty{ text-align:center; padding:26px 14px; color:var(--dim) }
+  .cempty b{ display:block; margin-top:8px; font-size:13px }
+
+  /* الشاشاتُ القصيرة: يُضغط الفراغُ لا الخطّ */
+  @media (max-height:720px){
+    .authtop{ padding:16px 0 14px } .authtop .logo{ width:168px; height:48px }
+    .authcard{ padding:20px 18px 18px } .authhead{ margin-bottom:16px }
+    .authfoot{ padding:10px 0 6px }
+  }
+
+
+  /* زرُّ فتح القائمة: ٤٤px لمسًا وإن بدا أصغر */
+  .cbtn{ width:44px; height:44px }
+
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <symbol id="av-m" viewBox="0 0 44 44">
@@ -3624,6 +3685,7 @@ DICT.en = {
   "احتياط:": "Reserve:",
   "اختر اسمك": "Choose your name",
   "اختر اسمك لتُعبَّأ كلمةُ المرور": "Choose your name and the password fills in",
+  "اختر اسمًا من القائمة أو اكتب رمزك": "Pick a name from the list or type your code",
   "اختر البديل": "Choose the substitute",
   "اختر التاريخ والوقت": "Choose Date and time",
   "اختر الحالة": "Choose Status",
@@ -3887,6 +3949,7 @@ DICT.en = {
   "افتح رحلات اليوم": "Open today’s trips",
   "افتح طلبات قيد المراجعة": "Open Requests under review",
   "افتح فنادق بلا مشرف": "Open hotels without a supervisor",
+  "افتح قائمة الأسماء": "Open the name list",
   "افتح قرارات تنتظرك": "Open decisions awaiting you",
   "افتح قوالب منشورة": "Open published templates",
   "افتح قيد المعالجة": "Open in progress",
@@ -3908,6 +3971,7 @@ DICT.en = {
   "اقتراب موعد مهمة · طلب تسكين ينتظر ردّك · تذكرة عاجلة · تذكير التحضير.": "A task time approaching · a rooming request awaiting your reply · an urgent ticket · the briefing reminder.",
   "اقترب إغلاق الطلبات على هذه المهمة": "Requests on this task are about to close",
   "اكتب الاسم": "Type a name",
+  "اكتب الاسم أو الرمز": "Type a name or code",
   "اكتب التعليمة بوضوح…": "Write the instruction clearly…",
   "اكتب الرد": "Write the reply",
   "اكتب الردّ": "Write the reply",
@@ -11190,6 +11254,7 @@ DICT.ms = {
   "احتياط:": "Simpanan:",
   "اختر اسمك": "Pilih nama anda",
   "اختر اسمك لتُعبَّأ كلمةُ المرور": "Pilih nama anda dan kata laluan akan diisi",
+  "اختر اسمًا من القائمة أو اكتب رمزك": "Pilih nama dari senarai atau taip kod anda",
   "اختر البديل": "Pilih pengganti",
   "اختر التاريخ والوقت": "Pilih Tarikh dan masa",
   "اختر الحالة": "Pilih Status",
@@ -11453,6 +11518,7 @@ DICT.ms = {
   "افتح رحلات اليوم": "Buka perjalanan hari ini",
   "افتح طلبات قيد المراجعة": "Buka Permohonan dalam semakan",
   "افتح فنادق بلا مشرف": "Buka hotel tanpa penyelia",
+  "افتح قائمة الأسماء": "Buka senarai nama",
   "افتح قرارات تنتظرك": "Buka keputusan menanti anda",
   "افتح قوالب منشورة": "Buka templat diterbitkan",
   "افتح قيد المعالجة": "Buka sedang diuruskan",
@@ -11474,6 +11540,7 @@ DICT.ms = {
   "اقتراب موعد مهمة · طلب تسكين ينتظر ردّك · تذكرة عاجلة · تذكير التحضير.": "Waktu tugas menghampiri · permintaan penempatan menunggu balasan anda · tiket segera · peringatan taklimat.",
   "اقترب إغلاق الطلبات على هذه المهمة": "Permintaan pada tugas ini hampir ditutup",
   "اكتب الاسم": "Taip nama",
+  "اكتب الاسم أو الرمز": "Taip nama atau kod",
   "اكتب التعليمة بوضوح…": "Tulis arahan dengan jelas…",
   "اكتب الرد": "Tulis balasan",
   "اكتب الردّ": "Tulis balasan",
@@ -18740,41 +18807,57 @@ function taskRow(t) {
 
 const DEMO_PW = '48162048';
 
-/* حسابُ العرض لكلّ صفة — أوّلُ من يحملها */
-const demoOf = kind => {
-  const U = S.users;
-  if (kind === 'leader') return U.find(u => u.role === 'leader');
-  if (kind === 'naql')   return U.find(u => u.role === 'muhsen' && u.specialty === 'نقل');
-  return U.find(u => u.role === 'muhsen' && u.specialty !== 'نقل');
+/* صفةُ الحساب في سطرٍ واحد — تُقرأ تحت الاسم في القائمة */
+const loginSub = u => {
+  if (!u) return '';
+  const L2 = userById(u.leaderId);
+  return u.role === 'leader'
+    ? 'محسن ليدر · ' + u.kt
+    : 'مُحسن · ' + u.specialty +
+      (u.reserve ? ' · فريق امتثال' : L2 ? ' · فريق ' + L2.name.split(' ')[0] : '');
 };
-const DEMO_ROLES = [
-  { k:'leader', i:'i-star',  ar:'محسن ليدر' },
-  { k:'muhsen', i:'i-user',  ar:'مُحسن' },
-  { k:'naql',   i:'i-bus',   ar:'مُحسن نقل' }
-];
 
-/* الاسمُ المكتوبُ يُطابَق بالرمز أو بالاسم — فمن يعرف رمزَه يكتبه */
-function loginMatch(q) {
-  q = (q || '').trim();
+/* القائمةُ تحت الحقل: تُصفَّى بما يُكتب — اسمًا أو رمزًا أو تخصّصًا.
+   فلا أزرارَ صفاتٍ منفصلة: الكتابةُ هي الاختيار. */
+function loginList() {
+  const q = (S.loginU || '').trim();
+  const list = S.users.slice().sort((a, b) =>
+    (a.role === 'leader' ? 0 : 1) - (b.role === 'leader' ? 0 : 1));
+  if (!q) return list;
+  const low = q.toLowerCase().replace(/^#/, '');
+  return list.filter(u =>
+    u.name.indexOf(q) >= 0 ||
+    String(u.code || '').toLowerCase().replace(/^#/, '').indexOf(low) >= 0 ||
+    u.id.toLowerCase().indexOf(low) >= 0 ||
+    String(u.specialty || '').indexOf(q) >= 0 ||
+    String(u.kt || '').toLowerCase().indexOf(low) >= 0);
+}
+
+/* المكتوبُ يُطابَق بالرمز أو بالاسم — ومن اختار من القائمة فاختيارُه */
+function loginMatch() {
+  if (S.loginId) { const u = userById(S.loginId); if (u) return u; }
+  const q = (S.loginU || '').trim();
   if (!q) return null;
   const low = q.toLowerCase().replace(/^#/, '');
   return S.users.find(u =>
+    u.name === q ||
     String(u.code || '').toLowerCase().replace(/^#/, '') === low ||
-    u.name === q || u.id.toLowerCase() === low) || null;
+    u.id.toLowerCase() === low) || null;
 }
 
 function screenLogin() {
-  const err = S.loginErr;
-  const busy = S.loginBusy;
+  const picked = S.loginId ? userById(S.loginId) : null;
+  const open = !!S.loginOpen;
+  const list = open ? loginList() : [];
 
-  const role = r => {
-    const u = demoOf(r.k);
-    if (!u) return '';
-    return '<button type="button" class="rolebtn" data-a="demologin" data-id="' + u.id + '" ' +
-      (busy ? 'disabled ' : '') + 'aria-label="دخول تجريبي بصفة ' + E(r.ar) + '">' +
-      '<span class="ci">' + icon(r.i, 's16') + '</span>' +
-      '<span>' + r.ar + '</span></button>';
-  };
+  const opt = u =>
+    '<button type="button" class="lopt' + (picked && picked.id === u.id ? ' on' : '') + '" ' +
+      'data-a="loginsel" data-id="' + u.id + '" role="option">' +
+      avat(u, 'sm') +
+      '<span class="nm sp"><b>' + E(u.name) + '</b>' +
+        '<span>' + E(loginSub(u)) + ' · ' + E(u.code || '') + '</span></span>' +
+      (picked && picked.id === u.id ? icon('i-checkc', 's18') : '') +
+    '</button>';
 
   return '<div class="login"><i class="pat"></i>' +
     '<div class="loginlang">' + langSwitch() + '</div>' +
@@ -18783,22 +18866,38 @@ function screenLogin() {
       '<div class="authtop">' +
         '<i class="logo mlockup" role="img" aria-label="مُحسن"></i>' +
       '</div>' +
-      '<div class="authcard">' +
 
+      '<div class="authcard">' +
         '<div class="authhead">' +
-          '<h1>تسجيل الدخول إلى مُحسن</h1>' +
+          '<h1>تسجيل الدخول</h1>' +
           '<p class="authsub">تطبيق الميدان — موسم الحج ١٤٤٨ هـ</p>' +
         '</div>' +
 
         '<form class="authbody" data-a="nosubmit">' +
-          (err ? '<div class="autherr" role="alert">' + icon('i-warn', 's16') +
-            '<span>' + E(err) + '</span></div>' : '') +
+          (S.loginErr ? '<div class="autherr" role="alert">' + icon('i-warn', 's16') +
+            '<span>' + E(S.loginErr) + '</span></div>' : '') +
 
           '<div class="fld">' +
-            '<label for="lu">اسم المستخدم أو الرمز</label>' +
-            '<input id="lu" type="text" dir="ltr" autocomplete="username" ' +
-              'placeholder="M1001 · #1001" value="' + E(S.loginU || '') + '" ' +
-              'data-a="loginu" aria-label="اسم المستخدم أو الرمز">' +
+            '<label for="lu">اسم المستخدم</label>' +
+            '<div class="combo' + (open ? ' open' : '') + '">' +
+              '<div class="cbox' + (open ? ' on' : '') + '">' +
+                icon('i-user', 's18') +
+                '<input id="lu" type="text" autocomplete="off" role="combobox" ' +
+                  'aria-expanded="' + (open ? 'true' : 'false') + '" ' +
+                  'placeholder="اكتب الاسم أو الرمز" ' +
+                  'value="' + E(S.loginU || '') + '" data-a="loginopen" ' +
+                  'aria-label="اسم المستخدم">' +
+                '<button type="button" class="cbtn" data-a="logintoggle" ' +
+                  'aria-label="افتح قائمة الأسماء">' + icon('i-down', 's16') + '</button>' +
+              '</div>' +
+              (open
+                ? '<div class="cmenu" role="listbox">' +
+                    (list.length ? list.map(opt).join('')
+                      : '<div class="cempty">' + icon('i-search', 's22') +
+                        '<b>لا اسم يطابق</b></div>') +
+                  '</div>'
+                : '') +
+            '</div>' +
           '</div>' +
 
           '<div class="fld">' +
@@ -18817,27 +18916,22 @@ function screenLogin() {
             '</div>' +
           '</div>' +
 
-          '<button class="btn p wide" data-a="dologin"' + (busy ? ' disabled' : '') + '>' +
-            (busy ? '<span class="spin"></span>' : icon('i-out', 's18')) +
+          '<button class="btn p wide" data-a="dologin"' + (S.loginBusy ? ' disabled' : '') + '>' +
+            (S.loginBusy ? '<span class="spin"></span>' : icon('i-out', 's18')) +
             'تسجيل الدخول</button>' +
         '</form>' +
 
-        '<section class="demo">' +
-          '<div class="demosep">أو جرّب النظام</div>' +
-          '<div class="demoroles">' + DEMO_ROLES.map(role).join('') + '</div>' +
-          '<p class="demonote">كلمة المرور لكل الحسابات التجريبية: ' +
-            '<code class="ltr">' + DEMO_PW + '</code></p>' +
-        '</section>' +
+        '<p class="demonote">كلمة المرور لكل الحسابات التجريبية: ' +
+          '<code class="ltr">' + DEMO_PW + '</code></p>' +
       '</div>' +
 
       '<div class="authfoot"><i class="mnozoly" role="img" aria-label="نُزلي"></i></div>' +
     '</div></div>';
 }
 
-/* الدخول: يُقبل الرمزُ أو الاسم، والمرورُ واحدةٌ في نسخة التجربة */
 function doLogin() {
-  const u = loginMatch(S.loginU);
-  if (!u) { S.loginErr = 'لا حساب بهذا الاسم أو الرمز'; save(); render(); return; }
+  const u = loginMatch();
+  if (!u) { S.loginErr = 'اختر اسمًا من القائمة أو اكتب رمزك'; save(); render(); return; }
   if ((S.loginP || '') !== DEMO_PW) {
     S.loginErr = 'كلمة المرور غير صحيحة'; save(); render(); return;
   }
@@ -18847,11 +18941,11 @@ function doLogin() {
 
 function enterAs(id) {
   const u = userById(id); if (!u) return;
-  S.loginBusy = true; S.loginErr = null;
+  S.loginBusy = true; S.loginErr = null; S.loginOpen = false;
   save(); render();
   setTimeout(function () {
     S.loginBusy = false;
-    S.loginU = ''; S.loginP = ''; S.loginShow = false;
+    S.loginU = ''; S.loginP = ''; S.loginId = null; S.loginShow = false;
     S.session = { id: u.id, at: Date.now() };
     S.route = { n: u.role === 'leader' ? 'home' : 'mhome' };
     toast('مرحبًا ' + u.name, 'g'); buzz();
@@ -21669,6 +21763,9 @@ function maybeAskPush() {
   if (!S.session) return false;
   if (S.pushAsked) return false;
   if (!pushSupported() || pushState() !== 'default') { S.pushAsked = true; return false; }
+  /* لا يطرد لوحًا مفتوحًا: يُطلَب الإذنُ بعد الدخول بثانيةٍ ونصف،
+     فمن فتح لوحًا في تلك اللحظة كان يُسلَب منه. يُؤجَّل لا يُلغى. */
+  if (S.sheet) return false;
   S.pushAsked = true;
   S.sheet = pushAskSheet();
   return true;
@@ -23388,14 +23485,19 @@ document.addEventListener('click', ev => {
 
     /* الدخول: البحثُ بالاسم، ومن اختار اسمًا من غير نسخته نُقل إلى رابطها */
     /* ---------- الدخول ---------- */
-    case 'nosubmit':   return;                 /* النموذجُ لا يُرسَل */
-    case 'loginu':     return;                 /* الكتابةُ يلتقطها LIVEQ */
-    case 'loginp':     return;
-    case 'loginshow':  S.loginShow = !S.loginShow; break;
+    case 'nosubmit':    return;                /* النموذجُ لا يُرسَل */
+    case 'loginp':      return;                /* الكتابةُ يلتقطها LIVEQ */
+    case 'loginopen':   S.loginOpen = true; break;
+    case 'logintoggle': S.loginOpen = !S.loginOpen; break;
+    case 'loginsel': {
+      /* الاختيارُ يملأ الحقلَ بالاسم وكلمةَ المرور معه، فتبقى خطوةٌ
+         واحدةٌ: الضغطُ على «تسجيل الدخول». */
+      const su = userById(id); if (!su) break;
+      S.loginId = su.id; S.loginU = su.name; S.loginP = DEMO_PW;
+      S.loginOpen = false; S.loginErr = null; break; }
+    case 'loginshow':   S.loginShow = !S.loginShow; break;
     case 'loginforgot': toast('راجع مشرفك لإعادة تعيين كلمة المرور', 'r'); break;
-    case 'dologin':    doLogin(); return;
-    case 'demologin':  enterAs(id); return;
-
+    case 'dologin':     doLogin(); return;
     case 'logout': S.session = null; S.route = { n: 'login' }; S.sheet = null; S.sheetBare = false; break;
 
     /* ---------- الردود: إضافةٌ ← عددٌ ← بدءٌ ← إنهاء ---------- */
@@ -23928,7 +24030,7 @@ document.addEventListener('click', ev => {
    ويُعاد موضعُ المؤشّر معه، وإلّا قفز إلى الأوّل عند كلّ حرف. */
 const LIVEQ = {
   pq: function (v) { S.tab.pq = v; },
-  lu: function (v) { S.loginU = v; S.loginErr = null; },
+  lu: function (v) { S.loginU = v; S.loginErr = null; S.loginId = null; S.loginOpen = true; },
   lp: function (v) { S.loginP = v; S.loginErr = null; }
 };
 document.addEventListener('input', function (ev) {

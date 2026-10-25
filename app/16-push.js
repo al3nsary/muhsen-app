@@ -179,6 +179,9 @@ function maybeAskPush() {
   if (!S.session) return false;
   if (S.pushAsked) return false;
   if (!pushSupported() || pushState() !== 'default') { S.pushAsked = true; return false; }
+  /* لا يطرد لوحًا مفتوحًا: يُطلَب الإذنُ بعد الدخول بثانيةٍ ونصف،
+     فمن فتح لوحًا في تلك اللحظة كان يُسلَب منه. يُؤجَّل لا يُلغى. */
+  if (S.sheet) return false;
   S.pushAsked = true;
   S.sheet = pushAskSheet();
   return true;

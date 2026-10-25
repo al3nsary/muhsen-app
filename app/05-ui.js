@@ -303,41 +303,57 @@ function taskRow(t) {
 
 const DEMO_PW = '48162048';
 
-/* حسابُ العرض لكلّ صفة — أوّلُ من يحملها */
-const demoOf = kind => {
-  const U = S.users;
-  if (kind === 'leader') return U.find(u => u.role === 'leader');
-  if (kind === 'naql')   return U.find(u => u.role === 'muhsen' && u.specialty === 'نقل');
-  return U.find(u => u.role === 'muhsen' && u.specialty !== 'نقل');
+/* صفةُ الحساب في سطرٍ واحد — تُقرأ تحت الاسم في القائمة */
+const loginSub = u => {
+  if (!u) return '';
+  const L2 = userById(u.leaderId);
+  return u.role === 'leader'
+    ? 'محسن ليدر · ' + u.kt
+    : 'مُحسن · ' + u.specialty +
+      (u.reserve ? ' · فريق امتثال' : L2 ? ' · فريق ' + L2.name.split(' ')[0] : '');
 };
-const DEMO_ROLES = [
-  { k:'leader', i:'i-star',  ar:'محسن ليدر' },
-  { k:'muhsen', i:'i-user',  ar:'مُحسن' },
-  { k:'naql',   i:'i-bus',   ar:'مُحسن نقل' }
-];
 
-/* الاسمُ المكتوبُ يُطابَق بالرمز أو بالاسم — فمن يعرف رمزَه يكتبه */
-function loginMatch(q) {
-  q = (q || '').trim();
+/* القائمةُ تحت الحقل: تُصفَّى بما يُكتب — اسمًا أو رمزًا أو تخصّصًا.
+   فلا أزرارَ صفاتٍ منفصلة: الكتابةُ هي الاختيار. */
+function loginList() {
+  const q = (S.loginU || '').trim();
+  const list = S.users.slice().sort((a, b) =>
+    (a.role === 'leader' ? 0 : 1) - (b.role === 'leader' ? 0 : 1));
+  if (!q) return list;
+  const low = q.toLowerCase().replace(/^#/, '');
+  return list.filter(u =>
+    u.name.indexOf(q) >= 0 ||
+    String(u.code || '').toLowerCase().replace(/^#/, '').indexOf(low) >= 0 ||
+    u.id.toLowerCase().indexOf(low) >= 0 ||
+    String(u.specialty || '').indexOf(q) >= 0 ||
+    String(u.kt || '').toLowerCase().indexOf(low) >= 0);
+}
+
+/* المكتوبُ يُطابَق بالرمز أو بالاسم — ومن اختار من القائمة فاختيارُه */
+function loginMatch() {
+  if (S.loginId) { const u = userById(S.loginId); if (u) return u; }
+  const q = (S.loginU || '').trim();
   if (!q) return null;
   const low = q.toLowerCase().replace(/^#/, '');
   return S.users.find(u =>
+    u.name === q ||
     String(u.code || '').toLowerCase().replace(/^#/, '') === low ||
-    u.name === q || u.id.toLowerCase() === low) || null;
+    u.id.toLowerCase() === low) || null;
 }
 
 function screenLogin() {
-  const err = S.loginErr;
-  const busy = S.loginBusy;
+  const picked = S.loginId ? userById(S.loginId) : null;
+  const open = !!S.loginOpen;
+  const list = open ? loginList() : [];
 
-  const role = r => {
-    const u = demoOf(r.k);
-    if (!u) return '';
-    return '<button type="button" class="rolebtn" data-a="demologin" data-id="' + u.id + '" ' +
-      (busy ? 'disabled ' : '') + 'aria-label="دخول تجريبي بصفة ' + E(r.ar) + '">' +
-      '<span class="ci">' + icon(r.i, 's16') + '</span>' +
-      '<span>' + r.ar + '</span></button>';
-  };
+  const opt = u =>
+    '<button type="button" class="lopt' + (picked && picked.id === u.id ? ' on' : '') + '" ' +
+      'data-a="loginsel" data-id="' + u.id + '" role="option">' +
+      avat(u, 'sm') +
+      '<span class="nm sp"><b>' + E(u.name) + '</b>' +
+        '<span>' + E(loginSub(u)) + ' · ' + E(u.code || '') + '</span></span>' +
+      (picked && picked.id === u.id ? icon('i-checkc', 's18') : '') +
+    '</button>';
 
   return '<div class="login"><i class="pat"></i>' +
     '<div class="loginlang">' + langSwitch() + '</div>' +
@@ -346,22 +362,38 @@ function screenLogin() {
       '<div class="authtop">' +
         '<i class="logo mlockup" role="img" aria-label="مُحسن"></i>' +
       '</div>' +
-      '<div class="authcard">' +
 
+      '<div class="authcard">' +
         '<div class="authhead">' +
-          '<h1>تسجيل الدخول إلى مُحسن</h1>' +
+          '<h1>تسجيل الدخول</h1>' +
           '<p class="authsub">تطبيق الميدان — موسم الحج ١٤٤٨ هـ</p>' +
         '</div>' +
 
         '<form class="authbody" data-a="nosubmit">' +
-          (err ? '<div class="autherr" role="alert">' + icon('i-warn', 's16') +
-            '<span>' + E(err) + '</span></div>' : '') +
+          (S.loginErr ? '<div class="autherr" role="alert">' + icon('i-warn', 's16') +
+            '<span>' + E(S.loginErr) + '</span></div>' : '') +
 
           '<div class="fld">' +
-            '<label for="lu">اسم المستخدم أو الرمز</label>' +
-            '<input id="lu" type="text" dir="ltr" autocomplete="username" ' +
-              'placeholder="M1001 · #1001" value="' + E(S.loginU || '') + '" ' +
-              'data-a="loginu" aria-label="اسم المستخدم أو الرمز">' +
+            '<label for="lu">اسم المستخدم</label>' +
+            '<div class="combo' + (open ? ' open' : '') + '">' +
+              '<div class="cbox' + (open ? ' on' : '') + '">' +
+                icon('i-user', 's18') +
+                '<input id="lu" type="text" autocomplete="off" role="combobox" ' +
+                  'aria-expanded="' + (open ? 'true' : 'false') + '" ' +
+                  'placeholder="اكتب الاسم أو الرمز" ' +
+                  'value="' + E(S.loginU || '') + '" data-a="loginopen" ' +
+                  'aria-label="اسم المستخدم">' +
+                '<button type="button" class="cbtn" data-a="logintoggle" ' +
+                  'aria-label="افتح قائمة الأسماء">' + icon('i-down', 's16') + '</button>' +
+              '</div>' +
+              (open
+                ? '<div class="cmenu" role="listbox">' +
+                    (list.length ? list.map(opt).join('')
+                      : '<div class="cempty">' + icon('i-search', 's22') +
+                        '<b>لا اسم يطابق</b></div>') +
+                  '</div>'
+                : '') +
+            '</div>' +
           '</div>' +
 
           '<div class="fld">' +
@@ -380,27 +412,22 @@ function screenLogin() {
             '</div>' +
           '</div>' +
 
-          '<button class="btn p wide" data-a="dologin"' + (busy ? ' disabled' : '') + '>' +
-            (busy ? '<span class="spin"></span>' : icon('i-out', 's18')) +
+          '<button class="btn p wide" data-a="dologin"' + (S.loginBusy ? ' disabled' : '') + '>' +
+            (S.loginBusy ? '<span class="spin"></span>' : icon('i-out', 's18')) +
             'تسجيل الدخول</button>' +
         '</form>' +
 
-        '<section class="demo">' +
-          '<div class="demosep">أو جرّب النظام</div>' +
-          '<div class="demoroles">' + DEMO_ROLES.map(role).join('') + '</div>' +
-          '<p class="demonote">كلمة المرور لكل الحسابات التجريبية: ' +
-            '<code class="ltr">' + DEMO_PW + '</code></p>' +
-        '</section>' +
+        '<p class="demonote">كلمة المرور لكل الحسابات التجريبية: ' +
+          '<code class="ltr">' + DEMO_PW + '</code></p>' +
       '</div>' +
 
       '<div class="authfoot"><i class="mnozoly" role="img" aria-label="نُزلي"></i></div>' +
     '</div></div>';
 }
 
-/* الدخول: يُقبل الرمزُ أو الاسم، والمرورُ واحدةٌ في نسخة التجربة */
 function doLogin() {
-  const u = loginMatch(S.loginU);
-  if (!u) { S.loginErr = 'لا حساب بهذا الاسم أو الرمز'; save(); render(); return; }
+  const u = loginMatch();
+  if (!u) { S.loginErr = 'اختر اسمًا من القائمة أو اكتب رمزك'; save(); render(); return; }
   if ((S.loginP || '') !== DEMO_PW) {
     S.loginErr = 'كلمة المرور غير صحيحة'; save(); render(); return;
   }
@@ -410,11 +437,11 @@ function doLogin() {
 
 function enterAs(id) {
   const u = userById(id); if (!u) return;
-  S.loginBusy = true; S.loginErr = null;
+  S.loginBusy = true; S.loginErr = null; S.loginOpen = false;
   save(); render();
   setTimeout(function () {
     S.loginBusy = false;
-    S.loginU = ''; S.loginP = ''; S.loginShow = false;
+    S.loginU = ''; S.loginP = ''; S.loginId = null; S.loginShow = false;
     S.session = { id: u.id, at: Date.now() };
     S.route = { n: u.role === 'leader' ? 'home' : 'mhome' };
     toast('مرحبًا ' + u.name, 'g'); buzz();

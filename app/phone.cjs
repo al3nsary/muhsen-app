@@ -35,6 +35,10 @@ const inject = '<script>\n' +
 '    S.pushAsked = true; S.sheet = null;\n' +
 '    if (' + JSON.stringify(SHEET) + ' === "more") { S.sheet = moreSheet(); S.sheetBare = true; }\n' +
 '    if (' + JSON.stringify(SHEET) + ' === "ride") { S.rdLeg = 0; S.sheet = rideSheet(); }\n' +
+/* قائمةُ الأسماء: مفتوحةً، ومفتوحةً بعد كتابةِ حرفين */
+'    if (' + JSON.stringify(SHEET) + ' === "combo") S.loginOpen = true;\n' +
+'    if (' + JSON.stringify(SHEET) + ' === "typed") {\n' +
+'      S.loginOpen = true; S.loginU = "\\u0645\\u062D"; }\n' +
 /* رَدٌّ مفتوحٌ أو جارٍ — لا تُصنعان في البذرة، والبطاقةُ تُقاس بهما */
 '    if (' + JSON.stringify(SHEET) + '.indexOf("open") === 0 ||\n' +
 '        ' + JSON.stringify(SHEET) + '.indexOf("transit") === 0) {\n' +
