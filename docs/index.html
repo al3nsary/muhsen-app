@@ -427,13 +427,13 @@
   .login .panel{background:#fff; border-radius:22px; padding:16px; flex:1; min-height:0;
     display:flex; flex-direction:column; gap:9px; box-shadow:0 24px 50px -22px rgba(0,0,0,.6)}
   .rolebtns{display:grid; grid-template-columns:1fr 1fr; gap:10px}
-  .rolebtn{border-radius:16px; padding:11px 10px; text-align:center; background:#fff;
-    border:1.5px solid rgba(20,89,63,.12); box-shadow:0 1px 2px rgba(11,53,39,.05)}
-  .rolebtn .ci{width:36px; height:36px; border-radius:12px; margin:0 auto 5px; display:grid;
-    place-items:center; background:#EFF4F0; color:var(--g)}
-  .rolebtn b{display:block; font-size:13.5px} .rolebtn span{display:block; font-size:10.5px; color:var(--dim2)}
-  .rolebtn.on{border-color:var(--g); background:#F2F8F4}
-  .rolebtn.on .ci{background:linear-gradient(150deg,var(--g3),var(--g2)); color:#fff}
+  /* قواعدُ مُنتقي الدور القديمةِ حُذفت: كانت تجعل أيقونةَ زرّ الصفة
+     مربّعًا بحشوةٍ ومحاذاةٍ رأسيّة، فتزاحم القاعدةَ الجديدة. */
+
+
+
+
+
   .login .foot{flex:none; padding-top:10px; text-align:center}
   .login .foot img{width:96px; opacity:.85}
   .login .foot div{color:#9FBBAC; font-size:10.5px; margin-top:6px}
@@ -1621,6 +1621,102 @@
   /* الحجابُ تحت الأزرار العائمة أخفُّ: لا لوحَ يحجب، وإنّما
      ظلٌّ يُبرز الأزرارَ ويُغلق بالنقر خارجها. */
   .scrim.soft{ background:rgba(11,53,39,.42) }
+
+
+  /* ══════════════════════════════════════════════════════════════
+     الدخول — على قياسات «نُزلي لإدارة المشاريع»
+
+     قرأتُ أنماطَها المبنيّةَ من موقعها: البطاقةُ ٤٤٠px بحدٍّ وظلٍّ
+     خفيف، والشعارُ ١٦٤px على الجوّال، والعنوانُ ٢٤px/٦٠٠،
+     والسطرُ تحته ١٤px، والتسميةُ ١٣٫٥px/٦٠٠، وزرُّ الصفة ٤٤px
+     بخطٍّ ١٢٫٥px. فالقياساتُ منقولةٌ لا مُقدَّرة.
+     ══════════════════════════════════════════════════════════════ */
+  .authmain{ position:relative; z-index:2; flex:1; min-height:0; display:flex;
+    flex-direction:column; align-items:center; gap:18px; padding:16px 16px 12px;
+    overflow-y:auto; -webkit-overflow-scrolling:touch }
+  .authmain::-webkit-scrollbar{ width:0 }
+  .authcard{ width:100%; max-width:440px; background:#fff; border:1px solid var(--line);
+    border-radius:22px; padding:26px 20px 22px;
+    box-shadow:0 1px 2px rgba(16,24,40,.04), 0 18px 40px -20px rgba(16,24,40,.22) }
+  .authlogo{ display:flex; justify-content:center; margin-bottom:20px }
+  .authlogo .logo{ width:164px; height:46px; margin:0; background-size:contain;
+    background-repeat:no-repeat; background-position:center; filter:none }
+  .authhead{ text-align:center; margin-bottom:22px }
+  .authhead h1{ font-size:21px; font-weight:700; letter-spacing:-.3px; line-height:1.4;
+    margin:0; color:var(--ink) }
+  .authsub{ margin:6px 0 0; font-size:13px; line-height:1.6; color:var(--dim) }
+
+  .authbody{ display:flex; flex-direction:column; gap:16px }
+  .autherr{ display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:12px;
+    background:var(--pRedB,rgba(200,60,60,.08)); color:var(--red); font-size:12.5px;
+    line-height:1.6; border:1px solid rgba(200,60,60,.22) }
+  .fld{ display:flex; flex-direction:column; gap:6px }
+  .fld > label{ font-size:13.5px; font-weight:600; color:var(--ink) }
+  .fld input{ width:100%; min-height:46px; padding:0 13px; font:inherit; font-size:14px;
+    color:var(--ink); background:#fff; border:1px solid var(--line2,#D7E0D9);
+    border-radius:12px; outline:none; transition:border-color .14s ease, box-shadow .14s ease }
+  .fld input::placeholder{ color:var(--dim2); font-size:13px }
+  .fld input:focus{ border-color:var(--g); box-shadow:0 0 0 3px rgba(20,89,63,.12) }
+  .pwrap{ position:relative; display:flex }
+  .pwrap input{ padding-inline-end:46px }
+  .pweye{ position:absolute; inset-inline-end:4px; top:50%; transform:translateY(-50%);
+    width:38px; height:38px; display:grid; place-items:center; border:0; background:none;
+    color:var(--dim); cursor:pointer; border-radius:10px }
+  .pweye[aria-pressed=true]{ color:var(--g) }
+  .fldend{ display:flex; justify-content:flex-end; margin-top:2px }
+  .alink{ border:0; background:none; padding:4px 2px; font:inherit; font-size:12.5px;
+    font-weight:600; color:var(--g); cursor:pointer; min-height:28px }
+
+  /* التجربةُ السريعة — أزرارُ صفاتٍ لا قائمةُ أسماء */
+  .demo{ display:flex; flex-direction:column; gap:12px; margin-top:20px }
+  .demosep{ display:flex; align-items:center; gap:12px; color:var(--dim2);
+    font-size:12px; font-weight:600 }
+  .demosep::before, .demosep::after{ content:''; flex:1; height:1px; background:var(--line) }
+  .demoroles{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px }
+  .rolebtn{ display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    min-height:44px; padding:0 6px; border-radius:12px; background:#fff;
+    border:1px solid var(--line2,#D7E0D9); cursor:pointer; font:inherit; font-size:12.5px;
+    font-weight:600; color:var(--ink); white-space:nowrap;
+    transition:border-color .16s ease, background .16s ease, color .16s ease }
+  .rolebtn .ci{ display:grid; place-items:center; color:var(--gold); flex:none }
+  .rolebtn:active{ transform:scale(.98) }
+  .rolebtn:disabled{ opacity:.6; cursor:progress }
+  .demonote{ margin:0; font-size:11.5px; line-height:1.7; color:var(--dim); text-align:center }
+  .demonote code{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px;
+    background:var(--soft); border:1px solid var(--line); border-radius:6px; padding:1px 6px }
+  .authfoot{ flex:none; padding:4px 0 10px; display:flex; justify-content:center }
+
+  @media (max-height:700px){
+    .authcard{ padding:20px 18px 18px }
+    .authlogo{ margin-bottom:14px } .authhead{ margin-bottom:16px }
+    .authlogo .logo{ width:136px; height:38px }
+  }
+
+  /* ══════════ «المزيد»: خطٌّ أصغرُ وحجمٌ أهدأ ══════════
+     كان ١٣٫٥px بحشوةٍ واسعةٍ فبدا ثقيلًا على عرض الجوّال. */
+  .fabs{ gap:7px; bottom:calc(var(--sab,14px) + 60px) }
+  .fab{ min-height:42px; padding:0 5px 0 14px; gap:9px;
+    box-shadow:0 8px 20px -12px rgba(11,53,39,.4) }
+  html[dir=ltr] .fab{ padding:0 14px 0 5px }
+  .fab b{ font-size:12px; font-weight:600 }
+  .fab .fi{ width:32px; height:32px }
+  .fab .fi .ic{ width:17px; height:17px }
+
+
+  /* الشعارُ فاتحٌ (أبيضُ وذهبيّ) فلا يُقرأ على بطاقةٍ بيضاء.
+     فموضعُه الأرضُ الخضراءُ فوق البطاقة، كما كان. */
+  .authtop{ flex:none; display:flex; flex-direction:column; align-items:center; gap:5px;
+    padding:10px 0 16px }
+  .authtop .logo{ width:160px; height:44px; margin:0; background-size:contain;
+    background-repeat:no-repeat; background-position:center }
+  .authtop .cap{ font-size:11.5px; color:#CBDCD1 }
+  .authcard{ padding:24px 20px 22px }
+  .authlogo{ display:none }
+  .pweye{ width:44px; height:44px }
+
+
+  /* زرُّ الصفة: الاسمُ يُقصَّر ولا يفيض، والأيقونةُ لا تُزاح */
+  .rolebtn > span:last-child{ min-width:0; overflow:hidden; text-overflow:ellipsis }
 
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -3003,6 +3099,7 @@ DICT.en = {
   "أنور بن سليمان": "Anwar bin Sulaiman",
   "أو اكتب سببًا": "Or write a reason",
   "أو انقر المقعد لتختار من قائمة.": "Or tap the seat to choose from a list.",
+  "أو جرّب النظام": "Or try the system",
   "أولويّتها": "its priority",
   "أولويّتها عاجل": "Priority: urgent",
   "أولًا: حجم التشغيل": "First: Scale of operation",
@@ -3306,6 +3403,7 @@ DICT.en = {
   "إضافة ملاحظة": "Add Note",
   "إضافة مهمة جديدة": "Add a new task",
   "إضافة هذا الحاجّ إلى الدفعة": "Add this pilgrim to the batch",
+  "إظهار كلمة المرور أو إخفاؤها": "Show or hide the password",
   "إعادة إسناد تلقائيّة من الشِفت": "Automatic reassignment from the shift",
   "إعادة الإرسال": "Resend",
   "إعادة الإصدار": "Reissue",
@@ -3662,6 +3760,7 @@ DICT.en = {
   "اسم المجموعة ووصفها": "Group name and description",
   "اسم المرشد": "Guide name",
   "اسم المستخدم": "Username",
+  "اسم المستخدم أو الرمز": "Username or code",
   "اسم الملف": "File name",
   "اسم النظام": "System name",
   "اسمح بالنوافذ المنبثقة": "Allow pop-up windows",
@@ -5555,6 +5654,7 @@ DICT.en = {
   "تسجيل الخروج من الفندق — {n}‏/{n}‏/{n}": "Hotel check-out — {n}‏/{n}‏/{n}",
   "تسجيل الخروج من…": "Sign out of…",
   "تسجيل الدخول": "Sign in",
+  "تسجيل الدخول إلى مُحسن": "Sign in to Muhsen",
   "تسجيل الدخول للفندق": "Hotel check-in",
   "تسجيل الدخول للفندق · {n}:{n} pm — {n}:{n} am · قادمة": "Hotel check-in · {n}:{n} pm — {n}:{n} am · Upcoming",
   "تسجيل الدخول للفندق · {n}:{n} pm — {n}:{n} pm · قادمة": "Hotel check-in · {n}:{n} pm — {n}:{n} pm · Upcoming",
@@ -6388,6 +6488,7 @@ DICT.en = {
   "دخل": "Entered",
   "دخلتَ بصفة": "You signed in as",
   "دخول": "Sign in",
+  "دخول تجريبي بصفة {t}": "Demo sign-in as {t}",
   "دخيل الله العتيبي": "Dakhilallah Al-Otaibi",
   "درجة الخطورة": "Severity level",
   "درجة الخطورة — ما مستوى الخطورة؟": "Severity — how serious is it?",
@@ -6451,6 +6552,7 @@ DICT.en = {
   "راجع المسار المعتمد ولا تتوقّف في غير نقاطه.": "Review the approved route and stop only at its points.",
   "راجع بطاقة نُسك لكل حاجٍّ قبل دخول المشعر.": "Check every pilgrim’s Nusuk card before entering the holy site.",
   "راجع مشرفك فورًا. — غرفة عمليات مُحسن": "See your supervisor at once. — Muhsen operations room",
+  "راجع مشرفك لإعادة تعيين كلمة المرور": "See your supervisor to reset your password",
   "راشد": "Rashid",
   "راشد بن عوض": "Rashid bin Awad",
   "رافق المجموعة ذهابًا وإيابًا": "Escort the group there and back",
@@ -7851,6 +7953,8 @@ DICT.en = {
   "كل نقلٍ أو سحبٍ بسببه المكتوب": "Every move or withdrawal with its written reason",
   "كل واحدة تُمنح أو تُمنع": "Each one granted or denied",
   "كلمة المرور": "Password",
+  "كلمة المرور غير صحيحة": "Incorrect password",
+  "كلمة المرور لكل الحسابات التجريبية:": "Password for all demo accounts:",
   "كلُّ ردودك اليوم": "All your runs today",
   "كلُّ نقلٍ أو سحبٍ أو استبدالٍ — بسببه كما كُتب وقتَه": "Every move, withdrawal or substitution — with its reason as written at the time",
   "كلّ التنبيهات": "All alerts",
@@ -7960,6 +8064,7 @@ DICT.en = {
   "لا حالة لهذا القطاع": "No case for this sector",
   "لا حجّاج بعد.": "No pilgrims yet.",
   "لا حركات بعد — أضِف حركةً وحدِّد عددَ ردودها": "No movements yet — add one and set its run count",
+  "لا حساب بهذا الاسم أو الرمز": "No account with that name or code",
   "لا خطوات لهذا التصنيف.": "No steps for this category.",
   "لا خطوة بعد.": "No steps yet.",
   "لا خطوة للتراجع عنها": "No step to undo",
@@ -8421,7 +8526,7 @@ DICT.en = {
   "محسن جاهزون": "Muhsens ready",
   "محسن في الاحتياط ضمن نطاق المهمة بلا تعارض في أوقاتهم.": "Muhsens in the reserve within the task’s scope with no time conflict.",
   "محسن للمهمة —": "Muhsens for the task —",
-  "محسن ليدر": "Muhsen leader",
+  "محسن ليدر": "Leader",
   "محسن ليدر ·": "Muhsen leader ·",
   "محسن ليدر · KT{n}": "Muhsen leader · KT{n}",
   "محسن من الاحتياط": "Muhsen from reserve",
@@ -9001,6 +9106,7 @@ DICT.en = {
   "مُحسن · نقل": "Muhsen · Transport",
   "مُحسن الميدان": "Muhsen Field",
   "مُحسن ليدر": "Muhsen leader",
+  "مُحسن نقل": "Transport",
   "مُر على الأدوار واطمئن على راحة الحجاج، وسجّل أي ملاحظة على السكن كتذكرة فورًا.": "Walk the floors, check on the pilgrims’ comfort, and log any accommodation observation as a ticket at once.",
   "مُرّ على الأدوار وسجّل أي ملاحظة كتذكرة": "Walk the floors and log any observation as a ticket",
   "مُسكَّن": "Rostered",
@@ -9072,6 +9178,7 @@ DICT.en = {
   "نسخة ٤٫١": "version 4.1",
   "نسخة ٤٫٢": "version 4.2",
   "نسخة ٤٫٣": "version 4.3",
+  "نسيت كلمة المرور؟": "Forgot your password?",
   "نشاط حجّ": "Hajj activity",
   "نشاط حجّ · استقبال الحجاج من المطار": "Hajj activity · Pilgrim reception from the airport",
   "نشاط حجّ · استقبال الحجاج من المطار · ن{n}": "Hajj activity · Receiving pilgrims from the airport · v{n}",
@@ -9277,6 +9384,7 @@ DICT.en = {
   "وإن رفضت بقيت، ويُسجَّل رفضك بوقته.": "If you reject it you stay, and your rejection is logged with its time.",
   "وإن كان المقعد لا يُترك فارغًا فاستبدلْه: يقع الخروجُ والدخول": "If the seat cannot be left empty, substitute: the exit and the entry happen",
   "وإن كان المقعد لا يُترك فارغًا فاستبدلْه: يقع الخروجُ والدخول معًا بسببٍ واحد، ويُكتب في الملفَّين من حلَّ محلَّ من.": "If the seat cannot be left empty, substitute: the exit and the entry happen together under one reason, and both files record who replaced whom.",
+  "وإن كانت المواضعُ ممتلئةً خرج الأقدمُ ودخل الجديد.": "When the slots are full, the oldest makes way for the new one.",
   "واتساب": "WhatsApp",
   "واجهة جدة البحرية": "Jeddah Waterfront",
   "واحدة تُعدّل، والبقية تطّلع": "One may edit; the rest may view",
@@ -10555,6 +10663,7 @@ DICT.ms = {
   "أنور بن سليمان": "Anwar bin Sulaiman",
   "أو اكتب سببًا": "Atau tulis sebab",
   "أو انقر المقعد لتختار من قائمة.": "Atau ketik tempat duduk untuk memilih daripada senarai.",
+  "أو جرّب النظام": "Atau cuba sistem",
   "أولويّتها": "keutamaannya",
   "أولويّتها عاجل": "Keutamaan: segera",
   "أولًا: حجم التشغيل": "Pertama: Skala operasi",
@@ -10858,6 +10967,7 @@ DICT.ms = {
   "إضافة ملاحظة": "Tambah Catatan",
   "إضافة مهمة جديدة": "Tambah tugasan baharu",
   "إضافة هذا الحاجّ إلى الدفعة": "Tambah jemaah ini ke dalam kelompok",
+  "إظهار كلمة المرور أو إخفاؤها": "Tunjuk atau sembunyikan kata laluan",
   "إعادة إسناد تلقائيّة من الشِفت": "Penugasan semula automatik daripada syif",
   "إعادة الإرسال": "Hantar semula",
   "إعادة الإصدار": "Terbit semula",
@@ -11214,6 +11324,7 @@ DICT.ms = {
   "اسم المجموعة ووصفها": "Nama dan penerangan kumpulan",
   "اسم المرشد": "Nama pembimbing",
   "اسم المستخدم": "Nama pengguna",
+  "اسم المستخدم أو الرمز": "Nama pengguna atau kod",
   "اسم الملف": "Nama fail",
   "اسم النظام": "Nama sistem",
   "اسمح بالنوافذ المنبثقة": "Benarkan tetingkap timbul",
@@ -13107,6 +13218,7 @@ DICT.ms = {
   "تسجيل الخروج من الفندق — {n}‏/{n}‏/{n}": "Daftar keluar hotel — {n}‏/{n}‏/{n}",
   "تسجيل الخروج من…": "Log keluar daripada…",
   "تسجيل الدخول": "Log masuk",
+  "تسجيل الدخول إلى مُحسن": "Log masuk ke Muhsen",
   "تسجيل الدخول للفندق": "Daftar masuk hotel",
   "تسجيل الدخول للفندق · {n}:{n} pm — {n}:{n} am · قادمة": "Daftar masuk hotel · {n}:{n} pm — {n}:{n} am · Akan datang",
   "تسجيل الدخول للفندق · {n}:{n} pm — {n}:{n} pm · قادمة": "Daftar masuk hotel · {n}:{n} pm — {n}:{n} pm · Akan datang",
@@ -13940,6 +14052,7 @@ DICT.ms = {
   "دخل": "Masuk",
   "دخلتَ بصفة": "Anda log masuk sebagai",
   "دخول": "Log masuk",
+  "دخول تجريبي بصفة {t}": "Log masuk demo sebagai {t}",
   "دخيل الله العتيبي": "Dakhilallah Al-Otaibi",
   "درجة الخطورة": "Tahap risiko",
   "درجة الخطورة — ما مستوى الخطورة؟": "Tahap keseriusan — setakat mana seriusnya?",
@@ -14003,6 +14116,7 @@ DICT.ms = {
   "راجع المسار المعتمد ولا تتوقّف في غير نقاطه.": "Semak laluan yang diluluskan dan berhenti hanya di titiknya.",
   "راجع بطاقة نُسك لكل حاجٍّ قبل دخول المشعر.": "Semak kad Nusuk setiap jemaah sebelum masuk ke tapak suci.",
   "راجع مشرفك فورًا. — غرفة عمليات مُحسن": "Jumpa penyelia anda segera. — bilik operasi Muhsin",
+  "راجع مشرفك لإعادة تعيين كلمة المرور": "Jumpa penyelia anda untuk menetapkan semula kata laluan",
   "راشد": "Rashid",
   "راشد بن عوض": "Rashid bin Awad",
   "رافق المجموعة ذهابًا وإيابًا": "Iringi kumpulan pergi dan balik",
@@ -15403,6 +15517,8 @@ DICT.ms = {
   "كل نقلٍ أو سحبٍ بسببه المكتوب": "Setiap pemindahan atau penarikan dengan sebab bertulisnya",
   "كل واحدة تُمنح أو تُمنع": "Setiap satu diberi atau ditolak",
   "كلمة المرور": "Kata laluan",
+  "كلمة المرور غير صحيحة": "Kata laluan salah",
+  "كلمة المرور لكل الحسابات التجريبية:": "Kata laluan untuk semua akaun demo:",
   "كلُّ ردودك اليوم": "Semua pusingan anda hari ini",
   "كلُّ نقلٍ أو سحبٍ أو استبدالٍ — بسببه كما كُتب وقتَه": "Setiap pemindahan, penarikan atau gantian — dengan sebabnya sebagaimana ditulis",
   "كلّ التنبيهات": "Semua amaran",
@@ -15512,6 +15628,7 @@ DICT.ms = {
   "لا حالة لهذا القطاع": "Tiada kes bagi sektor ini",
   "لا حجّاج بعد.": "Belum ada jemaah.",
   "لا حركات بعد — أضِف حركةً وحدِّد عددَ ردودها": "Belum ada pergerakan — tambah satu dan tetapkan bilangan pusingannya",
+  "لا حساب بهذا الاسم أو الرمز": "Tiada akaun dengan nama atau kod itu",
   "لا خطوات لهذا التصنيف.": "Tiada langkah bagi kategori ini.",
   "لا خطوة بعد.": "Belum ada langkah.",
   "لا خطوة للتراجع عنها": "Tiada langkah untuk dibatalkan",
@@ -15973,7 +16090,7 @@ DICT.ms = {
   "محسن جاهزون": "Muhsin bersedia",
   "محسن في الاحتياط ضمن نطاق المهمة بلا تعارض في أوقاتهم.": "Muhsin dalam simpanan dalam skop tugas tanpa percanggahan masa.",
   "محسن للمهمة —": "Muhsin untuk tugas —",
-  "محسن ليدر": "Ketua muhsin",
+  "محسن ليدر": "Ketua",
   "محسن ليدر ·": "Ketua muhsin ·",
   "محسن ليدر · KT{n}": "Ketua muhsin · KT{n}",
   "محسن من الاحتياط": "Muhsin daripada simpanan",
@@ -16553,6 +16670,7 @@ DICT.ms = {
   "مُحسن · نقل": "Muhsin · Pengangkutan",
   "مُحسن الميدان": "Muhsen Lapangan",
   "مُحسن ليدر": "Ketua muhsin",
+  "مُحسن نقل": "Pengangkutan",
   "مُر على الأدوار واطمئن على راحة الحجاج، وسجّل أي ملاحظة على السكن كتذكرة فورًا.": "Susur setiap tingkat, pastikan keselesaan jemaah, dan rekodkan sebarang pemerhatian tentang penginapan sebagai tiket dengan segera.",
   "مُرّ على الأدوار وسجّل أي ملاحظة كتذكرة": "Susur setiap tingkat dan rekodkan sebarang pemerhatian sebagai tiket",
   "مُسكَّن": "Ditempatkan",
@@ -16624,6 +16742,7 @@ DICT.ms = {
   "نسخة ٤٫١": "versi 4.1",
   "نسخة ٤٫٢": "versi 4.2",
   "نسخة ٤٫٣": "versi 4.3",
+  "نسيت كلمة المرور؟": "Lupa kata laluan?",
   "نشاط حجّ": "Aktiviti haji",
   "نشاط حجّ · استقبال الحجاج من المطار": "Aktiviti haji · Penyambutan jemaah dari lapangan terbang",
   "نشاط حجّ · استقبال الحجاج من المطار · ن{n}": "Aktiviti haji · Menyambut jemaah dari lapangan terbang · v{n}",
@@ -16829,6 +16948,7 @@ DICT.ms = {
   "وإن رفضت بقيت، ويُسجَّل رفضك بوقته.": "Jika anda menolak, anda kekal, dan penolakan anda direkodkan dengan waktunya.",
   "وإن كان المقعد لا يُترك فارغًا فاستبدلْه: يقع الخروجُ والدخول": "Jika tempat itu tidak boleh dibiarkan kosong, gantikan: keluar dan masuk berlaku",
   "وإن كان المقعد لا يُترك فارغًا فاستبدلْه: يقع الخروجُ والدخول معًا بسببٍ واحد، ويُكتب في الملفَّين من حلَّ محلَّ من.": "Jika tempat itu tidak boleh dibiarkan kosong, gantikan: keluar dan masuk berlaku serentak atas satu sebab, dan kedua-dua fail merekodkan siapa menggantikan siapa.",
+  "وإن كانت المواضعُ ممتلئةً خرج الأقدمُ ودخل الجديد.": "Apabila slot penuh, yang terlama memberi laluan kepada yang baharu.",
   "واتساب": "WhatsApp",
   "واجهة جدة البحرية": "Tepi Laut Jeddah",
   "واحدة تُعدّل، والبقية تطّلع": "Satu boleh menyunting; selebihnya boleh melihat",
@@ -17405,6 +17525,11 @@ const KEY = 'muhsen_app_v3';
 const APP_VER = 'نسخة ٤٫٣';
 const SCHEMA = 21;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
+
+/* الاهتزازُ: كان ثابتًا محلّيًّا داخل act() في المُوجِّه، فكلُّ نداءٍ
+   من شاشةٍ أو من ردِّ نداءٍ غيرِ متزامنٍ يرمي ReferenceError ويُسقط
+   ما بعده — فكان زرُّ الدخول يَضبِط الجلسةَ ولا يرسم، فيبدو ميتًا. */
+function buzz() { try { navigator.vibrate && navigator.vibrate(18); } catch (e) {} }
 
 const uid = (p) => p + Math.random().toString(36).slice(2, 8);
 const MIN = 60000, HR = 3600000, DAY = 86400000;
@@ -18361,11 +18486,13 @@ const TAB_DEFAULT = () => isLeader()
   ? ['tasks', 'lreq', 'desk']
   : ['tasks', 'daily', 'desk'];
 
-/* المختارةُ ثلاثٌ دائمًا: اختيارُ المستخدم ثمّ الافتراضيُّ ثمّ ما بقي.
-   فلو حُذفت وجهةٌ من الكتالوج لم يبقَ في الشريط فراغ. */
+/* الاختيارُ يُحترَم كما هو. وكان يُعاد ملؤه من الافتراضيّ متى نقص،
+   فإخراجُ وجهةٍ افتراضيّةٍ لا يقع — تُحذف ثمّ تعود في النداء نفسِه.
+   فصار: ما دام المستخدمُ لم يختر فالافتراضيُّ، وإذا اختار فاختيارُه. */
 function tabChosen() {
   const cat = tabCatalog(), has = k => cat.some(x => x.k === k);
-  const out = (S.tabs || []).filter(has).slice(0, TAB_SLOTS);
+  if (S.tabs) return S.tabs.filter(has).slice(0, TAB_SLOTS);
+  const out = [];
   const fill = k => { if (out.length < TAB_SLOTS && has(k) && out.indexOf(k) < 0) out.push(k); };
   TAB_DEFAULT().forEach(fill);
   cat.forEach(x => fill(x.k));
@@ -18543,103 +18670,141 @@ function taskRow(t) {
 
 /* ============================ تسجيل الدخول ============================ */
 /* ============================================================
-   الدخول — نموذجٌ كما في التطبيقات، لا قائمةُ أسماءٍ مكشوفة
+   الدخول — على بنية شاشة الدخول في «نُزلي لإدارة المشاريع»
 
-   كانت الشاشةُ قائمةَ حساباتٍ مفتوحةً تملأ الشاشة، فبدت لوحةَ
-   اختيارٍ لا شاشةَ دخول. وصارت حقلين وزرًّا: اسمُ المستخدم يفتح
-   قائمةً منسدلةً تحته تُصفَّى بالكتابة، وكلمةُ المرور تمتلئ عند
-   اختيار الاسم.
+   قرأتُ شاشتَها من مصدرها (LoginPage.tsx و AuthLayout.tsx)
+   وأنماطَها المبنيّة، وبنيتُ هذه عليها:
 
-   ورابطٌ واحدٌ للجميع: الدورُ يُقرأ من الحساب بعد الدخول،
-   فالليدرُ يرى شاشاتِه والمُحسنُ يرى شاشاتِه.
+     شعارٌ في الأعلى · عنوانٌ وسطرٌ تحته
+     نموذجٌ: اسم المستخدم · كلمة المرور بزرّ إظهار · «نسيت؟»
+     زرُّ «تسجيل الدخول» بعرض الحقل
+     فاصلٌ ثمّ أزرارُ الصفات للتجربة السريعة
+     سطرٌ أخيرٌ فيه كلمةُ المرور التجريبيّة
+
+   وأزرارُ الصفات هي ما يقوم مقامَ القائمة: نقرةٌ واحدةٌ تدخلك
+   بصفةٍ جاهزة، والنموذجُ فوقها يبقى نموذجًا حقيقيًّا.
    ============================================================ */
 
-const loginPick = () => S.loginId ? userById(S.loginId) : null;
-const loginSub  = u => {
-  if (!u) return '';
-  const L2 = userById(u.leaderId);
-  return u.role === 'leader'
-    ? 'محسن ليدر · ' + u.kt
-    : 'مُحسن · ' + u.specialty +
-      (u.reserve ? ' · فريق امتثال' : L2 ? ' · فريق ' + L2.name.split(' ')[0] : '');
-};
+const DEMO_PW = '48162048';
 
-/* القائمةُ المنسدلة: الليدرزُ أوّلًا ثمّ المحسنون، وتُصفَّى بالكتابة */
-function loginList() {
-  const q = (S.loginQ || '').trim();
-  let list = S.users.slice().sort((a, b) =>
-    (a.role === 'leader' ? 0 : 1) - (b.role === 'leader' ? 0 : 1));
-  if (q) list = list.filter(u =>
-    (u.name + ' ' + (u.code || '') + ' ' + (u.kt || '') + ' ' + (u.specialty || ''))
-      .indexOf(q) >= 0);
-  return list;
+/* حسابُ العرض لكلّ صفة — أوّلُ من يحملها */
+const demoOf = kind => {
+  const U = S.users;
+  if (kind === 'leader') return U.find(u => u.role === 'leader');
+  if (kind === 'naql')   return U.find(u => u.role === 'muhsen' && u.specialty === 'نقل');
+  return U.find(u => u.role === 'muhsen' && u.specialty !== 'نقل');
+};
+const DEMO_ROLES = [
+  { k:'leader', i:'i-star',  ar:'محسن ليدر' },
+  { k:'muhsen', i:'i-user',  ar:'مُحسن' },
+  { k:'naql',   i:'i-bus',   ar:'مُحسن نقل' }
+];
+
+/* الاسمُ المكتوبُ يُطابَق بالرمز أو بالاسم — فمن يعرف رمزَه يكتبه */
+function loginMatch(q) {
+  q = (q || '').trim();
+  if (!q) return null;
+  const low = q.toLowerCase().replace(/^#/, '');
+  return S.users.find(u =>
+    String(u.code || '').toLowerCase().replace(/^#/, '') === low ||
+    u.name === q || u.id.toLowerCase() === low) || null;
 }
 
 function screenLogin() {
-  const u = loginPick();
-  const open = !!S.loginOpen;
+  const err = S.loginErr;
+  const busy = S.loginBusy;
 
-  const opt = x =>
-    '<button class="lopt' + (u && u.id === x.id ? ' on' : '') + '" ' +
-      'data-a="loginsel" data-id="' + x.id + '" role="option">' +
-      avat(x, 'sm') +
-      '<span class="nm sp"><b>' + E(x.name) + '</b>' +
-        '<span>' + E(loginSub(x)) + '</span></span>' +
-      (u && u.id === x.id ? icon('i-checkc', 's18') : '') +
-    '</button>';
-
-  const list = loginList();
+  const role = r => {
+    const u = demoOf(r.k);
+    if (!u) return '';
+    return '<button type="button" class="rolebtn" data-a="demologin" data-id="' + u.id + '" ' +
+      (busy ? 'disabled ' : '') + 'aria-label="دخول تجريبي بصفة ' + E(r.ar) + '">' +
+      '<span class="ci">' + icon(r.i, 's16') + '</span>' +
+      '<span>' + r.ar + '</span></button>';
+  };
 
   return '<div class="login"><i class="pat"></i>' +
     '<div class="loginlang">' + langSwitch() + '</div>' +
-    '<div class="inner">' +
-      '<i class="logo mlockup" role="img" aria-label="مُحسن"></i>' +
-      '<div class="cap">' +
-        'تطبيق الميدان' + '</div>' +
 
-      '<form class="panel lform" data-a="nosubmit">' +
-        '<div class="lbl plain">اسم المستخدم</div>' +
+    '<div class="authmain">' +
+      '<div class="authtop">' +
+        '<i class="logo mlockup" role="img" aria-label="مُحسن"></i>' +
+      '</div>' +
+      '<div class="authcard">' +
 
-        /* الحقلُ والقائمةُ في حاويةٍ واحدة: القائمةُ تنسدل تحته
-           مطلقةً، فلا تدفع ما بعدها ولا تُغيّر ارتفاع النموذج. */
-        '<div class="lwrap' + (open ? ' open' : '') + '">' +
-          '<div class="lfield' + (open ? ' on' : '') + '" data-a="loginopen" ' +
-            'role="combobox" aria-expanded="' + (open ? 'true' : 'false') + '">' +
-            (u && !open ? avat(u, 'sm') : icon('i-user', 's18')) +
-            (open
-              ? '<input id="lq" type="text" autocomplete="off" placeholder="اكتب الاسم" ' +
-                'value="' + E(S.loginQ || '') + '" data-a="loginq" aria-label="اسم المستخدم">'
-              : '<span class="lval' + (u ? '' : ' ph') + '">' +
-                (u ? E(u.name) : 'اختر اسمك') + '</span>') +
-            icon('i-down', 's16') +
+        '<div class="authhead">' +
+          '<h1>تسجيل الدخول إلى مُحسن</h1>' +
+          '<p class="authsub">تطبيق الميدان — موسم الحج ١٤٤٨ هـ</p>' +
+        '</div>' +
+
+        '<form class="authbody" data-a="nosubmit">' +
+          (err ? '<div class="autherr" role="alert">' + icon('i-warn', 's16') +
+            '<span>' + E(err) + '</span></div>' : '') +
+
+          '<div class="fld">' +
+            '<label for="lu">اسم المستخدم أو الرمز</label>' +
+            '<input id="lu" type="text" dir="ltr" autocomplete="username" ' +
+              'placeholder="M1001 · #1001" value="' + E(S.loginU || '') + '" ' +
+              'data-a="loginu" aria-label="اسم المستخدم أو الرمز">' +
           '</div>' +
 
-          (open
-            ? '<div class="lmenu" role="listbox">' +
-                (list.length ? list.map(opt).join('')
-                  : '<div class="lempty">' + icon('i-search', 's22') +
-                    '<b>لا اسم يطابق</b></div>') +
-              '</div>'
-            : '') +
-        '</div>' +
+          '<div class="fld">' +
+            '<label for="lp">كلمة المرور</label>' +
+            '<div class="pwrap">' +
+              '<input id="lp" type="' + (S.loginShow ? 'text' : 'password') + '" ' +
+                'autocomplete="current-password" value="' + E(S.loginP || '') + '" ' +
+                'data-a="loginp" aria-label="كلمة المرور">' +
+              '<button type="button" class="pweye" data-a="loginshow" ' +
+                'aria-label="إظهار كلمة المرور أو إخفاؤها" ' +
+                'aria-pressed="' + (S.loginShow ? 'true' : 'false') + '">' +
+                icon('i-eye', 's18') + '</button>' +
+            '</div>' +
+            '<div class="fldend">' +
+              '<button type="button" class="alink" data-a="loginforgot">نسيت كلمة المرور؟</button>' +
+            '</div>' +
+          '</div>' +
 
-        '<div class="lbl plain">كلمة المرور</div>' +
-        '<div class="lfield pw">' + icon('i-lock', 's18') +
-          '<input type="password" value="' + (u ? '48162048' : '') + '" readonly ' +
-            'autocomplete="current-password" aria-label="كلمة المرور" tabindex="-1">' +
-          (u ? '<span class="lok">' + icon('i-checkc', 's16') + '</span>' : '') +
-        '</div>' +
+          '<button class="btn p wide" data-a="dologin"' + (busy ? ' disabled' : '') + '>' +
+            (busy ? '<span class="spin"></span>' : icon('i-out', 's18')) +
+            'تسجيل الدخول</button>' +
+        '</form>' +
 
-        '<button class="btn p wide lgo" ' +
-          (u ? 'data-a="login" data-id="' + u.id + '"' : 'disabled') + '>' +
-          'تسجيل الدخول</button>' +
+        '<section class="demo">' +
+          '<div class="demosep">أو جرّب النظام</div>' +
+          '<div class="demoroles">' + DEMO_ROLES.map(role).join('') + '</div>' +
+          '<p class="demonote">كلمة المرور لكل الحسابات التجريبية: ' +
+            '<code class="ltr">' + DEMO_PW + '</code></p>' +
+        '</section>' +
+      '</div>' +
 
-        '<div class="tiny dim2 center lhint">' +
-          (u ? E(loginSub(u)) : 'اختر اسمك لتُعبَّأ كلمةُ المرور') + '</div>' +
-      '</form>' +
-
-      '<div class="foot"><i class="mnozoly" role="img" aria-label="نُزلي"></i></div>' +
+      '<div class="authfoot"><i class="mnozoly" role="img" aria-label="نُزلي"></i></div>' +
     '</div></div>';
+}
+
+/* الدخول: يُقبل الرمزُ أو الاسم، والمرورُ واحدةٌ في نسخة التجربة */
+function doLogin() {
+  const u = loginMatch(S.loginU);
+  if (!u) { S.loginErr = 'لا حساب بهذا الاسم أو الرمز'; save(); render(); return; }
+  if ((S.loginP || '') !== DEMO_PW) {
+    S.loginErr = 'كلمة المرور غير صحيحة'; save(); render(); return;
+  }
+  S.loginErr = null;
+  enterAs(u.id);
+}
+
+function enterAs(id) {
+  const u = userById(id); if (!u) return;
+  S.loginBusy = true; S.loginErr = null;
+  save(); render();
+  setTimeout(function () {
+    S.loginBusy = false;
+    S.loginU = ''; S.loginP = ''; S.loginShow = false;
+    S.session = { id: u.id, at: Date.now() };
+    S.route = { n: u.role === 'leader' ? 'home' : 'mhome' };
+    toast('مرحبًا ' + u.name, 'g'); buzz();
+    save(); render();
+    setTimeout(function () { if (maybeAskPush()) render(); }, 1400);
+  }, 420);
 }
 
 /* ============================ تنبيهات ثابتة أعلى الصفحة ============================ */
@@ -22052,12 +22217,11 @@ function tabPick(k) {
   if (i >= 0) {
     if (cur.length <= 1) { toast('لا بدّ من وجهةٍ واحدةٍ على الأقلّ', 'r'); return; }
     cur.splice(i, 1);
-  } else {
-    if (cur.length >= TAB_SLOTS) {
-      toast('المواضعُ ثلاثةٌ — أخرِج واحدةً أوّلًا', 'r'); return;
-    }
-    cur.push(k);
-  }
+  } else if (cur.length >= TAB_SLOTS) {
+    /* المواضعُ ممتلئةٌ: يخرج الأقدمُ ويدخل الجديد. وكان يُرفَض
+       الاختيارُ ويُطلَب إخراجٌ يدويٌّ أوّلًا — نقرتان لعملٍ واحد. */
+    cur.shift(); cur.push(k);
+  } else cur.push(k);
   S.tabs = cur;
 }
 
@@ -22086,7 +22250,8 @@ function screenSettings() {
           icon('i-reset', 's16') + 'الترتيب الأوّل</button>' : '') + '</div>' +
       preview +
       '<div class="tiny dim2" style="margin:10px 0 8px">' +
-        'اختر ثلاثًا تظهر في الشريط. والباقي في «المزيد».</div>' +
+        'اختر ثلاثًا تظهر في الشريط. والباقي في «المزيد».' +
+        '<br>وإن كانت المواضعُ ممتلئةً خرج الأقدمُ ودخل الجديد.</div>' +
       '<div class="tpicks">' + cat.map(x => {
         const on = cur.indexOf(x.k) >= 0;
         return '<button class="tpick' + (on ? ' on' : '') + '" data-a="tabpick" data-v="' + x.k + '" ' +
@@ -23123,7 +23288,8 @@ document.addEventListener('click', ev => {
   const a = b.dataset.a, id = b.dataset.id, uid_ = b.dataset.u, v = b.dataset.v;
   const T = () => taskById(id);
   const K = () => S.tickets.find(x => x.id === id);
-  const buzz = () => { try { navigator.vibrate && navigator.vibrate(18); } catch (e) {} };
+  /* buzz صار عامًّا في 04-core — كان محلّيًّا هنا، فكلُّ نداءٍ من
+     خارج act() يسقط بـ ReferenceError ويُسقط معه ما بعده. */
 
   switch (a) {
     case 'go': S.sheet = null; S.sheetBare = false; S.route = { n: b.dataset.n, id }; break;
@@ -23147,15 +23313,14 @@ document.addEventListener('click', ev => {
 
     /* الدخول: البحثُ بالاسم، ومن اختار اسمًا من غير نسخته نُقل إلى رابطها */
     /* ---------- الدخول ---------- */
-    case 'nosubmit': return;                  /* النموذجُ لا يُرسَل */
-    case 'loginq':   return;                  /* الكتابةُ يلتقطها LIVEQ */
-    case 'loginopen': S.loginOpen = !S.loginOpen; S.loginQ = ''; break;
-    case 'loginsel': S.loginId = id; S.loginOpen = false; S.loginQ = ''; break;
-    case 'login': { const u = userById(id); S.session = { id: u.id, at: Date.now() };
-      S.route = { n: u.role === 'leader' ? 'home' : 'mhome' };
-      toast('مرحبًا ' + u.name, 'g'); buzz();
-      setTimeout(function () { if (maybeAskPush()) render(); }, 1400);
-      break; }
+    case 'nosubmit':   return;                 /* النموذجُ لا يُرسَل */
+    case 'loginu':     return;                 /* الكتابةُ يلتقطها LIVEQ */
+    case 'loginp':     return;
+    case 'loginshow':  S.loginShow = !S.loginShow; break;
+    case 'loginforgot': toast('راجع مشرفك لإعادة تعيين كلمة المرور', 'r'); break;
+    case 'dologin':    doLogin(); return;
+    case 'demologin':  enterAs(id); return;
+
     case 'logout': S.session = null; S.route = { n: 'login' }; S.sheet = null; S.sheetBare = false; break;
 
     /* ---------- الردود: إضافةٌ ← عددٌ ← بدءٌ ← إنهاء ---------- */
@@ -23686,7 +23851,11 @@ document.addEventListener('click', ev => {
 /* بحث الحجاج */
 /* البحثُ الحيُّ: الشاشةُ تُعاد رسمًا فيضيع التركيزُ ما لم يُعَد.
    ويُعاد موضعُ المؤشّر معه، وإلّا قفز إلى الأوّل عند كلّ حرف. */
-const LIVEQ = { pq: function (v) { S.tab.pq = v; }, lq: function (v) { S.loginQ = v; } };
+const LIVEQ = {
+  pq: function (v) { S.tab.pq = v; },
+  lu: function (v) { S.loginU = v; S.loginErr = null; },
+  lp: function (v) { S.loginP = v; S.loginErr = null; }
+};
 document.addEventListener('input', function (ev) {
   var id = ev.target && ev.target.id;
   if (!id || !LIVEQ[id]) return;
@@ -23695,6 +23864,15 @@ document.addEventListener('input', function (ev) {
   render();
   var el = document.getElementById(id);
   if (el) { el.focus(); try { el.setSelectionRange(v.length, v.length); } catch (e) {} }
+});
+
+/* Enter داخل نموذج الدخول يدخل — كما في كلّ نموذج */
+document.addEventListener('keydown', function (ev) {
+  if (ev.key !== 'Enter') return;
+  var t = ev.target;
+  if (!t || !t.closest || !t.closest('.authbody')) return;
+  ev.preventDefault();
+  if (typeof doLogin === 'function') doLogin();
 });
 
 /* لوحة المفاتيح: العناصر ذات role=button تعمل بالمسافة والإدخال */

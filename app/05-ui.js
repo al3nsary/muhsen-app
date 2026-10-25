@@ -86,11 +86,13 @@ const TAB_DEFAULT = () => isLeader()
   ? ['tasks', 'lreq', 'desk']
   : ['tasks', 'daily', 'desk'];
 
-/* المختارةُ ثلاثٌ دائمًا: اختيارُ المستخدم ثمّ الافتراضيُّ ثمّ ما بقي.
-   فلو حُذفت وجهةٌ من الكتالوج لم يبقَ في الشريط فراغ. */
+/* الاختيارُ يُحترَم كما هو. وكان يُعاد ملؤه من الافتراضيّ متى نقص،
+   فإخراجُ وجهةٍ افتراضيّةٍ لا يقع — تُحذف ثمّ تعود في النداء نفسِه.
+   فصار: ما دام المستخدمُ لم يختر فالافتراضيُّ، وإذا اختار فاختيارُه. */
 function tabChosen() {
   const cat = tabCatalog(), has = k => cat.some(x => x.k === k);
-  const out = (S.tabs || []).filter(has).slice(0, TAB_SLOTS);
+  if (S.tabs) return S.tabs.filter(has).slice(0, TAB_SLOTS);
+  const out = [];
   const fill = k => { if (out.length < TAB_SLOTS && has(k) && out.indexOf(k) < 0) out.push(k); };
   TAB_DEFAULT().forEach(fill);
   cat.forEach(x => fill(x.k));
@@ -268,103 +270,141 @@ function taskRow(t) {
 
 /* ============================ تسجيل الدخول ============================ */
 /* ============================================================
-   الدخول — نموذجٌ كما في التطبيقات، لا قائمةُ أسماءٍ مكشوفة
+   الدخول — على بنية شاشة الدخول في «نُزلي لإدارة المشاريع»
 
-   كانت الشاشةُ قائمةَ حساباتٍ مفتوحةً تملأ الشاشة، فبدت لوحةَ
-   اختيارٍ لا شاشةَ دخول. وصارت حقلين وزرًّا: اسمُ المستخدم يفتح
-   قائمةً منسدلةً تحته تُصفَّى بالكتابة، وكلمةُ المرور تمتلئ عند
-   اختيار الاسم.
+   قرأتُ شاشتَها من مصدرها (LoginPage.tsx و AuthLayout.tsx)
+   وأنماطَها المبنيّة، وبنيتُ هذه عليها:
 
-   ورابطٌ واحدٌ للجميع: الدورُ يُقرأ من الحساب بعد الدخول،
-   فالليدرُ يرى شاشاتِه والمُحسنُ يرى شاشاتِه.
+     شعارٌ في الأعلى · عنوانٌ وسطرٌ تحته
+     نموذجٌ: اسم المستخدم · كلمة المرور بزرّ إظهار · «نسيت؟»
+     زرُّ «تسجيل الدخول» بعرض الحقل
+     فاصلٌ ثمّ أزرارُ الصفات للتجربة السريعة
+     سطرٌ أخيرٌ فيه كلمةُ المرور التجريبيّة
+
+   وأزرارُ الصفات هي ما يقوم مقامَ القائمة: نقرةٌ واحدةٌ تدخلك
+   بصفةٍ جاهزة، والنموذجُ فوقها يبقى نموذجًا حقيقيًّا.
    ============================================================ */
 
-const loginPick = () => S.loginId ? userById(S.loginId) : null;
-const loginSub  = u => {
-  if (!u) return '';
-  const L2 = userById(u.leaderId);
-  return u.role === 'leader'
-    ? 'محسن ليدر · ' + u.kt
-    : 'مُحسن · ' + u.specialty +
-      (u.reserve ? ' · فريق امتثال' : L2 ? ' · فريق ' + L2.name.split(' ')[0] : '');
-};
+const DEMO_PW = '48162048';
 
-/* القائمةُ المنسدلة: الليدرزُ أوّلًا ثمّ المحسنون، وتُصفَّى بالكتابة */
-function loginList() {
-  const q = (S.loginQ || '').trim();
-  let list = S.users.slice().sort((a, b) =>
-    (a.role === 'leader' ? 0 : 1) - (b.role === 'leader' ? 0 : 1));
-  if (q) list = list.filter(u =>
-    (u.name + ' ' + (u.code || '') + ' ' + (u.kt || '') + ' ' + (u.specialty || ''))
-      .indexOf(q) >= 0);
-  return list;
+/* حسابُ العرض لكلّ صفة — أوّلُ من يحملها */
+const demoOf = kind => {
+  const U = S.users;
+  if (kind === 'leader') return U.find(u => u.role === 'leader');
+  if (kind === 'naql')   return U.find(u => u.role === 'muhsen' && u.specialty === 'نقل');
+  return U.find(u => u.role === 'muhsen' && u.specialty !== 'نقل');
+};
+const DEMO_ROLES = [
+  { k:'leader', i:'i-star',  ar:'محسن ليدر' },
+  { k:'muhsen', i:'i-user',  ar:'مُحسن' },
+  { k:'naql',   i:'i-bus',   ar:'مُحسن نقل' }
+];
+
+/* الاسمُ المكتوبُ يُطابَق بالرمز أو بالاسم — فمن يعرف رمزَه يكتبه */
+function loginMatch(q) {
+  q = (q || '').trim();
+  if (!q) return null;
+  const low = q.toLowerCase().replace(/^#/, '');
+  return S.users.find(u =>
+    String(u.code || '').toLowerCase().replace(/^#/, '') === low ||
+    u.name === q || u.id.toLowerCase() === low) || null;
 }
 
 function screenLogin() {
-  const u = loginPick();
-  const open = !!S.loginOpen;
+  const err = S.loginErr;
+  const busy = S.loginBusy;
 
-  const opt = x =>
-    '<button class="lopt' + (u && u.id === x.id ? ' on' : '') + '" ' +
-      'data-a="loginsel" data-id="' + x.id + '" role="option">' +
-      avat(x, 'sm') +
-      '<span class="nm sp"><b>' + E(x.name) + '</b>' +
-        '<span>' + E(loginSub(x)) + '</span></span>' +
-      (u && u.id === x.id ? icon('i-checkc', 's18') : '') +
-    '</button>';
-
-  const list = loginList();
+  const role = r => {
+    const u = demoOf(r.k);
+    if (!u) return '';
+    return '<button type="button" class="rolebtn" data-a="demologin" data-id="' + u.id + '" ' +
+      (busy ? 'disabled ' : '') + 'aria-label="دخول تجريبي بصفة ' + E(r.ar) + '">' +
+      '<span class="ci">' + icon(r.i, 's16') + '</span>' +
+      '<span>' + r.ar + '</span></button>';
+  };
 
   return '<div class="login"><i class="pat"></i>' +
     '<div class="loginlang">' + langSwitch() + '</div>' +
-    '<div class="inner">' +
-      '<i class="logo mlockup" role="img" aria-label="مُحسن"></i>' +
-      '<div class="cap">' +
-        'تطبيق الميدان' + '</div>' +
 
-      '<form class="panel lform" data-a="nosubmit">' +
-        '<div class="lbl plain">اسم المستخدم</div>' +
+    '<div class="authmain">' +
+      '<div class="authtop">' +
+        '<i class="logo mlockup" role="img" aria-label="مُحسن"></i>' +
+      '</div>' +
+      '<div class="authcard">' +
 
-        /* الحقلُ والقائمةُ في حاويةٍ واحدة: القائمةُ تنسدل تحته
-           مطلقةً، فلا تدفع ما بعدها ولا تُغيّر ارتفاع النموذج. */
-        '<div class="lwrap' + (open ? ' open' : '') + '">' +
-          '<div class="lfield' + (open ? ' on' : '') + '" data-a="loginopen" ' +
-            'role="combobox" aria-expanded="' + (open ? 'true' : 'false') + '">' +
-            (u && !open ? avat(u, 'sm') : icon('i-user', 's18')) +
-            (open
-              ? '<input id="lq" type="text" autocomplete="off" placeholder="اكتب الاسم" ' +
-                'value="' + E(S.loginQ || '') + '" data-a="loginq" aria-label="اسم المستخدم">'
-              : '<span class="lval' + (u ? '' : ' ph') + '">' +
-                (u ? E(u.name) : 'اختر اسمك') + '</span>') +
-            icon('i-down', 's16') +
+        '<div class="authhead">' +
+          '<h1>تسجيل الدخول إلى مُحسن</h1>' +
+          '<p class="authsub">تطبيق الميدان — موسم الحج ١٤٤٨ هـ</p>' +
+        '</div>' +
+
+        '<form class="authbody" data-a="nosubmit">' +
+          (err ? '<div class="autherr" role="alert">' + icon('i-warn', 's16') +
+            '<span>' + E(err) + '</span></div>' : '') +
+
+          '<div class="fld">' +
+            '<label for="lu">اسم المستخدم أو الرمز</label>' +
+            '<input id="lu" type="text" dir="ltr" autocomplete="username" ' +
+              'placeholder="M1001 · #1001" value="' + E(S.loginU || '') + '" ' +
+              'data-a="loginu" aria-label="اسم المستخدم أو الرمز">' +
           '</div>' +
 
-          (open
-            ? '<div class="lmenu" role="listbox">' +
-                (list.length ? list.map(opt).join('')
-                  : '<div class="lempty">' + icon('i-search', 's22') +
-                    '<b>لا اسم يطابق</b></div>') +
-              '</div>'
-            : '') +
-        '</div>' +
+          '<div class="fld">' +
+            '<label for="lp">كلمة المرور</label>' +
+            '<div class="pwrap">' +
+              '<input id="lp" type="' + (S.loginShow ? 'text' : 'password') + '" ' +
+                'autocomplete="current-password" value="' + E(S.loginP || '') + '" ' +
+                'data-a="loginp" aria-label="كلمة المرور">' +
+              '<button type="button" class="pweye" data-a="loginshow" ' +
+                'aria-label="إظهار كلمة المرور أو إخفاؤها" ' +
+                'aria-pressed="' + (S.loginShow ? 'true' : 'false') + '">' +
+                icon('i-eye', 's18') + '</button>' +
+            '</div>' +
+            '<div class="fldend">' +
+              '<button type="button" class="alink" data-a="loginforgot">نسيت كلمة المرور؟</button>' +
+            '</div>' +
+          '</div>' +
 
-        '<div class="lbl plain">كلمة المرور</div>' +
-        '<div class="lfield pw">' + icon('i-lock', 's18') +
-          '<input type="password" value="' + (u ? '48162048' : '') + '" readonly ' +
-            'autocomplete="current-password" aria-label="كلمة المرور" tabindex="-1">' +
-          (u ? '<span class="lok">' + icon('i-checkc', 's16') + '</span>' : '') +
-        '</div>' +
+          '<button class="btn p wide" data-a="dologin"' + (busy ? ' disabled' : '') + '>' +
+            (busy ? '<span class="spin"></span>' : icon('i-out', 's18')) +
+            'تسجيل الدخول</button>' +
+        '</form>' +
 
-        '<button class="btn p wide lgo" ' +
-          (u ? 'data-a="login" data-id="' + u.id + '"' : 'disabled') + '>' +
-          'تسجيل الدخول</button>' +
+        '<section class="demo">' +
+          '<div class="demosep">أو جرّب النظام</div>' +
+          '<div class="demoroles">' + DEMO_ROLES.map(role).join('') + '</div>' +
+          '<p class="demonote">كلمة المرور لكل الحسابات التجريبية: ' +
+            '<code class="ltr">' + DEMO_PW + '</code></p>' +
+        '</section>' +
+      '</div>' +
 
-        '<div class="tiny dim2 center lhint">' +
-          (u ? E(loginSub(u)) : 'اختر اسمك لتُعبَّأ كلمةُ المرور') + '</div>' +
-      '</form>' +
-
-      '<div class="foot"><i class="mnozoly" role="img" aria-label="نُزلي"></i></div>' +
+      '<div class="authfoot"><i class="mnozoly" role="img" aria-label="نُزلي"></i></div>' +
     '</div></div>';
+}
+
+/* الدخول: يُقبل الرمزُ أو الاسم، والمرورُ واحدةٌ في نسخة التجربة */
+function doLogin() {
+  const u = loginMatch(S.loginU);
+  if (!u) { S.loginErr = 'لا حساب بهذا الاسم أو الرمز'; save(); render(); return; }
+  if ((S.loginP || '') !== DEMO_PW) {
+    S.loginErr = 'كلمة المرور غير صحيحة'; save(); render(); return;
+  }
+  S.loginErr = null;
+  enterAs(u.id);
+}
+
+function enterAs(id) {
+  const u = userById(id); if (!u) return;
+  S.loginBusy = true; S.loginErr = null;
+  save(); render();
+  setTimeout(function () {
+    S.loginBusy = false;
+    S.loginU = ''; S.loginP = ''; S.loginShow = false;
+    S.session = { id: u.id, at: Date.now() };
+    S.route = { n: u.role === 'leader' ? 'home' : 'mhome' };
+    toast('مرحبًا ' + u.name, 'g'); buzz();
+    save(); render();
+    setTimeout(function () { if (maybeAskPush()) render(); }, 1400);
+  }, 420);
 }
 
 /* ============================ تنبيهات ثابتة أعلى الصفحة ============================ */

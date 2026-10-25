@@ -139,7 +139,8 @@ document.addEventListener('click', ev => {
   const a = b.dataset.a, id = b.dataset.id, uid_ = b.dataset.u, v = b.dataset.v;
   const T = () => taskById(id);
   const K = () => S.tickets.find(x => x.id === id);
-  const buzz = () => { try { navigator.vibrate && navigator.vibrate(18); } catch (e) {} };
+  /* buzz صار عامًّا في 04-core — كان محلّيًّا هنا، فكلُّ نداءٍ من
+     خارج act() يسقط بـ ReferenceError ويُسقط معه ما بعده. */
 
   switch (a) {
     case 'go': S.sheet = null; S.sheetBare = false; S.route = { n: b.dataset.n, id }; break;
@@ -163,15 +164,14 @@ document.addEventListener('click', ev => {
 
     /* الدخول: البحثُ بالاسم، ومن اختار اسمًا من غير نسخته نُقل إلى رابطها */
     /* ---------- الدخول ---------- */
-    case 'nosubmit': return;                  /* النموذجُ لا يُرسَل */
-    case 'loginq':   return;                  /* الكتابةُ يلتقطها LIVEQ */
-    case 'loginopen': S.loginOpen = !S.loginOpen; S.loginQ = ''; break;
-    case 'loginsel': S.loginId = id; S.loginOpen = false; S.loginQ = ''; break;
-    case 'login': { const u = userById(id); S.session = { id: u.id, at: Date.now() };
-      S.route = { n: u.role === 'leader' ? 'home' : 'mhome' };
-      toast('مرحبًا ' + u.name, 'g'); buzz();
-      setTimeout(function () { if (maybeAskPush()) render(); }, 1400);
-      break; }
+    case 'nosubmit':   return;                 /* النموذجُ لا يُرسَل */
+    case 'loginu':     return;                 /* الكتابةُ يلتقطها LIVEQ */
+    case 'loginp':     return;
+    case 'loginshow':  S.loginShow = !S.loginShow; break;
+    case 'loginforgot': toast('راجع مشرفك لإعادة تعيين كلمة المرور', 'r'); break;
+    case 'dologin':    doLogin(); return;
+    case 'demologin':  enterAs(id); return;
+
     case 'logout': S.session = null; S.route = { n: 'login' }; S.sheet = null; S.sheetBare = false; break;
 
     /* ---------- الردود: إضافةٌ ← عددٌ ← بدءٌ ← إنهاء ---------- */
@@ -702,7 +702,11 @@ document.addEventListener('click', ev => {
 /* بحث الحجاج */
 /* البحثُ الحيُّ: الشاشةُ تُعاد رسمًا فيضيع التركيزُ ما لم يُعَد.
    ويُعاد موضعُ المؤشّر معه، وإلّا قفز إلى الأوّل عند كلّ حرف. */
-const LIVEQ = { pq: function (v) { S.tab.pq = v; }, lq: function (v) { S.loginQ = v; } };
+const LIVEQ = {
+  pq: function (v) { S.tab.pq = v; },
+  lu: function (v) { S.loginU = v; S.loginErr = null; },
+  lp: function (v) { S.loginP = v; S.loginErr = null; }
+};
 document.addEventListener('input', function (ev) {
   var id = ev.target && ev.target.id;
   if (!id || !LIVEQ[id]) return;
@@ -711,6 +715,15 @@ document.addEventListener('input', function (ev) {
   render();
   var el = document.getElementById(id);
   if (el) { el.focus(); try { el.setSelectionRange(v.length, v.length); } catch (e) {} }
+});
+
+/* Enter داخل نموذج الدخول يدخل — كما في كلّ نموذج */
+document.addEventListener('keydown', function (ev) {
+  if (ev.key !== 'Enter') return;
+  var t = ev.target;
+  if (!t || !t.closest || !t.closest('.authbody')) return;
+  ev.preventDefault();
+  if (typeof doLogin === 'function') doLogin();
 });
 
 /* لوحة المفاتيح: العناصر ذات role=button تعمل بالمسافة والإدخال */

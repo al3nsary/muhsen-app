@@ -1,0 +1,54 @@
+{
+  "تسجيل الدخول إلى مُحسن": [
+    "Sign in to Muhsen",
+    "Log masuk ke Muhsen"
+  ],
+  "اسم المستخدم أو الرمز": [
+    "Username or code",
+    "Nama pengguna atau kod"
+  ],
+  "نسيت كلمة المرور؟": [
+    "Forgot your password?",
+    "Lupa kata laluan?"
+  ],
+  "أو جرّب النظام": [
+    "Or try the system",
+    "Atau cuba sistem"
+  ],
+  "كلمة المرور لكل الحسابات التجريبية:": [
+    "Password for all demo accounts:",
+    "Kata laluan untuk semua akaun demo:"
+  ],
+  "مُحسن نقل": [
+    "Transport",
+    "Pengangkutan"
+  ],
+  "لا حساب بهذا الاسم أو الرمز": [
+    "No account with that name or code",
+    "Tiada akaun dengan nama atau kod itu"
+  ],
+  "كلمة المرور غير صحيحة": [
+    "Incorrect password",
+    "Kata laluan salah"
+  ],
+  "راجع مشرفك لإعادة تعيين كلمة المرور": [
+    "See your supervisor to reset your password",
+    "Jumpa penyelia anda untuk menetapkan semula kata laluan"
+  ],
+  "إظهار كلمة المرور أو إخفاؤها": [
+    "Show or hide the password",
+    "Tunjuk atau sembunyikan kata laluan"
+  ],
+  "وإن كانت المواضعُ ممتلئةً خرج الأقدمُ ودخل الجديد.": [
+    "When the slots are full, the oldest makes way for the new one.",
+    "Apabila slot penuh, yang terlama memberi laluan kepada yang baharu."
+  ],
+  "دخول تجريبي بصفة {t}": [
+    "Demo sign-in as {t}",
+    "Log masuk demo sebagai {t}"
+  ],
+  "محسن ليدر": [
+    "Leader",
+    "Ketua"
+  ]
+}

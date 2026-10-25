@@ -14,12 +14,11 @@ function tabPick(k) {
   if (i >= 0) {
     if (cur.length <= 1) { toast('لا بدّ من وجهةٍ واحدةٍ على الأقلّ', 'r'); return; }
     cur.splice(i, 1);
-  } else {
-    if (cur.length >= TAB_SLOTS) {
-      toast('المواضعُ ثلاثةٌ — أخرِج واحدةً أوّلًا', 'r'); return;
-    }
-    cur.push(k);
-  }
+  } else if (cur.length >= TAB_SLOTS) {
+    /* المواضعُ ممتلئةٌ: يخرج الأقدمُ ويدخل الجديد. وكان يُرفَض
+       الاختيارُ ويُطلَب إخراجٌ يدويٌّ أوّلًا — نقرتان لعملٍ واحد. */
+    cur.shift(); cur.push(k);
+  } else cur.push(k);
   S.tabs = cur;
 }
 
@@ -48,7 +47,8 @@ function screenSettings() {
           icon('i-reset', 's16') + 'الترتيب الأوّل</button>' : '') + '</div>' +
       preview +
       '<div class="tiny dim2" style="margin:10px 0 8px">' +
-        'اختر ثلاثًا تظهر في الشريط. والباقي في «المزيد».</div>' +
+        'اختر ثلاثًا تظهر في الشريط. والباقي في «المزيد».' +
+        '<br>وإن كانت المواضعُ ممتلئةً خرج الأقدمُ ودخل الجديد.</div>' +
       '<div class="tpicks">' + cat.map(x => {
         const on = cur.indexOf(x.k) >= 0;
         return '<button class="tpick' + (on ? ' on' : '') + '" data-a="tabpick" data-v="' + x.k + '" ' +
