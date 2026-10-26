@@ -294,14 +294,18 @@ function taskRow(t) {
      شعارٌ في الأعلى · عنوانٌ وسطرٌ تحته
      نموذجٌ: اسم المستخدم · كلمة المرور بزرّ إظهار · «نسيت؟»
      زرُّ «تسجيل الدخول» بعرض الحقل
-     فاصلٌ ثمّ أزرارُ الصفات للتجربة السريعة
-     سطرٌ أخيرٌ فيه كلمةُ المرور التجريبيّة
 
    وأزرارُ الصفات هي ما يقوم مقامَ القائمة: نقرةٌ واحدةٌ تدخلك
    بصفةٍ جاهزة، والنموذجُ فوقها يبقى نموذجًا حقيقيًّا.
    ============================================================ */
 
-const DEMO_PW = '48162048';
+/* ══════════════ نقطةُ الربط ══════════════
+   التحقّقُ من كلمة المرور يقع هنا وحدَه. وحين يصل الـAPI يُستبدل
+   جسدُ checkPassword() بنداءٍ إلى الخادم، ولا يتغيّر شيءٌ في
+   الشاشة ولا في المُوجِّه.
+   ════════════════════════════════════════ */
+const AUTH_PW = '48162048';
+const checkPassword = (user, pw) => pw === AUTH_PW;
 
 /* صفةُ الحساب في سطرٍ واحد — تُقرأ تحت الاسم في القائمة */
 const loginSub = u => {
@@ -417,8 +421,7 @@ function screenLogin() {
             'تسجيل الدخول</button>' +
         '</form>' +
 
-        '<p class="demonote">كلمة المرور لكل الحسابات التجريبية: ' +
-          '<code class="ltr">' + DEMO_PW + '</code></p>' +
+
       '</div>' +
 
       '<div class="authfoot"><i class="mnozoly" role="img" aria-label="نُزلي"></i></div>' +
@@ -428,7 +431,7 @@ function screenLogin() {
 function doLogin() {
   const u = loginMatch();
   if (!u) { S.loginErr = 'اختر اسمًا من القائمة أو اكتب رمزك'; save(); render(); return; }
-  if ((S.loginP || '') !== DEMO_PW) {
+  if (!checkPassword(u, S.loginP || '')) {
     S.loginErr = 'كلمة المرور غير صحيحة'; save(); render(); return;
   }
   S.loginErr = null;
@@ -450,58 +453,9 @@ function enterAs(id) {
   }, 420);
 }
 
-/* ============================ تنبيهات ثابتة أعلى الصفحة ============================ */
-function alertsHTML() {
-  if (!S.session) return '';
-  const u = me(); if (!u) return '';
-  const out = [];
-  const box = (cls, ic, title, body, act) =>
-    '<button class="alert ' + cls + '" ' + (act || '') + '>' + icon(ic, 's26') +
-      '<span class="sp"><b>' + E(title) + '</b><span>' + E(body) + '</span></span>' + icon('i-back','s16') + '</button>';
-
-  if (u.role === 'muhsen') {
-    myTasks().filter(t => ['running','assigned','pending_assign'].includes(t.status)).forEach(t => {
-      const a = acceptedSlots(t).find(x => x.muhsenId === u.id);
-      if (!a || a.attendedAt) return;
-      if (now() >= t.start)
-        out.push(box('bad', 'i-warn', 'تأخرت عن إثبات الحضور',
-          '«' + t.title + '» بدأت ' + t12(t.start) + ' ولم تثبت حضورك — تُسجَّل عليك ملاحظة وتؤثر في تقييمك.',
-          'data-a="go" data-n="mhome"'));
-      else if (now() >= prepOpen(t)) {
-        const r = hms(t.start - now());
-        out.push(box('warn', 'i-clock', 'أثبت حضورك',
-          '«' + t.title + '» — تبقّى ' + AR(r.h) + ':' + AR(r.m) + ':' + AR(r.s) + ' على بدايتها.',
-          'data-a="go" data-n="mhome"'));
-      }
-    });
-    const rq = myRequests().length;
-    if (rq) out.push(box('warn', 'i-bell', 'لديك ' + AR(rq) + ' طلب بانتظار ردك',
-      'تسكين أو تفويض — لا يكتمل التسكين قبل ردك.', 'data-a="go" data-n="requests"'));
-  } else {
-    const un = unassignedTasks();
-    if (un.length) out.push(box(un.some(t => t.start - now() < 12 * HR) ? 'bad' : 'warn', 'i-assign',
-      AR(un.length) + ' مهمة تحتاج تسكينًا',
-      'أقربها «' + un[0].title + '» ' + untilTxt(un[0].start) + '. سكّن مبكرًا ولو كانت بعد أسابيع.',
-      'data-a="go" data-n="tasks"'));
-    const auto = myTasks().filter(t => t.status === 'running' && t.autoStarted);
-    if (auto.length) out.push(box('bad', 'i-warn', AR(auto.length) + ' مهمة بدأها النظام',
-      'حان وقتها ولم تبدأها — أغلقها، ويُحتسب ذلك في التقييم.',
-      'data-a="go" data-n="task" data-id="' + auto[0].id + '"'));
-    const notAtt = myTasks().filter(t => ['running','assigned','pending_assign'].includes(t.status) && inPrep(t) && !t.leaderAttendedAt);
-    if (notAtt.length) out.push(box('warn', 'i-target', 'أثبت حضورك',
-      '«' + notAtt[0].title + '»',
-      'data-a="go" data-n="task" data-id="' + notAtt[0].id + '"'));
-  }
-  if (!out.length) return '';
-  const atHome = ['home', 'mhome'].includes(S.route.n);
-  if (atHome) return '<div class="alerts">' + out.join('') + '</div>';
-  /* خارج الرئيسية: سطر واحد لا يزاحم محتوى الشاشة */
-  const worst = out.some(x => x.indexOf('alert bad') >= 0);
-  return '<button class="alerts one ' + (worst ? 'bad' : 'warn') + '" data-a="go" data-n="' +
-    (u.role === 'leader' ? 'home' : 'mhome') + '">' + icon(worst ? 'i-warn' : 'i-bell', 's18') +
-    '<span class="sp">' + AR(out.length) + (out.length === 1 ? ' تنبيه يحتاج إجراءً' : ' تنبيهات تحتاج إجراءً') + '</span>' +
-    icon('i-back', 's16') + '</button>';
-}
+/* شريطُ التنبيهات الثابتُ أعلى الصفحة حُذف: كان يُحقَن في رأس كلّ
+   شاشةٍ فيزاحم محتواها، ويكرّر ما تقوله البطاقاتُ نفسُها. والإشعاراتُ
+   لها زرُّها في الترويسة وشاشتُها. */
 
 /* عدّاد الإجراءات على الحساب: ما ينتظر ردّه هو وحده — لا ما ينتظر وقته */
 function pendingCountFor(uid_) {

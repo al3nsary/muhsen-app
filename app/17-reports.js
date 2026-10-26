@@ -189,7 +189,7 @@ function reportSheet(taskId) {
   const cat = S.rCat || RCATS[1];
   return '<div class="grip"></div><h3>رفع بلاغ</h3>' +
     '<div class="tiny dim2" style="margin-bottom:12px">' +
-      (L || !me().leaderId ? 'يُرفع إلى غرفة العمليات — الكنترول' : 'يُرفع إلى ليدر فريقك') + '</div>' +
+      (L || !me().leaderId ? 'يُرفع إلى غرفة العمليات — الكنترول' : 'يُرفع إلى ليدر الفريق') + '</div>' +
     '<div class="lbl plain">التصنيف</div>' +
     '<div class="col" style="gap:6px;margin:8px 0">' + RCATS.slice(0, 4).map(c =>
       '<button class="listitem' + (c === cat ? ' on' : '') + '" data-a="rcat" data-v="' + c + '">' +
@@ -250,10 +250,7 @@ function screenDesk() {
       '<button class="' + (seg === 'rp' ? 'on' : '') + '" data-a="seg" data-k="desk" data-v="rp">' +
         icon('i-flag','s16') + 'البلاغات' + (openReports() ? '<i>' + AR(openReports()) + '</i>' : '') + '</button>' +
     '</div>' +
-    '<div class="note b">' + icon('i-info','s16') + '<span>' +
-      (seg === 'tk'
-        ? 'التذاكر ترد إليك من الحجاج والكنترول والمحسنين — تُسند وتُتابع وتُغلق.'
-        : 'البلاغات ترفعها أنت: المحسن إلى ليدره، والليدر إلى الكنترول.') + '</span></div>' +
+
     (seg === 'tk' ? ticketsPane() : reportsPane()) +
     '</div>' + tabs();
 }

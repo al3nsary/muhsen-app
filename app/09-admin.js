@@ -5,7 +5,7 @@ function screenAdmin() {
   const doneN = S.tasks.filter(t => t.status === 'done').length;
   return bar('شاشة التحكم', { back: 1, right:'<span style="width:30px"></span>' }) + '<div class="view">' +
     '<div class="note b">' + icon('i-info','s16') +
-      '<span>هذه الشاشة للتجربة فقط وليست جزءًا من أدوار العمل. كل ما تغيّره ينعكس فورًا.</span></div>' +
+      '<span>أدواتُ تشغيلٍ داخليّةٌ لفريق النظام — خارجَ أدوار العمل. وكلُّ ما يتغيّر هنا ينعكس فورًا.</span></div>' +
 
     '<div class="admcard"><div class="lbl">الوقت</div>' +
       '<div class="row" style="margin:10px 0"><span class="sm">وقت التطبيق</span><b>' + t12(now()) + ' · ' + hijri(now()) + '</b></div>' +
@@ -92,7 +92,7 @@ function confirmSheet(title, body, action, danger) {
 }
 function placeSheet() {
   return '<div class="grip"></div><h3>تحديد موقعي</h3>' +
-    '<div class="tiny dim2" style="margin-bottom:12px">وضع التجربة — التحضير اليومي من المقر، وحضور المهمة من موقعها.</div>' +
+    '<div class="tiny dim2" style="margin-bottom:12px">التحضيرُ اليوميُّ من المقرّ، وحضورُ المهمّة من موقعها.</div>' +
     '<div class="col">' +
       '<button class="prow" data-a="setplace" data-v="hq"><span class="ico" style="width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:#EAF0FA;color:#1B5876">' + icon('i-home','s18') + '</span>' +
         '<span class="nm sp"><b>داخل المقر</b><span>مقر البعثة — للتحضير اليومي</span></span>' + (S.myPlace === 'hq' ? icon('i-checkc','s16') : '') + '</button>' +

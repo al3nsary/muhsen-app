@@ -33,6 +33,7 @@
     --g:#14593F; --g2:#0C3A29; --g3:#1D7452; --live:#0B8A4B;
     --gold:#A8875A; --gold2:#C6A86F;
     --ink:#101914; --dim:#6E7E75; --dim2:#8B978F;
+    --pGreenB:#E7F0EA; --pGoldB:#F5EEE3; --pRedB:#FBEAE7;
     --bg:#FCFBF8; --amber:#B8791A; --red:#C0392B;
     --card:0 1px 2px rgba(11,53,39,.05), 0 4px 10px -4px rgba(11,53,39,.07), 0 18px 34px -22px rgba(11,53,39,.3);
     --f:"Almarai","SF Arabic","Segoe UI",system-ui,sans-serif;
@@ -1537,220 +1538,66 @@
 
   /* ══════════════ «المزيد»: أزرارٌ عائمةٌ تصعد من الشريط ══════════════ */
   /* ══════════════════════════════════════════════════════════════
-     «المزيد» — أزرارٌ عائمةٌ متصاعدة
+     «المزيد» — على مقاسات FAB Menu في Material 3 Expressive
 
-     زرٌّ رئيسيٌّ في زاوية الإبهام، فوقه الأزرارُ الفرعيّةُ تصعد
-     واحدًا بعد واحد، وخلفَها حجابٌ ضبابيٌّ يُركّز النظر.
-     والزجاجيّةُ من لونِنا لا من رماديٍّ محايد.
+     نقلتُ القياساتِ من مصدر androidx لا من تقديري:
+       ارتفاعُ الحبّة ٥٦ · الفراغُ بينها ٤ · الحشوةُ ٢٤ من الطرفين
+       الأيقونةُ ٢٤ والفراغُ بينها وبين النصّ ٨
+       الزرُّ الرئيسيّ ٥٦×٥٦ وبينه والقائمة ٨ · والشكلُ دائريٌّ تامّ
+       الارتفاعُ Level 3
+
+     واللونُ من M3: الحبّةُ primaryContainer والنصُّ onPrimaryContainer،
+     والزرُّ الرئيسيُّ primary. وكانت زجاجيّةً بيضاء — وهي ما لا
+     يستعمله أحدٌ هنا: الزجاجيّةُ تُظهر ما خلفها فيتشوّش النصّ.
+     وأبقيتُ الدائرةَ الخضراءَ حول الأيقونة.
      ══════════════════════════════════════════════════════════════ */
-  .fabwrap{ position:absolute; inset-inline-end:14px;
+  .fabwrap{ position:absolute; inset-inline-end:16px;
     bottom:calc(var(--sab,14px) + 60px); z-index:60;
-    display:flex; flex-direction:column; align-items:flex-end; gap:10px;
+    display:flex; flex-direction:column; align-items:flex-end; gap:8px;
     max-height:calc(100% - 128px) }
 
-  .fabs{ display:flex; flex-direction:column; align-items:flex-end; gap:9px;
+  .fabs{ display:flex; flex-direction:column; align-items:flex-end; gap:4px;
     overflow-y:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
-    padding:4px 2px; min-height:0 }
+    padding:2px; min-height:0 }
   .fabs::-webkit-scrollbar{ display:none }
 
-  /* زجاجيّةٌ خضراء: الأرضُ تُرى خلفها فتبدو طافيةً لا ملصقة */
-  .fab{ display:flex; align-items:center; gap:10px; flex:none; min-height:46px;
-    padding:0 5px 0 16px; border-radius:99px; cursor:pointer;
-    background:rgba(255,255,255,.82);
-    -webkit-backdrop-filter:blur(14px) saturate(150%);
-    backdrop-filter:blur(14px) saturate(150%);
-    border:1px solid rgba(255,255,255,.55); color:var(--g2,#0B3527);
-    box-shadow:0 10px 26px -14px rgba(11,53,39,.65), 0 1px 2px rgba(11,53,39,.12);
+  .fab{ display:flex; align-items:center; gap:8px; flex:none;
+    height:56px; padding:0 8px 0 24px; border-radius:99px; border:0; cursor:pointer;
+    background:var(--pGreenB,#E7F0EA); color:var(--g2);
+    box-shadow:0 6px 10px rgba(11,53,39,.11), 0 2px 3px rgba(11,53,39,.09);
     animation:fabUp .26s cubic-bezier(.2,.9,.3,1) both;
-    animation-delay:calc(var(--i,0) * 32ms) }
-  html[dir=ltr] .fab{ padding:0 16px 0 5px; flex-direction:row-reverse }
-  .fab b{ font-size:12.5px; font-weight:700; white-space:nowrap; letter-spacing:-.1px }
-  .fab .fi{ position:relative; width:36px; height:36px; border-radius:50%; flex:none;
+    animation-delay:calc(var(--i,0) * 28ms) }
+  html[dir=ltr] .fab{ padding:0 24px 0 8px; flex-direction:row-reverse }
+  .fab b{ font-size:14px; font-weight:700; white-space:nowrap; letter-spacing:-.1px }
+  .fab .fi{ position:relative; width:40px; height:40px; border-radius:50%; flex:none;
     display:grid; place-items:center; color:#fff;
-    background:linear-gradient(150deg,var(--g3,#1A6B4C),var(--g,#14593F));
-    box-shadow:0 4px 10px -4px rgba(11,53,39,.55) }
-  .fab:active{ transform:scale(.96) }
-  .fab:focus-visible{ outline:2px solid var(--gold); outline-offset:3px }
+    background:linear-gradient(150deg,var(--g3),var(--g)) }
+  .fab .fi .ic{ width:22px; height:22px }
+  .fab:active{ transform:scale(.97) }
+  .fab:focus-visible{ outline:2px solid var(--g); outline-offset:3px }
 
-  /* الزرُّ الرئيسيّ: دائريٌّ أخضرُ غامقٌ بظلٍّ قويّ */
+  /* الزرُّ الرئيسيّ: primary في M3 — أغمقُ من الحبّات فيُقرأ أصلًا لها */
   .fabmain{ width:56px; height:56px; flex:none; border-radius:50%; cursor:pointer;
     display:grid; place-items:center; color:#fff; border:0;
-    background:linear-gradient(150deg,var(--g3,#1A6B4C),var(--g2,#0B3527));
-    box-shadow:0 14px 30px -10px rgba(11,53,39,.75), 0 2px 6px rgba(11,53,39,.3);
+    background:linear-gradient(150deg,var(--g3),var(--g2));
+    box-shadow:0 8px 14px rgba(11,53,39,.2), 0 3px 5px rgba(11,53,39,.14);
     animation:fabPop .24s cubic-bezier(.2,.9,.3,1) both }
+  .fabmain .ic{ width:22px; height:22px }
   .fabmain:active{ transform:scale(.94) }
   .fabmain:focus-visible{ outline:2px solid var(--gold); outline-offset:3px }
 
-  @keyframes fabUp{ from{ opacity:0; transform:translateY(14px) scale(.94) } }
+  @keyframes fabUp{ from{ opacity:0; transform:translateY(12px) scale(.94) } }
   @keyframes fabPop{ from{ opacity:0; transform:rotate(-90deg) scale(.7) } }
-  @media (prefers-reduced-motion:reduce){
-    .fab, .fabmain{ animation:none }
-  }
+  @media (prefers-reduced-motion:reduce){ .fab, .fabmain{ animation:none } }
 
-  /* الحجابُ خلف القائمة: ضبابٌ خفيفٌ لا عتمةٌ ثقيلة */
-  .scrim.soft{ background:rgba(11,53,39,.34);
-    -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px) }
+  .scrim.soft{ background:rgba(11,53,39,.32);
+    -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px) }
 
-  /* الشاشاتُ القصيرة: الأزرارُ أنحفُ فلا تُزاحم الشريط */
   @media (max-height:680px){
-    .fab{ min-height:42px } .fab .fi{ width:32px; height:32px }
-    .fabmain{ width:50px; height:50px } .fabs{ gap:7px }
+    .fab{ height:48px; padding-inline-start:18px }
+    .fab .fi{ width:36px; height:36px }
+    .fabmain{ width:52px; height:52px }
   }
-
-  /* ══════════════ الدخول: نموذجٌ بحقلين ══════════════ */
-  .lform{ flex:none; display:flex; flex-direction:column; gap:0 }
-  .lform .lbl{ margin:0 0 7px; font-size:12px }
-  .lwrap{ position:relative; margin-bottom:14px }
-  .lfield{ display:flex; align-items:center; gap:10px; min-height:52px; padding:0 14px;
-    background:var(--soft); border:1.5px solid var(--line); border-radius:14px;
-    color:var(--dim); cursor:pointer }
-  .lfield.on{ border-color:var(--g); background:#fff }
-  .lfield .lval{ flex:1; min-width:0; font-size:14px; font-weight:600; color:var(--ink);
-    overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
-  .lfield .lval.ph{ font-weight:400; color:var(--dim) }
-  .lfield input{ flex:1; min-width:0; border:0; background:none; outline:none;
-    font:inherit; font-size:14px; color:var(--ink); padding:14px 0 }
-  .lfield.pw{ margin-bottom:16px; cursor:default }
-  .lfield.pw input{ letter-spacing:3px; cursor:default }
-  .lfield .lok{ color:var(--live); flex:none }
-  .lwrap.open .lfield .ic:last-child{ transform:rotate(180deg) }
-
-  .lmenu{ position:absolute; inset-inline:0; top:calc(100% + 6px); z-index:30;
-    background:#fff; border:1px solid var(--line); border-radius:16px; padding:6px;
-    max-height:46vh; overflow-y:auto; -webkit-overflow-scrolling:touch;
-    box-shadow:0 22px 44px -18px rgba(11,53,39,.5) }
-  .lopt{ display:flex; align-items:center; gap:10px; width:100%; min-height:56px;
-    padding:8px 10px; border:0; border-radius:11px; background:none; color:var(--ink);
-    cursor:pointer; text-align:start }
-  .lopt + .lopt{ border-top:1px solid var(--line) }
-  .lopt .nm{ flex:1; min-width:0 }
-  .lopt .nm b{ display:block; font-size:13.5px; font-weight:700 }
-  .lopt .nm span{ display:block; font-size:11px; color:var(--dim); margin-top:2px;
-    overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
-  .lopt.on{ background:var(--pGreenB) }
-  .lopt:active{ background:var(--soft) }
-  .lempty{ text-align:center; padding:26px 14px; color:var(--dim) }
-  .lempty b{ display:block; margin-top:8px; font-size:13px }
-  .lgo{ width:100% }
-  .lgo:disabled{ opacity:.45; cursor:not-allowed }
-  .lhint{ margin-top:10px; min-height:16px }
-
-  /* ══════════════ الردود: في الطريق · الانتظار ══════════════ */
-  .rtransit{ display:flex; align-items:center; gap:10px; margin:10px 0;
-    padding:11px 13px; border-radius:14px; background:var(--pGoldB);
-    border:1px solid rgba(168,135,90,.34) }
-  .rtransit .sp{ flex:1; min-width:0 }
-  .rtransit b{ display:block; font-size:13px; color:var(--gold); font-weight:700 }
-  .rtransit span span{ display:block; font-size:11px; color:var(--dim); margin-top:2px;
-    line-height:1.6 }
-  .rpulse{ width:10px; height:10px; border-radius:50%; flex:none; background:var(--gold);
-    box-shadow:0 0 0 0 rgba(168,135,90,.6); animation:rpz 1.8s ease-out infinite }
-  @keyframes rpz{ 70%{ box-shadow:0 0 0 9px rgba(168,135,90,0) }
-                  100%{ box-shadow:0 0 0 0 rgba(168,135,90,0) } }
-  @media (prefers-reduced-motion:reduce){ .rpulse{ animation:none } }
-
-  .btn.wide{ width:100% }
-  .btn.busy{ opacity:.8 }
-  .rdsub{ display:flex; gap:9px; margin-top:9px }
-  .rdsub .btn{ flex:1 1 0; min-width:0 }
-  .spin{ width:15px; height:15px; border-radius:50%; flex:none; display:inline-block;
-    border:2px solid currentColor; border-top-color:transparent;
-    animation:spn .7s linear infinite }
-  @keyframes spn{ to{ transform:rotate(360deg) } }
-  @media (prefers-reduced-motion:reduce){ .spin{ animation:none } }
-
-  /* الحجابُ تحت الأزرار العائمة أخفُّ: لا لوحَ يحجب، وإنّما
-     ظلٌّ يُبرز الأزرارَ ويُغلق بالنقر خارجها. */
-  .scrim.soft{ background:rgba(11,53,39,.42) }
-
-
-  /* ══════════════════════════════════════════════════════════════
-     الدخول — على قياسات «نُزلي لإدارة المشاريع»
-
-     قرأتُ أنماطَها المبنيّةَ من موقعها: البطاقةُ ٤٤٠px بحدٍّ وظلٍّ
-     خفيف، والشعارُ ١٦٤px على الجوّال، والعنوانُ ٢٤px/٦٠٠،
-     والسطرُ تحته ١٤px، والتسميةُ ١٣٫٥px/٦٠٠، وزرُّ الصفة ٤٤px
-     بخطٍّ ١٢٫٥px. فالقياساتُ منقولةٌ لا مُقدَّرة.
-     ══════════════════════════════════════════════════════════════ */
-  .authmain{ position:relative; z-index:2; flex:1; min-height:0; display:flex;
-    flex-direction:column; align-items:center; gap:18px; padding:16px 16px 12px;
-    overflow-y:auto; -webkit-overflow-scrolling:touch }
-  .authmain::-webkit-scrollbar{ width:0 }
-  .authcard{ width:100%; max-width:440px; background:#fff; border:1px solid var(--line);
-    border-radius:22px; padding:26px 20px 22px;
-    box-shadow:0 1px 2px rgba(16,24,40,.04), 0 18px 40px -20px rgba(16,24,40,.22) }
-  .authlogo{ display:flex; justify-content:center; margin-bottom:20px }
-  .authlogo .logo{ width:164px; height:46px; margin:0; background-size:contain;
-    background-repeat:no-repeat; background-position:center; filter:none }
-  .authhead{ text-align:center; margin-bottom:22px }
-  .authhead h1{ font-size:21px; font-weight:700; letter-spacing:-.3px; line-height:1.4;
-    margin:0; color:var(--ink) }
-  .authsub{ margin:6px 0 0; font-size:13px; line-height:1.6; color:var(--dim) }
-
-  .authbody{ display:flex; flex-direction:column; gap:16px }
-  .autherr{ display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:12px;
-    background:var(--pRedB,rgba(200,60,60,.08)); color:var(--red); font-size:12.5px;
-    line-height:1.6; border:1px solid rgba(200,60,60,.22) }
-  .fld{ display:flex; flex-direction:column; gap:6px }
-  .fld > label{ font-size:13.5px; font-weight:600; color:var(--ink) }
-  .fld input{ width:100%; min-height:46px; padding:0 13px; font:inherit; font-size:14px;
-    color:var(--ink); background:#fff; border:1px solid var(--line2,#D7E0D9);
-    border-radius:12px; outline:none; transition:border-color .14s ease, box-shadow .14s ease }
-  .fld input::placeholder{ color:var(--dim2); font-size:13px }
-  .fld input:focus{ border-color:var(--g); box-shadow:0 0 0 3px rgba(20,89,63,.12) }
-  .pwrap{ position:relative; display:flex }
-  .pwrap input{ padding-inline-end:46px }
-  .pweye{ position:absolute; inset-inline-end:4px; top:50%; transform:translateY(-50%);
-    width:38px; height:38px; display:grid; place-items:center; border:0; background:none;
-    color:var(--dim); cursor:pointer; border-radius:10px }
-  .pweye[aria-pressed=true]{ color:var(--g) }
-  .fldend{ display:flex; justify-content:flex-end; margin-top:2px }
-  .alink{ border:0; background:none; padding:4px 2px; font:inherit; font-size:12.5px;
-    font-weight:600; color:var(--g); cursor:pointer; min-height:28px }
-
-  /* التجربةُ السريعة — أزرارُ صفاتٍ لا قائمةُ أسماء */
-  .demo{ display:flex; flex-direction:column; gap:12px; margin-top:20px }
-  .demosep{ display:flex; align-items:center; gap:12px; color:var(--dim2);
-    font-size:12px; font-weight:600 }
-  .demosep::before, .demosep::after{ content:''; flex:1; height:1px; background:var(--line) }
-  .demoroles{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px }
-  .rolebtn{ display:inline-flex; align-items:center; justify-content:center; gap:6px;
-    min-height:44px; padding:0 6px; border-radius:12px; background:#fff;
-    border:1px solid var(--line2,#D7E0D9); cursor:pointer; font:inherit; font-size:12.5px;
-    font-weight:600; color:var(--ink); white-space:nowrap;
-    transition:border-color .16s ease, background .16s ease, color .16s ease }
-  .rolebtn .ci{ display:grid; place-items:center; color:var(--gold); flex:none }
-  .rolebtn:active{ transform:scale(.98) }
-  .rolebtn:disabled{ opacity:.6; cursor:progress }
-  .demonote{ margin:0; font-size:11.5px; line-height:1.7; color:var(--dim); text-align:center }
-  .demonote code{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px;
-    background:var(--soft); border:1px solid var(--line); border-radius:6px; padding:1px 6px }
-  .authfoot{ flex:none; padding:4px 0 10px; display:flex; justify-content:center }
-
-  @media (max-height:700px){
-    .authcard{ padding:20px 18px 18px }
-    .authlogo{ margin-bottom:14px } .authhead{ margin-bottom:16px }
-    .authlogo .logo{ width:136px; height:38px }
-  }
-
-
-
-
-  /* الشعارُ فاتحٌ (أبيضُ وذهبيّ) فلا يُقرأ على بطاقةٍ بيضاء.
-     فموضعُه الأرضُ الخضراءُ فوق البطاقة، كما كان. */
-  .authtop{ flex:none; display:flex; flex-direction:column; align-items:center; gap:5px;
-    padding:10px 0 16px }
-  .authtop .logo{ width:160px; height:44px; margin:0; background-size:contain;
-    background-repeat:no-repeat; background-position:center }
-  .authtop .cap{ font-size:11.5px; color:#CBDCD1 }
-  .authcard{ padding:24px 20px 22px }
-  .authlogo{ display:none }
-  .pweye{ width:44px; height:44px }
-
-
-  /* زرُّ الصفة: الاسمُ يُقصَّر ولا يفيض، والأيقونةُ لا تُزاح */
-  .rolebtn > span:last-child{ min-width:0; overflow:hidden; text-overflow:ellipsis }
-
 
   /* ══════════════════════════════════════════════════════════════
      الدخول — مراجعةُ المقاسات والترتيب
@@ -1811,6 +1658,12 @@
 
   /* زرُّ فتح القائمة: ٤٤px لمسًا وإن بدا أصغر */
   .cbtn{ width:44px; height:44px }
+
+
+  /* الخروجُ المبكّرُ يُميَّز عن الانصراف: اللونُ وحدَه يقول إنّ
+     الشِفتَ ما زال ساريًا، فلا يُظنّ أنّ اليومَ اكتمل. */
+  .cta.out.early{ background:var(--pRedB,rgba(200,60,60,.08)); color:var(--red);
+    border-color:rgba(200,60,60,.28) }
 
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -3071,6 +2924,7 @@ DICT.en = {
   "أدلة معتمدة": "Approved guides",
   "أدنى خمس مهام": "Lowest five tasks",
   "أدوات معاينة لا تُشحن للعميل": "Preview tools; not shipped to the client",
+  "أدواتُ تشغيلٍ داخليّةٌ لفريق النظام — خارجَ أدوار العمل. وكلُّ ما يتغيّر هنا ينعكس فورًا.": "Internal operations tools for the system team — outside the work roles. Everything changed here takes effect at once.",
   "أرب": "Wed",
   "أربع نجوم · درجة أولى": "Four stars · first class",
   "أربعاء": "Wednesday",
@@ -3120,6 +2974,7 @@ DICT.en = {
   "أعاد فتح": "Reopened",
   "أعد تقييم الكل": "Re-rate all",
   "أعرف مسار هذا التفويج أكثر من زميلي.": "I know this dispatch route better than my colleague does.",
+  "أعضاء الفريق": "Team members",
   "أعطال الحافلات": "Bus breakdowns",
   "أعلن نقطة التجمّع مبكرًا وانطلق": "Announce the assembly point early, then set off",
   "أعلنه بوضوح عند الوصول للمزار": "Announce it clearly on reaching the landmark",
@@ -3222,6 +3077,7 @@ DICT.en = {
   "أُخرج": "Removed",
   "أُرجعت مسودّةً — لا يقرؤها التطبيق": "Returned to draft — the app does not read it",
   "أُرسل": "Sent",
+  "أُرسل إشعار": "An alert was sent",
   "أُرسل إشعار تجريبي": "A test notification was sent",
   "أُرسل إلى": "Sent to",
   "أُرسل إليه طلب تسكين": "A rooming request was sent to them",
@@ -3268,6 +3124,7 @@ DICT.en = {
   "أُسندت إليك قيادة «": "You were given leadership of “",
   "أُسندت إليك قيادة هذه المهمة — تبدأها وتغلقها، ولا تملك التسكين.": "You have been given leadership of this task — you start and close it, but cannot roster.",
   "أُسندت إليك مهمة دعمًا": "A task was assigned to you as support",
+  "أُسندت الصفةُ إليه — المتابعةُ قائمةٌ والقرارُ ليس لك.": "The role was delegated to them — you follow progress but do not decide.",
   "أُسندت المسؤولية": "Responsibility assigned",
   "أُسندت المسؤولية إلى": "Responsibility assigned to",
   "أُسندت تذكرة": "Ticket assigned",
@@ -3479,6 +3336,7 @@ DICT.en = {
   "إشاعة": "Rumour",
   "إشراف سكن": "Accommodation supervision",
   "إشعار": "Notice",
+  "إشعار اختبار": "Test alert",
   "إشعار تجريبي": "Test notification",
   "إشعارات أخرى تنتظرك": "Other notifications await you",
   "إشعارًا": "notifications",
@@ -4180,6 +4038,7 @@ DICT.en = {
   "البدء لصاحب القرار على المهمة": "Starting is for whoever holds the decision on the task",
   "البداية": "Start",
   "البديل مرتبط بمهمة متداخلة": "The substitute is committed to an overlapping task",
+  "البديل من الفريق": "Substitute from the team",
   "البديل من فريقك": "The substitute is from your team",
   "البطاقات": "Cards",
   "البعثة": "The mission",
@@ -4242,8 +4101,10 @@ DICT.en = {
   "التحرّك لمزدلفة بعد الغروب": "Moving to Muzdalifah after sunset",
   "التحضير": "Check-in",
   "التحضير اليومي": "Daily check-in",
+  "التحضير اليومي لا يُقبل إلا من داخل المقر. اضغط للتبديل.": "the daily check-in is only accepted from inside HQ. Tap to switch.",
   "التحضير اليومي من داخل المقر فقط — بدّل موقعك إلى «داخل المقر»": "Daily briefing check-in is only from inside headquarters — switch your location to “Inside HQ”",
   "التحضير والحضور": "Check-in and attendance",
+  "التحضيرُ اليوميُّ من المقرّ، وحضورُ المهمّة من موقعها.": "The daily check-in is from HQ, and task attendance from its site.",
   "التحقق من العثور على المفقود وتسليمه لصاحبه، أو توثيق الإجراء المختص.": "Confirm the lost item is found and returned to its owner, or document the relevant action.",
   "التحقق من العدد": "Verifying the head count",
   "التحقق من العدد بعد العودة": "Verify the head count after returning",
@@ -4358,6 +4219,8 @@ DICT.en = {
   "التقييم": "Rating",
   "التقييم التراكمي": "Cumulative rating",
   "التقييم متوسط عام لكل مهمة — يُحتسب من الالتزام بالأوقات وإنجاز المهام ورضا المستفيدين.": "The rating is an overall average per task — computed from timeliness, task completion, and beneficiary satisfaction.",
+  "التقييم والملاحظات": "Rating and notes",
+  "التقييم وترتيب الفريق": "Rating and team ranking",
   "التقييمات": "Ratings",
   "التكرار يُحال إلى لجنة الجزاءات. — غرفة عمليات مُحسن": "Repetition is referred to the penalties committee. — Muhsen operations room",
   "التمركز عند بوّابة الوصول": "Positioning at the arrivals gate",
@@ -4462,6 +4325,7 @@ DICT.en = {
   "الحضور الفعلي": "Actual attendance",
   "الحضور الميداني": "Field attendance",
   "الحضور متاح من أي موقع — والبُعد يُسجَّل ملاحظةً ويؤثر في التقييم.": "Check-in is allowed from any location — distance is logged as a remark and affects the rating.",
+  "الحضور مُثبَت": "Attendance confirmed",
   "الحلول مكان": "Standing in for",
   "الحلول مكانه": "Standing in for them",
   "الحوادث": "Incidents",
@@ -4568,6 +4432,8 @@ DICT.en = {
   "الشمري": "Al-Shammari",
   "الشهري": "Al-Shehri",
   "الشِفت": "Shift",
+  "الشِفت الجديد:": "New shift:",
+  "الشِفت الحالي:": "Current shift:",
   "الشِفت المطلوب": "Requested shift",
   "الشِفت صباحي": "Morning shift",
   "الشِفتات": "Shifts",
@@ -4781,6 +4647,7 @@ DICT.en = {
   "المتوسط · الأدنى": "Average · lowest",
   "المتوسط · الأدنى {n} · الأعلى {n}": "Average · lowest {n} · highest {n}",
   "المتوسط التراكمي": "Cumulative average",
+  "المتوسط العام لتقييم المهام": "Overall task rating average",
   "المتوسط العام لكل مهامه": "The overall average across all their tasks",
   "المجموع الموزون": "Weighted total",
   "المجموع الموزون {n}٪ — أي {n} من {n} نجوم.": "Weighted total {n}% — that is {n} out of {n} stars.",
@@ -4950,6 +4817,7 @@ DICT.en = {
   "المهام المنجزة": "Completed tasks",
   "المهام المُسنَدة": "Assigned tasks",
   "المهام المُسنَدة عليها": "Tasks assigned to it",
+  "المهام من هذا النوع": "Tasks of this kind",
   "المهمة": "Task",
   "المهمة أُغلقت": "The task has been closed",
   "المهمة الجارية الآن": "The task under way now",
@@ -4984,9 +4852,14 @@ DICT.en = {
   "الموعد الحالي والموعد المطلوب وبيانات المجموعة": "The current time, the requested time and the group’s details",
   "الموعد المخطّط": "Planned time",
   "الموقع": "Location",
+  "الموقع الآن": "Location now",
+  "الموقع الآن:": "Location now:",
   "الموقع والبُعد": "Location and distance",
   "الموقع والزمن": "Location and time",
   "الموقع والزمن · {n} أعمدة": "Place and time · {n} columns",
+  "الموقع: خارج النطاق — لا يُقبل تحضير": "Location: out of range — check-in is not accepted",
+  "الموقع: داخل المقر — التحضير اليومي متاح": "Location: inside HQ — the daily check-in is available",
+  "الموقع: داخل موقع المهمة": "Location: at the task site",
   "الموقعُ يغيّر المهلةَ ومسارَ التصعيد": "The location changes the deadline and the escalation path",
   "الموقف باختصار": "The situation in brief",
   "الموقف باختصار — طلب عفاشين، وفاة، تأخّر باص": "The situation in brief — porters requested, a death, a bus delay",
@@ -5114,6 +4987,7 @@ DICT.en = {
   "انسحاب معتمد": "Approved withdrawal",
   "انسحب": "Withdrew",
   "انسحبتَ بموافقة الليدر —": "You withdrew with the leader’s approval —",
+  "انسحبتَ بموافقة الليدر — ارتباط بمهمة أخرى": "Withdrawn with the leader’s approval — committed to another task",
   "انصراف": "Check-out",
   "انصرفتَ {t}": "Checked out {t}",
   "انصرفتَ اليوم بالفعل": "You already checked out today",
@@ -5717,6 +5591,7 @@ DICT.en = {
   "تذكيرات": "Reminders",
   "تراجع": "Undo",
   "ترتيب الفرق": "Team ranking",
+  "ترتيب الفريق": "Team ranking",
   "ترتيب فريقك": "Your team’s order",
   "ترتيب مرافقة كبار السن": "Arranging escorts for elderly pilgrims",
   "ترتيب وصول الباص": "Arranging the bus’s arrival",
@@ -5767,6 +5642,7 @@ DICT.en = {
   "تسجيل المعلومة": "Recording the information",
   "تسجيل المعلومة الصحيحة": "Record the correct information",
   "تسجيل المعلومة — فرصتان لتسجيلها إذا كانت مغلوطة": "Recording the information — two attempts if it is wrong",
+  "تسجيل خروج مبكر": "Early check-out",
   "تسجيل عقد": "Register contract",
   "تسجيل عقد نقل": "Register a transport contract",
   "تسريبُ ماءٍ في دورة مياه الدور الثالث.": "A water leak in the third-floor washroom.",
@@ -5992,6 +5868,7 @@ DICT.en = {
   "تم تسجيل الانصراف اليوم بالفعل": "Check-out is already recorded for today",
   "تم تسجيل الانصراف ٢:٤١ م": "Check-out recorded 2:41 pm",
   "تم تسجيل الحضور ٦:٠٦ ص": "Check-in recorded 6:06 am",
+  "تم تسجيل الخروج المبكر {t}": "Early check-out recorded {t}",
   "تم توثيق الوقت الصحيح , وإبلاغ الأطراف المعنية": "The correct time was documented and the parties concerned notified",
   "تم قبول الاستلام من مقدّم الخدمة": "Handover from the service provider was accepted",
   "تمت الطباعة": "Printed",
@@ -6013,6 +5890,7 @@ DICT.en = {
   "تنبيهات لم تُقرأ": "Unread alerts",
   "تنبيهًا": "alerts",
   "تنبيهًا لم يُقرأ بعد": "unread alerts",
+  "تنبيهٌ بالمهامّ في وقتها": "Alerts for tasks on time",
   "تنتظر الموافقة": "Awaiting approval",
   "تنتظر مجموعة": "Awaiting a group",
   "تنتظر موافقتك": "Awaiting your approval",
@@ -6366,6 +6244,7 @@ DICT.en = {
   "حان وقتها ولم تبدأ، أو فات ولم تُغلق": "Due and not started, or past due and not closed",
   "حان وقتها ولم تبدأها — أغلقها": "It is due and you have not started it — close it",
   "حان وقتها ولم تبدأها — أغلقها، ويُحتسب ذلك في التقييم.": "It is due and you have not started it — close it; this counts in the rating.",
+  "حان وقتها ولم تبدأها — ويُحتسب ذلك في التقييم.": "Its time came and it was not started — this counts towards the rating.",
   "حان وقتها ولم تبدأها — ويُحتسب ذلك في تقييمك.": "It is due and you have not started it — this counts in your rating.",
   "حتى احتساب التأخّر": "until lateness is counted",
   "حتى التصعيد التلقائي": "Until automatic escalation",
@@ -6502,7 +6381,7 @@ DICT.en = {
   "حِمل اليوم بالساعات": "Today’s load by hour",
   "خارج التشكيل ولا احتياط": "Outside formation and not in reserve",
   "خارج الشِفت": "Off shift",
-  "خارج النطاق": "Out of range",
+  "خارج النطاق": "out of range",
   "خارج النطاق ({n} كم)": "Out of range ({n} km)",
   "خارج النظام": "Outside the system",
   "خارج شِفت المهمّة": "Outside the task’s shift",
@@ -6976,6 +6855,7 @@ DICT.en = {
   "ستُسجَّل": "will be recorded",
   "ستُسجَّل غير منجزة في ملاحظات المهمة وتؤثر في التقييم.": "It will be recorded as not completed in the task’s remarks and affect the rating.",
   "سجل": "Log",
+  "سجل إجراءات المهمة": "Task action log",
   "سجل الإجراءات": "Action log",
   "سجل الطلبات": "Request log",
   "سجل النظام": "System Log",
@@ -7299,6 +7179,7 @@ DICT.en = {
   "صفًّا.": "rows.",
   "صفٌّ لكل مورد، وعمودٌ لكل فعل — انقر الخانة": "A row per resource, a column per action — tap the cell",
   "صفّ القرارات": "Decision queue",
+  "صلاحيةُ ليدر لهذه المهمّة وحدها — التسكينُ والإسنادُ غيرُ متاحين.": "Leader rights for this task only — rostering and delegation are unavailable.",
   "صور": "Photos",
   "صور التذكرة": "Ticket photos",
   "صور الجولة مرفوعة على المهمة": "The tour photos are uploaded to the task",
@@ -8113,6 +7994,7 @@ DICT.en = {
   "لا باسم ليدرها — والسبب يظهر في سجلّها.": "not under its leader’s name — the reason shows in its log.",
   "لا بديل حاضرٌ في هذا الشِفت": "No substitute present on this shift",
   "لا بديل في هذا الشِفت": "No substitute on this shift",
+  "لا بديل متاح في الفريق — يُطلب دعمٌ من الكنترول.": "No substitute available in the team — support is requested from Control.",
   "لا بديل متاحًا — الاحتياط فارغ": "No substitute available — the reserve is empty",
   "لا بدّ من صفةٍ واحدة على الأقلّ": "At least one role is required",
   "لا بدّ من وجهةٍ واحدةٍ على الأقلّ": "At least one destination is required",
@@ -8217,6 +8099,7 @@ DICT.en = {
   "لا مشرف": "No supervisor",
   "لا مشرف حرّ": "No free supervisor",
   "لا ملاحظات مسجّلة على المهمة.": "No remarks recorded on the task.",
+  "لا ملاحظات مسجّلة — سجلٌّ نظيف.": "No notes on record — a clean record.",
   "لا ملاحظات مكتوبة.": "No written remarks.",
   "لا ملاحظات.": "No remarks.",
   "لا منجزة بعد": "None completed yet",
@@ -8632,6 +8515,7 @@ DICT.en = {
   "محسن —": "Muhsen —",
   "محسن — «": "Muhsen — «",
   "محسنان في إجازةٍ مرضيّة اليوم ولم يُعوَّضا.": "Two Muhsens are on sick leave today and have not been replaced.",
+  "محسنو الفريق": "Team Muhsens",
   "محسنو المهمّة أولى بالمقعد.": "The task’s own Muhsens have first claim on the seat.",
   "محسنو النقل وحدهم": "Transport Muhsens only",
   "محسنو النقل وحدهم — من يدير الحركة لا يبحث في ثلاثمئة اسم": "Transport Muhsens only — whoever runs movement should not search three hundred names",
@@ -9178,7 +9062,7 @@ DICT.en = {
   "موقع إنزال خاطئ": "Wrong drop-off point",
   "موقع الإنزال المعتمد والموقع الفعلي وبيانات المجموعة": "The approved drop-off point, the actual one and the group’s details",
   "موقع البوفيه وصورة الملاحظة إن توفرت": "The buffet location and a photo of the observation if available",
-  "موقع مهمة": "Task site",
+  "موقع مهمة": "a task site",
   "موقعك": "Your location",
   "موقعك الآن:": "Your location:",
   "موقعك الآن: موقع مهمة — التحضير اليومي لا يُقبل إلا من داخل المقر. اضغط للتبديل.": "Your location: a task site — daily briefing check-in is only accepted from inside headquarters. Tap to switch.",
@@ -9419,6 +9303,7 @@ DICT.en = {
   "هذا المحسن أثبت حضوره على المهمّة — سحبُه بعد الحضور يُسجَّل بوضوح.": "This Muhsen has checked in on the task — withdrawing them afterwards is logged plainly.",
   "هذا المحسن أثبت حضوره — سحبُه بعد الحضور يُسجَّل بوضوح.": "This Muhsen has checked in — withdrawing them afterwards is logged plainly.",
   "هذا المحسن ليس من فريقك": "This Muhsen is not on your team",
+  "هذا المحسن من فريق آخر": "That Muhsen is on another team",
   "هذا الموسم · ثِقل السجلّ": "this season · record weight",
   "هذا النطاق": "This scope",
   "هذه الجهة زُرِعت": "This organisation was seeded",
@@ -9566,6 +9451,7 @@ DICT.en = {
   "وصلت": "Delivered",
   "وصلت إلى مركز التوزيع": "Arrived at the distribution centre",
   "وصلت الوجبات ناقصة اثنتي عشرة وجبة عن كشف المجموعة. عُوِّض الفرق من المخزون الاحتياطي.": "The meals arrived twelve short of the group’s manifest. The shortfall was covered from the reserve stock.",
+  "وصلك هذا الإشعار بنجاح.": "This alert reached you successfully.",
   "وصلوا": "Arrived",
   "وصلوا ·": "Arrived ·",
   "وصول الحافلة أو المجموعة إلى الموقع المحدد وتأكيد المسؤول الميداني اكتمال الحركة.": "The bus or group reaching the designated site, and the field officer confirming the movement is complete.",
@@ -9622,12 +9508,14 @@ DICT.en = {
   "وهذه الشاشة بابُه.": "This screen is its entry point.",
   "وهو من يختار ويُسند.": "and it is they who choose and assign.",
   "ووقع أثرُها على المهمة": "and took effect on the task",
+  "ويؤثر في التقييم": "and it affects the rating",
   "ويبقى محسنًا في المهمة": "and remains a Muhsen on the task",
   "ويجايا": "Wijaya",
   "ويحقّ للطرف الثاني فسخ العقد عند تكرار المخالفة ثلاث مرّات في الموسم الواحد.": "and the second party may terminate the contract if the breach recurs three times in a single season.",
   "ويحقّ للطرف الثاني نقل حجاجه على نفقة الطرف الأول عند تكرار الإخلال.": "and the second party may move its pilgrims at the first party’s expense if the breach recurs.",
   "ويظهر له إشعار النظام فور فتحه.": "and the system notification appears the moment they open it.",
   "ويوين": "Wiwin",
+  "ويُحتسب ذلك في التقييم.": "and it counts towards the rating.",
   "وُسمت تنبيهات المهمة مقروءة": "The task’s alerts were marked as read",
   "وُسمت كل التنبيهات مقروءة": "All alerts marked as read",
   "وُلِّدت": "Generated",
@@ -9722,6 +9610,7 @@ DICT.en = {
   "يملك البدء والإغلاق لهذه المهمة": "Can start and close this task",
   "يملك صلاحية البدء والإغلاق": "Has permission to start and close",
   "ينتظر اعتماد الكنترول، ولا يقع قبله.": "awaiting Control’s approval, and does not take effect before it.",
+  "ينتهي الشِفت {n}:{n}": "shift ends {n}:{n}",
   "ينقص بيانٌ في": "Data missing in",
   "ينقص جواز ثلاثة حجّاج ورقم تصريح موحّد لاثنين.": "Three pilgrims’ passports are missing and two share one permit number.",
   "يهبط بتكرار عدم الإنجاز": "Falls with repeated non-completion",
@@ -9755,6 +9644,7 @@ DICT.en = {
   "يُرجى إفادتنا بالسبب خلال {n} ساعة. — الكنترول": "Please give us the reason within {n} hours. — Control",
   "يُرجى الالتزام تفاديًا للتصعيد. — الكنترول": "Please comply to avoid escalation. — Control",
   "يُرفع إلى غرفة العمليات — الكنترول": "Raised to the operations room — Control",
+  "يُرفع إلى ليدر الفريق": "Raised to the team leader",
   "يُرفع إلى ليدر فريقك": "Raised to your team leader",
   "يُرفع طلبًا إلى الكنترول": "Raised as a request to Control",
   "يُزيل — وهو أخطرها": "Removes — the most dangerous of all",
@@ -9827,7 +9717,7 @@ DICT.en = {
   "— اختر —": "— select —",
   "— اختيارية": "— optional",
   "— الأقلّ حِملًا": "— the lightest load",
-  "— التحضير اليومي لا يُقبل إلا من داخل المقر. اضغط للتبديل.": "— the daily briefing check-in is only accepted from inside HQ. Tap to switch.",
+  "— التحضير اليومي لا يُقبل إلا من داخل المقر. اضغط للتبديل.": "— the daily check-in is only accepted from inside HQ. Tap to switch.",
   "— السبب:": "— reason:",
   "— المشرف": "— supervisor",
   "— الوردية لا تحتمل نقصًا": "— the shift cannot take a shortfall",
@@ -10640,6 +10530,7 @@ DICT.ms = {
   "أدلة معتمدة": "Panduan diluluskan",
   "أدنى خمس مهام": "Lima tugasan terendah",
   "أدوات معاينة لا تُشحن للعميل": "Alat pratonton; tidak dihantar kepada pelanggan",
+  "أدواتُ تشغيلٍ داخليّةٌ لفريق النظام — خارجَ أدوار العمل. وكلُّ ما يتغيّر هنا ينعكس فورًا.": "Alat operasi dalaman untuk pasukan sistem — di luar peranan kerja. Semua yang diubah di sini berkuat kuasa serta-merta.",
   "أرب": "Rab",
   "أربع نجوم · درجة أولى": "Empat bintang · kelas pertama",
   "أربعاء": "Rabu",
@@ -10689,6 +10580,7 @@ DICT.ms = {
   "أعاد فتح": "Membuka semula",
   "أعد تقييم الكل": "Nilai semula semua",
   "أعرف مسار هذا التفويج أكثر من زميلي.": "Saya lebih mengenali laluan penghantaran ini berbanding rakan sekerja saya.",
+  "أعضاء الفريق": "Ahli pasukan",
   "أعطال الحافلات": "Kerosakan bas",
   "أعلن نقطة التجمّع مبكرًا وانطلق": "Umumkan titik perhimpunan awal, kemudian bertolak",
   "أعلنه بوضوح عند الوصول للمزار": "Umumkan dengan jelas semasa tiba di mercu tanda",
@@ -10791,6 +10683,7 @@ DICT.ms = {
   "أُخرج": "Dikeluarkan",
   "أُرجعت مسودّةً — لا يقرؤها التطبيق": "Dikembalikan kepada draf — aplikasi tidak membacanya",
   "أُرسل": "Dihantar",
+  "أُرسل إشعار": "Amaran dihantar",
   "أُرسل إشعار تجريبي": "Pemberitahuan ujian dihantar",
   "أُرسل إلى": "Dihantar kepada",
   "أُرسل إليه طلب تسكين": "Permintaan penempatan dihantar kepadanya",
@@ -10837,6 +10730,7 @@ DICT.ms = {
   "أُسندت إليك قيادة «": "Anda diberikan kepimpinan “",
   "أُسندت إليك قيادة هذه المهمة — تبدأها وتغلقها، ولا تملك التسكين.": "Anda diberikan kepimpinan tugas ini — anda memulakan dan menutupnya, tetapi tidak boleh menempatkan.",
   "أُسندت إليك مهمة دعمًا": "Satu tugas ditugaskan kepada anda sebagai sokongan",
+  "أُسندت الصفةُ إليه — المتابعةُ قائمةٌ والقرارُ ليس لك.": "Peranan diserahkan kepadanya — anda memantau tetapi tidak membuat keputusan.",
   "أُسندت المسؤولية": "Tanggungjawab ditetapkan",
   "أُسندت المسؤولية إلى": "Tanggungjawab ditetapkan kepada",
   "أُسندت تذكرة": "Tiket ditugaskan",
@@ -11048,6 +10942,7 @@ DICT.ms = {
   "إشاعة": "Khabar angin",
   "إشراف سكن": "Penyeliaan penginapan",
   "إشعار": "Notis",
+  "إشعار اختبار": "Amaran ujian",
   "إشعار تجريبي": "Pemberitahuan ujian",
   "إشعارات أخرى تنتظرك": "Pemberitahuan lain menunggu anda",
   "إشعارًا": "pemberitahuan",
@@ -11749,6 +11644,7 @@ DICT.ms = {
   "البدء لصاحب القرار على المهمة": "Memulakan ialah hak pembuat keputusan pada tugas",
   "البداية": "Mula",
   "البديل مرتبط بمهمة متداخلة": "Pengganti terikat dengan tugas bertindih",
+  "البديل من الفريق": "Pengganti dari pasukan",
   "البديل من فريقك": "Pengganti daripada pasukan anda",
   "البطاقات": "Kad",
   "البعثة": "Misi",
@@ -11811,8 +11707,10 @@ DICT.ms = {
   "التحرّك لمزدلفة بعد الغروب": "Bergerak ke Muzdalifah selepas matahari terbenam",
   "التحضير": "Daftar",
   "التحضير اليومي": "Daftar hadir harian",
+  "التحضير اليومي لا يُقبل إلا من داخل المقر. اضغط للتبديل.": "daftar masuk harian hanya diterima dari dalam ibu pejabat. Ketik untuk tukar.",
   "التحضير اليومي من داخل المقر فقط — بدّل موقعك إلى «داخل المقر»": "Pendaftaran taklimat harian hanya dari dalam ibu pejabat — tukar lokasi anda kepada “Dalam ibu pejabat”",
   "التحضير والحضور": "Daftar hadir dan kehadiran",
+  "التحضيرُ اليوميُّ من المقرّ، وحضورُ المهمّة من موقعها.": "Daftar masuk harian dari ibu pejabat, dan kehadiran tugas dari tapaknya.",
   "التحقق من العثور على المفقود وتسليمه لصاحبه، أو توثيق الإجراء المختص.": "Sahkan barang hilang ditemui dan dikembalikan kepada pemiliknya, atau dokumenkan tindakan berkaitan.",
   "التحقق من العدد": "Mengesahkan bilangan",
   "التحقق من العدد بعد العودة": "Sahkan bilangan selepas kembali",
@@ -11927,6 +11825,8 @@ DICT.ms = {
   "التقييم": "Penilaian",
   "التقييم التراكمي": "Penarafan terkumpul",
   "التقييم متوسط عام لكل مهمة — يُحتسب من الالتزام بالأوقات وإنجاز المهام ورضا المستفيدين.": "Penarafan ialah purata keseluruhan bagi setiap tugas — dikira daripada ketepatan masa, penyiapan tugas, dan kepuasan penerima manfaat.",
+  "التقييم والملاحظات": "Penarafan dan nota",
+  "التقييم وترتيب الفريق": "Penarafan dan kedudukan pasukan",
   "التقييمات": "Penarafan",
   "التكرار يُحال إلى لجنة الجزاءات. — غرفة عمليات مُحسن": "Pengulangan dirujuk kepada jawatankuasa penalti. — bilik operasi Muhsin",
   "التمركز عند بوّابة الوصول": "Bersiap di pintu ketibaan",
@@ -12031,6 +11931,7 @@ DICT.ms = {
   "الحضور الفعلي": "Kehadiran sebenar",
   "الحضور الميداني": "Kehadiran lapangan",
   "الحضور متاح من أي موقع — والبُعد يُسجَّل ملاحظةً ويؤثر في التقييم.": "Pendaftaran hadir dibenarkan dari mana-mana lokasi — jarak direkodkan sebagai catatan dan memberi kesan pada penarafan.",
+  "الحضور مُثبَت": "Kehadiran disahkan",
   "الحلول مكان": "Menggantikan",
   "الحلول مكانه": "Menggantikannya",
   "الحوادث": "Insiden",
@@ -12137,6 +12038,8 @@ DICT.ms = {
   "الشمري": "Al-Shammari",
   "الشهري": "Al-Shehri",
   "الشِفت": "Syif",
+  "الشِفت الجديد:": "Syif baharu:",
+  "الشِفت الحالي:": "Syif semasa:",
   "الشِفت المطلوب": "Syif yang diminta",
   "الشِفت صباحي": "Syif pagi",
   "الشِفتات": "Syif",
@@ -12350,6 +12253,7 @@ DICT.ms = {
   "المتوسط · الأدنى": "Purata · terendah",
   "المتوسط · الأدنى {n} · الأعلى {n}": "Purata · terendah {n} · tertinggi {n}",
   "المتوسط التراكمي": "Purata terkumpul",
+  "المتوسط العام لتقييم المهام": "Purata keseluruhan penarafan tugas",
   "المتوسط العام لكل مهامه": "Purata keseluruhan bagi semua tugasnya",
   "المجموع الموزون": "Jumlah berwajaran",
   "المجموع الموزون {n}٪ — أي {n} من {n} نجوم.": "Jumlah berwajaran {n}% — iaitu {n} daripada {n} bintang.",
@@ -12519,6 +12423,7 @@ DICT.ms = {
   "المهام المنجزة": "Tugasan selesai",
   "المهام المُسنَدة": "Tugasan ditugaskan",
   "المهام المُسنَدة عليها": "Tugasan yang ditugaskan padanya",
+  "المهام من هذا النوع": "Tugas jenis ini",
   "المهمة": "Tugas",
   "المهمة أُغلقت": "Tugas telah ditutup",
   "المهمة الجارية الآن": "Tugas yang sedang berjalan",
@@ -12553,9 +12458,14 @@ DICT.ms = {
   "الموعد الحالي والموعد المطلوب وبيانات المجموعة": "Waktu semasa, waktu yang diminta dan butiran kumpulan",
   "الموعد المخطّط": "Waktu dirancang",
   "الموقع": "Lokasi",
+  "الموقع الآن": "Lokasi kini",
+  "الموقع الآن:": "Lokasi kini:",
   "الموقع والبُعد": "Lokasi dan jarak",
   "الموقع والزمن": "Lokasi dan masa",
   "الموقع والزمن · {n} أعمدة": "Tempat dan masa · {n} lajur",
+  "الموقع: خارج النطاق — لا يُقبل تحضير": "Lokasi: di luar julat — daftar masuk tidak diterima",
+  "الموقع: داخل المقر — التحضير اليومي متاح": "Lokasi: dalam ibu pejabat — daftar masuk harian tersedia",
+  "الموقع: داخل موقع المهمة": "Lokasi: di tapak tugas",
   "الموقعُ يغيّر المهلةَ ومسارَ التصعيد": "Lokasi mengubah tempoh dan laluan eskalasi",
   "الموقف باختصار": "Situasi secara ringkas",
   "الموقف باختصار — طلب عفاشين، وفاة، تأخّر باص": "Keadaan secara ringkas — permintaan pengangkut bagasi, kematian, kelewatan bas",
@@ -12683,6 +12593,7 @@ DICT.ms = {
   "انسحاب معتمد": "Penarikan diri diluluskan",
   "انسحب": "Menarik diri",
   "انسحبتَ بموافقة الليدر —": "Anda menarik diri dengan kelulusan ketua —",
+  "انسحبتَ بموافقة الليدر — ارتباط بمهمة أخرى": "Ditarik balik dengan kelulusan ketua — terikat dengan tugas lain",
   "انصراف": "Daftar keluar",
   "انصرفتَ {t}": "Mendaftar keluar {t}",
   "انصرفتَ اليوم بالفعل": "Anda sudah mendaftar keluar hari ini",
@@ -13286,6 +13197,7 @@ DICT.ms = {
   "تذكيرات": "Peringatan",
   "تراجع": "Buat asal",
   "ترتيب الفرق": "Kedudukan pasukan",
+  "ترتيب الفريق": "Kedudukan pasukan",
   "ترتيب فريقك": "Susunan pasukan anda",
   "ترتيب مرافقة كبار السن": "Mengatur pengiring untuk warga emas",
   "ترتيب وصول الباص": "Mengatur ketibaan bas",
@@ -13336,6 +13248,7 @@ DICT.ms = {
   "تسجيل المعلومة": "Merekod maklumat",
   "تسجيل المعلومة الصحيحة": "Rekodkan maklumat yang betul",
   "تسجيل المعلومة — فرصتان لتسجيلها إذا كانت مغلوطة": "Merekod maklumat — dua peluang jika ia tersilap",
+  "تسجيل خروج مبكر": "Daftar keluar awal",
   "تسجيل عقد": "Daftar kontrak",
   "تسجيل عقد نقل": "Daftar kontrak pengangkutan",
   "تسريبُ ماءٍ في دورة مياه الدور الثالث.": "Kebocoran air di tandas tingkat tiga.",
@@ -13561,6 +13474,7 @@ DICT.ms = {
   "تم تسجيل الانصراف اليوم بالفعل": "Daftar keluar sudah direkod hari ini",
   "تم تسجيل الانصراف ٢:٤١ م": "Daftar keluar direkod 2:41 PTG",
   "تم تسجيل الحضور ٦:٠٦ ص": "Daftar masuk direkod 6:06 PG",
+  "تم تسجيل الخروج المبكر {t}": "Daftar keluar awal direkod {t}",
   "تم توثيق الوقت الصحيح , وإبلاغ الأطراف المعنية": "Waktu yang betul didokumenkan dan pihak berkaitan dimaklumkan",
   "تم قبول الاستلام من مقدّم الخدمة": "Penyerahan daripada penyedia perkhidmatan telah diterima",
   "تمت الطباعة": "Telah dicetak",
@@ -13582,6 +13496,7 @@ DICT.ms = {
   "تنبيهات لم تُقرأ": "Amaran belum dibaca",
   "تنبيهًا": "amaran",
   "تنبيهًا لم يُقرأ بعد": "amaran belum dibaca",
+  "تنبيهٌ بالمهامّ في وقتها": "Amaran tugas tepat pada masanya",
   "تنتظر الموافقة": "Menunggu kelulusan",
   "تنتظر مجموعة": "Menunggu kumpulan",
   "تنتظر موافقتك": "Menunggu kelulusan anda",
@@ -13935,6 +13850,7 @@ DICT.ms = {
   "حان وقتها ولم تبدأ، أو فات ولم تُغلق": "Sampai masanya tetapi belum bermula, atau sudah lewat dan belum ditutup",
   "حان وقتها ولم تبدأها — أغلقها": "Sudah sampai masanya dan anda belum memulakannya — tutupkannya",
   "حان وقتها ولم تبدأها — أغلقها، ويُحتسب ذلك في التقييم.": "Sudah sampai masanya dan anda belum memulakannya — tutupkannya; ini dikira dalam penarafan.",
+  "حان وقتها ولم تبدأها — ويُحتسب ذلك في التقييم.": "Masanya tiba dan ia tidak dimulakan — ini dikira dalam penarafan.",
   "حان وقتها ولم تبدأها — ويُحتسب ذلك في تقييمك.": "Sudah sampai masanya dan anda belum memulakannya — ini dikira dalam penarafan anda.",
   "حتى احتساب التأخّر": "sehingga kelewatan dikira",
   "حتى التصعيد التلقائي": "Sehingga eskalasi automatik",
@@ -14071,7 +13987,7 @@ DICT.ms = {
   "حِمل اليوم بالساعات": "Beban hari ini mengikut jam",
   "خارج التشكيل ولا احتياط": "Di luar pembentukan dan bukan simpanan",
   "خارج الشِفت": "Luar syif",
-  "خارج النطاق": "Luar julat",
+  "خارج النطاق": "di luar julat",
   "خارج النطاق ({n} كم)": "Luar kawasan ({n} km)",
   "خارج النظام": "Luar sistem",
   "خارج شِفت المهمّة": "Di luar syif tugasan",
@@ -14545,6 +14461,7 @@ DICT.ms = {
   "ستُسجَّل": "akan direkodkan",
   "ستُسجَّل غير منجزة في ملاحظات المهمة وتؤثر في التقييم.": "Ia akan direkodkan sebagai tidak disiapkan dalam catatan tugas dan menjejaskan penarafan.",
   "سجل": "Log",
+  "سجل إجراءات المهمة": "Log tindakan tugas",
   "سجل الإجراءات": "Log tindakan",
   "سجل الطلبات": "Log permintaan",
   "سجل النظام": "Log Sistem",
@@ -14868,6 +14785,7 @@ DICT.ms = {
   "صفًّا.": "baris.",
   "صفٌّ لكل مورد، وعمودٌ لكل فعل — انقر الخانة": "Satu baris bagi setiap sumber, satu lajur bagi setiap tindakan — ketik selnya",
   "صفّ القرارات": "Barisan keputusan",
+  "صلاحيةُ ليدر لهذه المهمّة وحدها — التسكينُ والإسنادُ غيرُ متاحين.": "Hak ketua untuk tugas ini sahaja — penempatan dan penurunan kuasa tidak tersedia.",
   "صور": "Foto",
   "صور التذكرة": "Foto tiket",
   "صور الجولة مرفوعة على المهمة": "Foto lawatan telah dimuat naik ke tugas",
@@ -15682,6 +15600,7 @@ DICT.ms = {
   "لا باسم ليدرها — والسبب يظهر في سجلّها.": "bukan atas nama ketuanya — sebabnya dipaparkan dalam lognya.",
   "لا بديل حاضرٌ في هذا الشِفت": "Tiada pengganti hadir pada syif ini",
   "لا بديل في هذا الشِفت": "Tiada pengganti pada syif ini",
+  "لا بديل متاح في الفريق — يُطلب دعمٌ من الكنترول.": "Tiada pengganti dalam pasukan — sokongan diminta daripada Kawalan.",
   "لا بديل متاحًا — الاحتياط فارغ": "Tiada pengganti tersedia — simpanan kosong",
   "لا بدّ من صفةٍ واحدة على الأقلّ": "Sekurang-kurangnya satu peranan diperlukan",
   "لا بدّ من وجهةٍ واحدةٍ على الأقلّ": "Sekurang-kurangnya satu destinasi diperlukan",
@@ -15786,6 +15705,7 @@ DICT.ms = {
   "لا مشرف": "Tiada penyelia",
   "لا مشرف حرّ": "Tiada penyelia lapang",
   "لا ملاحظات مسجّلة على المهمة.": "Tiada catatan direkodkan pada tugas.",
+  "لا ملاحظات مسجّلة — سجلٌّ نظيف.": "Tiada nota direkod — rekod bersih.",
   "لا ملاحظات مكتوبة.": "Tiada catatan bertulis.",
   "لا ملاحظات.": "Tiada catatan.",
   "لا منجزة بعد": "Belum ada yang disiapkan",
@@ -16201,6 +16121,7 @@ DICT.ms = {
   "محسن —": "Muhsin —",
   "محسن — «": "Muhsin — «",
   "محسنان في إجازةٍ مرضيّة اليوم ولم يُعوَّضا.": "Dua Muhsin bercuti sakit hari ini dan belum diganti.",
+  "محسنو الفريق": "Muhsin pasukan",
   "محسنو المهمّة أولى بالمقعد.": "Muhsin tugas ini lebih berhak atas tempat itu.",
   "محسنو النقل وحدهم": "Muhsin pengangkutan sahaja",
   "محسنو النقل وحدهم — من يدير الحركة لا يبحث في ثلاثمئة اسم": "Muhsin pengangkutan sahaja — pengurus pergerakan tidak perlu mencari dalam tiga ratus nama",
@@ -16747,7 +16668,7 @@ DICT.ms = {
   "موقع إنزال خاطئ": "Tempat turun salah",
   "موقع الإنزال المعتمد والموقع الفعلي وبيانات المجموعة": "Lokasi penurunan yang diluluskan, lokasi sebenar dan butiran kumpulan",
   "موقع البوفيه وصورة الملاحظة إن توفرت": "Lokasi bufet dan foto pemerhatian jika ada",
-  "موقع مهمة": "Tapak tugas",
+  "موقع مهمة": "tapak tugas",
   "موقعك": "Lokasi anda",
   "موقعك الآن:": "Lokasi anda:",
   "موقعك الآن: موقع مهمة — التحضير اليومي لا يُقبل إلا من داخل المقر. اضغط للتبديل.": "Lokasi anda: tapak tugas — pendaftaran taklimat harian hanya diterima dari dalam ibu pejabat. Ketik untuk menukar.",
@@ -16988,6 +16909,7 @@ DICT.ms = {
   "هذا المحسن أثبت حضوره على المهمّة — سحبُه بعد الحضور يُسجَّل بوضوح.": "Muhsin ini telah mendaftar hadir pada tugas — menariknya selepas itu direkodkan dengan jelas.",
   "هذا المحسن أثبت حضوره — سحبُه بعد الحضور يُسجَّل بوضوح.": "Muhsin ini telah mendaftar hadir — menariknya selepas itu direkodkan dengan jelas.",
   "هذا المحسن ليس من فريقك": "Muhsin ini bukan daripada pasukan anda",
+  "هذا المحسن من فريق آخر": "Muhsin itu dalam pasukan lain",
   "هذا الموسم · ثِقل السجلّ": "musim ini · beban rekod",
   "هذا النطاق": "Skop ini",
   "هذه الجهة زُرِعت": "Organisasi ini dijana",
@@ -17135,6 +17057,7 @@ DICT.ms = {
   "وصلت": "Sampai",
   "وصلت إلى مركز التوزيع": "Tiba di pusat agihan",
   "وصلت الوجبات ناقصة اثنتي عشرة وجبة عن كشف المجموعة. عُوِّض الفرق من المخزون الاحتياطي.": "Hidangan tiba kurang dua belas daripada manifes kumpulan. Kekurangan ditampung daripada stok simpanan.",
+  "وصلك هذا الإشعار بنجاح.": "Amaran ini sampai kepada anda.",
   "وصلوا": "Telah tiba",
   "وصلوا ·": "Telah tiba ·",
   "وصول الحافلة أو المجموعة إلى الموقع المحدد وتأكيد المسؤول الميداني اكتمال الحركة.": "Bas atau kumpulan tiba di lokasi yang ditetapkan, dan pegawai lapangan mengesahkan pergerakan selesai.",
@@ -17191,12 +17114,14 @@ DICT.ms = {
   "وهذه الشاشة بابُه.": "Skrin ini ialah pintu masuknya.",
   "وهو من يختار ويُسند.": "dan merekalah yang memilih dan menugaskan.",
   "ووقع أثرُها على المهمة": "dan berkuat kuasa pada tugas",
+  "ويؤثر في التقييم": "dan ia menjejaskan penarafan",
   "ويبقى محسنًا في المهمة": "dan kekal sebagai Muhsin pada tugas",
   "ويجايا": "Wijaya",
   "ويحقّ للطرف الثاني فسخ العقد عند تكرار المخالفة ثلاث مرّات في الموسم الواحد.": "dan pihak kedua berhak menamatkan kontrak jika pelanggaran berulang tiga kali dalam satu musim.",
   "ويحقّ للطرف الثاني نقل حجاجه على نفقة الطرف الأول عند تكرار الإخلال.": "dan pihak kedua berhak memindahkan jemaahnya atas perbelanjaan pihak pertama jika pelanggaran berulang.",
   "ويظهر له إشعار النظام فور فتحه.": "dan pemberitahuan sistem muncul sebaik sahaja dibuka.",
   "ويوين": "Wiwin",
+  "ويُحتسب ذلك في التقييم.": "dan ia dikira dalam penarafan.",
   "وُسمت تنبيهات المهمة مقروءة": "Amaran tugas ditanda sebagai dibaca",
   "وُسمت كل التنبيهات مقروءة": "Semua amaran ditanda sebagai dibaca",
   "وُلِّدت": "Dijana",
@@ -17291,6 +17216,7 @@ DICT.ms = {
   "يملك البدء والإغلاق لهذه المهمة": "Boleh memulakan dan menutup tugas ini",
   "يملك صلاحية البدء والإغلاق": "Mempunyai kebenaran memulakan dan menutup",
   "ينتظر اعتماد الكنترول، ولا يقع قبله.": "menunggu kelulusan Kawalan, dan tidak berkuat kuasa sebelumnya.",
+  "ينتهي الشِفت {n}:{n}": "syif tamat {n}:{n}",
   "ينقص بيانٌ في": "Data tiada dalam",
   "ينقص جواز ثلاثة حجّاج ورقم تصريح موحّد لاثنين.": "Pasport tiga jemaah tiada dan dua berkongsi satu nombor permit.",
   "يهبط بتكرار عدم الإنجاز": "Menurun dengan kegagalan berulang",
@@ -17324,6 +17250,7 @@ DICT.ms = {
   "يُرجى إفادتنا بالسبب خلال {n} ساعة. — الكنترول": "Sila berikan sebabnya dalam {n} jam. — Kawalan",
   "يُرجى الالتزام تفاديًا للتصعيد. — الكنترول": "Sila patuhi bagi mengelakkan eskalasi. — Kawalan",
   "يُرفع إلى غرفة العمليات — الكنترول": "Dikemukakan kepada bilik operasi — Kawalan",
+  "يُرفع إلى ليدر الفريق": "Dinaikkan kepada ketua pasukan",
   "يُرفع إلى ليدر فريقك": "Dikemukakan kepada ketua pasukan anda",
   "يُرفع طلبًا إلى الكنترول": "Dikemukakan sebagai permintaan kepada Kawalan",
   "يُزيل — وهو أخطرها": "Membuang — yang paling berisiko",
@@ -17396,7 +17323,7 @@ DICT.ms = {
   "— اختر —": "— pilih —",
   "— اختيارية": "— pilihan",
   "— الأقلّ حِملًا": "— beban paling ringan",
-  "— التحضير اليومي لا يُقبل إلا من داخل المقر. اضغط للتبديل.": "— pendaftaran taklimat harian hanya diterima dari dalam ibu pejabat. Ketik untuk menukar.",
+  "— التحضير اليومي لا يُقبل إلا من داخل المقر. اضغط للتبديل.": "— daftar masuk harian hanya diterima dari dalam ibu pejabat. Ketik untuk tukar.",
   "— السبب:": "— sebab:",
   "— المشرف": "— penyelia",
   "— الوردية لا تحتمل نقصًا": "— syif tidak boleh kekurangan",
@@ -17627,7 +17554,7 @@ const REPORT_SEED = [
 /* تطبيقٌ واحدٌ ورابطٌ واحد: الدورُ يُقرأ من الحساب بعد الدخول. */
 const KEY = 'muhsen_app_v3';
 const APP_VER = 'نسخة ٤٫٣';
-const SCHEMA = 21;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
+const SCHEMA = 22;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
 /* الاهتزازُ: كان ثابتًا محلّيًّا داخل act() في المُوجِّه، فكلُّ نداءٍ
@@ -17714,10 +17641,21 @@ function makePilgrims(n, seedNo) {
   });
 }
 
-/* كل مهمة جديدة تُسكَّن تلقائيًّا بفريق الليدر كاملًا */
+/* التسكينُ التلقائيُّ يأخذ جزءًا من الفريق لا كلَّه.
+
+   كان يُسكِّن الفريقَ كاملًا على كلّ مهمّة، فيرى المحسنُ ما يراه
+   ليدرُه حرفًا بحرف — وهو خلافُ الواقع: المحسنُ على مهامِّه هو.
+   والاختيارُ ثابتٌ لا عشوائيّ: يدور على الفريق بترتيبه فتتوزّع
+   الأحمالُ ولا تتبدّل البذرةُ بين تشغيلين. */
+const TASK_CREW = 3;
 function autoAssign(st, t) {
   const team = (st.users || S.users).filter(u => u.role === 'muhsen' && u.leaderId === t.leaderId && !u.reserve);
-  team.forEach(m => {
+  if (!team.length) return t;
+  const seq = Number(String(t.id).replace(/\D/g, '')) || 0;
+  const take = Math.min(TASK_CREW, team.length);
+  const crew = [];
+  for (let i = 0; i < take; i++) crew.push(team[(seq + i) % team.length]);
+  crew.forEach(m => {
     if (t.assigned.some(a => a.muhsenId === m.id)) return;
     t.assigned.push({ muhsenId: m.id, req: 'accepted', auto: true,
       reqAt: t.start - 72 * HR, reqNote: 'تسكين تلقائي', respAt: t.start - 72 * HR, respNote: '',
@@ -18798,14 +18736,18 @@ function taskRow(t) {
      شعارٌ في الأعلى · عنوانٌ وسطرٌ تحته
      نموذجٌ: اسم المستخدم · كلمة المرور بزرّ إظهار · «نسيت؟»
      زرُّ «تسجيل الدخول» بعرض الحقل
-     فاصلٌ ثمّ أزرارُ الصفات للتجربة السريعة
-     سطرٌ أخيرٌ فيه كلمةُ المرور التجريبيّة
 
    وأزرارُ الصفات هي ما يقوم مقامَ القائمة: نقرةٌ واحدةٌ تدخلك
    بصفةٍ جاهزة، والنموذجُ فوقها يبقى نموذجًا حقيقيًّا.
    ============================================================ */
 
-const DEMO_PW = '48162048';
+/* ══════════════ نقطةُ الربط ══════════════
+   التحقّقُ من كلمة المرور يقع هنا وحدَه. وحين يصل الـAPI يُستبدل
+   جسدُ checkPassword() بنداءٍ إلى الخادم، ولا يتغيّر شيءٌ في
+   الشاشة ولا في المُوجِّه.
+   ════════════════════════════════════════ */
+const AUTH_PW = '48162048';
+const checkPassword = (user, pw) => pw === AUTH_PW;
 
 /* صفةُ الحساب في سطرٍ واحد — تُقرأ تحت الاسم في القائمة */
 const loginSub = u => {
@@ -18921,8 +18863,7 @@ function screenLogin() {
             'تسجيل الدخول</button>' +
         '</form>' +
 
-        '<p class="demonote">كلمة المرور لكل الحسابات التجريبية: ' +
-          '<code class="ltr">' + DEMO_PW + '</code></p>' +
+
       '</div>' +
 
       '<div class="authfoot"><i class="mnozoly" role="img" aria-label="نُزلي"></i></div>' +
@@ -18932,7 +18873,7 @@ function screenLogin() {
 function doLogin() {
   const u = loginMatch();
   if (!u) { S.loginErr = 'اختر اسمًا من القائمة أو اكتب رمزك'; save(); render(); return; }
-  if ((S.loginP || '') !== DEMO_PW) {
+  if (!checkPassword(u, S.loginP || '')) {
     S.loginErr = 'كلمة المرور غير صحيحة'; save(); render(); return;
   }
   S.loginErr = null;
@@ -18954,58 +18895,9 @@ function enterAs(id) {
   }, 420);
 }
 
-/* ============================ تنبيهات ثابتة أعلى الصفحة ============================ */
-function alertsHTML() {
-  if (!S.session) return '';
-  const u = me(); if (!u) return '';
-  const out = [];
-  const box = (cls, ic, title, body, act) =>
-    '<button class="alert ' + cls + '" ' + (act || '') + '>' + icon(ic, 's26') +
-      '<span class="sp"><b>' + E(title) + '</b><span>' + E(body) + '</span></span>' + icon('i-back','s16') + '</button>';
-
-  if (u.role === 'muhsen') {
-    myTasks().filter(t => ['running','assigned','pending_assign'].includes(t.status)).forEach(t => {
-      const a = acceptedSlots(t).find(x => x.muhsenId === u.id);
-      if (!a || a.attendedAt) return;
-      if (now() >= t.start)
-        out.push(box('bad', 'i-warn', 'تأخرت عن إثبات الحضور',
-          '«' + t.title + '» بدأت ' + t12(t.start) + ' ولم تثبت حضورك — تُسجَّل عليك ملاحظة وتؤثر في تقييمك.',
-          'data-a="go" data-n="mhome"'));
-      else if (now() >= prepOpen(t)) {
-        const r = hms(t.start - now());
-        out.push(box('warn', 'i-clock', 'أثبت حضورك',
-          '«' + t.title + '» — تبقّى ' + AR(r.h) + ':' + AR(r.m) + ':' + AR(r.s) + ' على بدايتها.',
-          'data-a="go" data-n="mhome"'));
-      }
-    });
-    const rq = myRequests().length;
-    if (rq) out.push(box('warn', 'i-bell', 'لديك ' + AR(rq) + ' طلب بانتظار ردك',
-      'تسكين أو تفويض — لا يكتمل التسكين قبل ردك.', 'data-a="go" data-n="requests"'));
-  } else {
-    const un = unassignedTasks();
-    if (un.length) out.push(box(un.some(t => t.start - now() < 12 * HR) ? 'bad' : 'warn', 'i-assign',
-      AR(un.length) + ' مهمة تحتاج تسكينًا',
-      'أقربها «' + un[0].title + '» ' + untilTxt(un[0].start) + '. سكّن مبكرًا ولو كانت بعد أسابيع.',
-      'data-a="go" data-n="tasks"'));
-    const auto = myTasks().filter(t => t.status === 'running' && t.autoStarted);
-    if (auto.length) out.push(box('bad', 'i-warn', AR(auto.length) + ' مهمة بدأها النظام',
-      'حان وقتها ولم تبدأها — أغلقها، ويُحتسب ذلك في التقييم.',
-      'data-a="go" data-n="task" data-id="' + auto[0].id + '"'));
-    const notAtt = myTasks().filter(t => ['running','assigned','pending_assign'].includes(t.status) && inPrep(t) && !t.leaderAttendedAt);
-    if (notAtt.length) out.push(box('warn', 'i-target', 'أثبت حضورك',
-      '«' + notAtt[0].title + '»',
-      'data-a="go" data-n="task" data-id="' + notAtt[0].id + '"'));
-  }
-  if (!out.length) return '';
-  const atHome = ['home', 'mhome'].includes(S.route.n);
-  if (atHome) return '<div class="alerts">' + out.join('') + '</div>';
-  /* خارج الرئيسية: سطر واحد لا يزاحم محتوى الشاشة */
-  const worst = out.some(x => x.indexOf('alert bad') >= 0);
-  return '<button class="alerts one ' + (worst ? 'bad' : 'warn') + '" data-a="go" data-n="' +
-    (u.role === 'leader' ? 'home' : 'mhome') + '">' + icon(worst ? 'i-warn' : 'i-bell', 's18') +
-    '<span class="sp">' + AR(out.length) + (out.length === 1 ? ' تنبيه يحتاج إجراءً' : ' تنبيهات تحتاج إجراءً') + '</span>' +
-    icon('i-back', 's16') + '</button>';
-}
+/* شريطُ التنبيهات الثابتُ أعلى الصفحة حُذف: كان يُحقَن في رأس كلّ
+   شاشةٍ فيزاحم محتواها، ويكرّر ما تقوله البطاقاتُ نفسُها. والإشعاراتُ
+   لها زرُّها في الترويسة وشاشتُها. */
 
 /* عدّاد الإجراءات على الحساب: ما ينتظر ردّه هو وحده — لا ما ينتظر وقته */
 function pendingCountFor(uid_) {
@@ -19117,14 +19009,8 @@ function screenTask() {
       (can ? 'وتبدأ تلقائيًّا ' + t12(t.start) + ' على كل حال' : E(why)) + '</span></span></button>';
   }
 
-  /* قسم قابل للطيّ */
-  const fold = (key, title, sub2, body, ic) =>
-    '<div class="fold' + (open(key) ? ' on' : '') + '">' +
-      '<button class="fhead" data-a="fold" data-id="' + t.id + '" data-v="' + key + '">' +
-        icon(ic || 'i-list','s18') +
-        '<span class="sp"><b>' + title + '</b>' + (sub2 ? '<span>' + sub2 + '</span>' : '') + '</span>' +
-        icon('i-down','s16') + '</button>' +
-      (open(key) ? '<div class="fbody">' + body + '</div>' : '') + '</div>';
+  /* القسمُ القابلُ للطيّ صار عامًّا في ذيل الملفّ — كان محلّيًّا هنا
+     فلا يراه taskLog. ومثلُه أسقط الدخولَ حين كان buzz محلّيًّا. */
 
   return bar('تفاصيل المهمة', { back: 1,
     right: lead ? '<button data-a="go" data-n="timeline" data-id="' + t.id + '" aria-label="سجل الإجراءات">' + icon('i-hist') + '</button>'
@@ -19132,18 +19018,12 @@ function screenTask() {
     '<div class="view">' + ground() +
     svcCard(t) + metaCard(t) +
 
-    (t.autoStarted && lead ? '<div class="note r">' + icon('i-warn','s16') +
-      '<span><b>بدأها النظام تلقائيًّا</b><br>حان وقتها ولم تبدأها — ويُحتسب ذلك في تقييمك.</span></div>' : '') +
-    (watch ? '<div class="note b">' + icon('i-shield','s16') +
-      '<span><b>الليدر على هذه المهمة: ' + E(userById(t.delegate.muhsenId).name) + '</b><br>' +
-      'أسندتَ صفتك إليه — تتابع التقدّم ولا تتخذ قرارات.</span></div>' : '') +
-    (deleg ? '<div class="note b">' + icon('i-shield','s16') +
-      '<span>تعمل بصلاحية ليدر لهذه المهمة فقط. التسكين والإسناد غير متاحين لك.</span></div>' : '') +
+    /* تعليقاتُ حالة المهمّة نزلت إلى سجلّ الإجراءات في الأسفل:
+       كانت تتوسّط التفاصيل فتزاحم ما يُفعَل بما وقع. */
 
     (!closed ? attendCard(t, u, lead) : '') +
     startCta +
 
-    guideChip(t, 1) +
 
     '<div class="lbl">المهام الفرعية<small>' + AR(doneSubs) + ' من ' + AR(t.subs.length) + '</small></div>' +
     (!act && !closed ? '<div class="note ' + (canShootSub(t) ? 'b' : 'a') + '">' + icon('i-info','s16') +
@@ -19152,11 +19032,14 @@ function screenTask() {
         : 'الليدر هو من يؤشّر على الإنجاز. ' + E(shootSubWhy(t)) + '.') + '</span></div>' : '') +
     '<div class="c">' + t.subs.map((s, i2) => subRow(t, s, i2, running)).join('') + '</div>' +
 
+    /* دليلُ التنفيذ تحت الخطوات: يُقرأ بعد أن يُعرَف ما يُنفَّذ */
+    guideChip(t, 1) +
+
     (t.rating ? '<button class="c gold" data-a="go" data-n="taskrating" data-id="' + t.id + '" style="width:100%;text-align:right">' +
       '<div class="row"><b class="sm">تقييم المهمة</b>' + pill('التفاصيل', 'gold') + '</div>' +
       '<div class="fl" style="margin-top:10px;justify-content:center">' + stars(avgRating(t.rating), 'lg') + '</div></button>' : '') +
 
-    (lead ? fold('team', 'المحسنون على المهمة',
+    (lead ? foldOf(t.id, 'team', 'المحسنون على المهمة',
         AR(acc.length) + ' فعليًّا · ' + AR(att) + ' أثبتوا حضورهم',
         (slotPeople(t).length ? slotPeople(t).map(pid => slotCard(t, primaryRow(t, pid), act && !deleg)).join('')
           : '<div class="c center dim sm" style="padding:20px">لا يوجد أحد على المهمة</div>'),
@@ -19185,7 +19068,7 @@ function screenTask() {
         taskSupport(t.id).map(s2 => supportCard(s2)).join('') : '') +
 
     (lead && hasDocs(t)
-      ? fold('docs', 'مستندات المهمة', 'عقد النقل وعقد السكن', docButtons(t), 'i-file') : '') +
+      ? foldOf(t.id, 'docs', 'مستندات المهمة', 'عقد النقل وعقد السكن', docButtons(t), 'i-file') : '') +
 
     (!lead && !closed && slotOf(t, u.id) && slotOf(t, u.id).req === 'accepted'
       ? (function () {
@@ -19208,7 +19091,7 @@ function screenTask() {
     taskPhotoSection(t, lead) +
 
     (!lead && bucket !== 'undone' && acc.length > 1
-      ? fold('mates', 'معك على المهمة', AR(acc.length - 1) + ' زميلًا',
+      ? foldOf(t.id, 'mates', 'معك على المهمة', AR(acc.length - 1) + ' زميلًا',
         acc.filter(a2 => a2.muhsenId !== u.id).map(a2 => {
           const mm = userById(a2.muhsenId); if (!mm) return '';
           const ph = String(mm.phone || '').replace(/[^0-9]/g, '');
@@ -19224,11 +19107,9 @@ function screenTask() {
 
     (lead && !deleg && !closed ? delegCard(t, isCo, !locked && act) : '') +
 
-    (t.notes.length && lead ? fold('notes', 'ملاحظات المهمة', AR(t.notes.length) + ' ملاحظة',
-      t.notes.map(n => '<div class="note ' + (n.kind === 'auto' ? 'a' : 'b') + '">' +
-        icon(n.kind === 'auto' ? 'i-info' : 'i-edit','s16') +
-        '<span>' + E(n.text) + '<br><span class="tiny dim2">' + t12(n.at) + '</span></span></div>').join(''),
-      'i-edit') : '') +
+    /* سجلُّ إجراءات المهمّة — ما وقع عليها لا ما يُفعَل بها.
+       يجمع تعليقاتِ الحالة والملاحظاتِ في مكانٍ واحدٍ أسفلَ الشاشة. */
+    taskLog(t, lead, watch, deleg) +
 
     (!closed ? '<div class="grid2">' +
       '<button class="btn l sm" data-a="note" data-id="' + t.id + '">' + icon('i-edit','s16') + 'ملاحظة</button>' +
@@ -19251,7 +19132,7 @@ function attendCard(t, u, lead) {
   const involved = lead || (a && a.req === 'accepted');
   if (!involved) return '';
   if (mine) return '<div class="note g">' + icon('i-checkc','s16') +
-    '<span>حضورك مُثبَت ' + t12(mine) + '</span></div>';
+    '<span>الحضور مُثبَت ' + t12(mine) + '</span></div>';
   if (now() < prepOpen(t)) return '<div class="note a">' + icon('i-clock','s16') +
     '<span>يُفتح التحضير قبل المهمة بساعتين — ' + untilTxt(prepOpen(t)) + '</span></div>';
   /* أُغلقت النافذة: الزر باهت ومعطّل، والسبب مكتوب */
@@ -19269,12 +19150,12 @@ function attendCard(t, u, lead) {
       '</b><i>:</i><b' + (late ? ' style="color:var(--red)"' : '') + '>' + AR(r.s) + '</b></div>' +
     '<div class="tunits"><span>ساعة</span><span>دقيقة</span><span>ثانية</span></div>' +
     '<div class="tiny ' + (late ? '' : 'dim') + '" style="margin-top:9px' + (late ? ';color:var(--red);font-weight:700' : '') + '">' +
-      (late ? 'يُسجَّل تأخرك في ملاحظات المهمة ويؤثر في تقييمك' : 'تبدأ المهمة ' + t12(t.start)) + '</div></div>' +
+      (late ? 'يُسجَّل تأخرك في ملاحظات المهمة ويؤثر في التقييم' : 'تبدأ المهمة ' + t12(t.start)) + '</div></div>' +
     mapBox(t, true) +
     '<div class="grid2" style="margin-top:11px">' +
       '<button class="btn g sm" data-a="place">' + icon('i-pin','s16') + 'تغيير موقعي</button>' +
       '<button class="btn p sm" data-a="attend" data-id="' + t.id + '">' + icon('i-target','s16') + 'إثبات الحضور</button></div>' +
-    '<div class="tiny dim2 center" style="margin-top:7px">وضع التجربة: الحضور متاح من أي موقع — والبُعد يُسجَّل ملاحظةً</div></div>';
+    '</div>';
 }
 
 
@@ -19365,7 +19246,56 @@ function screenTimeline() {
     '</div>' + tabs();
 }
 
-/* ============================ صناديق الوضع الآن ============================ */
+/* ============================================================
+   سجلُّ إجراءات المهمّة
+
+   كانت تعليقاتُ الحالة («بدأها النظام تلقائيًّا» · «الليدر على
+   هذه المهمة» · «تعمل بصلاحية ليدر») تتوسّط التفاصيل، فتزاحم
+   ما يُفعَل بما وقع. ونزلت إلى هنا مع ملاحظات المهمّة: سجلٌّ
+   واحدٌ مطويٌّ أسفلَ الشاشة يُقرأ عند الحاجة لا في كلّ مرّة.
+   ============================================================ */
+function taskLog(t, lead, watch, deleg) {
+  const rows = [];
+  const row = (ic, cls, title, body, at) =>
+    '<div class="note ' + cls + '">' + icon(ic, 's16') +
+      '<span>' + (title ? '<b>' + E(title) + '</b><br>' : '') + E(body) +
+      (at ? '<br><span class="tiny dim2">' + t12(at) + '</span>' : '') +
+    '</span></div>';
+
+  if (t.autoStarted && lead)
+    rows.push(row('i-warn', 'r', 'بدأها النظام تلقائيًّا',
+      'حان وقتها ولم تبدأها — ويُحتسب ذلك في التقييم.', t.start));
+  if (watch)
+    rows.push(row('i-shield', 'b',
+      'الليدر على هذه المهمة: ' + userById(t.delegate.muhsenId).name,
+      'أُسندت الصفةُ إليه — المتابعةُ قائمةٌ والقرارُ ليس لك.'));
+  if (deleg)
+    rows.push(row('i-shield', 'b', '',
+      'صلاحيةُ ليدر لهذه المهمّة وحدها — التسكينُ والإسنادُ غيرُ متاحين.'));
+
+  (t.notes || []).slice().sort((a, b) => b.at - a.at).forEach(n =>
+    rows.push(row(n.kind === 'auto' ? 'i-info' : 'i-edit',
+      n.kind === 'auto' ? 'a' : 'b', '', n.text, n.at)));
+
+  if (!rows.length) return '';
+  return foldOf(t.id, 'tlog', 'سجل إجراءات المهمة',
+    AR(rows.length) + ' إجراء', rows.join(''), 'i-hist');
+}
+
+/* قسمٌ قابلٌ للطيّ — عامٌّ ليراه كلُّ من يبنيه، ومفتاحُ حالته
+   يجمع بين المهمّة والقسم فلا تتداخل مهمّتان. */
+const foldOpen = (tid, key) => !!(S.open && S.open[tid + ':' + key]);
+function foldOf(tid, key, title, sub2, body, ic) {
+  const on = foldOpen(tid, key);
+  return '<div class="fold' + (on ? ' on' : '') + '">' +
+    '<button class="fhead" data-a="fold" data-id="' + tid + '" data-v="' + key + '">' +
+      icon(ic || 'i-list', 's18') +
+      '<span class="sp"><b>' + title + '</b>' + (sub2 ? '<span>' + sub2 + '</span>' : '') + '</span>' +
+      icon('i-down', 's16') + '</button>' +
+    (on ? '<div class="fbody">' + body + '</div>' : '') + '</div>';
+}
+
+/* بطاقةُ المهمّة الجارية — تبقى وإن سقطت صناديقُ «الوضع الآن» */
 /* المهمة الجارية تتصدّر الرئيسية ببطاقتها كاملة */
 function runningCard() {
   const t = myTasks().find(x => x.status === 'running');
@@ -19384,7 +19314,7 @@ function runningCard() {
           '<div class="tiny dim2" style="margin-top:4px">' + E(t.place) + '</div>' +
           '<div class="fl" style="gap:6px;margin-top:7px;flex-wrap:wrap">' +
             pill(AR(done) + ' من ' + AR(t.subs.length) + ' منجزة', done === t.subs.length ? 'live' : 'wait') +
-            (mine ? pill('حضورك مُثبَت', 'live') : pill('لم تثبت حضورك', 'no')) +
+            (mine ? pill('الحضور مُثبَت', 'live') : pill('لم تثبت حضورك', 'no')) +
             (late ? pill('تجاوزت ' + AR(late) + ' د', 'no') : '') + '</div></div></div>' +
       '<div class="meter" style="margin-top:11px"><i style="width:' +
         Math.round(done / Math.max(1, t.subs.length) * 100) + '%"></i></div>' +
@@ -19392,52 +19322,26 @@ function runningCard() {
         icon('i-tasks','s16') + 'فتح المهمة الجارية</button></div>';
 }
 
-function statusBoxes() {
-  const L = isLeader(), ts = myTasks();
-  const running = ts.filter(t => t.status === 'running');
-  const auto = running.filter(t => t.autoStarted);
-  const soon = ts.filter(t => !['done','cancelled','running'].includes(t.status) && t.start > now() && t.start - now() < 12 * HR);
-  const un = L ? unassignedTasks() : [];
-  const inbox = L ? 0 : myRequests().length;
-  const tks = myTickets().filter(k => k.status !== 'مغلقة').length;
-  const over = running.filter(t => now() > t.end);
 
-  const box = (cls, ic, n, title, sub, act) =>
-    '<button class="c ' + cls + '" ' + (act || '') + ' style="width:100%;text-align:right">' +
-      '<div class="fl" style="gap:11px">' +
-        '<span class="ico" style="width:42px;height:42px;border-radius:13px;display:grid;place-items:center;' +
-          (cls === 'urgent' ? 'background:#FCEDEB;color:#93261C' : cls === 'soon' ? 'background:#FCF5E7;color:#7A5512'
-            : 'background:#E4F2E9;color:#0B6540') + '">' + icon(ic, 's18') + '</span>' +
-        '<span class="sp"><b style="font-size:14px;display:block">' + E(title) + '</b>' +
-        '<span class="tiny dim">' + E(sub) + '</span></span>' +
-        '<b style="font-size:22px;font-weight:800;' +
-          (cls === 'urgent' ? 'color:var(--red)' : cls === 'soon' ? 'color:var(--amber)' : 'color:var(--g)') + '">' + AR(n) + '</b>' +
-      '</div></button>';
+/* «الوضع الآن» وصناديقُه حُذفت: كانت تعيد ما تقوله بطاقاتُ المهامّ
+   نفسُها، وتدفع «المهامَّ القادمة» إلى أسفل الشاشة. والمهامُّ هي
+   ما يُفتح التطبيقُ لأجله، فصدّرت. */
 
-  let out = '<div class="lbl">الوضع الآن<small>' + dayName(now()) + ' · ' + t12(now()) + '</small></div>';
-  let any = false;
-  if (auto.length)    { any = 1; out += box('urgent','i-warn',auto.length,'مهمة بدأها النظام','حان وقتها ولم تبدأها — أغلقها','data-a="go" data-n="tasks"'); }
-  if (over.length)    { any = 1; out += box('urgent','i-clock',over.length,'مهمة تجاوزت وقتها','لم تُغلق بعد انتهاء مدتها','data-a="go" data-n="tasks"'); }
-  if (running.length) { any = 1; out += box('','i-play',running.length,'مهمة جارية الآن',
-    running.map(t => t.title).slice(0,2).join(' · ') + (running.length > 2 ? ' وغيرها' : ''),'data-a="go" data-n="tasks"'); }
-  if (un.length)      { any = 1; out += box('urgent','i-assign',un.length,'مهمة بلا محسنين','اطلب تعزيزًا من فريق امتثال','data-a="go" data-n="tasks"'); }
-  const wd = ts.reduce((n, t) => n + (L ? pendingWithdraws(t).length : 0), 0);
-  if (wd)             { any = 1; out += box('soon','i-out',wd,'طلب انسحاب من مهمة','بانتظار موافقتك أو رفضك','data-a="go" data-n="tasks"'); }
-  if (soon.length)    { any = 1; out += box('soon','i-clock',soon.length,'مهمة خلال ١٢ ساعة',
-    soon.map(t => t.title + ' ' + t12(t.start)).slice(0,2).join(' · '),'data-a="go" data-n="tasks"'); }
-  if (inbox)          { any = 1; out += box('soon','i-bell',inbox,'طلب بانتظار ردك','تسكين أو تفويض','data-a="go" data-n="requests"'); }
-  if (tks)            { any = 1; out += box('','i-ticket',tks,'تذكرة مفتوحة','من الحجاج والكنترول والمحسنين','data-a="go" data-n="tickets"'); }
-  if (!any) out += '<div class="note g">' + icon('i-checkc','s16') + '<span>لا يوجد ما يستدعي انتباهك الآن.</span></div>';
-  return out;
-}
-
-/* ============================ رئيسية الليدر ============================ */
 function screenLeaderHome() {
-  const u = me(), org = ORGS.find(o => o.id === u.orgId) || ORGS[0], ts = myTasks();
+  const u = me(), ts = myTasks();
   const live = activeTasks(u.id), upcoming = live.slice(0, 3);
-  const rt = personRating(u.id);
   return bar('مُحسن ليدر') + '<div class="view">' + ground() +
     runningCard() +
+
+    /* المهامُّ تتصدَّر */
+    '<div class="lbl">المهام القادمة<small>' + AR(live.length) + ' مهمة قائمة</small></div>' +
+    (upcoming.length ? upcoming.map(t => taskRow(t)).join('') +
+      (live.length > upcoming.length
+        ? '<button class="btn l sm" data-a="pickbucket" data-v="all">' + icon('i-tasks','s16') +
+          'عرض بقية المهام (' + AR(live.length - upcoming.length) + ')</button>' : '')
+      : '<div class="c center" style="padding:24px"><b>لا توجد مهام قائمة</b>' +
+        '<button class="btn l sm" style="margin-top:12px" data-a="pickbucket" data-v="done">' +
+          icon('i-checkc','s16') + 'المهام المنجزة</button></div>') +
 
     '<div class="banner bgw-haram"><span class="bt">' +
       '<b>' + E(dayName(now())) + ' · ' + hijri(now()) + '</b><span>' +
@@ -19447,44 +19351,29 @@ function screenLeaderHome() {
       '<div class="kpi"><b>' + AR(u.pilgrims) + '</b><span>حاج</span></div>' +
       '<div class="kpi"><b>' + AR(teamOf(u.id).length) + '</b><span>محسن</span></div>' +
       '<div class="kpi"><b>' + AR(ts.length) + '</b><span>مهمة</span></div></div>' +
-
-    statusBoxes() +
-    '<div class="lbl">المهام القادمة<small>' + AR(live.length) + ' مهمة قائمة</small></div>' +
-    (upcoming.length ? upcoming.map(t => taskRow(t)).join('') +
-      (live.length > upcoming.length
-        ? '<button class="btn l sm" data-a="pickbucket" data-v="all">' + icon('i-tasks','s16') +
-          'عرض بقية المهام (' + AR(live.length - upcoming.length) + ')</button>' : '')
-      : '<div class="c center" style="padding:24px"><b>لا توجد مهام قائمة</b>' +
-        '<div class="sm dim" style="margin-top:6px">كل ما لديك مُغلق — راجع «المنجزة» في المهام.</div>' +
-        '<button class="btn l sm" style="margin-top:12px" data-a="pickbucket" data-v="done">' +
-          icon('i-checkc','s16') + 'المهام المنجزة</button></div>') +
     '</div>' + tabs();
 }
 
 /* ============================ رئيسية المحسن ============================ */
 function screenMuhsenHome() {
-  const u = me(), L = userById(u.leaderId), t = currentTask();
-  const teamLine = u.reserve ? 'فريق احتياطي — مشترك بين الليدرز'
-    : L ? 'فريق ' + L.name + ' · ' + L.kt : 'بلا فريق';
-  const rt = personRating(u.id);
+  const u = me(), t = currentTask();
+  const live = activeTasks(u.id).filter(x => !t || x.id !== t.id);
   return bar('المهمة الحالية') + '<div class="view">' + ground() +
     runningCard() +
-    statusBoxes() +
 
-    (!t || t.status === 'running' ? '' : '') +
+    /* المهمّةُ الجاريةُ ثمّ القادمةُ — ولا شيءَ بينهما */
     (!t ? '<div class="c center" style="padding:30px 16px">' +
-        '<div style="color:var(--dim2);margin-bottom:8px;display:flex;justify-content:center">' + icon('i-tasks','s26') + '</div>' +
-        '<b>لا توجد مهمة حالية</b><div class="sm dim" style="margin-top:4px">ستظهر مهمتك هنا فور قبولك طلب تسكين.</div></div>'
+        '<div style="color:var(--dim2);margin-bottom:8px;display:flex;justify-content:center">' +
+        icon('i-tasks','s26') + '</div>' +
+        '<b>لا توجد مهمة حالية</b></div>'
       : t.status === 'running' ? '' : muhsenTaskCard(t, u)) +
 
-    (function () {
-      const live = activeTasks(u.id).filter(x => !t || x.id !== t.id);
-      if (!live.length) return '';
-      return '<div class="lbl">مهامك القادمة<small>' + AR(live.length) + '</small></div>' +
+    (live.length
+      ? '<div class="lbl">المهام القادمة<small>' + AR(live.length) + '</small></div>' +
         live.slice(0, 3).map(x => taskRow(x)).join('') +
         (live.length > 3 ? '<button class="btn l sm" data-a="pickbucket" data-v="all">' +
-          icon('i-tasks','s16') + 'عرض الكل (' + AR(live.length) + ')</button>' : '');
-    })() +
+          icon('i-tasks','s16') + 'عرض الكل (' + AR(live.length) + ')</button>' : '')
+      : '') +
     '</div>' + tabs();
 }
 
@@ -19587,8 +19476,7 @@ function ticketsPane() {
   const segs = L ? [['open','المفتوحة'],['hajj','الحجاج'],['ctrl','الكنترول'],['muh','المحسنون'],['closed','المغلقة']]
                  : [['open','المفتوحة'],['mine','المسندة إليّ'],['closed','المغلقة']];
 
-  return '<div class="note b">' + icon('i-info','s16') +
-      '<span>التذاكر يرفعها <b>الحجاج</b> وحدهم — وتصل الليدر ليُسندها ويتابعها. وما ترفعه أنت يكون <b>بلاغًا</b>.</span></div>' +
+  return 
     '<div class="seg">' + segs.map(x =>
       '<button class="' + (f === x[0] ? 'on' : '') + '" data-a="seg" data-k="tk" data-v="' + x[0] + '">' +
       x[1] + '</button>').join('') + '</div>' +
@@ -19679,15 +19567,14 @@ function screenRating() {
       '<b>' + AR(String(rt.avg || 0).replace(/\.0$/, '')) + '</b>' +
       '<div class="bigstars">' + stars(rt.avg || 0, 'lg') + '</div>' +
       '<span class="tiny dim">من ' + AR(rt.n) + ' مهمة مقيَّمة</span></div>' +
-      '<div class="note b">' + icon('i-info','s16') +
-        '<span>التقييم متوسط عام لكل مهمة — يُحتسب من الالتزام بالأوقات وإنجاز المهام ورضا المستفيدين.</span></div>' +
+      
       '<div class="lbl">تقييم كل مهمة</div>' +
       (rated.length ? rated.map(t => ratingRow(t)).join('')
         : '<div class="c center dim sm" style="padding:24px">لا توجد مهام مقيَّمة بعد</div>');
   } else {
     const people = L ? teamOf(u.id) : S.users.filter(x => x.leaderId === u.leaderId && x.id !== u.id);
     const rows = people.map(p => ({ p, r: personRating(p.id) })).sort((a, b) => b.r.avg - a.r.avg);
-    body = '<div class="lbl">' + (L ? 'ترتيب فريقك' : 'زملاؤك في الفريق') + '<small>حسب المتوسط التراكمي</small></div>' +
+    body = '<div class="lbl">' + (L ? 'ترتيب الفريق' : 'أعضاء الفريق') + '<small>حسب المتوسط التراكمي</small></div>' +
       rows.map((x, i) => '<button class="c" data-a="go" data-n="profile" data-id="' + x.p.id + '" style="width:100%;text-align:right">' +
         '<div class="fl">' +
           '<span class="rank' + (i === 0 ? ' top' : '') + '">' + AR(i + 1) + '</span>' + avat(x.p) +
@@ -19865,7 +19752,7 @@ function screenMuhsens() {
         '<span>إن نقص العدد على مهمة، ارفع <b>طلب دعم من الكنترول</b> من داخل المهمة — ' +
         'وهو من يختار ويُسند.</span></div>'
       : u.reserve
-      ? '<div class="lbl">فريق امتثال<small>زملاؤك — مشترك بين الليدرز</small></div>' +
+      ? '<div class="lbl">فريق امتثال<small>مشترك بين الليدرز</small></div>' +
         reserveTeam().filter(m2 => m2.id !== u.id).map(m2 => {
           const n2 = S.tasks.filter(t => acceptedSlots(t).some(a2 => a2.muhsenId === m2.id)).length;
           return '<button class="prow" data-a="go" data-n="profile" data-id="' + m2.id + '">' +
@@ -19909,13 +19796,19 @@ function screenProfile() {
     (r.n ? '<div class="lbl">التقييم التراكمي<small>' + AR(r.n) + ' مهمة مقيَّمة</small></div>' +
       '<div class="score sm"><b>' + AR(String(r.avg).replace(/\.0$/, '')) + '</b>' +
         '<div class="bigstars">' + stars(r.avg, 'lg') + '</div>' +
-        '<span class="tiny dim">المتوسط العام لكل مهامه</span></div>' : '') +
+        '<span class="tiny dim">المتوسط العام لتقييم المهام</span></div>' : '') +
 
-    '<div class="lbl">الملاحظات المسجّلة<small>' + AR(notes.length) + ' ملاحظة</small></div>' +
-    (notes.length ? notes.slice(0, 15).map(n =>
-      '<div class="note a">' + icon('i-info','s16') + '<span>' + E(n.text) +
-      '<br><span class="tiny dim2">' + E(n.t.title) + ' · ' + hijri(n.at) + '</span></span></div>').join('')
-      : '<div class="note g">' + icon('i-checkc','s16') + '<span>لا توجد ملاحظات مسجّلة — سجلّ نظيف.</span></div>') +
+    /* الملاحظاتُ قائمةٌ تُطوى: كانت تُسكب كلُّها فتدفع ما بعدها إلى
+       أسفل الشاشة، وهي سجلٌّ يُقرأ عند الحاجة لا في كلّ زيارة. */
+    (notes.length
+      ? foldOf('pf:' + u.id, 'notes', 'الملاحظات المسجّلة',
+          AR(notes.length) + ' ملاحظة',
+          notes.slice(0, 15).map(n =>
+            '<div class="note a">' + icon('i-info','s16') + '<span>' + E(n.text) +
+            '<br><span class="tiny dim2">' + E(n.t.title) + ' · ' + hijri(n.at) +
+            '</span></span></div>').join(''), 'i-edit')
+      : '<div class="note g">' + icon('i-checkc','s16') +
+        '<span>لا ملاحظات مسجّلة — سجلٌّ نظيف.</span></div>') +
 
 
     (!isMe && isLeader() && !L ? '<div class="note b">' + icon('i-info','s16') +
@@ -19994,7 +19887,7 @@ function screenAdmin() {
   const doneN = S.tasks.filter(t => t.status === 'done').length;
   return bar('شاشة التحكم', { back: 1, right:'<span style="width:30px"></span>' }) + '<div class="view">' +
     '<div class="note b">' + icon('i-info','s16') +
-      '<span>هذه الشاشة للتجربة فقط وليست جزءًا من أدوار العمل. كل ما تغيّره ينعكس فورًا.</span></div>' +
+      '<span>أدواتُ تشغيلٍ داخليّةٌ لفريق النظام — خارجَ أدوار العمل. وكلُّ ما يتغيّر هنا ينعكس فورًا.</span></div>' +
 
     '<div class="admcard"><div class="lbl">الوقت</div>' +
       '<div class="row" style="margin:10px 0"><span class="sm">وقت التطبيق</span><b>' + t12(now()) + ' · ' + hijri(now()) + '</b></div>' +
@@ -20081,7 +19974,7 @@ function confirmSheet(title, body, action, danger) {
 }
 function placeSheet() {
   return '<div class="grip"></div><h3>تحديد موقعي</h3>' +
-    '<div class="tiny dim2" style="margin-bottom:12px">وضع التجربة — التحضير اليومي من المقر، وحضور المهمة من موقعها.</div>' +
+    '<div class="tiny dim2" style="margin-bottom:12px">التحضيرُ اليوميُّ من المقرّ، وحضورُ المهمّة من موقعها.</div>' +
     '<div class="col">' +
       '<button class="prow" data-a="setplace" data-v="hq"><span class="ico" style="width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:#EAF0FA;color:#1B5876">' + icon('i-home','s18') + '</span>' +
         '<span class="nm sp"><b>داخل المقر</b><span>مقر البعثة — للتحضير اليومي</span></span>' + (S.myPlace === 'hq' ? icon('i-checkc','s16') : '') + '</button>' +
@@ -21018,7 +20911,7 @@ function screenGuide() {
       '<div class="sub" style="cursor:default"><span class="gnum sm">' + AR(i + 1) + '</span>' +
       '<span class="t sp">' + E(n) + '</span></div>').join('') + '</div>' +
 
-    (mine.length ? '<div class="lbl">مهامك من هذا النوع</div>' +
+    (mine.length ? '<div class="lbl">المهام من هذا النوع</div>' +
       mine.slice(0, 4).map(t => '<button class="listitem" data-a="go" data-n="task" data-id="' + t.id + '">' +
         '<span class="ico">' + icon(ui.i,'s18') + '</span>' +
         '<span class="sp"><b style="font-size:13px;display:block">' + E(t.title) + '</b>' +
@@ -21282,6 +21175,16 @@ function checkInReason() {
 /* الانصراف: لا يُفتح قبل الحضور، ولا يتكرّر. وبينهما المدّةُ تُقرأ،
    فتُعرَف ساعاتُ اليوم لا حضورُه وحده. */
 const checkedOutToday = id => { const r = dayRec(id, now()); return !!(r && r.outAt); };
+/* هل انقضى الشِفت؟ الليليُّ يعبر منتصفَ الليل فيُحسَب على طرفين.
+   وعليه يتبدّل نصُّ الزرّ: خروجٌ مبكرٌ ما دام الشِفتُ ساريًا،
+   وانصرافٌ متى حلّ وقتُه. */
+function shiftEnded(id) {
+  const s = SHIFTS[shiftOf(id)];
+  const h = new Date(now()).getHours();
+  return s.to > s.from ? h >= s.to : (h >= s.to && h < s.from);
+}
+const outLabel = id => shiftEnded(id) ? 'تسجيل الانصراف' : 'تسجيل خروج مبكر';
+
 function canCheckOut(id) { const r = dayRec(id, now()); return !!r && !r.outAt; }
 function checkOut(id) {
   if (!canCheckOut(id)) return false;
@@ -21360,7 +21263,7 @@ function swapAct(s, act, note_) {
     S.shifts[s.from] = s.toShift;
     s.log.push({ at: now(), by: by.id, text: 'اعتمد ' + by.name + ' التبديل — صار الشِفت ' + SHIFTS[s.toShift].l });
     notify(s.from, 'i-checkc', 'اعتُمد تبديل الشِفت',
-      'شِفتك الجديد: ' + SHIFTS[s.toShift].l + ' · ' + shiftWindow(s.toShift), { n: 'daily' });
+      'الشِفت الجديد: ' + SHIFTS[s.toShift].l + ' · ' + shiftWindow(s.toShift), { n: 'daily' });
   } else if (act === 'reject') {
     s.state = 'rejected'; s.at2 = now(); s.note = note_;
     s.log.push({ at: now(), by: by.id, text: 'رفض ' + by.name + ' الطلب — ' + note_ });
@@ -21373,7 +21276,8 @@ function swapAct(s, act, note_) {
       'رفع الليدر طلب تبديل الشِفت إلى غرفة العمليات.', { n: 'daily' });
   }
 }
-const shiftWindow = k => AR(SHIFTS[k].from) + ':٠٠ — ' + AR(SHIFTS[k].to) + ':٠٠';
+const hh = h => AR(h) + ':' + AR('00');
+const shiftWindow = k => hh(SHIFTS[k].from) + ' — ' + hh(SHIFTS[k].to);
 
 /* ---------- الشاشة ---------- */
 function screenDaily() {
@@ -21431,15 +21335,18 @@ function screenDaily() {
             (canCheckIn(u.id) ? 'داخل المقر — ' + t12(now()) : E(checkInReason())) +
             '</span></span></button>'
         : !me_.outAt
-        ? '<button class="cta out" data-a="checkout">' + icon('i-out','s26') +
-            '<span class="t"><b>تسجيل الانصراف</b><span>' + t12(now()) +
-            ' · مضى ' + workedTxt(me_) + '</span></span></button>'
+        ? '<button class="cta out' + (shiftEnded(u.id) ? '' : ' early') + '" data-a="checkout">' +
+            icon('i-out','s26') +
+            '<span class="t"><b>' + outLabel(u.id) + '</b><span>' + t12(now()) +
+            ' · مضى ' + workedTxt(me_) +
+            (shiftEnded(u.id) ? '' : ' · ينتهي الشِفت ' + hh(SHIFTS[shiftOf(u.id)].to)) +
+            '</span></span></button>'
         : '<div class="cta off done">' + icon('i-checkc','s26') +
             '<span class="t"><b>اكتمل دوام اليوم</b><span>مدّة الدوام ' + workedTxt(me_) +
             ' · ' + dayName(now()) + ' ' + hijri(now()) + '</span></span></div>') +
 
       (!inHQ() ? '<button class="note a" data-a="place" style="width:100%">' + icon('i-pin','s16') +
-        '<span class="sp" style="text-align:right">موقعك الآن: ' +
+        '<span class="sp" style="text-align:right">الموقع الآن: ' +
         (S.myPlace === 'site' ? 'موقع مهمة' : 'خارج النطاق') +
         ' — التحضير اليومي لا يُقبل إلا من داخل المقر. اضغط للتبديل.</span></button>' : '') +
 
@@ -21517,7 +21424,7 @@ function swapSheet() {
   const cur = shiftOf(S.session.id);
   const pick = S.swapTo && S.swapTo !== cur ? S.swapTo : Object.keys(SHIFTS).find(k => k !== cur);
   return '<div class="grip"></div><h3>طلب تبديل الشِفت</h3>' +
-    '<div class="tiny dim2" style="margin-bottom:10px">شِفتك الحالي: ' + SHIFTS[cur].l + ' · ' + shiftWindow(cur) + '</div>' +
+    '<div class="tiny dim2" style="margin-bottom:10px">الشِفت الحالي: ' + SHIFTS[cur].l + ' · ' + shiftWindow(cur) + '</div>' +
     '<div class="lbl plain">الشِفت المطلوب</div>' +
     '<div class="col" style="gap:7px;margin:8px 0">' + Object.keys(SHIFTS).filter(k => k !== cur).map(k =>
       '<button class="listitem' + (k === pick ? ' on' : '') + '" data-a="swapto" data-v="' + k + '">' +
@@ -21595,7 +21502,7 @@ const AUDIENCE = {
   all:      { l:'الجميع',     d:'كل الليدرز والمحسنين' },
   leaders:  { l:'الليدرز',    d:'قادة الفرق فقط' },
   muhsens:  { l:'المحسنون',   d:'كل المحسنين' },
-  myteam:   { l:'فريقي',      d:'محسنو فريقك أنت' }
+  myteam:   { l:'فريقي',      d:'محسنو الفريق' }
 };
 function audienceUsers(k) {
   const u = me();
@@ -21710,7 +21617,7 @@ function pushBox() {
       ? '<div class="grid2">' +
           '<button class="btn ' + (on ? 'd' : 'p') + ' sm" data-a="pushtoggle">' +
             icon('i-bell','s16') + (on ? 'إيقافها' : 'تشغيلها') + '</button>' +
-          '<button class="btn l sm" data-a="pushtest">' + icon('i-send','s16') + 'إشعار تجريبي</button></div>' +
+          '<button class="btn l sm" data-a="pushtest">' + icon('i-send','s16') + 'إشعار اختبار</button></div>' +
           '<button class="btn l sm" style="margin-top:8px" data-a="pushbacklog">' + icon('i-bell','s16') +
             'إرسال ما ينتظر إجراءً الآن (' + AR(S.notifs.filter(function (n) {
               return n.to === S.session.id && stillRelevant(n); }).length) + ')</button>'
@@ -21749,7 +21656,7 @@ function pushAskSheet() {
   return '<div class="grip"></div>' +
     '<div class="center" style="padding:4px 0 2px">' +
       '<span class="askic">' + icon('i-bell','s26') + '</span>' +
-      '<h3 style="margin:12px 0 4px">نُنبّهك بمهامك في وقتها</h3>' +
+      '<h3 style="margin:12px 0 4px">تنبيهٌ بالمهامّ في وقتها</h3>' +
       '<div class="sm dim" style="line-height:1.9">فعّل تنبيهات الجوال ليصلك خارج التطبيق:<br>' +
       'اقتراب موعد مهمة · طلب تسكين ينتظر ردّك · تذكرة عاجلة · تذكير التحضير.</div></div>' +
     '<div class="note a" style="margin:14px 0">' + icon('i-info','s16') +
@@ -22444,18 +22351,11 @@ function screenSettings() {
         '</button>').join('') + '</div>' +
     '</div>' +
 
-    /* ---------- الحساب ---------- */
+    /* ---------- الحساب ----------
+       سقط منه صفُّ البطاقة (الأفاتار في الترويسة يفتح الملفّ)،
+       وصفُّ الموقع، وبابُ شاشة التحكّم. ويبقى الخروج. */
     '<div class="c">' +
       '<div class="h"><b>الحساب</b></div>' +
-      '<button class="prow" data-a="go" data-n="profile">' + avat(u) +
-        '<span class="nm sp"><b>' + E(u.name) + '</b><span>' + E(u.code) + '</span></span>' +
-        icon('i-back', 's16') + '</button>' +
-      '<button class="prow" data-a="place">' + icon('i-pin', 's20') +
-        '<span class="nm sp"><b>موقعي</b><span>' +
-        (S.myPlace === 'hq' ? 'داخل المقر' : 'في الموقع') + '</span></span>' +
-        icon('i-back', 's16') + '</button>' +
-      '<button class="prow" data-a="go" data-n="admin">' + icon('i-gear', 's20') +
-        '<span class="nm sp"><b>شاشة التحكم</b></span>' + icon('i-back', 's16') + '</button>' +
       '<button class="prow danger" data-a="logout">' + icon('i-out', 's20') +
         '<span class="nm sp"><b>تسجيل الخروج</b></span></button>' +
     '</div>' +
@@ -22655,7 +22555,7 @@ function reportSheet(taskId) {
   const cat = S.rCat || RCATS[1];
   return '<div class="grip"></div><h3>رفع بلاغ</h3>' +
     '<div class="tiny dim2" style="margin-bottom:12px">' +
-      (L || !me().leaderId ? 'يُرفع إلى غرفة العمليات — الكنترول' : 'يُرفع إلى ليدر فريقك') + '</div>' +
+      (L || !me().leaderId ? 'يُرفع إلى غرفة العمليات — الكنترول' : 'يُرفع إلى ليدر الفريق') + '</div>' +
     '<div class="lbl plain">التصنيف</div>' +
     '<div class="col" style="gap:6px;margin:8px 0">' + RCATS.slice(0, 4).map(c =>
       '<button class="listitem' + (c === cat ? ' on' : '') + '" data-a="rcat" data-v="' + c + '">' +
@@ -22716,10 +22616,7 @@ function screenDesk() {
       '<button class="' + (seg === 'rp' ? 'on' : '') + '" data-a="seg" data-k="desk" data-v="rp">' +
         icon('i-flag','s16') + 'البلاغات' + (openReports() ? '<i>' + AR(openReports()) + '</i>' : '') + '</button>' +
     '</div>' +
-    '<div class="note b">' + icon('i-info','s16') + '<span>' +
-      (seg === 'tk'
-        ? 'التذاكر ترد إليك من الحجاج والكنترول والمحسنين — تُسند وتُتابع وتُغلق.'
-        : 'البلاغات ترفعها أنت: المحسن إلى ليدره، والليدر إلى الكنترول.') + '</span></div>' +
+
     (seg === 'tk' ? ticketsPane() : reportsPane()) +
     '</div>' + tabs();
 }
@@ -23262,7 +23159,7 @@ function excludeSheet(t, muhsenId) {
 
     (kind === 'swap'
       ? (cands.length
-        ? '<div class="lbl plain">البديل من فريقك</div>' +
+        ? '<div class="lbl plain">البديل من الفريق</div>' +
           '<div class="col" style="gap:6px;max-height:34vh;overflow:auto;margin:8px 0">' + cands.map(c =>
             '<button class="listitem' + (c.id === pick ? ' on' : '') + '" data-a="exto" data-v="' + c.id + '">' +
               avat(c, 'sm') + '<span class="sp"><b style="font-size:13px;display:block">' + E(c.name) + '</b>' +
@@ -23271,7 +23168,7 @@ function excludeSheet(t, muhsenId) {
           '<div class="note a">' + icon('i-info','s16') +
             '<span>يبقى ' + E(m.name.split(' ')[0]) + ' على المهمة حتى يقبل البديل. وإن اعتذر، يبقى ولا يُستبعد.</span></div>'
         : '<div class="note r">' + icon('i-warn','s16') +
-          '<span>لا يوجد بديل متاح من فريقك — اطلب دعمًا من الكنترول.</span></div>')
+          '<span>لا بديل متاح في الفريق — يُطلب دعمٌ من الكنترول.</span></div>')
       : '<div class="note r">' + icon('i-warn','s16') +
         '<span><b>إقرار مسؤولية</b><br>باستبعاده لعدم الحاجة تتحمّل مسؤولية ما ينتج عن نقص العدد في هذه المهمة.</span></div>') +
 
@@ -23352,7 +23249,8 @@ function render() {
   const el = document.getElementById('screen');
   el.className = n === 'admin' ? 'adm' : '';
   let html = fn();
-  html = html.replace('<div class="view">', '<div class="view">' + alertsHTML());
+  /* شريطُ التنبيهات أعلى كلّ شاشةٍ سقط: كان يزاحم المحتوى في
+     كلّ وجهة، والإشعاراتُ لها زرُّها في الترويسة وشاشتُها. */
 
   let pushHTML = '';
   const fresh = S.session ? S.notifs.filter(x => x.to === S.session.id && !x.read) : [];
@@ -23493,7 +23391,7 @@ document.addEventListener('click', ev => {
       /* الاختيارُ يملأ الحقلَ بالاسم وكلمةَ المرور معه، فتبقى خطوةٌ
          واحدةٌ: الضغطُ على «تسجيل الدخول». */
       const su = userById(id); if (!su) break;
-      S.loginId = su.id; S.loginU = su.name; S.loginP = DEMO_PW;
+      S.loginId = su.id; S.loginU = su.name; S.loginP = AUTH_PW;
       S.loginOpen = false; S.loginErr = null; break; }
     case 'loginshow':   S.loginShow = !S.loginShow; break;
     case 'loginforgot': toast('راجع مشرفك لإعادة تعيين كلمة المرور', 'r'); break;
@@ -23510,9 +23408,9 @@ document.addEventListener('click', ev => {
     case 'rdend':   rideEnd(id); return;
     case 'place': S.sheetBare = false; S.sheet = placeSheet(); break;
     case 'setplace': S.myPlace = v; S.sheet = null; S.sheetBare = false;
-      toast(v === 'site' ? 'موقعك داخل موقع المهمة'
-        : v === 'hq' ? 'موقعك داخل المقر — التحضير اليومي متاح'
-        : 'موقعك خارج النطاق — لا يُقبل تحضير', v === 'away' ? 'r' : 'g'); break;
+      toast(v === 'site' ? 'الموقع: داخل موقع المهمة'
+        : v === 'hq' ? 'الموقع: داخل المقر — التحضير اليومي متاح'
+        : 'الموقع: خارج النطاق — لا يُقبل تحضير', v === 'away' ? 'r' : 'g'); break;
     case 'attend': { const t = T(); if (!t) break;
       if (['done','cancelled'].indexOf(t.status) >= 0) { toast('المهمة أُغلقت', 'r'); break; }
       if (!actsAsLeader(t, S.session.id) && !slotOf(t, S.session.id))
@@ -23528,7 +23426,7 @@ document.addEventListener('click', ev => {
       const mu = userById(uid_);
       if (!mu || mu.role !== 'muhsen') { toast('لا يُسكَّن إلا محسن', 'r'); break; }
       if (mu.reserve) { toast('الاحتياط يُسنده الكنترول — ارفع طلب دعم', 'r'); break; }
-      if (mu.leaderId !== t.leaderId) { toast('هذا المحسن ليس من فريقك', 'r'); break; }
+      if (mu.leaderId !== t.leaderId) { toast('هذا المحسن من فريق آخر', 'r'); break; }
       if (busyIn(uid_, t)) { toast('المحسن مرتبط بمهمة متداخلة', 'r'); break; }
       if (sendRequest(t, uid_)) { S.sheet = null; S.sheetBare = false; toast('أُرسل الطلب إلى ' + userById(uid_).name); }
       else toast('تعذّر الإرسال — الطلب قائم بالفعل', 'r');
@@ -23797,7 +23695,7 @@ document.addEventListener('click', ev => {
       if (!s || s.state !== 'pending') break;
       controlAnswerSupport(s, v === '1',
         v === '1' ? 'توفّر محسنون في الاحتياط ضمن نطاق المهمة ولا تعارض في أوقاتهم.'
-                  : 'لا يتوفّر محسن غير مرتبط في هذا التوقيت — أعد التوزيع من فريقك.');
+                  : 'لا يتوفّر محسن غير مرتبط في هذا التوقيت — أعد التوزيع من الفريق.');
       toast(v === '1' ? 'لُبّي طلب الدعم' : 'اعتذر الكنترول', v === '1' ? 'g' : 'r'); break; }
 
     /* ===== الانسحاب من مهمة ===== */
@@ -23922,7 +23820,8 @@ document.addEventListener('click', ev => {
         toast(attendedToday(S.session.id) ? 'تم تسجيل الانصراف اليوم بالفعل' : 'سجّل الحضور أوّلًا', 'r'); break; }
       const rec = dayRec(S.session.id, now());
       checkOut(S.session.id); buzz();
-      toast('تم تسجيل الانصراف ' + t12(now()) + ' · مدّة الدوام ' + workedTxt(rec), 'g'); break; }
+      toast((shiftEnded(S.session.id) ? 'تم تسجيل الانصراف ' : 'تم تسجيل الخروج المبكر ') +
+        t12(now()) + ' · مدّة الدوام ' + workedTxt(rec), 'g'); break; }
     case 'swapreq': S.swapTo = null; S.sheetBare = false; S.sheet = swapSheet(); break;
     case 'swapto': S.swapTo = v; S.sheetBare = false; S.sheet = swapSheet(); break;
     case 'dosendswap': {
@@ -23963,8 +23862,8 @@ document.addEventListener('click', ev => {
       toast(n4 ? 'أُرسل ' + AR(n4) + ' إشعارًا' : 'لا يوجد ما ينتظر إجراءً'); break; }
     case 'pushtest': {
       if (!pushOn()) { toast('فعّل الإذن أولًا', 'r'); break; }
-      firePush('تطبيق مُحسن', 'هذا إشعار تجريبي — وصلك بنجاح.', 'test');
-      toast('أُرسل إشعار تجريبي'); break; }
+      firePush('تطبيق مُحسن', 'وصلك هذا الإشعار بنجاح.', 'test');
+      toast('أُرسل إشعار'); break; }
     case 'bcaud': S.bcAud = v; break;
     case 'dobroadcast': {
       const ti = val('bct'), bo = val('bcb');

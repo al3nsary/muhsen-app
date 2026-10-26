@@ -80,14 +80,8 @@ function screenTask() {
       (can ? 'وتبدأ تلقائيًّا ' + t12(t.start) + ' على كل حال' : E(why)) + '</span></span></button>';
   }
 
-  /* قسم قابل للطيّ */
-  const fold = (key, title, sub2, body, ic) =>
-    '<div class="fold' + (open(key) ? ' on' : '') + '">' +
-      '<button class="fhead" data-a="fold" data-id="' + t.id + '" data-v="' + key + '">' +
-        icon(ic || 'i-list','s18') +
-        '<span class="sp"><b>' + title + '</b>' + (sub2 ? '<span>' + sub2 + '</span>' : '') + '</span>' +
-        icon('i-down','s16') + '</button>' +
-      (open(key) ? '<div class="fbody">' + body + '</div>' : '') + '</div>';
+  /* القسمُ القابلُ للطيّ صار عامًّا في ذيل الملفّ — كان محلّيًّا هنا
+     فلا يراه taskLog. ومثلُه أسقط الدخولَ حين كان buzz محلّيًّا. */
 
   return bar('تفاصيل المهمة', { back: 1,
     right: lead ? '<button data-a="go" data-n="timeline" data-id="' + t.id + '" aria-label="سجل الإجراءات">' + icon('i-hist') + '</button>'
@@ -95,18 +89,12 @@ function screenTask() {
     '<div class="view">' + ground() +
     svcCard(t) + metaCard(t) +
 
-    (t.autoStarted && lead ? '<div class="note r">' + icon('i-warn','s16') +
-      '<span><b>بدأها النظام تلقائيًّا</b><br>حان وقتها ولم تبدأها — ويُحتسب ذلك في تقييمك.</span></div>' : '') +
-    (watch ? '<div class="note b">' + icon('i-shield','s16') +
-      '<span><b>الليدر على هذه المهمة: ' + E(userById(t.delegate.muhsenId).name) + '</b><br>' +
-      'أسندتَ صفتك إليه — تتابع التقدّم ولا تتخذ قرارات.</span></div>' : '') +
-    (deleg ? '<div class="note b">' + icon('i-shield','s16') +
-      '<span>تعمل بصلاحية ليدر لهذه المهمة فقط. التسكين والإسناد غير متاحين لك.</span></div>' : '') +
+    /* تعليقاتُ حالة المهمّة نزلت إلى سجلّ الإجراءات في الأسفل:
+       كانت تتوسّط التفاصيل فتزاحم ما يُفعَل بما وقع. */
 
     (!closed ? attendCard(t, u, lead) : '') +
     startCta +
 
-    guideChip(t, 1) +
 
     '<div class="lbl">المهام الفرعية<small>' + AR(doneSubs) + ' من ' + AR(t.subs.length) + '</small></div>' +
     (!act && !closed ? '<div class="note ' + (canShootSub(t) ? 'b' : 'a') + '">' + icon('i-info','s16') +
@@ -115,11 +103,14 @@ function screenTask() {
         : 'الليدر هو من يؤشّر على الإنجاز. ' + E(shootSubWhy(t)) + '.') + '</span></div>' : '') +
     '<div class="c">' + t.subs.map((s, i2) => subRow(t, s, i2, running)).join('') + '</div>' +
 
+    /* دليلُ التنفيذ تحت الخطوات: يُقرأ بعد أن يُعرَف ما يُنفَّذ */
+    guideChip(t, 1) +
+
     (t.rating ? '<button class="c gold" data-a="go" data-n="taskrating" data-id="' + t.id + '" style="width:100%;text-align:right">' +
       '<div class="row"><b class="sm">تقييم المهمة</b>' + pill('التفاصيل', 'gold') + '</div>' +
       '<div class="fl" style="margin-top:10px;justify-content:center">' + stars(avgRating(t.rating), 'lg') + '</div></button>' : '') +
 
-    (lead ? fold('team', 'المحسنون على المهمة',
+    (lead ? foldOf(t.id, 'team', 'المحسنون على المهمة',
         AR(acc.length) + ' فعليًّا · ' + AR(att) + ' أثبتوا حضورهم',
         (slotPeople(t).length ? slotPeople(t).map(pid => slotCard(t, primaryRow(t, pid), act && !deleg)).join('')
           : '<div class="c center dim sm" style="padding:20px">لا يوجد أحد على المهمة</div>'),
@@ -148,7 +139,7 @@ function screenTask() {
         taskSupport(t.id).map(s2 => supportCard(s2)).join('') : '') +
 
     (lead && hasDocs(t)
-      ? fold('docs', 'مستندات المهمة', 'عقد النقل وعقد السكن', docButtons(t), 'i-file') : '') +
+      ? foldOf(t.id, 'docs', 'مستندات المهمة', 'عقد النقل وعقد السكن', docButtons(t), 'i-file') : '') +
 
     (!lead && !closed && slotOf(t, u.id) && slotOf(t, u.id).req === 'accepted'
       ? (function () {
@@ -171,7 +162,7 @@ function screenTask() {
     taskPhotoSection(t, lead) +
 
     (!lead && bucket !== 'undone' && acc.length > 1
-      ? fold('mates', 'معك على المهمة', AR(acc.length - 1) + ' زميلًا',
+      ? foldOf(t.id, 'mates', 'معك على المهمة', AR(acc.length - 1) + ' زميلًا',
         acc.filter(a2 => a2.muhsenId !== u.id).map(a2 => {
           const mm = userById(a2.muhsenId); if (!mm) return '';
           const ph = String(mm.phone || '').replace(/[^0-9]/g, '');
@@ -187,11 +178,9 @@ function screenTask() {
 
     (lead && !deleg && !closed ? delegCard(t, isCo, !locked && act) : '') +
 
-    (t.notes.length && lead ? fold('notes', 'ملاحظات المهمة', AR(t.notes.length) + ' ملاحظة',
-      t.notes.map(n => '<div class="note ' + (n.kind === 'auto' ? 'a' : 'b') + '">' +
-        icon(n.kind === 'auto' ? 'i-info' : 'i-edit','s16') +
-        '<span>' + E(n.text) + '<br><span class="tiny dim2">' + t12(n.at) + '</span></span></div>').join(''),
-      'i-edit') : '') +
+    /* سجلُّ إجراءات المهمّة — ما وقع عليها لا ما يُفعَل بها.
+       يجمع تعليقاتِ الحالة والملاحظاتِ في مكانٍ واحدٍ أسفلَ الشاشة. */
+    taskLog(t, lead, watch, deleg) +
 
     (!closed ? '<div class="grid2">' +
       '<button class="btn l sm" data-a="note" data-id="' + t.id + '">' + icon('i-edit','s16') + 'ملاحظة</button>' +
@@ -214,7 +203,7 @@ function attendCard(t, u, lead) {
   const involved = lead || (a && a.req === 'accepted');
   if (!involved) return '';
   if (mine) return '<div class="note g">' + icon('i-checkc','s16') +
-    '<span>حضورك مُثبَت ' + t12(mine) + '</span></div>';
+    '<span>الحضور مُثبَت ' + t12(mine) + '</span></div>';
   if (now() < prepOpen(t)) return '<div class="note a">' + icon('i-clock','s16') +
     '<span>يُفتح التحضير قبل المهمة بساعتين — ' + untilTxt(prepOpen(t)) + '</span></div>';
   /* أُغلقت النافذة: الزر باهت ومعطّل، والسبب مكتوب */
@@ -232,12 +221,12 @@ function attendCard(t, u, lead) {
       '</b><i>:</i><b' + (late ? ' style="color:var(--red)"' : '') + '>' + AR(r.s) + '</b></div>' +
     '<div class="tunits"><span>ساعة</span><span>دقيقة</span><span>ثانية</span></div>' +
     '<div class="tiny ' + (late ? '' : 'dim') + '" style="margin-top:9px' + (late ? ';color:var(--red);font-weight:700' : '') + '">' +
-      (late ? 'يُسجَّل تأخرك في ملاحظات المهمة ويؤثر في تقييمك' : 'تبدأ المهمة ' + t12(t.start)) + '</div></div>' +
+      (late ? 'يُسجَّل تأخرك في ملاحظات المهمة ويؤثر في التقييم' : 'تبدأ المهمة ' + t12(t.start)) + '</div></div>' +
     mapBox(t, true) +
     '<div class="grid2" style="margin-top:11px">' +
       '<button class="btn g sm" data-a="place">' + icon('i-pin','s16') + 'تغيير موقعي</button>' +
       '<button class="btn p sm" data-a="attend" data-id="' + t.id + '">' + icon('i-target','s16') + 'إثبات الحضور</button></div>' +
-    '<div class="tiny dim2 center" style="margin-top:7px">وضع التجربة: الحضور متاح من أي موقع — والبُعد يُسجَّل ملاحظةً</div></div>';
+    '</div>';
 }
 
 
@@ -326,4 +315,53 @@ function screenTimeline() {
       '<span class="tiny dim2">' + t12(e.at) + ' · ' + hijri(e.at) + '</span></span></div></div>').join('')
       : '<div class="c center dim sm">لا توجد إجراءات بعد</div>') +
     '</div>' + tabs();
+}
+
+/* ============================================================
+   سجلُّ إجراءات المهمّة
+
+   كانت تعليقاتُ الحالة («بدأها النظام تلقائيًّا» · «الليدر على
+   هذه المهمة» · «تعمل بصلاحية ليدر») تتوسّط التفاصيل، فتزاحم
+   ما يُفعَل بما وقع. ونزلت إلى هنا مع ملاحظات المهمّة: سجلٌّ
+   واحدٌ مطويٌّ أسفلَ الشاشة يُقرأ عند الحاجة لا في كلّ مرّة.
+   ============================================================ */
+function taskLog(t, lead, watch, deleg) {
+  const rows = [];
+  const row = (ic, cls, title, body, at) =>
+    '<div class="note ' + cls + '">' + icon(ic, 's16') +
+      '<span>' + (title ? '<b>' + E(title) + '</b><br>' : '') + E(body) +
+      (at ? '<br><span class="tiny dim2">' + t12(at) + '</span>' : '') +
+    '</span></div>';
+
+  if (t.autoStarted && lead)
+    rows.push(row('i-warn', 'r', 'بدأها النظام تلقائيًّا',
+      'حان وقتها ولم تبدأها — ويُحتسب ذلك في التقييم.', t.start));
+  if (watch)
+    rows.push(row('i-shield', 'b',
+      'الليدر على هذه المهمة: ' + userById(t.delegate.muhsenId).name,
+      'أُسندت الصفةُ إليه — المتابعةُ قائمةٌ والقرارُ ليس لك.'));
+  if (deleg)
+    rows.push(row('i-shield', 'b', '',
+      'صلاحيةُ ليدر لهذه المهمّة وحدها — التسكينُ والإسنادُ غيرُ متاحين.'));
+
+  (t.notes || []).slice().sort((a, b) => b.at - a.at).forEach(n =>
+    rows.push(row(n.kind === 'auto' ? 'i-info' : 'i-edit',
+      n.kind === 'auto' ? 'a' : 'b', '', n.text, n.at)));
+
+  if (!rows.length) return '';
+  return foldOf(t.id, 'tlog', 'سجل إجراءات المهمة',
+    AR(rows.length) + ' إجراء', rows.join(''), 'i-hist');
+}
+
+/* قسمٌ قابلٌ للطيّ — عامٌّ ليراه كلُّ من يبنيه، ومفتاحُ حالته
+   يجمع بين المهمّة والقسم فلا تتداخل مهمّتان. */
+const foldOpen = (tid, key) => !!(S.open && S.open[tid + ':' + key]);
+function foldOf(tid, key, title, sub2, body, ic) {
+  const on = foldOpen(tid, key);
+  return '<div class="fold' + (on ? ' on' : '') + '">' +
+    '<button class="fhead" data-a="fold" data-id="' + tid + '" data-v="' + key + '">' +
+      icon(ic || 'i-list', 's18') +
+      '<span class="sp"><b>' + title + '</b>' + (sub2 ? '<span>' + sub2 + '</span>' : '') + '</span>' +
+      icon('i-down', 's16') + '</button>' +
+    (on ? '<div class="fbody">' + body + '</div>' : '') + '</div>';
 }

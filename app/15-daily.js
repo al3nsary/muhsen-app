@@ -35,6 +35,16 @@ function checkInReason() {
 /* الانصراف: لا يُفتح قبل الحضور، ولا يتكرّر. وبينهما المدّةُ تُقرأ،
    فتُعرَف ساعاتُ اليوم لا حضورُه وحده. */
 const checkedOutToday = id => { const r = dayRec(id, now()); return !!(r && r.outAt); };
+/* هل انقضى الشِفت؟ الليليُّ يعبر منتصفَ الليل فيُحسَب على طرفين.
+   وعليه يتبدّل نصُّ الزرّ: خروجٌ مبكرٌ ما دام الشِفتُ ساريًا،
+   وانصرافٌ متى حلّ وقتُه. */
+function shiftEnded(id) {
+  const s = SHIFTS[shiftOf(id)];
+  const h = new Date(now()).getHours();
+  return s.to > s.from ? h >= s.to : (h >= s.to && h < s.from);
+}
+const outLabel = id => shiftEnded(id) ? 'تسجيل الانصراف' : 'تسجيل خروج مبكر';
+
 function canCheckOut(id) { const r = dayRec(id, now()); return !!r && !r.outAt; }
 function checkOut(id) {
   if (!canCheckOut(id)) return false;
@@ -113,7 +123,7 @@ function swapAct(s, act, note_) {
     S.shifts[s.from] = s.toShift;
     s.log.push({ at: now(), by: by.id, text: 'اعتمد ' + by.name + ' التبديل — صار الشِفت ' + SHIFTS[s.toShift].l });
     notify(s.from, 'i-checkc', 'اعتُمد تبديل الشِفت',
-      'شِفتك الجديد: ' + SHIFTS[s.toShift].l + ' · ' + shiftWindow(s.toShift), { n: 'daily' });
+      'الشِفت الجديد: ' + SHIFTS[s.toShift].l + ' · ' + shiftWindow(s.toShift), { n: 'daily' });
   } else if (act === 'reject') {
     s.state = 'rejected'; s.at2 = now(); s.note = note_;
     s.log.push({ at: now(), by: by.id, text: 'رفض ' + by.name + ' الطلب — ' + note_ });
@@ -126,7 +136,8 @@ function swapAct(s, act, note_) {
       'رفع الليدر طلب تبديل الشِفت إلى غرفة العمليات.', { n: 'daily' });
   }
 }
-const shiftWindow = k => AR(SHIFTS[k].from) + ':٠٠ — ' + AR(SHIFTS[k].to) + ':٠٠';
+const hh = h => AR(h) + ':' + AR('00');
+const shiftWindow = k => hh(SHIFTS[k].from) + ' — ' + hh(SHIFTS[k].to);
 
 /* ---------- الشاشة ---------- */
 function screenDaily() {
@@ -184,15 +195,18 @@ function screenDaily() {
             (canCheckIn(u.id) ? 'داخل المقر — ' + t12(now()) : E(checkInReason())) +
             '</span></span></button>'
         : !me_.outAt
-        ? '<button class="cta out" data-a="checkout">' + icon('i-out','s26') +
-            '<span class="t"><b>تسجيل الانصراف</b><span>' + t12(now()) +
-            ' · مضى ' + workedTxt(me_) + '</span></span></button>'
+        ? '<button class="cta out' + (shiftEnded(u.id) ? '' : ' early') + '" data-a="checkout">' +
+            icon('i-out','s26') +
+            '<span class="t"><b>' + outLabel(u.id) + '</b><span>' + t12(now()) +
+            ' · مضى ' + workedTxt(me_) +
+            (shiftEnded(u.id) ? '' : ' · ينتهي الشِفت ' + hh(SHIFTS[shiftOf(u.id)].to)) +
+            '</span></span></button>'
         : '<div class="cta off done">' + icon('i-checkc','s26') +
             '<span class="t"><b>اكتمل دوام اليوم</b><span>مدّة الدوام ' + workedTxt(me_) +
             ' · ' + dayName(now()) + ' ' + hijri(now()) + '</span></span></div>') +
 
       (!inHQ() ? '<button class="note a" data-a="place" style="width:100%">' + icon('i-pin','s16') +
-        '<span class="sp" style="text-align:right">موقعك الآن: ' +
+        '<span class="sp" style="text-align:right">الموقع الآن: ' +
         (S.myPlace === 'site' ? 'موقع مهمة' : 'خارج النطاق') +
         ' — التحضير اليومي لا يُقبل إلا من داخل المقر. اضغط للتبديل.</span></button>' : '') +
 
@@ -270,7 +284,7 @@ function swapSheet() {
   const cur = shiftOf(S.session.id);
   const pick = S.swapTo && S.swapTo !== cur ? S.swapTo : Object.keys(SHIFTS).find(k => k !== cur);
   return '<div class="grip"></div><h3>طلب تبديل الشِفت</h3>' +
-    '<div class="tiny dim2" style="margin-bottom:10px">شِفتك الحالي: ' + SHIFTS[cur].l + ' · ' + shiftWindow(cur) + '</div>' +
+    '<div class="tiny dim2" style="margin-bottom:10px">الشِفت الحالي: ' + SHIFTS[cur].l + ' · ' + shiftWindow(cur) + '</div>' +
     '<div class="lbl plain">الشِفت المطلوب</div>' +
     '<div class="col" style="gap:7px;margin:8px 0">' + Object.keys(SHIFTS).filter(k => k !== cur).map(k =>
       '<button class="listitem' + (k === pick ? ' on' : '') + '" data-a="swapto" data-v="' + k + '">' +

@@ -510,7 +510,7 @@ function excludeSheet(t, muhsenId) {
 
     (kind === 'swap'
       ? (cands.length
-        ? '<div class="lbl plain">البديل من فريقك</div>' +
+        ? '<div class="lbl plain">البديل من الفريق</div>' +
           '<div class="col" style="gap:6px;max-height:34vh;overflow:auto;margin:8px 0">' + cands.map(c =>
             '<button class="listitem' + (c.id === pick ? ' on' : '') + '" data-a="exto" data-v="' + c.id + '">' +
               avat(c, 'sm') + '<span class="sp"><b style="font-size:13px;display:block">' + E(c.name) + '</b>' +
@@ -519,7 +519,7 @@ function excludeSheet(t, muhsenId) {
           '<div class="note a">' + icon('i-info','s16') +
             '<span>يبقى ' + E(m.name.split(' ')[0]) + ' على المهمة حتى يقبل البديل. وإن اعتذر، يبقى ولا يُستبعد.</span></div>'
         : '<div class="note r">' + icon('i-warn','s16') +
-          '<span>لا يوجد بديل متاح من فريقك — اطلب دعمًا من الكنترول.</span></div>')
+          '<span>لا بديل متاح في الفريق — يُطلب دعمٌ من الكنترول.</span></div>')
       : '<div class="note r">' + icon('i-warn','s16') +
         '<span><b>إقرار مسؤولية</b><br>باستبعاده لعدم الحاجة تتحمّل مسؤولية ما ينتج عن نقص العدد في هذه المهمة.</span></div>') +
 

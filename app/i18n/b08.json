@@ -1,0 +1,142 @@
+{
+  "سجل إجراءات المهمة": [
+    "Task action log",
+    "Log tindakan tugas"
+  ],
+  "تسجيل خروج مبكر": [
+    "Early check-out",
+    "Daftar keluar awal"
+  ],
+  "تم تسجيل الخروج المبكر {t}": [
+    "Early check-out recorded {t}",
+    "Daftar keluar awal direkod {t}"
+  ],
+  "ينتهي الشِفت {n}:{n}": [
+    "shift ends {n}:{n}",
+    "syif tamat {n}:{n}"
+  ],
+  "الموقع: داخل موقع المهمة": [
+    "Location: at the task site",
+    "Lokasi: di tapak tugas"
+  ],
+  "الموقع: داخل المقر — التحضير اليومي متاح": [
+    "Location: inside HQ — the daily check-in is available",
+    "Lokasi: dalam ibu pejabat — daftar masuk harian tersedia"
+  ],
+  "الموقع: خارج النطاق — لا يُقبل تحضير": [
+    "Location: out of range — check-in is not accepted",
+    "Lokasi: di luar julat — daftar masuk tidak diterima"
+  ],
+  "المتوسط العام لتقييم المهام": [
+    "Overall task rating average",
+    "Purata keseluruhan penarafan tugas"
+  ],
+  "ترتيب الفريق": [
+    "Team ranking",
+    "Kedudukan pasukan"
+  ],
+  "أعضاء الفريق": [
+    "Team members",
+    "Ahli pasukan"
+  ],
+  "المهام من هذا النوع": [
+    "Tasks of this kind",
+    "Tugas jenis ini"
+  ],
+  "محسنو الفريق": [
+    "Team Muhsens",
+    "Muhsin pasukan"
+  ],
+  "تنبيهٌ بالمهامّ في وقتها": [
+    "Alerts for tasks on time",
+    "Amaran tugas tepat pada masanya"
+  ],
+  "البديل من الفريق": [
+    "Substitute from the team",
+    "Pengganti dari pasukan"
+  ],
+  "لا بديل متاح في الفريق — يُطلب دعمٌ من الكنترول.": [
+    "No substitute available in the team — support is requested from Control.",
+    "Tiada pengganti dalam pasukan — sokongan diminta daripada Kawalan."
+  ],
+  "يُرفع إلى ليدر الفريق": [
+    "Raised to the team leader",
+    "Dinaikkan kepada ketua pasukan"
+  ],
+  "الشِفت الحالي:": [
+    "Current shift:",
+    "Syif semasa:"
+  ],
+  "الشِفت الجديد:": [
+    "New shift:",
+    "Syif baharu:"
+  ],
+  "هذا المحسن من فريق آخر": [
+    "That Muhsen is on another team",
+    "Muhsin itu dalam pasukan lain"
+  ],
+  "الحضور مُثبَت": [
+    "Attendance confirmed",
+    "Kehadiran disahkan"
+  ],
+  "ويؤثر في التقييم": [
+    "and it affects the rating",
+    "dan ia menjejaskan penarafan"
+  ],
+  "ويُحتسب ذلك في التقييم.": [
+    "and it counts towards the rating.",
+    "dan ia dikira dalam penarafan."
+  ],
+  "التقييم والملاحظات": [
+    "Rating and notes",
+    "Penarafan dan nota"
+  ],
+  "التقييم وترتيب الفريق": [
+    "Rating and team ranking",
+    "Penarafan dan kedudukan pasukan"
+  ],
+  "لا ملاحظات مسجّلة — سجلٌّ نظيف.": [
+    "No notes on record — a clean record.",
+    "Tiada nota direkod — rekod bersih."
+  ],
+  "أدواتُ تشغيلٍ داخليّةٌ لفريق النظام — خارجَ أدوار العمل. وكلُّ ما يتغيّر هنا ينعكس فورًا.": [
+    "Internal operations tools for the system team — outside the work roles. Everything changed here takes effect at once.",
+    "Alat operasi dalaman untuk pasukan sistem — di luar peranan kerja. Semua yang diubah di sini berkuat kuasa serta-merta."
+  ],
+  "التحضيرُ اليوميُّ من المقرّ، وحضورُ المهمّة من موقعها.": [
+    "The daily check-in is from HQ, and task attendance from its site.",
+    "Daftar masuk harian dari ibu pejabat, dan kehadiran tugas dari tapaknya."
+  ],
+  "{n} إجراء": [
+    "{n} actions",
+    "{n} tindakan"
+  ],
+  "أُسندت الصفةُ إليه — المتابعةُ قائمةٌ والقرارُ ليس لك.": [
+    "The role was delegated to them — you follow progress but do not decide.",
+    "Peranan diserahkan kepadanya — anda memantau tetapi tidak membuat keputusan."
+  ],
+  "صلاحيةُ ليدر لهذه المهمّة وحدها — التسكينُ والإسنادُ غيرُ متاحين.": [
+    "Leader rights for this task only — rostering and delegation are unavailable.",
+    "Hak ketua untuk tugas ini sahaja — penempatan dan penurunan kuasa tidak tersedia."
+  ],
+  "حان وقتها ولم تبدأها — ويُحتسب ذلك في التقييم.": [
+    "Its time came and it was not started — this counts towards the rating.",
+    "Masanya tiba dan ia tidak dimulakan — ini dikira dalam penarafan."
+  ],
+  "وصلك هذا الإشعار بنجاح.": [
+    "This alert reached you successfully.",
+    "Amaran ini sampai kepada anda."
+  ],
+  "أُرسل إشعار": [
+    "An alert was sent",
+    "Amaran dihantar"
+  ],
+  "إشعار اختبار": [
+    "Test alert",
+    "Amaran ujian"
+  ],
+  "الموقع الآن": [
+    "Location now",
+    "Lokasi kini"
+  ]
+}

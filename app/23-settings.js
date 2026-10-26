@@ -84,18 +84,11 @@ function screenSettings() {
         '</button>').join('') + '</div>' +
     '</div>' +
 
-    /* ---------- الحساب ---------- */
+    /* ---------- الحساب ----------
+       سقط منه صفُّ البطاقة (الأفاتار في الترويسة يفتح الملفّ)،
+       وصفُّ الموقع، وبابُ شاشة التحكّم. ويبقى الخروج. */
     '<div class="c">' +
       '<div class="h"><b>الحساب</b></div>' +
-      '<button class="prow" data-a="go" data-n="profile">' + avat(u) +
-        '<span class="nm sp"><b>' + E(u.name) + '</b><span>' + E(u.code) + '</span></span>' +
-        icon('i-back', 's16') + '</button>' +
-      '<button class="prow" data-a="place">' + icon('i-pin', 's20') +
-        '<span class="nm sp"><b>موقعي</b><span>' +
-        (S.myPlace === 'hq' ? 'داخل المقر' : 'في الموقع') + '</span></span>' +
-        icon('i-back', 's16') + '</button>' +
-      '<button class="prow" data-a="go" data-n="admin">' + icon('i-gear', 's20') +
-        '<span class="nm sp"><b>شاشة التحكم</b></span>' + icon('i-back', 's16') + '</button>' +
       '<button class="prow danger" data-a="logout">' + icon('i-out', 's20') +
         '<span class="nm sp"><b>تسجيل الخروج</b></span></button>' +
     '</div>' +

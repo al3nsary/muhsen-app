@@ -31,7 +31,8 @@ function render() {
   const el = document.getElementById('screen');
   el.className = n === 'admin' ? 'adm' : '';
   let html = fn();
-  html = html.replace('<div class="view">', '<div class="view">' + alertsHTML());
+  /* شريطُ التنبيهات أعلى كلّ شاشةٍ سقط: كان يزاحم المحتوى في
+     كلّ وجهة، والإشعاراتُ لها زرُّها في الترويسة وشاشتُها. */
 
   let pushHTML = '';
   const fresh = S.session ? S.notifs.filter(x => x.to === S.session.id && !x.read) : [];
@@ -172,7 +173,7 @@ document.addEventListener('click', ev => {
       /* الاختيارُ يملأ الحقلَ بالاسم وكلمةَ المرور معه، فتبقى خطوةٌ
          واحدةٌ: الضغطُ على «تسجيل الدخول». */
       const su = userById(id); if (!su) break;
-      S.loginId = su.id; S.loginU = su.name; S.loginP = DEMO_PW;
+      S.loginId = su.id; S.loginU = su.name; S.loginP = AUTH_PW;
       S.loginOpen = false; S.loginErr = null; break; }
     case 'loginshow':   S.loginShow = !S.loginShow; break;
     case 'loginforgot': toast('راجع مشرفك لإعادة تعيين كلمة المرور', 'r'); break;
@@ -189,9 +190,9 @@ document.addEventListener('click', ev => {
     case 'rdend':   rideEnd(id); return;
     case 'place': S.sheetBare = false; S.sheet = placeSheet(); break;
     case 'setplace': S.myPlace = v; S.sheet = null; S.sheetBare = false;
-      toast(v === 'site' ? 'موقعك داخل موقع المهمة'
-        : v === 'hq' ? 'موقعك داخل المقر — التحضير اليومي متاح'
-        : 'موقعك خارج النطاق — لا يُقبل تحضير', v === 'away' ? 'r' : 'g'); break;
+      toast(v === 'site' ? 'الموقع: داخل موقع المهمة'
+        : v === 'hq' ? 'الموقع: داخل المقر — التحضير اليومي متاح'
+        : 'الموقع: خارج النطاق — لا يُقبل تحضير', v === 'away' ? 'r' : 'g'); break;
     case 'attend': { const t = T(); if (!t) break;
       if (['done','cancelled'].indexOf(t.status) >= 0) { toast('المهمة أُغلقت', 'r'); break; }
       if (!actsAsLeader(t, S.session.id) && !slotOf(t, S.session.id))
@@ -207,7 +208,7 @@ document.addEventListener('click', ev => {
       const mu = userById(uid_);
       if (!mu || mu.role !== 'muhsen') { toast('لا يُسكَّن إلا محسن', 'r'); break; }
       if (mu.reserve) { toast('الاحتياط يُسنده الكنترول — ارفع طلب دعم', 'r'); break; }
-      if (mu.leaderId !== t.leaderId) { toast('هذا المحسن ليس من فريقك', 'r'); break; }
+      if (mu.leaderId !== t.leaderId) { toast('هذا المحسن من فريق آخر', 'r'); break; }
       if (busyIn(uid_, t)) { toast('المحسن مرتبط بمهمة متداخلة', 'r'); break; }
       if (sendRequest(t, uid_)) { S.sheet = null; S.sheetBare = false; toast('أُرسل الطلب إلى ' + userById(uid_).name); }
       else toast('تعذّر الإرسال — الطلب قائم بالفعل', 'r');
@@ -476,7 +477,7 @@ document.addEventListener('click', ev => {
       if (!s || s.state !== 'pending') break;
       controlAnswerSupport(s, v === '1',
         v === '1' ? 'توفّر محسنون في الاحتياط ضمن نطاق المهمة ولا تعارض في أوقاتهم.'
-                  : 'لا يتوفّر محسن غير مرتبط في هذا التوقيت — أعد التوزيع من فريقك.');
+                  : 'لا يتوفّر محسن غير مرتبط في هذا التوقيت — أعد التوزيع من الفريق.');
       toast(v === '1' ? 'لُبّي طلب الدعم' : 'اعتذر الكنترول', v === '1' ? 'g' : 'r'); break; }
 
     /* ===== الانسحاب من مهمة ===== */
@@ -601,7 +602,8 @@ document.addEventListener('click', ev => {
         toast(attendedToday(S.session.id) ? 'تم تسجيل الانصراف اليوم بالفعل' : 'سجّل الحضور أوّلًا', 'r'); break; }
       const rec = dayRec(S.session.id, now());
       checkOut(S.session.id); buzz();
-      toast('تم تسجيل الانصراف ' + t12(now()) + ' · مدّة الدوام ' + workedTxt(rec), 'g'); break; }
+      toast((shiftEnded(S.session.id) ? 'تم تسجيل الانصراف ' : 'تم تسجيل الخروج المبكر ') +
+        t12(now()) + ' · مدّة الدوام ' + workedTxt(rec), 'g'); break; }
     case 'swapreq': S.swapTo = null; S.sheetBare = false; S.sheet = swapSheet(); break;
     case 'swapto': S.swapTo = v; S.sheetBare = false; S.sheet = swapSheet(); break;
     case 'dosendswap': {
@@ -642,8 +644,8 @@ document.addEventListener('click', ev => {
       toast(n4 ? 'أُرسل ' + AR(n4) + ' إشعارًا' : 'لا يوجد ما ينتظر إجراءً'); break; }
     case 'pushtest': {
       if (!pushOn()) { toast('فعّل الإذن أولًا', 'r'); break; }
-      firePush('تطبيق مُحسن', 'هذا إشعار تجريبي — وصلك بنجاح.', 'test');
-      toast('أُرسل إشعار تجريبي'); break; }
+      firePush('تطبيق مُحسن', 'وصلك هذا الإشعار بنجاح.', 'test');
+      toast('أُرسل إشعار'); break; }
     case 'bcaud': S.bcAud = v; break;
     case 'dobroadcast': {
       const ti = val('bct'), bo = val('bcb');

@@ -18,8 +18,7 @@ function ticketsPane() {
   const segs = L ? [['open','المفتوحة'],['hajj','الحجاج'],['ctrl','الكنترول'],['muh','المحسنون'],['closed','المغلقة']]
                  : [['open','المفتوحة'],['mine','المسندة إليّ'],['closed','المغلقة']];
 
-  return '<div class="note b">' + icon('i-info','s16') +
-      '<span>التذاكر يرفعها <b>الحجاج</b> وحدهم — وتصل الليدر ليُسندها ويتابعها. وما ترفعه أنت يكون <b>بلاغًا</b>.</span></div>' +
+  return 
     '<div class="seg">' + segs.map(x =>
       '<button class="' + (f === x[0] ? 'on' : '') + '" data-a="seg" data-k="tk" data-v="' + x[0] + '">' +
       x[1] + '</button>').join('') + '</div>' +
@@ -110,15 +109,14 @@ function screenRating() {
       '<b>' + AR(String(rt.avg || 0).replace(/\.0$/, '')) + '</b>' +
       '<div class="bigstars">' + stars(rt.avg || 0, 'lg') + '</div>' +
       '<span class="tiny dim">من ' + AR(rt.n) + ' مهمة مقيَّمة</span></div>' +
-      '<div class="note b">' + icon('i-info','s16') +
-        '<span>التقييم متوسط عام لكل مهمة — يُحتسب من الالتزام بالأوقات وإنجاز المهام ورضا المستفيدين.</span></div>' +
+      
       '<div class="lbl">تقييم كل مهمة</div>' +
       (rated.length ? rated.map(t => ratingRow(t)).join('')
         : '<div class="c center dim sm" style="padding:24px">لا توجد مهام مقيَّمة بعد</div>');
   } else {
     const people = L ? teamOf(u.id) : S.users.filter(x => x.leaderId === u.leaderId && x.id !== u.id);
     const rows = people.map(p => ({ p, r: personRating(p.id) })).sort((a, b) => b.r.avg - a.r.avg);
-    body = '<div class="lbl">' + (L ? 'ترتيب فريقك' : 'زملاؤك في الفريق') + '<small>حسب المتوسط التراكمي</small></div>' +
+    body = '<div class="lbl">' + (L ? 'ترتيب الفريق' : 'أعضاء الفريق') + '<small>حسب المتوسط التراكمي</small></div>' +
       rows.map((x, i) => '<button class="c" data-a="go" data-n="profile" data-id="' + x.p.id + '" style="width:100%;text-align:right">' +
         '<div class="fl">' +
           '<span class="rank' + (i === 0 ? ' top' : '') + '">' + AR(i + 1) + '</span>' + avat(x.p) +
@@ -296,7 +294,7 @@ function screenMuhsens() {
         '<span>إن نقص العدد على مهمة، ارفع <b>طلب دعم من الكنترول</b> من داخل المهمة — ' +
         'وهو من يختار ويُسند.</span></div>'
       : u.reserve
-      ? '<div class="lbl">فريق امتثال<small>زملاؤك — مشترك بين الليدرز</small></div>' +
+      ? '<div class="lbl">فريق امتثال<small>مشترك بين الليدرز</small></div>' +
         reserveTeam().filter(m2 => m2.id !== u.id).map(m2 => {
           const n2 = S.tasks.filter(t => acceptedSlots(t).some(a2 => a2.muhsenId === m2.id)).length;
           return '<button class="prow" data-a="go" data-n="profile" data-id="' + m2.id + '">' +
@@ -340,13 +338,19 @@ function screenProfile() {
     (r.n ? '<div class="lbl">التقييم التراكمي<small>' + AR(r.n) + ' مهمة مقيَّمة</small></div>' +
       '<div class="score sm"><b>' + AR(String(r.avg).replace(/\.0$/, '')) + '</b>' +
         '<div class="bigstars">' + stars(r.avg, 'lg') + '</div>' +
-        '<span class="tiny dim">المتوسط العام لكل مهامه</span></div>' : '') +
+        '<span class="tiny dim">المتوسط العام لتقييم المهام</span></div>' : '') +
 
-    '<div class="lbl">الملاحظات المسجّلة<small>' + AR(notes.length) + ' ملاحظة</small></div>' +
-    (notes.length ? notes.slice(0, 15).map(n =>
-      '<div class="note a">' + icon('i-info','s16') + '<span>' + E(n.text) +
-      '<br><span class="tiny dim2">' + E(n.t.title) + ' · ' + hijri(n.at) + '</span></span></div>').join('')
-      : '<div class="note g">' + icon('i-checkc','s16') + '<span>لا توجد ملاحظات مسجّلة — سجلّ نظيف.</span></div>') +
+    /* الملاحظاتُ قائمةٌ تُطوى: كانت تُسكب كلُّها فتدفع ما بعدها إلى
+       أسفل الشاشة، وهي سجلٌّ يُقرأ عند الحاجة لا في كلّ زيارة. */
+    (notes.length
+      ? foldOf('pf:' + u.id, 'notes', 'الملاحظات المسجّلة',
+          AR(notes.length) + ' ملاحظة',
+          notes.slice(0, 15).map(n =>
+            '<div class="note a">' + icon('i-info','s16') + '<span>' + E(n.text) +
+            '<br><span class="tiny dim2">' + E(n.t.title) + ' · ' + hijri(n.at) +
+            '</span></span></div>').join(''), 'i-edit')
+      : '<div class="note g">' + icon('i-checkc','s16') +
+        '<span>لا ملاحظات مسجّلة — سجلٌّ نظيف.</span></div>') +
 
 
     (!isMe && isLeader() && !L ? '<div class="note b">' + icon('i-info','s16') +

@@ -11,7 +11,7 @@ const AUDIENCE = {
   all:      { l:'الجميع',     d:'كل الليدرز والمحسنين' },
   leaders:  { l:'الليدرز',    d:'قادة الفرق فقط' },
   muhsens:  { l:'المحسنون',   d:'كل المحسنين' },
-  myteam:   { l:'فريقي',      d:'محسنو فريقك أنت' }
+  myteam:   { l:'فريقي',      d:'محسنو الفريق' }
 };
 function audienceUsers(k) {
   const u = me();
@@ -126,7 +126,7 @@ function pushBox() {
       ? '<div class="grid2">' +
           '<button class="btn ' + (on ? 'd' : 'p') + ' sm" data-a="pushtoggle">' +
             icon('i-bell','s16') + (on ? 'إيقافها' : 'تشغيلها') + '</button>' +
-          '<button class="btn l sm" data-a="pushtest">' + icon('i-send','s16') + 'إشعار تجريبي</button></div>' +
+          '<button class="btn l sm" data-a="pushtest">' + icon('i-send','s16') + 'إشعار اختبار</button></div>' +
           '<button class="btn l sm" style="margin-top:8px" data-a="pushbacklog">' + icon('i-bell','s16') +
             'إرسال ما ينتظر إجراءً الآن (' + AR(S.notifs.filter(function (n) {
               return n.to === S.session.id && stillRelevant(n); }).length) + ')</button>'
@@ -165,7 +165,7 @@ function pushAskSheet() {
   return '<div class="grip"></div>' +
     '<div class="center" style="padding:4px 0 2px">' +
       '<span class="askic">' + icon('i-bell','s26') + '</span>' +
-      '<h3 style="margin:12px 0 4px">نُنبّهك بمهامك في وقتها</h3>' +
+      '<h3 style="margin:12px 0 4px">تنبيهٌ بالمهامّ في وقتها</h3>' +
       '<div class="sm dim" style="line-height:1.9">فعّل تنبيهات الجوال ليصلك خارج التطبيق:<br>' +
       'اقتراب موعد مهمة · طلب تسكين ينتظر ردّك · تذكرة عاجلة · تذكير التحضير.</div></div>' +
     '<div class="note a" style="margin:14px 0">' + icon('i-info','s16') +

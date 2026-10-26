@@ -132,7 +132,7 @@ function screenGuide() {
       '<div class="sub" style="cursor:default"><span class="gnum sm">' + AR(i + 1) + '</span>' +
       '<span class="t sp">' + E(n) + '</span></div>').join('') + '</div>' +
 
-    (mine.length ? '<div class="lbl">مهامك من هذا النوع</div>' +
+    (mine.length ? '<div class="lbl">المهام من هذا النوع</div>' +
       mine.slice(0, 4).map(t => '<button class="listitem" data-a="go" data-n="task" data-id="' + t.id + '">' +
         '<span class="ico">' + icon(ui.i,'s18') + '</span>' +
         '<span class="sp"><b style="font-size:13px;display:block">' + E(t.title) + '</b>' +

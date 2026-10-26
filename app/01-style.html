@@ -6,6 +6,7 @@
     --g:#14593F; --g2:#0C3A29; --g3:#1D7452; --live:#0B8A4B;
     --gold:#A8875A; --gold2:#C6A86F;
     --ink:#101914; --dim:#6E7E75; --dim2:#8B978F;
+    --pGreenB:#E7F0EA; --pGoldB:#F5EEE3; --pRedB:#FBEAE7;
     --bg:#FCFBF8; --amber:#B8791A; --red:#C0392B;
     --card:0 1px 2px rgba(11,53,39,.05), 0 4px 10px -4px rgba(11,53,39,.07), 0 18px 34px -22px rgba(11,53,39,.3);
     --f:"Almarai","SF Arabic","Segoe UI",system-ui,sans-serif;
@@ -1510,220 +1511,66 @@
 
   /* ══════════════ «المزيد»: أزرارٌ عائمةٌ تصعد من الشريط ══════════════ */
   /* ══════════════════════════════════════════════════════════════
-     «المزيد» — أزرارٌ عائمةٌ متصاعدة
+     «المزيد» — على مقاسات FAB Menu في Material 3 Expressive
 
-     زرٌّ رئيسيٌّ في زاوية الإبهام، فوقه الأزرارُ الفرعيّةُ تصعد
-     واحدًا بعد واحد، وخلفَها حجابٌ ضبابيٌّ يُركّز النظر.
-     والزجاجيّةُ من لونِنا لا من رماديٍّ محايد.
+     نقلتُ القياساتِ من مصدر androidx لا من تقديري:
+       ارتفاعُ الحبّة ٥٦ · الفراغُ بينها ٤ · الحشوةُ ٢٤ من الطرفين
+       الأيقونةُ ٢٤ والفراغُ بينها وبين النصّ ٨
+       الزرُّ الرئيسيّ ٥٦×٥٦ وبينه والقائمة ٨ · والشكلُ دائريٌّ تامّ
+       الارتفاعُ Level 3
+
+     واللونُ من M3: الحبّةُ primaryContainer والنصُّ onPrimaryContainer،
+     والزرُّ الرئيسيُّ primary. وكانت زجاجيّةً بيضاء — وهي ما لا
+     يستعمله أحدٌ هنا: الزجاجيّةُ تُظهر ما خلفها فيتشوّش النصّ.
+     وأبقيتُ الدائرةَ الخضراءَ حول الأيقونة.
      ══════════════════════════════════════════════════════════════ */
-  .fabwrap{ position:absolute; inset-inline-end:14px;
+  .fabwrap{ position:absolute; inset-inline-end:16px;
     bottom:calc(var(--sab,14px) + 60px); z-index:60;
-    display:flex; flex-direction:column; align-items:flex-end; gap:10px;
+    display:flex; flex-direction:column; align-items:flex-end; gap:8px;
     max-height:calc(100% - 128px) }
 
-  .fabs{ display:flex; flex-direction:column; align-items:flex-end; gap:9px;
+  .fabs{ display:flex; flex-direction:column; align-items:flex-end; gap:4px;
     overflow-y:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
-    padding:4px 2px; min-height:0 }
+    padding:2px; min-height:0 }
   .fabs::-webkit-scrollbar{ display:none }
 
-  /* زجاجيّةٌ خضراء: الأرضُ تُرى خلفها فتبدو طافيةً لا ملصقة */
-  .fab{ display:flex; align-items:center; gap:10px; flex:none; min-height:46px;
-    padding:0 5px 0 16px; border-radius:99px; cursor:pointer;
-    background:rgba(255,255,255,.82);
-    -webkit-backdrop-filter:blur(14px) saturate(150%);
-    backdrop-filter:blur(14px) saturate(150%);
-    border:1px solid rgba(255,255,255,.55); color:var(--g2,#0B3527);
-    box-shadow:0 10px 26px -14px rgba(11,53,39,.65), 0 1px 2px rgba(11,53,39,.12);
+  .fab{ display:flex; align-items:center; gap:8px; flex:none;
+    height:56px; padding:0 8px 0 24px; border-radius:99px; border:0; cursor:pointer;
+    background:var(--pGreenB,#E7F0EA); color:var(--g2);
+    box-shadow:0 6px 10px rgba(11,53,39,.11), 0 2px 3px rgba(11,53,39,.09);
     animation:fabUp .26s cubic-bezier(.2,.9,.3,1) both;
-    animation-delay:calc(var(--i,0) * 32ms) }
-  html[dir=ltr] .fab{ padding:0 16px 0 5px; flex-direction:row-reverse }
-  .fab b{ font-size:12.5px; font-weight:700; white-space:nowrap; letter-spacing:-.1px }
-  .fab .fi{ position:relative; width:36px; height:36px; border-radius:50%; flex:none;
+    animation-delay:calc(var(--i,0) * 28ms) }
+  html[dir=ltr] .fab{ padding:0 24px 0 8px; flex-direction:row-reverse }
+  .fab b{ font-size:14px; font-weight:700; white-space:nowrap; letter-spacing:-.1px }
+  .fab .fi{ position:relative; width:40px; height:40px; border-radius:50%; flex:none;
     display:grid; place-items:center; color:#fff;
-    background:linear-gradient(150deg,var(--g3,#1A6B4C),var(--g,#14593F));
-    box-shadow:0 4px 10px -4px rgba(11,53,39,.55) }
-  .fab:active{ transform:scale(.96) }
-  .fab:focus-visible{ outline:2px solid var(--gold); outline-offset:3px }
+    background:linear-gradient(150deg,var(--g3),var(--g)) }
+  .fab .fi .ic{ width:22px; height:22px }
+  .fab:active{ transform:scale(.97) }
+  .fab:focus-visible{ outline:2px solid var(--g); outline-offset:3px }
 
-  /* الزرُّ الرئيسيّ: دائريٌّ أخضرُ غامقٌ بظلٍّ قويّ */
+  /* الزرُّ الرئيسيّ: primary في M3 — أغمقُ من الحبّات فيُقرأ أصلًا لها */
   .fabmain{ width:56px; height:56px; flex:none; border-radius:50%; cursor:pointer;
     display:grid; place-items:center; color:#fff; border:0;
-    background:linear-gradient(150deg,var(--g3,#1A6B4C),var(--g2,#0B3527));
-    box-shadow:0 14px 30px -10px rgba(11,53,39,.75), 0 2px 6px rgba(11,53,39,.3);
+    background:linear-gradient(150deg,var(--g3),var(--g2));
+    box-shadow:0 8px 14px rgba(11,53,39,.2), 0 3px 5px rgba(11,53,39,.14);
     animation:fabPop .24s cubic-bezier(.2,.9,.3,1) both }
+  .fabmain .ic{ width:22px; height:22px }
   .fabmain:active{ transform:scale(.94) }
   .fabmain:focus-visible{ outline:2px solid var(--gold); outline-offset:3px }
 
-  @keyframes fabUp{ from{ opacity:0; transform:translateY(14px) scale(.94) } }
+  @keyframes fabUp{ from{ opacity:0; transform:translateY(12px) scale(.94) } }
   @keyframes fabPop{ from{ opacity:0; transform:rotate(-90deg) scale(.7) } }
-  @media (prefers-reduced-motion:reduce){
-    .fab, .fabmain{ animation:none }
-  }
+  @media (prefers-reduced-motion:reduce){ .fab, .fabmain{ animation:none } }
 
-  /* الحجابُ خلف القائمة: ضبابٌ خفيفٌ لا عتمةٌ ثقيلة */
-  .scrim.soft{ background:rgba(11,53,39,.34);
-    -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px) }
+  .scrim.soft{ background:rgba(11,53,39,.32);
+    -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px) }
 
-  /* الشاشاتُ القصيرة: الأزرارُ أنحفُ فلا تُزاحم الشريط */
   @media (max-height:680px){
-    .fab{ min-height:42px } .fab .fi{ width:32px; height:32px }
-    .fabmain{ width:50px; height:50px } .fabs{ gap:7px }
+    .fab{ height:48px; padding-inline-start:18px }
+    .fab .fi{ width:36px; height:36px }
+    .fabmain{ width:52px; height:52px }
   }
-
-  /* ══════════════ الدخول: نموذجٌ بحقلين ══════════════ */
-  .lform{ flex:none; display:flex; flex-direction:column; gap:0 }
-  .lform .lbl{ margin:0 0 7px; font-size:12px }
-  .lwrap{ position:relative; margin-bottom:14px }
-  .lfield{ display:flex; align-items:center; gap:10px; min-height:52px; padding:0 14px;
-    background:var(--soft); border:1.5px solid var(--line); border-radius:14px;
-    color:var(--dim); cursor:pointer }
-  .lfield.on{ border-color:var(--g); background:#fff }
-  .lfield .lval{ flex:1; min-width:0; font-size:14px; font-weight:600; color:var(--ink);
-    overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
-  .lfield .lval.ph{ font-weight:400; color:var(--dim) }
-  .lfield input{ flex:1; min-width:0; border:0; background:none; outline:none;
-    font:inherit; font-size:14px; color:var(--ink); padding:14px 0 }
-  .lfield.pw{ margin-bottom:16px; cursor:default }
-  .lfield.pw input{ letter-spacing:3px; cursor:default }
-  .lfield .lok{ color:var(--live); flex:none }
-  .lwrap.open .lfield .ic:last-child{ transform:rotate(180deg) }
-
-  .lmenu{ position:absolute; inset-inline:0; top:calc(100% + 6px); z-index:30;
-    background:#fff; border:1px solid var(--line); border-radius:16px; padding:6px;
-    max-height:46vh; overflow-y:auto; -webkit-overflow-scrolling:touch;
-    box-shadow:0 22px 44px -18px rgba(11,53,39,.5) }
-  .lopt{ display:flex; align-items:center; gap:10px; width:100%; min-height:56px;
-    padding:8px 10px; border:0; border-radius:11px; background:none; color:var(--ink);
-    cursor:pointer; text-align:start }
-  .lopt + .lopt{ border-top:1px solid var(--line) }
-  .lopt .nm{ flex:1; min-width:0 }
-  .lopt .nm b{ display:block; font-size:13.5px; font-weight:700 }
-  .lopt .nm span{ display:block; font-size:11px; color:var(--dim); margin-top:2px;
-    overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
-  .lopt.on{ background:var(--pGreenB) }
-  .lopt:active{ background:var(--soft) }
-  .lempty{ text-align:center; padding:26px 14px; color:var(--dim) }
-  .lempty b{ display:block; margin-top:8px; font-size:13px }
-  .lgo{ width:100% }
-  .lgo:disabled{ opacity:.45; cursor:not-allowed }
-  .lhint{ margin-top:10px; min-height:16px }
-
-  /* ══════════════ الردود: في الطريق · الانتظار ══════════════ */
-  .rtransit{ display:flex; align-items:center; gap:10px; margin:10px 0;
-    padding:11px 13px; border-radius:14px; background:var(--pGoldB);
-    border:1px solid rgba(168,135,90,.34) }
-  .rtransit .sp{ flex:1; min-width:0 }
-  .rtransit b{ display:block; font-size:13px; color:var(--gold); font-weight:700 }
-  .rtransit span span{ display:block; font-size:11px; color:var(--dim); margin-top:2px;
-    line-height:1.6 }
-  .rpulse{ width:10px; height:10px; border-radius:50%; flex:none; background:var(--gold);
-    box-shadow:0 0 0 0 rgba(168,135,90,.6); animation:rpz 1.8s ease-out infinite }
-  @keyframes rpz{ 70%{ box-shadow:0 0 0 9px rgba(168,135,90,0) }
-                  100%{ box-shadow:0 0 0 0 rgba(168,135,90,0) } }
-  @media (prefers-reduced-motion:reduce){ .rpulse{ animation:none } }
-
-  .btn.wide{ width:100% }
-  .btn.busy{ opacity:.8 }
-  .rdsub{ display:flex; gap:9px; margin-top:9px }
-  .rdsub .btn{ flex:1 1 0; min-width:0 }
-  .spin{ width:15px; height:15px; border-radius:50%; flex:none; display:inline-block;
-    border:2px solid currentColor; border-top-color:transparent;
-    animation:spn .7s linear infinite }
-  @keyframes spn{ to{ transform:rotate(360deg) } }
-  @media (prefers-reduced-motion:reduce){ .spin{ animation:none } }
-
-  /* الحجابُ تحت الأزرار العائمة أخفُّ: لا لوحَ يحجب، وإنّما
-     ظلٌّ يُبرز الأزرارَ ويُغلق بالنقر خارجها. */
-  .scrim.soft{ background:rgba(11,53,39,.42) }
-
-
-  /* ══════════════════════════════════════════════════════════════
-     الدخول — على قياسات «نُزلي لإدارة المشاريع»
-
-     قرأتُ أنماطَها المبنيّةَ من موقعها: البطاقةُ ٤٤٠px بحدٍّ وظلٍّ
-     خفيف، والشعارُ ١٦٤px على الجوّال، والعنوانُ ٢٤px/٦٠٠،
-     والسطرُ تحته ١٤px، والتسميةُ ١٣٫٥px/٦٠٠، وزرُّ الصفة ٤٤px
-     بخطٍّ ١٢٫٥px. فالقياساتُ منقولةٌ لا مُقدَّرة.
-     ══════════════════════════════════════════════════════════════ */
-  .authmain{ position:relative; z-index:2; flex:1; min-height:0; display:flex;
-    flex-direction:column; align-items:center; gap:18px; padding:16px 16px 12px;
-    overflow-y:auto; -webkit-overflow-scrolling:touch }
-  .authmain::-webkit-scrollbar{ width:0 }
-  .authcard{ width:100%; max-width:440px; background:#fff; border:1px solid var(--line);
-    border-radius:22px; padding:26px 20px 22px;
-    box-shadow:0 1px 2px rgba(16,24,40,.04), 0 18px 40px -20px rgba(16,24,40,.22) }
-  .authlogo{ display:flex; justify-content:center; margin-bottom:20px }
-  .authlogo .logo{ width:164px; height:46px; margin:0; background-size:contain;
-    background-repeat:no-repeat; background-position:center; filter:none }
-  .authhead{ text-align:center; margin-bottom:22px }
-  .authhead h1{ font-size:21px; font-weight:700; letter-spacing:-.3px; line-height:1.4;
-    margin:0; color:var(--ink) }
-  .authsub{ margin:6px 0 0; font-size:13px; line-height:1.6; color:var(--dim) }
-
-  .authbody{ display:flex; flex-direction:column; gap:16px }
-  .autherr{ display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:12px;
-    background:var(--pRedB,rgba(200,60,60,.08)); color:var(--red); font-size:12.5px;
-    line-height:1.6; border:1px solid rgba(200,60,60,.22) }
-  .fld{ display:flex; flex-direction:column; gap:6px }
-  .fld > label{ font-size:13.5px; font-weight:600; color:var(--ink) }
-  .fld input{ width:100%; min-height:46px; padding:0 13px; font:inherit; font-size:14px;
-    color:var(--ink); background:#fff; border:1px solid var(--line2,#D7E0D9);
-    border-radius:12px; outline:none; transition:border-color .14s ease, box-shadow .14s ease }
-  .fld input::placeholder{ color:var(--dim2); font-size:13px }
-  .fld input:focus{ border-color:var(--g); box-shadow:0 0 0 3px rgba(20,89,63,.12) }
-  .pwrap{ position:relative; display:flex }
-  .pwrap input{ padding-inline-end:46px }
-  .pweye{ position:absolute; inset-inline-end:4px; top:50%; transform:translateY(-50%);
-    width:38px; height:38px; display:grid; place-items:center; border:0; background:none;
-    color:var(--dim); cursor:pointer; border-radius:10px }
-  .pweye[aria-pressed=true]{ color:var(--g) }
-  .fldend{ display:flex; justify-content:flex-end; margin-top:2px }
-  .alink{ border:0; background:none; padding:4px 2px; font:inherit; font-size:12.5px;
-    font-weight:600; color:var(--g); cursor:pointer; min-height:28px }
-
-  /* التجربةُ السريعة — أزرارُ صفاتٍ لا قائمةُ أسماء */
-  .demo{ display:flex; flex-direction:column; gap:12px; margin-top:20px }
-  .demosep{ display:flex; align-items:center; gap:12px; color:var(--dim2);
-    font-size:12px; font-weight:600 }
-  .demosep::before, .demosep::after{ content:''; flex:1; height:1px; background:var(--line) }
-  .demoroles{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px }
-  .rolebtn{ display:inline-flex; align-items:center; justify-content:center; gap:6px;
-    min-height:44px; padding:0 6px; border-radius:12px; background:#fff;
-    border:1px solid var(--line2,#D7E0D9); cursor:pointer; font:inherit; font-size:12.5px;
-    font-weight:600; color:var(--ink); white-space:nowrap;
-    transition:border-color .16s ease, background .16s ease, color .16s ease }
-  .rolebtn .ci{ display:grid; place-items:center; color:var(--gold); flex:none }
-  .rolebtn:active{ transform:scale(.98) }
-  .rolebtn:disabled{ opacity:.6; cursor:progress }
-  .demonote{ margin:0; font-size:11.5px; line-height:1.7; color:var(--dim); text-align:center }
-  .demonote code{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px;
-    background:var(--soft); border:1px solid var(--line); border-radius:6px; padding:1px 6px }
-  .authfoot{ flex:none; padding:4px 0 10px; display:flex; justify-content:center }
-
-  @media (max-height:700px){
-    .authcard{ padding:20px 18px 18px }
-    .authlogo{ margin-bottom:14px } .authhead{ margin-bottom:16px }
-    .authlogo .logo{ width:136px; height:38px }
-  }
-
-
-
-
-  /* الشعارُ فاتحٌ (أبيضُ وذهبيّ) فلا يُقرأ على بطاقةٍ بيضاء.
-     فموضعُه الأرضُ الخضراءُ فوق البطاقة، كما كان. */
-  .authtop{ flex:none; display:flex; flex-direction:column; align-items:center; gap:5px;
-    padding:10px 0 16px }
-  .authtop .logo{ width:160px; height:44px; margin:0; background-size:contain;
-    background-repeat:no-repeat; background-position:center }
-  .authtop .cap{ font-size:11.5px; color:#CBDCD1 }
-  .authcard{ padding:24px 20px 22px }
-  .authlogo{ display:none }
-  .pweye{ width:44px; height:44px }
-
-
-  /* زرُّ الصفة: الاسمُ يُقصَّر ولا يفيض، والأيقونةُ لا تُزاح */
-  .rolebtn > span:last-child{ min-width:0; overflow:hidden; text-overflow:ellipsis }
-
 
   /* ══════════════════════════════════════════════════════════════
      الدخول — مراجعةُ المقاسات والترتيب
@@ -1784,5 +1631,11 @@
 
   /* زرُّ فتح القائمة: ٤٤px لمسًا وإن بدا أصغر */
   .cbtn{ width:44px; height:44px }
+
+
+  /* الخروجُ المبكّرُ يُميَّز عن الانصراف: اللونُ وحدَه يقول إنّ
+     الشِفتَ ما زال ساريًا، فلا يُظنّ أنّ اليومَ اكتمل. */
+  .cta.out.early{ background:var(--pRedB,rgba(200,60,60,.08)); color:var(--red);
+    border-color:rgba(200,60,60,.28) }
 
 </style>
