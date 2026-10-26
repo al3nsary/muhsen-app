@@ -33,12 +33,20 @@ const inject = '<script>\n' +
 '    }\n' +
 '    S.route = { n: ' + JSON.stringify(ROUTE) + ', id: (S.tasks[0] || {}).id };\n' +
 '    S.pushAsked = true; S.sheet = null;\n' +
-'    if (' + JSON.stringify(SHEET) + ' === "more") { S.sheet = moreSheet(); S.sheetBare = true; }\n' +
+/* more · morevA · morevB … — اللاحقةُ تُضاف صنفًا لتُجرَّب البدائل */
+'    if (' + JSON.stringify(SHEET) + '.indexOf("more") === 0) {\n' +
+'      S.sheet = moreSheet(); S.sheetBare = true;\n' +
+'      var V = ' + JSON.stringify(SHEET) + '.slice(4);\n' +
+'      if (V) S.sheet = S.sheet.replace("fabwrap", "fabwrap " + V);\n' +
+'    }\n' +
 '    if (' + JSON.stringify(SHEET) + ' === "ride") { S.rdLeg = 0; S.sheet = rideSheet(); }\n' +
 /* قائمةُ الأسماء: مفتوحةً، ومفتوحةً بعد كتابةِ حرفين */
 '    if (' + JSON.stringify(SHEET) + ' === "combo") S.loginOpen = true;\n' +
-'    if (' + JSON.stringify(SHEET) + ' === "typed") {\n' +
-'      S.loginOpen = true; S.loginU = "\\u0645\\u062D"; }\n' +
+'    if (' + JSON.stringify(SHEET) + ' === "bio")\n' +
+'      bioStore({ id: "x", userId: S.users[0].id, name: S.users[0].name });\n' +
+'    if (' + JSON.stringify(SHEET) + ' === "bioask") {\n' +
+'      S.session = { id: S.users[0].id, at: Date.now() };\n' +
+'      S.route = { n: "home" }; S.sheet = bioAskSheet(S.users[0]); }\n' +
 /* رَدٌّ مفتوحٌ أو جارٍ — لا تُصنعان في البذرة، والبطاقةُ تُقاس بهما */
 '    if (' + JSON.stringify(SHEET) + '.indexOf("open") === 0 ||\n' +
 '        ' + JSON.stringify(SHEET) + '.indexOf("transit") === 0) {\n' +

@@ -90,21 +90,13 @@ function makePilgrims(n, seedNo) {
   });
 }
 
-/* التسكينُ التلقائيُّ يأخذ جزءًا من الفريق لا كلَّه.
+/* كل مهمة جديدة تُسكَّن تلقائيًّا بفريق الليدر كاملًا.
 
-   كان يُسكِّن الفريقَ كاملًا على كلّ مهمّة، فيرى المحسنُ ما يراه
-   ليدرُه حرفًا بحرف — وهو خلافُ الواقع: المحسنُ على مهامِّه هو.
-   والاختيارُ ثابتٌ لا عشوائيّ: يدور على الفريق بترتيبه فتتوزّع
-   الأحمالُ ولا تتبدّل البذرةُ بين تشغيلين. */
-const TASK_CREW = 3;
+   جرّبتُ أن أقصرَها على ثلاثةٍ ظنًّا منّي أنّ ذلك سببُ رؤية المحسن
+   لكلّ شيء — وهو تغييرٌ في البزنس لم يُطلَب منّي. أُعيد الأصل. */
 function autoAssign(st, t) {
   const team = (st.users || S.users).filter(u => u.role === 'muhsen' && u.leaderId === t.leaderId && !u.reserve);
-  if (!team.length) return t;
-  const seq = Number(String(t.id).replace(/\D/g, '')) || 0;
-  const take = Math.min(TASK_CREW, team.length);
-  const crew = [];
-  for (let i = 0; i < take; i++) crew.push(team[(seq + i) % team.length]);
-  crew.forEach(m => {
+  team.forEach(m => {
     if (t.assigned.some(a => a.muhsenId === m.id)) return;
     t.assigned.push({ muhsenId: m.id, req: 'accepted', auto: true,
       reqAt: t.start - 72 * HR, reqNote: 'تسكين تلقائي', respAt: t.start - 72 * HR, respNote: '',

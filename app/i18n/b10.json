@@ -1,0 +1,22 @@
+{
+  "أهلًا بك": ["Welcome", "Selamat datang"],
+  "سجّل الدخول للمتابعة": ["Sign in to continue", "Log masuk untuk teruskan"],
+  "تذكّرني": ["Remember me", "Ingat saya"],
+  "الدخول ببصمة الجهاز": ["Sign in with device biometrics", "Log masuk dengan biometrik peranti"],
+  "أو": ["or", "atau"],
+  "الدخول بالسِّمة الحيويّة": ["Biometric sign-in", "Log masuk biometrik"],
+  "تدخل مرّةً واحدةً ببصمة الجهاز أو وجهه بدل كتابة كلمة المرور.": ["Sign in with your device fingerprint or face instead of typing a password.", "Log masuk dengan cap jari atau wajah peranti anda dan bukan menaip kata laluan."],
+  "والسِّمةُ لا تُغادر جهازك — يُحفظ معرّفٌ لا سرَّ فيه.": ["Your biometric never leaves the device — only an identifier is stored, with no secret in it.", "Biometrik anda tidak pernah meninggalkan peranti — hanya pengecam disimpan, tanpa rahsia di dalamnya."],
+  "تفعيل": ["Enable", "Dayakan"],
+  "لاحقًا": ["Later", "Kemudian"],
+  "فُعّل الدخول بالسِّمة الحيويّة": ["Biometric sign-in enabled", "Log masuk biometrik didayakan"],
+  "الجهاز لا يدعم هذه الميزة": ["This device does not support that", "Peranti ini tidak menyokongnya"],
+  "لم يكتمل التسجيل": ["Enrolment did not complete", "Pendaftaran tidak selesai"],
+  "أُلغي التسجيل": ["Enrolment was cancelled", "Pendaftaran dibatalkan"],
+  "تعذّر التسجيل على هذا الجهاز": ["Enrolment failed on this device", "Pendaftaran gagal pada peranti ini"],
+  "لا سِمة مسجّلة على هذا الجهاز": ["No biometric is enrolled on this device", "Tiada biometrik didaftarkan pada peranti ini"],
+  "لم يكتمل التحقّق": ["Verification did not complete", "Pengesahan tidak selesai"],
+  "أُلغي التحقّق": ["Verification was cancelled", "Pengesahan dibatalkan"],
+  "تعذّر التحقّق — ادخل بكلمة المرور": ["Verification failed — sign in with your password", "Pengesahan gagal — log masuk dengan kata laluan anda"],
+  "الحساب المسجّل لم يعد موجودًا": ["The enrolled account no longer exists", "Akaun yang didaftarkan tidak lagi wujud"]
+}

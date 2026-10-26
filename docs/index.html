@@ -1590,8 +1590,11 @@
   @keyframes fabPop{ from{ opacity:0; transform:rotate(-90deg) scale(.7) } }
   @media (prefers-reduced-motion:reduce){ .fab, .fabmain{ animation:none } }
 
-  .scrim.soft{ background:rgba(11,53,39,.32);
-    -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px) }
+  .scrim.soft{ background:radial-gradient(135% 95% at 88% 90%,
+    rgba(7,36,25,.14) 0%, rgba(7,36,25,.55) 62%);
+    -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px) }
+  html[dir=ltr] .scrim.soft{ background:radial-gradient(135% 95% at 12% 90%,
+    rgba(7,36,25,.14) 0%, rgba(7,36,25,.55) 62%) }
 
   @media (max-height:680px){
     .fab{ height:48px; padding-inline-start:18px }
@@ -1665,6 +1668,146 @@
   .cta.out.early{ background:var(--pRedB,rgba(200,60,60,.08)); color:var(--red);
     border-color:rgba(200,60,60,.28) }
 
+
+  /* ══════════════════════════════════════════════════════════════
+     «المزيد» — حبّاتٌ مصنوعةٌ لا مُعبَّأة
+
+     كانت تعبئةً مسطّحةً بلونٍ واحد، وحوافُّها مسنّنةٌ لأنّ كلَّ
+     حبّةٍ بعرض نصّها. فصارت: عرضٌ موحَّدٌ، وتدرّجٌ يعطي عمقًا،
+     وحافّةُ ضوءٍ من أعلى وظلٌّ داخليٌّ من أسفل، وظلٌّ مزدوجٌ
+     (تماسٌّ قريبٌ ومحيطٌ بعيد)، وأيقونةٌ ذهبيّةٌ في حوضٍ له
+     حافّتُه — فالذهبيُّ على الأخضر هويّةُ مُحسن.
+     ══════════════════════════════════════════════════════════════ */
+  .fabwrap{ inset-inline-end:16px; gap:12px }
+  .fabwrap .fabs{ gap:9px; min-width:206px; align-items:stretch; overflow:visible }
+
+  .fabwrap .fab{
+    height:54px; padding:0 16px 0 7px; gap:12px; border-radius:16px;
+    justify-content:flex-start; color:#F2F7F4;
+    background:linear-gradient(180deg,#1C6B4D 0%,#10442F 100%);
+    border:1px solid rgba(255,255,255,.07);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.15),
+      inset 0 -1px 0 rgba(0,0,0,.22),
+      0 1px 2px rgba(7,36,25,.42),
+      0 12px 26px -10px rgba(7,36,25,.62);
+    transform-origin:100% 100%;
+    animation:fabIn .36s cubic-bezier(.22,1.15,.36,1) both;
+    animation-delay:calc(var(--i,0) * 34ms);
+    transition:transform .14s ease }
+  html[dir=ltr] .fabwrap .fab{ padding:0 7px 0 16px; transform-origin:0 100% }
+
+  .fabwrap .fab b{ flex:1; font-size:14px; font-weight:600; letter-spacing:-.15px;
+    white-space:nowrap }
+
+  /* حوضٌ ذهبيٌّ للأيقونة: حافّةُ ضوءٍ من أعلى وظلٌّ داخليٌّ من أسفل */
+  .fabwrap .fab .fi{
+    order:2; width:38px; height:38px; border-radius:12px; flex:none;
+    display:grid; place-items:center; color:#1A3B2B; background:
+      linear-gradient(180deg,#D8BE8C 0%,#B4945F 100%);
+    border:1px solid rgba(255,255,255,.28);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.45), 0 2px 5px rgba(0,0,0,.3) }
+  .fabwrap .fab .fi .ic{ width:19px; height:19px }
+  .fabwrap .fab:active{ transform:scale(.975) }
+
+  /* الإعداداتُ آخرُ الصفّ: فاصلٌ خفيٌّ يفصل الأبوابَ عن الضبط */
+  .fabwrap .fab:last-child{ margin-top:5px }
+  .fabwrap .fab:last-child::before{
+    content:''; position:absolute; inset-inline:14px; top:-7px; height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.16),transparent) }
+  .fabwrap .fab{ position:relative }
+
+  /* الزرُّ الرئيسيّ: حلقةٌ ذهبيّةٌ وتدرّجٌ وظلٌّ عميق */
+  .fabwrap .fabmain{
+    width:58px; height:58px; border-radius:20px;
+    background:linear-gradient(180deg,#1E7352 0%,#0A3626 100%);
+    border:1px solid rgba(198,168,111,.28);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.2),
+      inset 0 -2px 4px rgba(0,0,0,.25),
+      0 2px 4px rgba(7,36,25,.45),
+      0 16px 32px -10px rgba(7,36,25,.75);
+    animation:fabSpin .32s cubic-bezier(.22,1.15,.36,1) both }
+  .fabwrap .fabmain .ic{ width:26px; height:26px; color:#E8D5AE }
+  .fabwrap .fabmain:active{ transform:scale(.95) }
+
+  @keyframes fabIn{ from{ opacity:0; transform:translateY(16px) scale(.9) } }
+  @keyframes fabSpin{ from{ opacity:0; transform:rotate(-135deg) scale(.6) } }
+  @media (prefers-reduced-motion:reduce){
+    .fabwrap .fab, .fabwrap .fabmain{ animation:none } }
+
+
+  /* ══════════════ الدخول: صفُّ التذكّر · الفاصل · السِّمة ══════════════ */
+  .lrow{ display:flex; align-items:center; justify-content:space-between; gap:10px;
+    margin:-2px 0 2px }
+  .chk{ display:inline-flex; align-items:center; gap:8px; border:0; background:none;
+    padding:6px 2px; min-height:36px; font:inherit; font-size:12.5px; color:var(--dim);
+    cursor:pointer }
+  .chk .box{ width:19px; height:19px; border-radius:6px; flex:none; display:grid;
+    place-items:center; border:1.5px solid var(--line2,#D7E0D9); background:#fff;
+    color:#fff; transition:background .14s ease, border-color .14s ease }
+  .chk.on{ color:var(--ink); font-weight:600 }
+  .chk.on .box{ background:var(--g); border-color:var(--g) }
+
+  .orsep{ display:flex; align-items:center; gap:12px; margin:18px 0 14px;
+    color:var(--dim2); font-size:12px; font-weight:600 }
+  .orsep::before, .orsep::after{ content:''; flex:1; height:1px; background:var(--line) }
+
+  .biobtn{ display:flex; align-items:center; gap:12px; width:100%; min-height:56px;
+    padding:0 14px; border-radius:14px; cursor:pointer; font:inherit; text-align:start;
+    color:var(--ink); background:#fff; border:1.5px solid var(--line2,#D7E0D9);
+    transition:border-color .16s ease, background .16s ease }
+  .biobtn:active{ transform:scale(.985); background:var(--soft) }
+  .biobtn:disabled{ opacity:.65; cursor:progress }
+  .biobtn .sp{ flex:1; min-width:0 }
+  .biobtn b{ display:block; font-size:13.5px; font-weight:700 }
+  .biobtn .sp > span{ display:block; font-size:11.5px; color:var(--dim); margin-top:2px }
+  .biobtn .bioic{ width:42px; height:42px; border-radius:50%; flex:none; display:grid;
+    place-items:center; color:var(--g);
+    background:linear-gradient(180deg,rgba(20,89,63,.12),rgba(20,89,63,.06));
+    border:1px solid rgba(20,89,63,.16) }
+  .biobtn .ic:last-child{ color:var(--dim2); flex:none }
+
+  /* لوحُ عرض التفعيل */
+  .bioask{ display:flex; gap:14px; align-items:flex-start; padding:4px 0 6px }
+  .bioask .bioic{ width:52px; height:52px; border-radius:16px; flex:none; display:grid;
+    place-items:center; color:#fff;
+    background:linear-gradient(160deg,var(--g3),var(--g2));
+    box-shadow:0 8px 18px -8px rgba(11,53,39,.6) }
+  .bioask p{ margin:0; font-size:13px; line-height:1.85; color:var(--dim) }
+
+  /* حقلُ كلمة المرور صار cbox مثلَ الاسم — توحيدُ الارتفاع والحدّ */
+  .cbox.pwrap input{ letter-spacing:2px }
+  .cbox.pwrap input::placeholder{ letter-spacing:3px }
+
+
+  /* ══════════════════════════════════════════════════════════════
+     الدخول — البطاقةُ والحقولُ
+
+     (أُعيدت: سقطت سهوًا مع حذف بدائل القائمة، فظهرت الشاشةُ
+      بلا بطاقةٍ بيضاءَ ولا حدودِ حقول.)
+     ══════════════════════════════════════════════════════════════ */
+  .authmain{ position:relative; z-index:2; flex:1; min-height:0; display:flex;
+    flex-direction:column; align-items:center; overflow-y:auto;
+    -webkit-overflow-scrolling:touch }
+  .authmain::-webkit-scrollbar{ width:0 }
+  .authtop{ flex:none; display:flex; justify-content:center }
+  .authtop .logo{ margin:0; background-size:contain; background-repeat:no-repeat;
+    background-position:center }
+  .authcard{ width:100%; max-width:440px; background:#fff; border:1px solid var(--line);
+    box-shadow:0 1px 2px rgba(16,24,40,.04), 0 18px 40px -20px rgba(16,24,40,.22) }
+  .authhead{ text-align:center }
+  .authhead h1{ font-weight:700; letter-spacing:-.3px; line-height:1.4; margin:0;
+    color:var(--ink) }
+  .authsub{ margin:5px 0 0; font-size:12.5px; line-height:1.6; color:var(--dim) }
+  .authbody{ display:flex; flex-direction:column; gap:15px }
+  .autherr{ display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:12px;
+    background:var(--pRedB); color:var(--red); font-size:12.5px; line-height:1.6;
+    border:1px solid rgba(200,60,60,.22) }
+  .fld{ display:flex; flex-direction:column; gap:6px }
+  .fld > label{ font-size:13.5px; font-weight:600; color:var(--ink) }
+  .authfoot{ flex:none; display:flex; justify-content:center }
+
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <symbol id="av-m" viewBox="0 0 44 44">
@@ -1723,6 +1866,8 @@
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.6"/><path d="M15.6 15.6L20 20"/></symbol>
   <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><circle cx="12" cy="12" r="3.4"/><path d="M12 1.6v3M12 19.4v3M1.6 12h3M19.4 12h3"/></symbol>
   <symbol id="i-ticket" viewBox="0 0 24 24"><path d="M3.6 9.3V6.6a1.6 1.6 0 011.6-1.6h13.6a1.6 1.6 0 011.6 1.6v2.7a2.7 2.7 0 000 5.4v2.7a1.6 1.6 0 01-1.6 1.6H5.2a1.6 1.6 0 01-1.6-1.6v-2.7a2.7 2.7 0 000-5.4z"/><path d="M13.4 5v14" stroke-dasharray="2 2.4"/></symbol>
+  <symbol id="i-touch" viewBox="0 0 24 24"><path d="M12 3.2c-4.3 0-7.8 3.5-7.8 7.8v2.4"/><path d="M19.8 11c0-4.3-3.5-7.8-7.8-7.8"/><path d="M7.9 11a4.1 4.1 0 018.2 0v3.4"/><path d="M12 11v4.6"/><path d="M16.1 14.4a9.6 9.6 0 01-1 4.4"/><path d="M7.9 14.4v1.2a8 8 0 01-1.3 4.4"/><path d="M12 18.6v2.2"/><path d="M4.2 17.4a7.6 7.6 0 001-3.8"/></symbol>
+  <symbol id="i-face" viewBox="0 0 24 24"><path d="M3.4 8.2V5.6a2.2 2.2 0 012.2-2.2h2.6"/><path d="M15.8 3.4h2.6a2.2 2.2 0 012.2 2.2v2.6"/><path d="M20.6 15.8v2.6a2.2 2.2 0 01-2.2 2.2h-2.6"/><path d="M8.2 20.6H5.6a2.2 2.2 0 01-2.2-2.2v-2.6"/><path d="M9 10v1.4M15 10v1.4"/><path d="M12 10.4v3.2h-.9"/><path d="M9.3 15.8a4 4 0 005.4 0"/></symbol>
   <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.6" y="10" width="14.8" height="10.6" rx="3"/><path d="M8.2 10V7.6a3.8 3.8 0 017.6 0V10"/></symbol>
   <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6.4" y="2.6" width="11.2" height="18.8" rx="3"/><path d="M10.6 18.4h2.8"/></symbol>
   <symbol id="i-out" viewBox="0 0 24 24"><path d="M14.5 4.5h3.9a2 2 0 012 2v11a2 2 0 01-2 2h-3.9"/><path d="M9.6 8.2L5.4 12l4.2 3.8M5.6 12h9"/></symbol>
@@ -3046,6 +3191,8 @@ DICT.en = {
   "أنهِ مهمة جارية": "End a running task",
   "أنواع العمل": "Work types",
   "أنور بن سليمان": "Anwar bin Sulaiman",
+  "أهلًا بك": "Welcome",
+  "أو": "or",
   "أو اكتب سببًا": "Or write a reason",
   "أو انقر المقعد لتختار من قائمة.": "Or tap the seat to choose from a list.",
   "أو جرّب النظام": "Or try the system",
@@ -3203,6 +3350,8 @@ DICT.en = {
   "أُلغي إثبات حضور": "Check-in undone for",
   "أُلغي استبدالك": "Your substitution was cancelled",
   "أُلغي الإسناد": "Assignment cancelled",
+  "أُلغي التحقّق": "Verification was cancelled",
+  "أُلغي التسجيل": "Enrolment was cancelled",
   "أُلغي التفويض": "Delegation cancelled",
   "أُلغي تأشير «": "Unticked “",
   "أُلغي تأشيرها": "Unticked",
@@ -4278,6 +4427,7 @@ DICT.en = {
   "الجهات وحِملها": "Organisations and their load",
   "الجهات وملفّاتها": "Organisations and their files",
   "الجهاز لا يدعم تحديد الموقع": "This device does not support location",
+  "الجهاز لا يدعم هذه الميزة": "This device does not support that",
   "الجهة": "Organisation",
   "الجهة المشاركة": "Participating party",
   "الجهني": "Al-Juhani",
@@ -4320,6 +4470,7 @@ DICT.en = {
   "الحركة": "Movement",
   "الحرم بلازا": "Al-Haram Plaza",
   "الحساب": "Account",
+  "الحساب المسجّل لم يعد موجودًا": "The enrolled account no longer exists",
   "الحصيلة": "Outcome",
   "الحضور": "Attendance",
   "الحضور الفعلي": "Actual attendance",
@@ -4345,6 +4496,8 @@ DICT.en = {
   "الخطّ الزمني": "Timeline",
   "الخميس": "Thursday",
   "الخميس · {n} ربيع الآخر {n} هـ": "Thursday · {n} Rabi‘ al-Thani {n} AH",
+  "الدخول بالسِّمة الحيويّة": "Biometric sign-in",
+  "الدخول ببصمة الجهاز": "Sign in with device biometrics",
   "الدخول من البوّابة الشمالية بدل الشرقية حتى إشعار آخر.": "Enter through the north gate instead of the east gate until further notice.",
   "الدرجة": "Level",
   "الدرجة تُصعَّد بالتكرار لا بالمزاج": "The grade escalates by repetition, not by mood",
@@ -5172,8 +5325,12 @@ DICT.en = {
   "بعثة نوسانتارا · بعثة · إندونيسيا · فندق النسيم الملكي · المشرف مشعل الرشيدي": "Nusantara Mission · Mission · Indonesia · Al-Naseem Royal Hotel · Supervisor Mishal Al-Rashidi",
   "بعثة، شركة، مراكز، مشرفو المدينة": "Mission, company, centres, Madinah supervisors",
   "بعد": "After",
+  "بعد {n} أيام": "in {n} days",
+  "بعد {n} دقيقة": "in {n} min",
   "بعد {n} س {n} د": "after {n}h {n}m",
   "بعد {n} س و{n} د": "in {n} h {n} m",
+  "بعد {n} ساعة": "in {n} h",
+  "بعد {n} ساعة و{n} د": "in {n} h {n} m",
   "بعد {n} يوم": "in {n} days",
   "بعد الاختيار اضغط «توليد الردود» — فيُنشأ لكلّ محسنٍ": "After choosing, tap “Generate runs” — each Muhsen then gets",
   "بعد التصعيد": "After escalation",
@@ -5536,6 +5693,7 @@ DICT.en = {
   "تخصّصي أقرب لمهمّة زميلي فبادلناها.": "My specialism fits my colleague’s task better, so we swapped.",
   "تخصّصُه": "their specialism",
   "تداخل موعد التفويج مع مهمّة الطواف": "The dispatch time overlaps the Tawaf task",
+  "تدخل مرّةً واحدةً ببصمة الجهاز أو وجهه بدل كتابة كلمة المرور.": "Sign in with your device fingerprint or face instead of typing a password.",
   "تدفّق الحوادث": "Incident feed",
   "تدهور الحالة الصحية, والتأكد من الإحتياج المناسب بالعلاج أو النقل للمستشفى": "Deteriorating medical condition, and determining whether treatment or hospital transfer is required",
   "تذاكر": "Tickets",
@@ -5589,6 +5747,7 @@ DICT.en = {
   "تذكير على الثلاثاء {n}‏/{n}‏/{n}": "Reminder on Tuesday {n}‏/{n}‏/{n}",
   "تذكير: التحضير داخل النطاق": "Reminder: check in within range",
   "تذكيرات": "Reminders",
+  "تذكّرني": "Remember me",
   "تراجع": "Undo",
   "ترتيب الفرق": "Team ranking",
   "ترتيب الفريق": "Team ranking",
@@ -5751,6 +5910,8 @@ DICT.en = {
   "تعذّر إرسال الطلب": "The request could not be sent",
   "تعذّر الإرسال — الطلب قائم بالفعل": "Could not send — the request is already open",
   "تعذّر الإسناد — لا أحد في تلك الشِفتات": "Assignment failed — nobody is on those shifts",
+  "تعذّر التحقّق — ادخل بكلمة المرور": "Verification failed — sign in with your password",
+  "تعذّر التسجيل على هذا الجهاز": "Enrolment failed on this device",
   "تعذّر التنزيل في هذا المتصفّح": "Download failed in this browser",
   "تعذّر تحديد الموقع": "Could not determine the location",
   "تعذّر تلبية طلب الدعم": "The support request could not be met",
@@ -5823,6 +5984,7 @@ DICT.en = {
   "تفريغ الكلّ": "Clear all",
   "تفرّغ للقيادة": "Freed up to lead",
   "تفصيل التقييم": "Rating breakdown",
+  "تفعيل": "Enable",
   "تفعيل إشعارات الجوال": "Enable mobile notifications",
   "تفعيل التنبيهات": "Enable alerts",
   "تفعيل بطاقة": "Activate a card",
@@ -6885,6 +7047,7 @@ DICT.en = {
   "سجلّه نظيف": "Clean record",
   "سجّل أيّ حالةٍ صحّية فورًا ولو بدت عابرة.": "Log any medical case at once, even if it seems minor.",
   "سجّل الحضور أوّلًا": "Record check-in first",
+  "سجّل الدخول للمتابعة": "Sign in to continue",
   "سجّل العدد فور الاستقرار في المخيم": "Record the head count as soon as you settle at the camp",
   "سجّل حضورك أوّلًا": "Check in first",
   "سجّله": "Record it",
@@ -7778,6 +7941,7 @@ DICT.en = {
   "فُتحت": "Opened",
   "فُعِّلت التنبيهات الخارجية": "External alerts enabled",
   "فُعِّلت التنبيهات — وصلك": "Alerts enabled — you received",
+  "فُعّل الدخول بالسِّمة الحيويّة": "Biometric sign-in enabled",
   "فُوِّضت قيادة مهمة": "Task leadership delegated",
   "قائد": "Leader",
   "قائم": "Standing",
@@ -8062,6 +8226,7 @@ DICT.en = {
   "لا رسالة تطابق": "No matching message",
   "لا ركّاب بعد": "No passengers yet",
   "لا سجلّ — الحالة سليمة": "No record — all clear",
+  "لا سِمة مسجّلة على هذا الجهاز": "No biometric is enrolled on this device",
   "لا شروط بعد — أضِفها أو اربط قالبًا.": "No conditions yet — add them or link a template.",
   "لا شيء": "Nothing",
   "لا شيء خلال ساعة": "Nothing within an hour",
@@ -8218,6 +8383,8 @@ DICT.en = {
   "لم يصل — الرقم غير صالح": "Not delivered — the number is invalid",
   "لم يصلوا": "Have not arrived",
   "لم يصلوا بعد": "Not yet arrived",
+  "لم يكتمل التحقّق": "Verification did not complete",
+  "لم يكتمل التسجيل": "Enrolment did not complete",
   "لم يلتزم بمسار الطوارئ أثناء التفويج": "Did not follow the emergency route during dispatch",
   "لم يُبتّ فيها بعد": "Not yet decided",
   "لم يُتحقَّق": "Not verified",
@@ -8947,8 +9114,12 @@ DICT.en = {
   "منخفض": "Low",
   "منخفض · مهلة ساعة واحدة": "Low · one-hour deadline",
   "منذ": "for",
+  "منذ {n} أيام": "{n} days ago",
   "منذ {n} د": "for {n} m",
+  "منذ {n} دقيقة": "{n} min ago",
   "منذ {n} س {n} د": "for {n} h {n} m",
+  "منذ {n} ساعة": "{n} h ago",
+  "منذ {n} ساعة و{n} د": "{n} h {n} m ago",
   "منسحب بموافقة": "Withdrawn with approval",
   "منصور الحربي": "Mansour Al-Harbi",
   "منع الكل": "Deny all",
@@ -9381,6 +9552,7 @@ DICT.en = {
   "واقعة — من إنشائها إلى إغلاقها": "incidents — from creation to closure",
   "والدتي لا تستطيع المشي مسافات طويلة وتحتاج كرسيًا متحركًا لجولة الحرم.": "My mother cannot walk long distances and needs a wheelchair for the Haram visit.",
   "والدتي لا تقوى على المشي إلى الحرم وتحتاج كرسيًّا.": "My mother cannot walk to the Haram and needs a wheelchair.",
+  "والسِّمةُ لا تُغادر جهازك — يُحفظ معرّفٌ لا سرَّ فيه.": "Your biometric never leaves the device — only an identifier is stored, with no secret in it.",
   "والمُسنَد إليه لا يُختار إلا ممّن يغطّي شِفتُه ذلك الوقت.": "And the assignee is only chosen from those whose shift covers that time.",
   "وبلا خادم مركزي لا يمكن دفعه إلى جهاز شخص آخر وهو مغلق — يصله داخل التطبيق،": "Without a central server it cannot be pushed to another person’s device while closed — it reaches them inside the app,",
   "وتبدأ تلقائيًّا": "and starts automatically",
@@ -9682,7 +9854,7 @@ DICT.en = {
   "يُغلق قبل المهمة بساعة ونصف — ولم تثبت حضورك.": "It closes an hour and a half before the task — and you did not check in.",
   "يُغيَّران من هنا": "Both changed from here",
   "يُفتح البدء قبل الموعد بساعتين —": "Starting opens two hours before the time —",
-  "يُفتح التحضير قبل المهمة بساعتين": "Briefing check-in opens two hours before the task",
+  "يُفتح التحضير قبل المهمة بساعتين": "Check-in opens two hours before the task",
   "يُفتح التحضير قبل المهمة بساعتين —": "Briefing check-in opens two hours before the task —",
   "يُفتح في التطبيق": "Opens in the app",
   "يُقدَّم تفويج منى ساعة كاملة. راجعوا جداولكم واعتمدوا التحضير قبل {n}:{n}.": "The Mina dispatch is brought forward by a full hour. Review your schedules and complete briefing check-in before {n}:{n}.",
@@ -10652,6 +10824,8 @@ DICT.ms = {
   "أنهِ مهمة جارية": "Tamatkan tugasan berjalan",
   "أنواع العمل": "Jenis kerja",
   "أنور بن سليمان": "Anwar bin Sulaiman",
+  "أهلًا بك": "Selamat datang",
+  "أو": "atau",
   "أو اكتب سببًا": "Atau tulis sebab",
   "أو انقر المقعد لتختار من قائمة.": "Atau ketik tempat duduk untuk memilih daripada senarai.",
   "أو جرّب النظام": "Atau cuba sistem",
@@ -10809,6 +10983,8 @@ DICT.ms = {
   "أُلغي إثبات حضور": "Pendaftaran hadir dibatalkan bagi",
   "أُلغي استبدالك": "Gantian anda dibatalkan",
   "أُلغي الإسناد": "Penugasan dibatalkan",
+  "أُلغي التحقّق": "Pengesahan dibatalkan",
+  "أُلغي التسجيل": "Pendaftaran dibatalkan",
   "أُلغي التفويض": "Perwakilan dibatalkan",
   "أُلغي تأشير «": "Tanda dibuang “",
   "أُلغي تأشيرها": "Tandanya dibuang",
@@ -11884,6 +12060,7 @@ DICT.ms = {
   "الجهات وحِملها": "Organisasi dan bebannya",
   "الجهات وملفّاتها": "Organisasi dan failnya",
   "الجهاز لا يدعم تحديد الموقع": "Peranti ini tidak menyokong lokasi",
+  "الجهاز لا يدعم هذه الميزة": "Peranti ini tidak menyokongnya",
   "الجهة": "Organisasi",
   "الجهة المشاركة": "Pihak terlibat",
   "الجهني": "Al-Juhani",
@@ -11926,6 +12103,7 @@ DICT.ms = {
   "الحركة": "Pergerakan",
   "الحرم بلازا": "Al-Haram Plaza",
   "الحساب": "Akaun",
+  "الحساب المسجّل لم يعد موجودًا": "Akaun yang didaftarkan tidak lagi wujud",
   "الحصيلة": "Hasil",
   "الحضور": "Kehadiran",
   "الحضور الفعلي": "Kehadiran sebenar",
@@ -11951,6 +12129,8 @@ DICT.ms = {
   "الخطّ الزمني": "Garis masa",
   "الخميس": "Khamis",
   "الخميس · {n} ربيع الآخر {n} هـ": "Khamis · {n} Rabiulakhir {n}H",
+  "الدخول بالسِّمة الحيويّة": "Log masuk biometrik",
+  "الدخول ببصمة الجهاز": "Log masuk dengan biometrik peranti",
   "الدخول من البوّابة الشمالية بدل الشرقية حتى إشعار آخر.": "Masuk melalui pintu utara dan bukan pintu timur sehingga diberitahu kelak.",
   "الدرجة": "Tahap",
   "الدرجة تُصعَّد بالتكرار لا بالمزاج": "Gred dinaikkan kerana berulang, bukan mengikut perasaan",
@@ -12778,8 +12958,12 @@ DICT.ms = {
   "بعثة نوسانتارا · بعثة · إندونيسيا · فندق النسيم الملكي · المشرف مشعل الرشيدي": "Misi Nusantara · Misi · Indonesia · Hotel Al-Naseem Royal · Penyelia Mishal Al-Rashidi",
   "بعثة، شركة، مراكز، مشرفو المدينة": "Misi, syarikat, pusat, penyelia Madinah",
   "بعد": "Selepas",
+  "بعد {n} أيام": "dalam {n} hari",
+  "بعد {n} دقيقة": "dalam {n} min",
   "بعد {n} س {n} د": "selepas {n}j {n}m",
   "بعد {n} س و{n} د": "dalam {n} j {n} m",
+  "بعد {n} ساعة": "dalam {n} j",
+  "بعد {n} ساعة و{n} د": "dalam {n} j {n} m",
   "بعد {n} يوم": "dalam {n} hari",
   "بعد الاختيار اضغط «توليد الردود» — فيُنشأ لكلّ محسنٍ": "Selepas memilih, ketik “Jana pusingan” — setiap Muhsin kemudian mendapat",
   "بعد التصعيد": "Selepas eskalasi",
@@ -13142,6 +13326,7 @@ DICT.ms = {
   "تخصّصي أقرب لمهمّة زميلي فبادلناها.": "Kepakaran saya lebih sesuai dengan tugas rakan sekerja, jadi kami bertukar.",
   "تخصّصُه": "kepakarannya",
   "تداخل موعد التفويج مع مهمّة الطواف": "Waktu penghantaran bertindih dengan tugas tawaf",
+  "تدخل مرّةً واحدةً ببصمة الجهاز أو وجهه بدل كتابة كلمة المرور.": "Log masuk dengan cap jari atau wajah peranti anda dan bukan menaip kata laluan.",
   "تدفّق الحوادث": "Suapan insiden",
   "تدهور الحالة الصحية, والتأكد من الإحتياج المناسب بالعلاج أو النقل للمستشفى": "Keadaan kesihatan merosot, dan menentukan sama ada rawatan atau pemindahan ke hospital diperlukan",
   "تذاكر": "Tiket",
@@ -13195,6 +13380,7 @@ DICT.ms = {
   "تذكير على الثلاثاء {n}‏/{n}‏/{n}": "Peringatan pada Selasa {n}‏/{n}‏/{n}",
   "تذكير: التحضير داخل النطاق": "Peringatan: daftar hadir dalam kawasan",
   "تذكيرات": "Peringatan",
+  "تذكّرني": "Ingat saya",
   "تراجع": "Buat asal",
   "ترتيب الفرق": "Kedudukan pasukan",
   "ترتيب الفريق": "Kedudukan pasukan",
@@ -13357,6 +13543,8 @@ DICT.ms = {
   "تعذّر إرسال الطلب": "Permintaan tidak dapat dihantar",
   "تعذّر الإرسال — الطلب قائم بالفعل": "Tidak dapat dihantar — permintaan sudah terbuka",
   "تعذّر الإسناد — لا أحد في تلك الشِفتات": "Penugasan gagal — tiada sesiapa pada syif tersebut",
+  "تعذّر التحقّق — ادخل بكلمة المرور": "Pengesahan gagal — log masuk dengan kata laluan anda",
+  "تعذّر التسجيل على هذا الجهاز": "Pendaftaran gagal pada peranti ini",
   "تعذّر التنزيل في هذا المتصفّح": "Muat turun gagal dalam pelayar ini",
   "تعذّر تحديد الموقع": "Lokasi tidak dapat ditentukan",
   "تعذّر تلبية طلب الدعم": "Permintaan sokongan tidak dapat dipenuhi",
@@ -13429,6 +13617,7 @@ DICT.ms = {
   "تفريغ الكلّ": "Kosongkan semua",
   "تفرّغ للقيادة": "Dibebaskan untuk mengetuai",
   "تفصيل التقييم": "Pecahan penilaian",
+  "تفعيل": "Dayakan",
   "تفعيل إشعارات الجوال": "Aktifkan pemberitahuan mudah alih",
   "تفعيل التنبيهات": "Aktifkan amaran",
   "تفعيل بطاقة": "Aktifkan kad",
@@ -14491,6 +14680,7 @@ DICT.ms = {
   "سجلّه نظيف": "Rekod bersih",
   "سجّل أيّ حالةٍ صحّية فورًا ولو بدت عابرة.": "Rekodkan sebarang kes perubatan segera, walaupun nampak ringan.",
   "سجّل الحضور أوّلًا": "Rekod daftar masuk dahulu",
+  "سجّل الدخول للمتابعة": "Log masuk untuk teruskan",
   "سجّل العدد فور الاستقرار في المخيم": "Rekodkan bilangan sebaik menetap di perkhemahan",
   "سجّل حضورك أوّلًا": "Daftar masuk dahulu",
   "سجّله": "Rekodkannya",
@@ -15384,6 +15574,7 @@ DICT.ms = {
   "فُتحت": "Dibuka",
   "فُعِّلت التنبيهات الخارجية": "Amaran luaran diaktifkan",
   "فُعِّلت التنبيهات — وصلك": "Amaran diaktifkan — anda menerima",
+  "فُعّل الدخول بالسِّمة الحيويّة": "Log masuk biometrik didayakan",
   "فُوِّضت قيادة مهمة": "Kepimpinan tugas diwakilkan",
   "قائد": "Ketua",
   "قائم": "Masih berkuat kuasa",
@@ -15668,6 +15859,7 @@ DICT.ms = {
   "لا رسالة تطابق": "Tiada mesej sepadan",
   "لا ركّاب بعد": "Belum ada penumpang",
   "لا سجلّ — الحالة سليمة": "Tiada rekod — semuanya baik",
+  "لا سِمة مسجّلة على هذا الجهاز": "Tiada biometrik didaftarkan pada peranti ini",
   "لا شروط بعد — أضِفها أو اربط قالبًا.": "Belum ada syarat — tambah atau pautkan templat.",
   "لا شيء": "Tiada",
   "لا شيء خلال ساعة": "Tiada apa dalam sejam",
@@ -15824,6 +16016,8 @@ DICT.ms = {
   "لم يصل — الرقم غير صالح": "Tidak sampai — nombor tidak sah",
   "لم يصلوا": "Belum tiba",
   "لم يصلوا بعد": "Belum tiba",
+  "لم يكتمل التحقّق": "Pengesahan tidak selesai",
+  "لم يكتمل التسجيل": "Pendaftaran tidak selesai",
   "لم يلتزم بمسار الطوارئ أثناء التفويج": "Tidak mematuhi laluan kecemasan semasa penghantaran",
   "لم يُبتّ فيها بعد": "Belum diputuskan",
   "لم يُتحقَّق": "Belum disahkan",
@@ -16553,8 +16747,12 @@ DICT.ms = {
   "منخفض": "Rendah",
   "منخفض · مهلة ساعة واحدة": "Rendah · tempoh satu jam",
   "منذ": "selama",
+  "منذ {n} أيام": "{n} hari lalu",
   "منذ {n} د": "selama {n} m",
+  "منذ {n} دقيقة": "{n} min lalu",
   "منذ {n} س {n} د": "selama {n} j {n} m",
+  "منذ {n} ساعة": "{n} j lalu",
+  "منذ {n} ساعة و{n} د": "{n} j {n} m lalu",
   "منسحب بموافقة": "Menarik diri dengan kelulusan",
   "منصور الحربي": "Mansour Al-Harbi",
   "منع الكل": "Halang semua",
@@ -16987,6 +17185,7 @@ DICT.ms = {
   "واقعة — من إنشائها إلى إغلاقها": "insiden — daripada dibuka hingga ditutup",
   "والدتي لا تستطيع المشي مسافات طويلة وتحتاج كرسيًا متحركًا لجولة الحرم.": "Ibu saya tidak mampu berjalan jauh dan memerlukan kerusi roda untuk lawatan Haram.",
   "والدتي لا تقوى على المشي إلى الحرم وتحتاج كرسيًّا.": "Ibu saya tidak mampu berjalan ke Haram dan memerlukan kerusi roda.",
+  "والسِّمةُ لا تُغادر جهازك — يُحفظ معرّفٌ لا سرَّ فيه.": "Biometrik anda tidak pernah meninggalkan peranti — hanya pengecam disimpan, tanpa rahsia di dalamnya.",
   "والمُسنَد إليه لا يُختار إلا ممّن يغطّي شِفتُه ذلك الوقت.": "Dan penerima tugas hanya dipilih daripada mereka yang syifnya meliputi waktu itu.",
   "وبلا خادم مركزي لا يمكن دفعه إلى جهاز شخص آخر وهو مغلق — يصله داخل التطبيق،": "Tanpa pelayan pusat, ia tidak boleh ditolak ke peranti orang lain semasa ditutup — ia sampai kepadanya dalam aplikasi,",
   "وتبدأ تلقائيًّا": "dan bermula secara automatik",
@@ -17288,7 +17487,7 @@ DICT.ms = {
   "يُغلق قبل المهمة بساعة ونصف — ولم تثبت حضورك.": "Ia ditutup sejam setengah sebelum tugas — dan anda tidak mendaftar hadir.",
   "يُغيَّران من هنا": "Kedua-duanya diubah di sini",
   "يُفتح البدء قبل الموعد بساعتين —": "Permulaan dibuka dua jam sebelum waktunya —",
-  "يُفتح التحضير قبل المهمة بساعتين": "Pendaftaran taklimat dibuka dua jam sebelum tugas",
+  "يُفتح التحضير قبل المهمة بساعتين": "Daftar masuk dibuka dua jam sebelum tugas",
   "يُفتح التحضير قبل المهمة بساعتين —": "Pendaftaran taklimat dibuka dua jam sebelum tugas —",
   "يُفتح في التطبيق": "Dibuka dalam aplikasi",
   "يُقدَّم تفويج منى ساعة كاملة. راجعوا جداولكم واعتمدوا التحضير قبل {n}:{n}.": "Penghantaran ke Mina diawalkan sejam penuh. Semak jadual anda dan lengkapkan pendaftaran taklimat sebelum {n}:{n}.",
@@ -17641,21 +17840,13 @@ function makePilgrims(n, seedNo) {
   });
 }
 
-/* التسكينُ التلقائيُّ يأخذ جزءًا من الفريق لا كلَّه.
+/* كل مهمة جديدة تُسكَّن تلقائيًّا بفريق الليدر كاملًا.
 
-   كان يُسكِّن الفريقَ كاملًا على كلّ مهمّة، فيرى المحسنُ ما يراه
-   ليدرُه حرفًا بحرف — وهو خلافُ الواقع: المحسنُ على مهامِّه هو.
-   والاختيارُ ثابتٌ لا عشوائيّ: يدور على الفريق بترتيبه فتتوزّع
-   الأحمالُ ولا تتبدّل البذرةُ بين تشغيلين. */
-const TASK_CREW = 3;
+   جرّبتُ أن أقصرَها على ثلاثةٍ ظنًّا منّي أنّ ذلك سببُ رؤية المحسن
+   لكلّ شيء — وهو تغييرٌ في البزنس لم يُطلَب منّي. أُعيد الأصل. */
 function autoAssign(st, t) {
   const team = (st.users || S.users).filter(u => u.role === 'muhsen' && u.leaderId === t.leaderId && !u.reserve);
-  if (!team.length) return t;
-  const seq = Number(String(t.id).replace(/\D/g, '')) || 0;
-  const take = Math.min(TASK_CREW, team.length);
-  const crew = [];
-  for (let i = 0; i < take; i++) crew.push(team[(seq + i) % team.length]);
-  crew.forEach(m => {
+  team.forEach(m => {
     if (t.assigned.some(a => a.muhsenId === m.id)) return;
     t.assigned.push({ muhsenId: m.id, req: 'accepted', auto: true,
       reqAt: t.start - 72 * HR, reqNote: 'تسكين تلقائي', respAt: t.start - 72 * HR, respNote: '',
@@ -18791,6 +18982,7 @@ function screenLogin() {
   const picked = S.loginId ? userById(S.loginId) : null;
   const open = !!S.loginOpen;
   const list = open ? loginList() : [];
+  const bio = bioSaved();
 
   const opt = u =>
     '<button type="button" class="lopt' + (picked && picked.id === u.id ? ' on' : '') + '" ' +
@@ -18811,8 +19003,8 @@ function screenLogin() {
 
       '<div class="authcard">' +
         '<div class="authhead">' +
-          '<h1>تسجيل الدخول</h1>' +
-          '<p class="authsub">تطبيق الميدان — موسم الحج ١٤٤٨ هـ</p>' +
+          '<h1>أهلًا بك</h1>' +
+          '<p class="authsub">سجّل الدخول للمتابعة</p>' +
         '</div>' +
 
         '<form class="authbody" data-a="nosubmit">' +
@@ -18824,7 +19016,7 @@ function screenLogin() {
             '<div class="combo' + (open ? ' open' : '') + '">' +
               '<div class="cbox' + (open ? ' on' : '') + '">' +
                 icon('i-user', 's18') +
-                '<input id="lu" type="text" autocomplete="off" role="combobox" ' +
+                '<input id="lu" type="text" autocomplete="username" role="combobox" ' +
                   'aria-expanded="' + (open ? 'true' : 'false') + '" ' +
                   'placeholder="اكتب الاسم أو الرمز" ' +
                   'value="' + E(S.loginU || '') + '" data-a="loginopen" ' +
@@ -18844,26 +19036,44 @@ function screenLogin() {
 
           '<div class="fld">' +
             '<label for="lp">كلمة المرور</label>' +
-            '<div class="pwrap">' +
+            '<div class="cbox pwrap">' + icon('i-lock', 's18') +
               '<input id="lp" type="' + (S.loginShow ? 'text' : 'password') + '" ' +
-                'autocomplete="current-password" value="' + E(S.loginP || '') + '" ' +
+                'autocomplete="current-password" placeholder="••••••••" ' +
+                'value="' + E(S.loginP || '') + '" ' +
                 'data-a="loginp" aria-label="كلمة المرور">' +
-              '<button type="button" class="pweye" data-a="loginshow" ' +
+              '<button type="button" class="cbtn" data-a="loginshow" ' +
                 'aria-label="إظهار كلمة المرور أو إخفاؤها" ' +
                 'aria-pressed="' + (S.loginShow ? 'true' : 'false') + '">' +
                 icon('i-eye', 's18') + '</button>' +
             '</div>' +
-            '<div class="fldend">' +
-              '<button type="button" class="alink" data-a="loginforgot">نسيت كلمة المرور؟</button>' +
-            '</div>' +
+          '</div>' +
+
+          /* صفُّ التذكّر والنسيان — موضعُهما المعتاد في كلّ تطبيق */
+          '<div class="lrow">' +
+            '<button type="button" class="chk' + (S.loginKeep ? ' on' : '') + '" ' +
+              'data-a="loginkeep" role="checkbox" ' +
+              'aria-checked="' + (S.loginKeep ? 'true' : 'false') + '">' +
+              '<span class="box">' + (S.loginKeep ? icon('i-check', 's14') : '') + '</span>' +
+              '<span>تذكّرني</span></button>' +
+            '<button type="button" class="alink" data-a="loginforgot">نسيت كلمة المرور؟</button>' +
           '</div>' +
 
           '<button class="btn p wide" data-a="dologin"' + (S.loginBusy ? ' disabled' : '') + '>' +
-            (S.loginBusy ? '<span class="spin"></span>' : icon('i-out', 's18')) +
+            (S.loginBusy ? '<span class="spin"></span>' : '') +
             'تسجيل الدخول</button>' +
         '</form>' +
 
-
+        /* السِّمةُ الحيويّة: لا تظهر إلّا لمن سجّلها على هذا الجهاز */
+        (bio
+          ? '<div class="orsep">أو</div>' +
+            '<button class="biobtn' + (S.bioBusy ? ' busy' : '') + '" data-a="biologin"' +
+              (S.bioBusy ? ' disabled' : '') + '>' +
+              '<span class="bioic">' +
+                (S.bioBusy ? '<span class="spin"></span>' : icon('i-touch', 's22')) + '</span>' +
+              '<span class="sp"><b>الدخول ببصمة الجهاز</b>' +
+                '<span>' + E(bio.name) + '</span></span>' +
+              icon('i-back', 's16') + '</button>'
+          : '') +
       '</div>' +
 
       '<div class="authfoot"><i class="mnozoly" role="img" aria-label="نُزلي"></i></div>' +
@@ -18891,7 +19101,10 @@ function enterAs(id) {
     S.route = { n: u.role === 'leader' ? 'home' : 'mhome' };
     toast('مرحبًا ' + u.name, 'g'); buzz();
     save(); render();
-    setTimeout(function () { if (maybeAskPush()) render(); }, 1400);
+    setTimeout(function () {
+      if (maybeAskPush()) { render(); return; }
+      bioProbe(function () { if (maybeAskBio()) render(); });
+    }, 1400);
   }, 420);
 }
 
@@ -22364,6 +22577,162 @@ function screenSettings() {
   '</div>' + tabs();
 }
 
+/* ============================================================
+   الدخولُ بالسِّمة الحيويّة — WebAuthn
+
+   يُستعمل مُصدِّقُ المنصّة (بصمةُ الجهاز أو وجهُه)، لا بصمةٌ
+   يحفظها التطبيق: البصمةُ لا تُغادر الجهازَ قطُّ، وما يُحفظ هنا
+   هو **معرّفُ اعتمادٍ** لا سرَّ فيه.
+
+   وحين يصل الخادم: يُستبدل التحدّي العشوائيُّ المحلّيُّ بتحدٍّ
+   من الخادم، ويُرسَل الجوابُ إليه ليتحقّق. ولا يتغيّر شيءٌ في
+   الشاشة — الموضعان معلَّمان بـ«نقطةُ الربط».
+
+   ويعمل على https وعلى localhost وحدهما: وهو شرطُ المتصفّح لا
+   اختيارُنا.
+   ============================================================ */
+
+const BIO_KEY = 'muhsen_bio_v1';
+
+const bioSupported = () =>
+  typeof window.PublicKeyCredential === 'function' &&
+  !!(navigator.credentials && navigator.credentials.create);
+
+/* هل في الجهاز مُصدِّقُ منصّةٍ فعلًا؟ سؤالٌ غيرُ متزامن */
+let _bioReady = null;
+function bioProbe(cb) {
+  if (_bioReady !== null) { cb(_bioReady); return; }
+  if (!bioSupported()) { _bioReady = false; cb(false); return; }
+  try {
+    PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
+      .then(ok => { _bioReady = !!ok; cb(_bioReady); })
+      .catch(() => { _bioReady = false; cb(false); });
+  } catch (e) { _bioReady = false; cb(false); }
+}
+
+/* ما سُجّل على هذا الجهاز: { id, userId, name } */
+function bioSaved() {
+  try { return JSON.parse(localStorage.getItem(BIO_KEY) || 'null'); }
+  catch (e) { return null; }
+}
+function bioStore(v) {
+  try { v ? localStorage.setItem(BIO_KEY, JSON.stringify(v))
+          : localStorage.removeItem(BIO_KEY); } catch (e) {}
+}
+
+const b64 = buf => {
+  const a = new Uint8Array(buf); let s = '';
+  for (let i = 0; i < a.length; i++) s += String.fromCharCode(a[i]);
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+};
+const unb64 = s => {
+  const t = s.replace(/-/g, '+').replace(/_/g, '/');
+  const bin = atob(t + '==='.slice((t.length + 3) % 4));
+  const a = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
+  return a;
+};
+const rand = n => { const a = new Uint8Array(n);
+  (window.crypto || {}).getRandomValues ? crypto.getRandomValues(a)
+    : a.forEach((_, i) => { a[i] = (Math.random() * 256) | 0; });
+  return a; };
+
+/* ---------- التسجيل: يُعرَض بعد أوّل دخولٍ ناجح ---------- */
+function bioEnroll(u, done) {
+  if (!bioSupported()) { done(false, 'الجهاز لا يدعم هذه الميزة'); return; }
+  /* نقطةُ الربط: التحدّي يأتي من الخادم */
+  navigator.credentials.create({
+    publicKey: {
+      challenge: rand(32),
+      rp: { name: 'مُحسن', id: location.hostname },
+      user: { id: rand(16), name: u.code || u.id, displayName: u.name },
+      pubKeyCredParams: [{ type: 'public-key', alg: -7 },
+                         { type: 'public-key', alg: -257 }],
+      authenticatorSelection: {
+        authenticatorAttachment: 'platform',
+        userVerification: 'required',
+        residentKey: 'preferred'
+      },
+      timeout: 60000,
+      attestation: 'none'
+    }
+  }).then(cred => {
+    if (!cred) { done(false, 'لم يكتمل التسجيل'); return; }
+    bioStore({ id: b64(cred.rawId), userId: u.id, name: u.name });
+    done(true);
+  }).catch(err => {
+    done(false, err && err.name === 'NotAllowedError'
+      ? 'أُلغي التسجيل' : 'تعذّر التسجيل على هذا الجهاز');
+  });
+}
+
+/* ---------- الدخول ---------- */
+function bioLogin(done) {
+  const saved = bioSaved();
+  if (!saved) { done(false, 'لا سِمة مسجّلة على هذا الجهاز'); return; }
+  /* نقطةُ الربط: التحدّي من الخادم، والجوابُ يُرسَل إليه */
+  navigator.credentials.get({
+    publicKey: {
+      challenge: rand(32),
+      allowCredentials: [{ type: 'public-key', id: unb64(saved.id) }],
+      userVerification: 'required',
+      timeout: 60000
+    }
+  }).then(res => {
+    if (!res) { done(false, 'لم يكتمل التحقّق'); return; }
+    done(true, null, saved.userId);
+  }).catch(err => {
+    done(false, err && err.name === 'NotAllowedError'
+      ? 'أُلغي التحقّق' : 'تعذّر التحقّق — ادخل بكلمة المرور');
+  });
+}
+
+/* ---------- الأفعال ---------- */
+function bioDo() {
+  if (S.bioBusy) return;
+  S.bioBusy = true; S.loginErr = null; save(); render();
+  bioLogin(function (ok, why, uid) {
+    S.bioBusy = false;
+    if (!ok) { S.loginErr = why; save(); render(); return; }
+    const u = userById(uid);
+    if (!u) { bioStore(null); S.loginErr = 'الحساب المسجّل لم يعد موجودًا';
+      save(); render(); return; }
+    enterAs(u.id);
+  });
+}
+
+function bioAskSheet(u) {
+  return '<div class="sheeth"><b>الدخول بالسِّمة الحيويّة</b></div>' +
+    '<div class="bioask">' +
+      '<span class="bioic">' + icon('i-touch', 's26') + '</span>' +
+      '<p>تدخل مرّةً واحدةً ببصمة الجهاز أو وجهه بدل كتابة كلمة المرور. ' +
+        'والسِّمةُ لا تُغادر جهازك — يُحفظ معرّفٌ لا سرَّ فيه.</p>' +
+    '</div>' +
+    '<div class="sheetbtns">' +
+      '<button class="btn g" data-a="bioskip">لاحقًا</button>' +
+      '<button class="btn p" data-a="bioenroll" data-id="' + u.id + '">' +
+        icon('i-touch', 's16') + 'تفعيل</button>' +
+    '</div>';
+}
+
+function bioEnrollDo(id) {
+  const u = userById(id); if (!u) return;
+  bioEnroll(u, function (ok, why) {
+    S.sheet = null;
+    toast(ok ? 'فُعّل الدخول بالسِّمة الحيويّة' : why, ok ? 'g' : 'r');
+    save(); render();
+  });
+}
+
+/* يُعرَض مرّةً واحدةً لكلّ جهاز، وبعد الدخول لا قبله */
+function maybeAskBio() {
+  if (!S.session || S.bioAsked || bioSaved()) return false;
+  if (!bioSupported() || _bioReady === false) return false;
+  S.bioAsked = true;
+  S.sheet = bioAskSheet(me());
+  return true;
+}
+
 /* ============================ البلاغات — منفصلة عن التذاكر ============================ */
 /* المحسن يرفع بلاغه إلى ليدره، والليدر يرفع إلى الكنترول أو يُصعّد ما وصله */
 
@@ -23396,6 +23765,10 @@ document.addEventListener('click', ev => {
     case 'loginshow':   S.loginShow = !S.loginShow; break;
     case 'loginforgot': toast('راجع مشرفك لإعادة تعيين كلمة المرور', 'r'); break;
     case 'dologin':     doLogin(); return;
+    case 'loginkeep': S.loginKeep = !S.loginKeep; break;
+    case 'biologin':  bioDo(); return;
+    case 'bioenroll': bioEnrollDo(id); return;
+    case 'bioskip':   S.sheet = null; break;
     case 'logout': S.session = null; S.route = { n: 'login' }; S.sheet = null; S.sheetBare = false; break;
 
     /* ---------- الردود: إضافةٌ ← عددٌ ← بدءٌ ← إنهاء ---------- */

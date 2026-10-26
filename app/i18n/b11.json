@@ -1,0 +1,11 @@
+{
+  "بعد {n} دقيقة": ["in {n} min", "dalam {n} min"],
+  "منذ {n} دقيقة": ["{n} min ago", "{n} min lalu"],
+  "بعد {n} ساعة": ["in {n} h", "dalam {n} j"],
+  "منذ {n} ساعة": ["{n} h ago", "{n} j lalu"],
+  "بعد {n} ساعة و{n} د": ["in {n} h {n} m", "dalam {n} j {n} m"],
+  "منذ {n} ساعة و{n} د": ["{n} h {n} m ago", "{n} j {n} m lalu"],
+  "بعد {n} أيام": ["in {n} days", "dalam {n} hari"],
+  "منذ {n} أيام": ["{n} days ago", "{n} hari lalu"],
+  "يُفتح التحضير قبل المهمة بساعتين": ["Check-in opens two hours before the task", "Daftar masuk dibuka dua jam sebelum tugas"]
+}

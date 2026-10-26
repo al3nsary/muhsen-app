@@ -1563,8 +1563,11 @@
   @keyframes fabPop{ from{ opacity:0; transform:rotate(-90deg) scale(.7) } }
   @media (prefers-reduced-motion:reduce){ .fab, .fabmain{ animation:none } }
 
-  .scrim.soft{ background:rgba(11,53,39,.32);
-    -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px) }
+  .scrim.soft{ background:radial-gradient(135% 95% at 88% 90%,
+    rgba(7,36,25,.14) 0%, rgba(7,36,25,.55) 62%);
+    -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px) }
+  html[dir=ltr] .scrim.soft{ background:radial-gradient(135% 95% at 12% 90%,
+    rgba(7,36,25,.14) 0%, rgba(7,36,25,.55) 62%) }
 
   @media (max-height:680px){
     .fab{ height:48px; padding-inline-start:18px }
@@ -1637,5 +1640,145 @@
      الشِفتَ ما زال ساريًا، فلا يُظنّ أنّ اليومَ اكتمل. */
   .cta.out.early{ background:var(--pRedB,rgba(200,60,60,.08)); color:var(--red);
     border-color:rgba(200,60,60,.28) }
+
+
+  /* ══════════════════════════════════════════════════════════════
+     «المزيد» — حبّاتٌ مصنوعةٌ لا مُعبَّأة
+
+     كانت تعبئةً مسطّحةً بلونٍ واحد، وحوافُّها مسنّنةٌ لأنّ كلَّ
+     حبّةٍ بعرض نصّها. فصارت: عرضٌ موحَّدٌ، وتدرّجٌ يعطي عمقًا،
+     وحافّةُ ضوءٍ من أعلى وظلٌّ داخليٌّ من أسفل، وظلٌّ مزدوجٌ
+     (تماسٌّ قريبٌ ومحيطٌ بعيد)، وأيقونةٌ ذهبيّةٌ في حوضٍ له
+     حافّتُه — فالذهبيُّ على الأخضر هويّةُ مُحسن.
+     ══════════════════════════════════════════════════════════════ */
+  .fabwrap{ inset-inline-end:16px; gap:12px }
+  .fabwrap .fabs{ gap:9px; min-width:206px; align-items:stretch; overflow:visible }
+
+  .fabwrap .fab{
+    height:54px; padding:0 16px 0 7px; gap:12px; border-radius:16px;
+    justify-content:flex-start; color:#F2F7F4;
+    background:linear-gradient(180deg,#1C6B4D 0%,#10442F 100%);
+    border:1px solid rgba(255,255,255,.07);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.15),
+      inset 0 -1px 0 rgba(0,0,0,.22),
+      0 1px 2px rgba(7,36,25,.42),
+      0 12px 26px -10px rgba(7,36,25,.62);
+    transform-origin:100% 100%;
+    animation:fabIn .36s cubic-bezier(.22,1.15,.36,1) both;
+    animation-delay:calc(var(--i,0) * 34ms);
+    transition:transform .14s ease }
+  html[dir=ltr] .fabwrap .fab{ padding:0 7px 0 16px; transform-origin:0 100% }
+
+  .fabwrap .fab b{ flex:1; font-size:14px; font-weight:600; letter-spacing:-.15px;
+    white-space:nowrap }
+
+  /* حوضٌ ذهبيٌّ للأيقونة: حافّةُ ضوءٍ من أعلى وظلٌّ داخليٌّ من أسفل */
+  .fabwrap .fab .fi{
+    order:2; width:38px; height:38px; border-radius:12px; flex:none;
+    display:grid; place-items:center; color:#1A3B2B; background:
+      linear-gradient(180deg,#D8BE8C 0%,#B4945F 100%);
+    border:1px solid rgba(255,255,255,.28);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.45), 0 2px 5px rgba(0,0,0,.3) }
+  .fabwrap .fab .fi .ic{ width:19px; height:19px }
+  .fabwrap .fab:active{ transform:scale(.975) }
+
+  /* الإعداداتُ آخرُ الصفّ: فاصلٌ خفيٌّ يفصل الأبوابَ عن الضبط */
+  .fabwrap .fab:last-child{ margin-top:5px }
+  .fabwrap .fab:last-child::before{
+    content:''; position:absolute; inset-inline:14px; top:-7px; height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.16),transparent) }
+  .fabwrap .fab{ position:relative }
+
+  /* الزرُّ الرئيسيّ: حلقةٌ ذهبيّةٌ وتدرّجٌ وظلٌّ عميق */
+  .fabwrap .fabmain{
+    width:58px; height:58px; border-radius:20px;
+    background:linear-gradient(180deg,#1E7352 0%,#0A3626 100%);
+    border:1px solid rgba(198,168,111,.28);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.2),
+      inset 0 -2px 4px rgba(0,0,0,.25),
+      0 2px 4px rgba(7,36,25,.45),
+      0 16px 32px -10px rgba(7,36,25,.75);
+    animation:fabSpin .32s cubic-bezier(.22,1.15,.36,1) both }
+  .fabwrap .fabmain .ic{ width:26px; height:26px; color:#E8D5AE }
+  .fabwrap .fabmain:active{ transform:scale(.95) }
+
+  @keyframes fabIn{ from{ opacity:0; transform:translateY(16px) scale(.9) } }
+  @keyframes fabSpin{ from{ opacity:0; transform:rotate(-135deg) scale(.6) } }
+  @media (prefers-reduced-motion:reduce){
+    .fabwrap .fab, .fabwrap .fabmain{ animation:none } }
+
+
+  /* ══════════════ الدخول: صفُّ التذكّر · الفاصل · السِّمة ══════════════ */
+  .lrow{ display:flex; align-items:center; justify-content:space-between; gap:10px;
+    margin:-2px 0 2px }
+  .chk{ display:inline-flex; align-items:center; gap:8px; border:0; background:none;
+    padding:6px 2px; min-height:36px; font:inherit; font-size:12.5px; color:var(--dim);
+    cursor:pointer }
+  .chk .box{ width:19px; height:19px; border-radius:6px; flex:none; display:grid;
+    place-items:center; border:1.5px solid var(--line2,#D7E0D9); background:#fff;
+    color:#fff; transition:background .14s ease, border-color .14s ease }
+  .chk.on{ color:var(--ink); font-weight:600 }
+  .chk.on .box{ background:var(--g); border-color:var(--g) }
+
+  .orsep{ display:flex; align-items:center; gap:12px; margin:18px 0 14px;
+    color:var(--dim2); font-size:12px; font-weight:600 }
+  .orsep::before, .orsep::after{ content:''; flex:1; height:1px; background:var(--line) }
+
+  .biobtn{ display:flex; align-items:center; gap:12px; width:100%; min-height:56px;
+    padding:0 14px; border-radius:14px; cursor:pointer; font:inherit; text-align:start;
+    color:var(--ink); background:#fff; border:1.5px solid var(--line2,#D7E0D9);
+    transition:border-color .16s ease, background .16s ease }
+  .biobtn:active{ transform:scale(.985); background:var(--soft) }
+  .biobtn:disabled{ opacity:.65; cursor:progress }
+  .biobtn .sp{ flex:1; min-width:0 }
+  .biobtn b{ display:block; font-size:13.5px; font-weight:700 }
+  .biobtn .sp > span{ display:block; font-size:11.5px; color:var(--dim); margin-top:2px }
+  .biobtn .bioic{ width:42px; height:42px; border-radius:50%; flex:none; display:grid;
+    place-items:center; color:var(--g);
+    background:linear-gradient(180deg,rgba(20,89,63,.12),rgba(20,89,63,.06));
+    border:1px solid rgba(20,89,63,.16) }
+  .biobtn .ic:last-child{ color:var(--dim2); flex:none }
+
+  /* لوحُ عرض التفعيل */
+  .bioask{ display:flex; gap:14px; align-items:flex-start; padding:4px 0 6px }
+  .bioask .bioic{ width:52px; height:52px; border-radius:16px; flex:none; display:grid;
+    place-items:center; color:#fff;
+    background:linear-gradient(160deg,var(--g3),var(--g2));
+    box-shadow:0 8px 18px -8px rgba(11,53,39,.6) }
+  .bioask p{ margin:0; font-size:13px; line-height:1.85; color:var(--dim) }
+
+  /* حقلُ كلمة المرور صار cbox مثلَ الاسم — توحيدُ الارتفاع والحدّ */
+  .cbox.pwrap input{ letter-spacing:2px }
+  .cbox.pwrap input::placeholder{ letter-spacing:3px }
+
+
+  /* ══════════════════════════════════════════════════════════════
+     الدخول — البطاقةُ والحقولُ
+
+     (أُعيدت: سقطت سهوًا مع حذف بدائل القائمة، فظهرت الشاشةُ
+      بلا بطاقةٍ بيضاءَ ولا حدودِ حقول.)
+     ══════════════════════════════════════════════════════════════ */
+  .authmain{ position:relative; z-index:2; flex:1; min-height:0; display:flex;
+    flex-direction:column; align-items:center; overflow-y:auto;
+    -webkit-overflow-scrolling:touch }
+  .authmain::-webkit-scrollbar{ width:0 }
+  .authtop{ flex:none; display:flex; justify-content:center }
+  .authtop .logo{ margin:0; background-size:contain; background-repeat:no-repeat;
+    background-position:center }
+  .authcard{ width:100%; max-width:440px; background:#fff; border:1px solid var(--line);
+    box-shadow:0 1px 2px rgba(16,24,40,.04), 0 18px 40px -20px rgba(16,24,40,.22) }
+  .authhead{ text-align:center }
+  .authhead h1{ font-weight:700; letter-spacing:-.3px; line-height:1.4; margin:0;
+    color:var(--ink) }
+  .authsub{ margin:5px 0 0; font-size:12.5px; line-height:1.6; color:var(--dim) }
+  .authbody{ display:flex; flex-direction:column; gap:15px }
+  .autherr{ display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:12px;
+    background:var(--pRedB); color:var(--red); font-size:12.5px; line-height:1.6;
+    border:1px solid rgba(200,60,60,.22) }
+  .fld{ display:flex; flex-direction:column; gap:6px }
+  .fld > label{ font-size:13.5px; font-weight:600; color:var(--ink) }
+  .authfoot{ flex:none; display:flex; justify-content:center }
 
 </style>

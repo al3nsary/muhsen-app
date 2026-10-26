@@ -178,6 +178,10 @@ document.addEventListener('click', ev => {
     case 'loginshow':   S.loginShow = !S.loginShow; break;
     case 'loginforgot': toast('راجع مشرفك لإعادة تعيين كلمة المرور', 'r'); break;
     case 'dologin':     doLogin(); return;
+    case 'loginkeep': S.loginKeep = !S.loginKeep; break;
+    case 'biologin':  bioDo(); return;
+    case 'bioenroll': bioEnrollDo(id); return;
+    case 'bioskip':   S.sheet = null; break;
     case 'logout': S.session = null; S.route = { n: 'login' }; S.sheet = null; S.sheetBare = false; break;
 
     /* ---------- الردود: إضافةٌ ← عددٌ ← بدءٌ ← إنهاء ---------- */

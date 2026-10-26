@@ -349,6 +349,7 @@ function screenLogin() {
   const picked = S.loginId ? userById(S.loginId) : null;
   const open = !!S.loginOpen;
   const list = open ? loginList() : [];
+  const bio = bioSaved();
 
   const opt = u =>
     '<button type="button" class="lopt' + (picked && picked.id === u.id ? ' on' : '') + '" ' +
@@ -369,8 +370,8 @@ function screenLogin() {
 
       '<div class="authcard">' +
         '<div class="authhead">' +
-          '<h1>تسجيل الدخول</h1>' +
-          '<p class="authsub">تطبيق الميدان — موسم الحج ١٤٤٨ هـ</p>' +
+          '<h1>أهلًا بك</h1>' +
+          '<p class="authsub">سجّل الدخول للمتابعة</p>' +
         '</div>' +
 
         '<form class="authbody" data-a="nosubmit">' +
@@ -382,7 +383,7 @@ function screenLogin() {
             '<div class="combo' + (open ? ' open' : '') + '">' +
               '<div class="cbox' + (open ? ' on' : '') + '">' +
                 icon('i-user', 's18') +
-                '<input id="lu" type="text" autocomplete="off" role="combobox" ' +
+                '<input id="lu" type="text" autocomplete="username" role="combobox" ' +
                   'aria-expanded="' + (open ? 'true' : 'false') + '" ' +
                   'placeholder="اكتب الاسم أو الرمز" ' +
                   'value="' + E(S.loginU || '') + '" data-a="loginopen" ' +
@@ -402,26 +403,44 @@ function screenLogin() {
 
           '<div class="fld">' +
             '<label for="lp">كلمة المرور</label>' +
-            '<div class="pwrap">' +
+            '<div class="cbox pwrap">' + icon('i-lock', 's18') +
               '<input id="lp" type="' + (S.loginShow ? 'text' : 'password') + '" ' +
-                'autocomplete="current-password" value="' + E(S.loginP || '') + '" ' +
+                'autocomplete="current-password" placeholder="••••••••" ' +
+                'value="' + E(S.loginP || '') + '" ' +
                 'data-a="loginp" aria-label="كلمة المرور">' +
-              '<button type="button" class="pweye" data-a="loginshow" ' +
+              '<button type="button" class="cbtn" data-a="loginshow" ' +
                 'aria-label="إظهار كلمة المرور أو إخفاؤها" ' +
                 'aria-pressed="' + (S.loginShow ? 'true' : 'false') + '">' +
                 icon('i-eye', 's18') + '</button>' +
             '</div>' +
-            '<div class="fldend">' +
-              '<button type="button" class="alink" data-a="loginforgot">نسيت كلمة المرور؟</button>' +
-            '</div>' +
+          '</div>' +
+
+          /* صفُّ التذكّر والنسيان — موضعُهما المعتاد في كلّ تطبيق */
+          '<div class="lrow">' +
+            '<button type="button" class="chk' + (S.loginKeep ? ' on' : '') + '" ' +
+              'data-a="loginkeep" role="checkbox" ' +
+              'aria-checked="' + (S.loginKeep ? 'true' : 'false') + '">' +
+              '<span class="box">' + (S.loginKeep ? icon('i-check', 's14') : '') + '</span>' +
+              '<span>تذكّرني</span></button>' +
+            '<button type="button" class="alink" data-a="loginforgot">نسيت كلمة المرور؟</button>' +
           '</div>' +
 
           '<button class="btn p wide" data-a="dologin"' + (S.loginBusy ? ' disabled' : '') + '>' +
-            (S.loginBusy ? '<span class="spin"></span>' : icon('i-out', 's18')) +
+            (S.loginBusy ? '<span class="spin"></span>' : '') +
             'تسجيل الدخول</button>' +
         '</form>' +
 
-
+        /* السِّمةُ الحيويّة: لا تظهر إلّا لمن سجّلها على هذا الجهاز */
+        (bio
+          ? '<div class="orsep">أو</div>' +
+            '<button class="biobtn' + (S.bioBusy ? ' busy' : '') + '" data-a="biologin"' +
+              (S.bioBusy ? ' disabled' : '') + '>' +
+              '<span class="bioic">' +
+                (S.bioBusy ? '<span class="spin"></span>' : icon('i-touch', 's22')) + '</span>' +
+              '<span class="sp"><b>الدخول ببصمة الجهاز</b>' +
+                '<span>' + E(bio.name) + '</span></span>' +
+              icon('i-back', 's16') + '</button>'
+          : '') +
       '</div>' +
 
       '<div class="authfoot"><i class="mnozoly" role="img" aria-label="نُزلي"></i></div>' +
@@ -449,7 +468,10 @@ function enterAs(id) {
     S.route = { n: u.role === 'leader' ? 'home' : 'mhome' };
     toast('مرحبًا ' + u.name, 'g'); buzz();
     save(); render();
-    setTimeout(function () { if (maybeAskPush()) render(); }, 1400);
+    setTimeout(function () {
+      if (maybeAskPush()) { render(); return; }
+      bioProbe(function () { if (maybeAskBio()) render(); });
+    }, 1400);
   }, 420);
 }
 
