@@ -13,10 +13,24 @@ const SC = __dirname.split('\\').join('/') + '/';
 const SRC = SC + '../docs/index.html';
 const LANG = process.argv[2] || 'ar';
 
+const headCatch = `<script>
+window.__E=[];
+window.addEventListener("error",function(e){window.__E.push(e.message)});
+</scr` + `ipt>`;
+
 const harness = `<script>
 (function () {
-  var OUT = [], ERR = [];
+  var OUT = [], ERR = window.__E || [];
   window.addEventListener('error', function (e) { ERR.push(e.message); });
+  /* أوّلُ سؤال: هل رسم التطبيقُ نفسَه بلا عونٍ منّا؟
+     كان الفحصُ يرسم بيده فيُخفي سقوطَ الإقلاع — وهو ما
+     أخرج الشاشةَ بيضاءَ على جهاز المستخدم. */
+  (function () {
+    var sc = document.getElementById('screen');
+    var n = sc ? sc.innerHTML.length : 0;
+    if (!n) OUT.push('X الإقلاع: الشاشةُ فارغةٌ قبل أيّ تدخّل' +
+      (ERR.length ? ' — ' + ERR[0] : ''));
+  })();
   setTimeout(function () {
     try { S.lang = ${JSON.stringify(LANG)}; i18nReset(); applyDir(); } catch (e) {}
     var ROLES = [['leader', 'home'], ['muhsen', 'mhome']];
@@ -72,8 +86,11 @@ const harness = `<script>
 </scr` + `ipt>`;
 
 const html = fs.readFileSync(SRC, 'utf8');
-const i = html.lastIndexOf('</body>');
-fs.writeFileSync(SC + '_smoke.html', html.slice(0, i) + harness + html.slice(i));
+/* المُلتقِطُ قبل سكربت التطبيق: ما يُرمى أثناء تنفيذه لا يراه
+   مُلتقِطٌ يُسجَّل بعده. */
+const withCatch = html.replace('<body>', '<body>\n' + headCatch);
+const i = withCatch.lastIndexOf('</body>');
+fs.writeFileSync(SC + '_smoke.html', withCatch.slice(0, i) + harness + withCatch.slice(i));
 
 const r = cp.execSync('"C:/Program Files/Google/Chrome/Application/chrome.exe" --headless=new ' +
   '--disable-gpu --window-size=430,900 --virtual-time-budget=40000 --dump-dom ' +

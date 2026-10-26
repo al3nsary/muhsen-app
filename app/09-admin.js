@@ -221,7 +221,7 @@ function editTaskSheet(t) {
       '<button class="btn p" data-a="savetask" data-id="' + t.id + '">حفظ</button></div>';
 }
 function addTaskSheet() {
-  const leaders = S.users.filter(u => u.role === 'leader');
+  const leaders = groupLeaders();
   const d = new Date(now() + 3 * HR);
   return '<div class="grip"></div><h3>إضافة مهمة جديدة</h3>' +
     '<div class="lbl plain">النشاط</div>' +

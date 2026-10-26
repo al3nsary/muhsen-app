@@ -258,7 +258,7 @@ function screenDesk() {
 /* ---------- بذر البلاغات ---------- */
 function seedReports(st) {
   st.reports = [];
-  const leaders = st.users.filter(u => u.role === 'leader');
+  const leaders = groupLeaders(st);
   REPORT_SEED.forEach((r, i) => {
     const L = leaders[i % leaders.length];
     const team = st.users.filter(u => u.role === 'muhsen' && u.leaderId === L.id);

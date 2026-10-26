@@ -15,7 +15,7 @@ const AUDIENCE = {
 };
 function audienceUsers(k) {
   const u = me();
-  if (k === 'leaders') return S.users.filter(x => x.role === 'leader');
+  if (k === 'leaders') return groupLeaders();
   if (k === 'muhsens') return S.users.filter(x => x.role === 'muhsen');
   if (k === 'myteam') return teamOf(u.id);
   return S.users.slice();

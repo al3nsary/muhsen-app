@@ -17926,7 +17926,7 @@ const APIv = {
 /* تطبيقٌ واحدٌ ورابطٌ واحد: الدورُ يُقرأ من الحساب بعد الدخول. */
 const KEY = 'muhsen_app_v3';
 const APP_VER = 'نسخة ٤٫٣';
-const SCHEMA = 23;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
+const SCHEMA = 24;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
 /* الاهتزازُ: كان ثابتًا محلّيًّا داخل act() في المُوجِّه، فكلُّ نداءٍ
@@ -18167,6 +18167,14 @@ const me = () => (S.session ? S.users.find(u => u.id === S.session.id) : null) |
 const isLeader = () => { const u = me(); return !!u && u.role === 'leader'; };
 /* حسابُ النظام: إعداداتُ النظام له وحدَه، وبابُها لا يظهر لغيره */
 const isAdmin = () => { const u = me(); return !!u && !!u.admin; };
+
+/* ليدرُ مجموعةٍ — لا حسابُ النظام.
+
+   أضفتُ حسابَ النظام بصفة leader فدخل كلَّ قائمةٍ تُبنى بـ
+   «role === 'leader'»، وفريقُه فارغٌ ومهامُّه صفرٌ — فسقطت بذرةُ
+   البلاغات على `team[i % 0].id` وخرجت الشاشةُ بيضاء. فصار لمن
+   يريد «ليدرز المجموعات» دالّةٌ واحدةٌ تستثنيه. */
+const groupLeaders = st => ((st || S).users || []).filter(u => u.role === 'leader' && !u.admin);
 const userById = id => S.users.find(u => u.id === id);
 const orgOf = t => S.orgs.find(o => o.id === t.orgId);
 const taskById = id => S.tasks.find(t => t.id === id);
@@ -20497,7 +20505,7 @@ function editTaskSheet(t) {
       '<button class="btn p" data-a="savetask" data-id="' + t.id + '">حفظ</button></div>';
 }
 function addTaskSheet() {
-  const leaders = S.users.filter(u => u.role === 'leader');
+  const leaders = groupLeaders();
   const d = new Date(now() + 3 * HR);
   return '<div class="grip"></div><h3>إضافة مهمة جديدة</h3>' +
     '<div class="lbl plain">النشاط</div>' +
@@ -21900,7 +21908,7 @@ const AUDIENCE = {
 };
 function audienceUsers(k) {
   const u = me();
-  if (k === 'leaders') return S.users.filter(x => x.role === 'leader');
+  if (k === 'leaders') return groupLeaders();
   if (k === 'muhsens') return S.users.filter(x => x.role === 'muhsen');
   if (k === 'myteam') return teamOf(u.id);
   return S.users.slice();
@@ -23189,7 +23197,7 @@ function screenDesk() {
 /* ---------- بذر البلاغات ---------- */
 function seedReports(st) {
   st.reports = [];
-  const leaders = st.users.filter(u => u.role === 'leader');
+  const leaders = groupLeaders(st);
   REPORT_SEED.forEach((r, i) => {
     const L = leaders[i % leaders.length];
     const team = st.users.filter(u => u.role === 'muhsen' && u.leaderId === L.id);

@@ -3,7 +3,7 @@
 /* تطبيقٌ واحدٌ ورابطٌ واحد: الدورُ يُقرأ من الحساب بعد الدخول. */
 const KEY = 'muhsen_app_v3';
 const APP_VER = 'نسخة ٤٫٣';
-const SCHEMA = 23;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
+const SCHEMA = 24;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
 /* الاهتزازُ: كان ثابتًا محلّيًّا داخل act() في المُوجِّه، فكلُّ نداءٍ
@@ -244,6 +244,14 @@ const me = () => (S.session ? S.users.find(u => u.id === S.session.id) : null) |
 const isLeader = () => { const u = me(); return !!u && u.role === 'leader'; };
 /* حسابُ النظام: إعداداتُ النظام له وحدَه، وبابُها لا يظهر لغيره */
 const isAdmin = () => { const u = me(); return !!u && !!u.admin; };
+
+/* ليدرُ مجموعةٍ — لا حسابُ النظام.
+
+   أضفتُ حسابَ النظام بصفة leader فدخل كلَّ قائمةٍ تُبنى بـ
+   «role === 'leader'»، وفريقُه فارغٌ ومهامُّه صفرٌ — فسقطت بذرةُ
+   البلاغات على `team[i % 0].id` وخرجت الشاشةُ بيضاء. فصار لمن
+   يريد «ليدرز المجموعات» دالّةٌ واحدةٌ تستثنيه. */
+const groupLeaders = st => ((st || S).users || []).filter(u => u.role === 'leader' && !u.admin);
 const userById = id => S.users.find(u => u.id === id);
 const orgOf = t => S.orgs.find(o => o.id === t.orgId);
 const taskById = id => S.tasks.find(t => t.id === id);
