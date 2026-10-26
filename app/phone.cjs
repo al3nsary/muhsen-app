@@ -28,7 +28,9 @@ const inject = '<script>\n' +
 '  try {\n' +
 '    S.lang = ' + JSON.stringify(LANG) + '; i18nReset(); applyDir();\n' +
 '    if (' + JSON.stringify(ROUTE) + ' !== "login") {\n' +
-'      var u = S.users.filter(function (x) { return x.role === ' + JSON.stringify(ROLE) + '; })[0];\n' +
+/* حسابُ النظام أوّلُ من يحمل صفةَ leader — ولا مهامَّ له، فيُتخطّى */
+'      var u = S.users.filter(function (x) {\n' +
+'        return x.role === ' + JSON.stringify(ROLE) + ' && !x.admin; })[0];\n' +
 '      S.session = { id: u.id, at: Date.now() };\n' +
 '    }\n' +
 '    S.route = { n: ' + JSON.stringify(ROUTE) + ', id: (S.tasks[0] || {}).id };\n' +

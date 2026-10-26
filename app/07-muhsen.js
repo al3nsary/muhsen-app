@@ -36,16 +36,7 @@ function screenLeaderHome() {
   return bar('مُحسن ليدر') + '<div class="view">' + ground() +
     runningCard() +
 
-    /* المهامُّ تتصدَّر */
-    '<div class="lbl">المهام القادمة<small>' + AR(live.length) + ' مهمة قائمة</small></div>' +
-    (upcoming.length ? upcoming.map(t => taskRow(t)).join('') +
-      (live.length > upcoming.length
-        ? '<button class="btn l sm" data-a="pickbucket" data-v="all">' + icon('i-tasks','s16') +
-          'عرض بقية المهام (' + AR(live.length - upcoming.length) + ')</button>' : '')
-      : '<div class="c center" style="padding:24px"><b>لا توجد مهام قائمة</b>' +
-        '<button class="btn l sm" style="margin-top:12px" data-a="pickbucket" data-v="done">' +
-          icon('i-checkc','s16') + 'المهام المنجزة</button></div>') +
-
+    /* لوحةُ اليوم تتصدَّر: صورةٌ وتاريخٌ وثلاثةُ أرقام */
     '<div class="banner bgw-haram"><span class="bt">' +
       '<b>' + E(dayName(now())) + ' · ' + hijri(now()) + '</b><span>' +
       AR(ts.filter(t => dayStart(t.start) === dayStart(now())).length) + ' مهمة اليوم</span></span></div>' +
@@ -54,6 +45,15 @@ function screenLeaderHome() {
       '<div class="kpi"><b>' + AR(u.pilgrims) + '</b><span>حاج</span></div>' +
       '<div class="kpi"><b>' + AR(teamOf(u.id).length) + '</b><span>محسن</span></div>' +
       '<div class="kpi"><b>' + AR(ts.length) + '</b><span>مهمة</span></div></div>' +
+
+    '<div class="lbl">المهام القادمة<small>' + AR(live.length) + ' مهمة قائمة</small></div>' +
+    (upcoming.length ? upcoming.map(t => taskRow(t)).join('') +
+      (live.length > upcoming.length
+        ? '<button class="btn l sm" data-a="pickbucket" data-v="all">' + icon('i-tasks','s16') +
+          'عرض بقية المهام (' + AR(live.length - upcoming.length) + ')</button>' : '')
+      : '<div class="c center" style="padding:24px"><b>لا توجد مهام قائمة</b>' +
+        '<button class="btn l sm" style="margin-top:12px" data-a="pickbucket" data-v="done">' +
+          icon('i-checkc','s16') + 'المهام المنجزة</button></div>') +
     '</div>' + tabs();
 }
 

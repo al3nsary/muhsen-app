@@ -35,6 +35,14 @@ await wait(900);
 log('دخولٌ صحيح → جلسة=' + (S.session ? S.session.id : 'لا ✗') +
     ' · وجهة=' + S.route.n + ' · شريط=' + document.querySelectorAll('.tabs button').length);
 
+/* التذاكر: القائمةُ تُرسَم ولا تعود undefined */
+S.route = { n: 'desk' }; S.tab.desk = 'tk'; render(); await wait(150);
+var dk = q('.view');
+log('التذاكر → ' + (dk && dk.textContent.indexOf('undefined') >= 0 ? 'undefined X' : 'سليمة ✓') +
+    ' · صفوف=' + document.querySelectorAll('[data-a="tkopen"], [data-n="ticket"]').length);
+S.tab.desk = 'rp'; render(); await wait(150);
+log('البلاغات → ' + (q('.view') && q('.view').textContent.indexOf('undefined') >= 0 ? 'undefined X' : 'سليمة ✓'));
+
 /* ٥ · لوحُ المزيد */
 await click('[data-a="moresheet"]');
 log('لوحُ المزيد → فرعيّة=' + document.querySelectorAll('.fab').length +

@@ -18,8 +18,10 @@ function ticketsPane() {
   const segs = L ? [['open','المفتوحة'],['hajj','الحجاج'],['ctrl','الكنترول'],['muh','المحسنون'],['closed','المغلقة']]
                  : [['open','المفتوحة'],['mine','المسندة إليّ'],['closed','المغلقة']];
 
-  return 
-    '<div class="seg">' + segs.map(x =>
+  /* الإرجاعُ على سطر ما بعده: «return» وحدَه في سطرٍ تُدرَج بعده
+     فاصلةٌ تلقائيًّا، فيعود undefined ويموت ما تحته. وقع ذلك حين
+     حُذف سطرُ التعريف الذي كان يليه. */
+  return '<div class="seg">' + segs.map(x =>
       '<button class="' + (f === x[0] ? 'on' : '') + '" data-a="seg" data-k="tk" data-v="' + x[0] + '">' +
       x[1] + '</button>').join('') + '</div>' +
     (list.length ? list.map(k => ticketRow(k)).join('')

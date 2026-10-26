@@ -174,5 +174,22 @@ miss.length ? fail('شاشاتٌ ناقصة', miss.join(', ')) : console.log('+ 
     : console.log('+ حاوية التمرير');
 })();
 
+/* ١٠ · «return» وحدَه في سطرٍ وتحته تعبير.
+      تُدرَج بعده فاصلةٌ تلقائيًّا فيعود undefined ويموت ما تحته،
+      والنحوُ سليمٌ فلا يشكو منه أحد. وقعتْ حين حُذف سطرٌ كان يليه،
+      فظهرت كلمةُ undefined مكانَ قائمةِ التذاكر. */
+(function () {
+  const hit = [];
+  JS.forEach(f => {
+    const L = read(f).split('\n');
+    L.forEach((l, i) => {
+      if (!/^\s*return\s*$/.test(l)) return;
+      const nxt = (L[i + 1] || '').trim();
+      if (nxt && !/^[}\])]/.test(nxt)) hit.push(f + ':' + (i + 1));
+    });
+  });
+  hit.length ? fail('return معلَّق', hit.join(', ')) : console.log('+ الإرجاع');
+})();
+
 console.log(bad ? '\nX ' + bad + ' حارسًا سقط' : '\n+ كلُّ الحرّاس');
 if (bad) process.exitCode = 1;
