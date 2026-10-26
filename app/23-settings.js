@@ -93,6 +93,18 @@ function screenSettings() {
         '<span class="nm sp"><b>تسجيل الخروج</b></span></button>' +
     '</div>' +
 
+    /* ---------- إعدادات النظام ----------
+       لحساب النظام وحدَه. ولا يراها ليدرٌ ولا مُحسن. */
+    (isAdmin()
+      ? '<div class="c">' +
+          '<div class="h"><b>إعدادات النظام</b></div>' +
+          '<button class="prow" data-a="go" data-n="admin">' + icon('i-gear', 's20') +
+            '<span class="nm sp"><b>لوحة النظام</b>' +
+            '<span>الوقت والموقع وإعادة الضبط</span></span>' +
+            icon('i-back', 's16') + '</button>' +
+        '</div>'
+      : '') +
+
     '<div class="appver">' + APP_VER + '</div>' +
   '</div>' + tabs();
 }

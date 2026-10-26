@@ -3,7 +3,7 @@
 /* تطبيقٌ واحدٌ ورابطٌ واحد: الدورُ يُقرأ من الحساب بعد الدخول. */
 const KEY = 'muhsen_app_v3';
 const APP_VER = 'نسخة ٤٫٣';
-const SCHEMA = 22;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
+const SCHEMA = 23;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
 /* الاهتزازُ: كان ثابتًا محلّيًّا داخل act() في المُوجِّه، فكلُّ نداءٍ
@@ -17,7 +17,10 @@ const MIN = 60000, HR = 3600000, DAY = 86400000;
 const RADIUS_KM = 2;            /* نطاق إثبات الحضور */
 
 /* ============================ الوقت ============================ */
-const now = () => Date.now() + (S && S.clockOffset ? S.clockOffset : 0) * MIN;
+/* الوقتُ: ساعةُ الجهاز + إزاحةُ شاشة التحكّم + فرقُ ساعة الخادم.
+   والأخيرُ صفرٌ حتّى يصل الربط، فلا يتغيّر شيءٌ اليوم. */
+const now = () => Date.now() + (S && S.clockOffset ? S.clockOffset : 0) * MIN +
+  (typeof serverSkew === 'function' ? serverSkew() : 0);
 /* الأصلُ العربيُّ يبقى باسمٍ صريح، والاسمُ العامُّ يسأل عن اللغة */
 const ARd = n => String(n).replace(/[0-9]/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
 const AR = n => (typeof NUM === 'function' ? NUM(n) : ARd(n));
@@ -131,12 +134,15 @@ function seed() {
     shifts: {}, attend: [], swaps: [], broadcasts: [], toast: null,
     /* ترتيبُ الشريط: فارغٌ يعني الافتراضيّ — يملؤه المستخدمُ من الإعدادات */
     tabs: null, sheet: null,
+    /* يُملآن عند الربط: كتالوجٌ مجلوبٌ وطابورُ ما لم يُرسَل بعد */
+    escal: null, escalV: null, outbox: [],
     /* الردود: حركةُ الكوسترات في المشاعر */
     rides: []
   };
   S = st;   /* لتعمل الدوال المعتمِدة على S أثناء التهيئة */
 
-  USERS.filter(u => u.role === 'leader').forEach((L, li) => {
+  /* حسابُ النظام ليس ليدرَ مجموعةٍ: لا مهامَّ له ولا فريق. */
+  USERS.filter(u => u.role === 'leader' && !u.admin).forEach((L, li) => {
     st.pilgrims[L.kt] = makePilgrims(L.pilgrims, li + 1);
     PLAN.forEach((p, idx) => {
       st.tasks.push(autoAssign(st, newTask(L, p.k, Date.now() + p.h * HR, 1200 + idx * 7 + li * 3)));
@@ -178,7 +184,7 @@ function seed() {
 
   /* التذاكر — كلها تصل الليدر */
   TICKET_SEED.forEach((k, i) => {
-    const lead = USERS.filter(u => u.role === 'leader')[i % 3];
+    const lead = USERS.filter(u => u.role === 'leader' && !u.admin)[i % 3];
     const tks = st.tasks.filter(t => t.leaderId === lead.id);
     const tk = tks[i % tks.length];
     const pls = st.pilgrims[lead.kt];
@@ -236,6 +242,8 @@ function reset() { localStorage.removeItem(KEY); S = seed(); go('login'); toast(
 /* ============================ الأدوار ============================ */
 const me = () => (S.session ? S.users.find(u => u.id === S.session.id) : null) || null;
 const isLeader = () => { const u = me(); return !!u && u.role === 'leader'; };
+/* حسابُ النظام: إعداداتُ النظام له وحدَه، وبابُها لا يظهر لغيره */
+const isAdmin = () => { const u = me(); return !!u && !!u.admin; };
 const userById = id => S.users.find(u => u.id === id);
 const orgOf = t => S.orgs.find(o => o.id === t.orgId);
 const taskById = id => S.tasks.find(t => t.id === id);

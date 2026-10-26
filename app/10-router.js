@@ -15,9 +15,12 @@ const SCREENS = {
 /* وجهاتٌ لا تخصّ دورَ الداخل: مَن بلغها رُدَّ إلى رئيسيّته.
    فالليدرُ لا يملك «طلباتي» ولا «الردود»، والمحسنُ لا يملك
    مركزَ الطلبات ولا تسلسلَ الإجراءات ولا قائمةَ المحسنين. */
-const roleOut = () => isLeader()
+const roleOut = () => (isLeader()
   ? ['requests', 'rides']
-  : ['lreq', 'timeline', 'muhsens'];
+  : ['lreq', 'timeline', 'muhsens'])
+  /* لوحةُ النظام لحساب النظام وحدَه: البابُ مخفيٌّ والوجهةُ مردودة.
+     فلا يكفي إخفاءُ الزرّ — من كتب الوجهةَ يُردّ كذلك. */
+  .concat(isAdmin() ? [] : ['admin']);
 
 function render() {
   if (typeof repAutoEscalate === 'function') repAutoEscalate();

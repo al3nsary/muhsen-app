@@ -37,7 +37,9 @@ const harness = `<script>
 
       ROUTES.forEach(function (r) {
         S.session = { id: who.id, at: Date.now() };
-        S.route = { n: r, id: myTasks().length ? myTasks()[0].id : (S.tasks[0] || {}).id };
+        var mine0 = myTasks();
+        if (!mine0.length && /task|doc|rating/.test(r)) return;   /* لا مهمّةَ له: لا يُغذّى بمهمّة غيره */
+        S.route = { n: r, id: mine0.length ? mine0[0].id : null };
         S.sheet = null; S.pushAsked = true;
         try { render(); } catch (e) { return; }
         var el = document.getElementById('screen');
@@ -61,7 +63,8 @@ const harness = `<script>
       });
     }
 
-    audit(S.users.filter(function (u) { return u.role === 'leader'; })[0], 'ليدر');
+    audit(S.users.filter(function (u) { return u.role === 'leader' && !u.admin; })[0], 'ليدر');
+    audit(S.users.filter(function (u) { return u.admin; })[0], 'حساب النظام');
     audit(S.users.filter(function (u) {
       return u.role === 'muhsen' && !u.reserve; })[0], 'محسن');
 
@@ -79,7 +82,7 @@ const harness = `<script>
       });
       return set;
     }
-    var LD = S.users.filter(function (u) { return u.role === 'leader'; })[0];
+    var LD = S.users.filter(function (u) { return u.role === 'leader' && !u.admin; })[0];
     var MU = S.users.filter(function (u) { return u.role === 'muhsen' && !u.reserve; })[0];
     var aL = actsOf(LD), aM = actsOf(MU);
     var onlyL = Object.keys(aL).filter(function (k) { return !aM[k]; });

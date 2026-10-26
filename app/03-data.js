@@ -36,6 +36,11 @@ const MU = (id, name, av, g, leader, spec) => ({
 });
 
 const USERS = [
+  /* حسابُ النظام: يرى إعداداتِ النظام وحدَه، ولا يملك مهامَّ ولا فريقًا.
+     وصفتُه admin لا role جديدًا — فقواعدُ الدورين لا تُمَسّ. */
+  { id:'AD1', name:'مدير النظام', av:'p4', g:'m', role:'leader', admin:true,
+    kt:'—', orgId:'o1', pilgrims:0, phone:'٩٦٦٥٠٠٠٠٠٠٠١', code:'#ADMIN' },
+
   { id:'L1', name:'محمد القحطاني',    av:'p1', g:'m', role:'leader', kt:'KT085', orgId:'o1', pilgrims:141, phone:'٩٦٦٥٤٩٤٩٣١٩٤', code:'#L085' },
   { id:'L2', name:'سعود بن حسين',     av:'p2', g:'m', role:'leader', kt:'KT062', orgId:'o2', pilgrims:188, phone:'٩٦٦٥٥٣٢٢٨٨٧١', code:'#L062' },
   { id:'L3', name:'عبدالرحمن الشريف', av:'p3', g:'m', role:'leader', kt:'KT031', orgId:'o3', pilgrims:94,  phone:'٩٦٦٥٠٦٧٧٤٤٢٣', code:'#L031' },

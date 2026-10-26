@@ -123,7 +123,10 @@ const harness = `<script>
   window.__E = [];
   window.addEventListener('error', function (e) { window.__E.push(e.message); });
   await wait(700);
-  S.pushAsked = true;
+  /* جلسةٌ باقيةٌ من تشغيلٍ سابقٍ تُنزلنا على الرئيسيّة لا الدخول */
+  S.session = null; S.route = { n: 'login' };
+  S.loginU = ''; S.loginP = ''; S.loginId = null; S.loginOpen = false;
+  S.pushAsked = true; S.bioAsked = true; render(); await wait(200);
   try {
 ${steps}
   } catch (err) { log('X استثناء: ' + err.message); }
