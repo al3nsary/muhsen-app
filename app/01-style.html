@@ -1510,72 +1510,6 @@
   .tpick.on{ box-shadow:0 0 0 1px var(--g) inset }
 
   /* ══════════════ «المزيد»: أزرارٌ عائمةٌ تصعد من الشريط ══════════════ */
-  /* ══════════════════════════════════════════════════════════════
-     «المزيد» — على مقاسات FAB Menu في Material 3 Expressive
-
-     نقلتُ القياساتِ من مصدر androidx لا من تقديري:
-       ارتفاعُ الحبّة ٥٦ · الفراغُ بينها ٤ · الحشوةُ ٢٤ من الطرفين
-       الأيقونةُ ٢٤ والفراغُ بينها وبين النصّ ٨
-       الزرُّ الرئيسيّ ٥٦×٥٦ وبينه والقائمة ٨ · والشكلُ دائريٌّ تامّ
-       الارتفاعُ Level 3
-
-     واللونُ من M3: الحبّةُ primaryContainer والنصُّ onPrimaryContainer،
-     والزرُّ الرئيسيُّ primary. وكانت زجاجيّةً بيضاء — وهي ما لا
-     يستعمله أحدٌ هنا: الزجاجيّةُ تُظهر ما خلفها فيتشوّش النصّ.
-     وأبقيتُ الدائرةَ الخضراءَ حول الأيقونة.
-     ══════════════════════════════════════════════════════════════ */
-  .fabwrap{ position:absolute; inset-inline-end:16px;
-    bottom:calc(var(--sab,14px) + 60px); z-index:60;
-    display:flex; flex-direction:column; align-items:flex-end; gap:8px;
-    max-height:calc(100% - 128px) }
-
-  .fabs{ display:flex; flex-direction:column; align-items:flex-end; gap:4px;
-    overflow-y:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
-    padding:2px; min-height:0 }
-  .fabs::-webkit-scrollbar{ display:none }
-
-  .fab{ display:flex; align-items:center; gap:8px; flex:none;
-    height:56px; padding:0 8px 0 24px; border-radius:99px; border:0; cursor:pointer;
-    background:var(--pGreenB,#E7F0EA); color:var(--g2);
-    box-shadow:0 6px 10px rgba(11,53,39,.11), 0 2px 3px rgba(11,53,39,.09);
-    animation:fabUp .26s cubic-bezier(.2,.9,.3,1) both;
-    animation-delay:calc(var(--i,0) * 28ms) }
-  html[dir=ltr] .fab{ padding:0 24px 0 8px; flex-direction:row-reverse }
-  .fab b{ font-size:14px; font-weight:700; white-space:nowrap; letter-spacing:-.1px }
-  .fab .fi{ position:relative; width:40px; height:40px; border-radius:50%; flex:none;
-    display:grid; place-items:center; color:#fff;
-    background:linear-gradient(150deg,var(--g3),var(--g)) }
-  .fab .fi .ic{ width:22px; height:22px }
-  .fab:active{ transform:scale(.97) }
-  .fab:focus-visible{ outline:2px solid var(--g); outline-offset:3px }
-
-  /* الزرُّ الرئيسيّ: primary في M3 — أغمقُ من الحبّات فيُقرأ أصلًا لها */
-  .fabmain{ width:56px; height:56px; flex:none; border-radius:50%; cursor:pointer;
-    display:grid; place-items:center; color:#fff; border:0;
-    background:linear-gradient(150deg,var(--g3),var(--g2));
-    box-shadow:0 8px 14px rgba(11,53,39,.2), 0 3px 5px rgba(11,53,39,.14);
-    animation:fabPop .24s cubic-bezier(.2,.9,.3,1) both }
-  .fabmain .ic{ width:22px; height:22px }
-  .fabmain:active{ transform:scale(.94) }
-  .fabmain:focus-visible{ outline:2px solid var(--gold); outline-offset:3px }
-
-  @keyframes fabUp{ from{ opacity:0; transform:translateY(12px) scale(.94) } }
-  @keyframes fabPop{ from{ opacity:0; transform:rotate(-90deg) scale(.7) } }
-  @media (prefers-reduced-motion:reduce){ .fab, .fabmain{ animation:none } }
-
-  .scrim.soft{ background:radial-gradient(135% 95% at 88% 90%,
-    rgba(7,36,25,.14) 0%, rgba(7,36,25,.55) 62%);
-    -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px) }
-  html[dir=ltr] .scrim.soft{ background:radial-gradient(135% 95% at 12% 90%,
-    rgba(7,36,25,.14) 0%, rgba(7,36,25,.55) 62%) }
-
-  @media (max-height:680px){
-    .fab{ height:48px; padding-inline-start:18px }
-    .fab .fi{ width:36px; height:36px }
-    .fabmain{ width:52px; height:52px }
-  }
-
-  /* ══════════════════════════════════════════════════════════════
      الدخول — مراجعةُ المقاسات والترتيب
 
      الشعارُ أكبرُ (١٩٠px) وبينه وبين شريط اللغة فراغٌ يفصلهما،
@@ -1643,73 +1577,6 @@
 
 
   /* ══════════════════════════════════════════════════════════════
-     «المزيد» — حبّاتٌ مصنوعةٌ لا مُعبَّأة
-
-     كانت تعبئةً مسطّحةً بلونٍ واحد، وحوافُّها مسنّنةٌ لأنّ كلَّ
-     حبّةٍ بعرض نصّها. فصارت: عرضٌ موحَّدٌ، وتدرّجٌ يعطي عمقًا،
-     وحافّةُ ضوءٍ من أعلى وظلٌّ داخليٌّ من أسفل، وظلٌّ مزدوجٌ
-     (تماسٌّ قريبٌ ومحيطٌ بعيد)، وأيقونةٌ ذهبيّةٌ في حوضٍ له
-     حافّتُه — فالذهبيُّ على الأخضر هويّةُ مُحسن.
-     ══════════════════════════════════════════════════════════════ */
-  .fabwrap{ inset-inline-end:16px; gap:12px }
-  .fabwrap .fabs{ gap:9px; min-width:206px; align-items:stretch; overflow:visible }
-
-  .fabwrap .fab{
-    height:54px; padding:0 16px 0 7px; gap:12px; border-radius:16px;
-    justify-content:flex-start; color:#F2F7F4;
-    background:linear-gradient(180deg,#1C6B4D 0%,#10442F 100%);
-    border:1px solid rgba(255,255,255,.07);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,.15),
-      inset 0 -1px 0 rgba(0,0,0,.22),
-      0 1px 2px rgba(7,36,25,.42),
-      0 12px 26px -10px rgba(7,36,25,.62);
-    transform-origin:100% 100%;
-    animation:fabIn .36s cubic-bezier(.22,1.15,.36,1) both;
-    animation-delay:calc(var(--i,0) * 34ms);
-    transition:transform .14s ease }
-  html[dir=ltr] .fabwrap .fab{ padding:0 7px 0 16px; transform-origin:0 100% }
-
-  .fabwrap .fab b{ flex:1; font-size:14px; font-weight:600; letter-spacing:-.15px;
-    white-space:nowrap }
-
-  /* حوضٌ ذهبيٌّ للأيقونة: حافّةُ ضوءٍ من أعلى وظلٌّ داخليٌّ من أسفل */
-  .fabwrap .fab .fi{
-    order:2; width:38px; height:38px; border-radius:12px; flex:none;
-    display:grid; place-items:center; color:#1A3B2B; background:
-      linear-gradient(180deg,#D8BE8C 0%,#B4945F 100%);
-    border:1px solid rgba(255,255,255,.28);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.45), 0 2px 5px rgba(0,0,0,.3) }
-  .fabwrap .fab .fi .ic{ width:19px; height:19px }
-  .fabwrap .fab:active{ transform:scale(.975) }
-
-  /* الإعداداتُ آخرُ الصفّ: فاصلٌ خفيٌّ يفصل الأبوابَ عن الضبط */
-  .fabwrap .fab:last-child{ margin-top:5px }
-  .fabwrap .fab:last-child::before{
-    content:''; position:absolute; inset-inline:14px; top:-7px; height:1px;
-    background:linear-gradient(90deg,transparent,rgba(255,255,255,.16),transparent) }
-  .fabwrap .fab{ position:relative }
-
-  /* الزرُّ الرئيسيّ: حلقةٌ ذهبيّةٌ وتدرّجٌ وظلٌّ عميق */
-  .fabwrap .fabmain{
-    width:58px; height:58px; border-radius:20px;
-    background:linear-gradient(180deg,#1E7352 0%,#0A3626 100%);
-    border:1px solid rgba(198,168,111,.28);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,.2),
-      inset 0 -2px 4px rgba(0,0,0,.25),
-      0 2px 4px rgba(7,36,25,.45),
-      0 16px 32px -10px rgba(7,36,25,.75);
-    animation:fabSpin .32s cubic-bezier(.22,1.15,.36,1) both }
-  .fabwrap .fabmain .ic{ width:26px; height:26px; color:#E8D5AE }
-  .fabwrap .fabmain:active{ transform:scale(.95) }
-
-  @keyframes fabIn{ from{ opacity:0; transform:translateY(16px) scale(.9) } }
-  @keyframes fabSpin{ from{ opacity:0; transform:rotate(-135deg) scale(.6) } }
-  @media (prefers-reduced-motion:reduce){
-    .fabwrap .fab, .fabwrap .fabmain{ animation:none } }
-
-
   /* ══════════════ الدخول: صفُّ التذكّر · الفاصل · السِّمة ══════════════ */
   .lrow{ display:flex; align-items:center; justify-content:space-between; gap:10px;
     margin:-2px 0 2px }
@@ -1782,36 +1649,146 @@
   .authfoot{ flex:none; display:flex; justify-content:center }
 
 
-  /* ══════════════ القائمة: أصغرُ وحركةٌ متتابعة ══════════════
-     الارتفاعُ من ٥٤ إلى ٤٨، والحوضُ من ٣٨ إلى ٣٤، والخطُّ من ١٤
-     إلى ١٣. والتتابعُ من ٣٤ms إلى ٥٥ms فتُرى واحدةً بعد واحدة.
 
-     والمحدِّدُ يبدأ بـ.fabwrap: القاعدةُ الأصلُ كذلك، ومحدِّدٌ أقلُّ
-     خصوصيّةً لا يغلبها مهما تأخّر موضعُه. */
-  .fabwrap{ gap:10px }
-  .fabwrap .fabs{ gap:7px; min-width:184px }
-  .fabwrap .fab{ height:48px; padding:0 14px 0 6px; gap:10px; border-radius:14px;
-    animation:fabRise .42s cubic-bezier(.16,1.1,.3,1) both;
-    animation-delay:calc(var(--i,0) * 55ms) }
-  html[dir=ltr] .fabwrap .fab{ padding:0 6px 0 14px }
-  .fabwrap .fab b{ font-size:13px }
-  .fabwrap .fab .fi{ width:34px; height:34px; border-radius:11px }
-  .fabwrap .fab .fi .ic{ width:17px; height:17px }
-  .fabwrap .fabmain{ width:54px; height:54px; border-radius:18px }
-  .fabwrap .fabmain .ic{ width:24px; height:24px }
 
-  @keyframes fabRise{
-    0%   { opacity:0; transform:translateY(22px) scale(.86) }
-    60%  { opacity:1 }
+  /* ══════════════════════════════════════════════════════════════
+     قائمةُ الأزرار العائمة — كتلةٌ واحدةٌ لا أربع
+
+     تراكمت عندي أربعُ كتلٍ متداخلةٍ يغلب بعضُها بعضًا بالخصوصيّة،
+     فصار القياسُ لا يُطابق ما أكتب. حُذفت كلُّها وكُتبت هذه.
+
+     المواصفة:
+       · حبّاتٌ مستديرةٌ تمامًا (Pill) لا مربّعاتُ زوايا
+       · أخضرُ داكنٌ متدرّجٌ بتباينٍ نظيف
+       · الأيقونةُ في حوضٍ ذهبيٍّ دافئ
+       · حجابٌ معتمٌ مضبَّبٌ خلفها
+       · صعودٌ متتابعٌ من الأسفل إلى الأعلى بمرونةٍ زنبركيّة
+       · حشوةٌ مريحةٌ للإبهام · ودعمٌ تامٌّ لاتّجاه العربيّة
+     ══════════════════════════════════════════════════════════════ */
+
+  /* ── الحاوية ── */
+  .fabwrap{
+    position:absolute; inset-inline-end:16px;
+    bottom:calc(var(--sab,14px) + 62px); z-index:60;
+    display:flex; flex-direction:column; align-items:flex-end; gap:14px;
+    max-height:calc(100% - 132px);
+  }
+
+  .fabs{
+    display:flex; flex-direction:column; align-items:stretch; gap:10px;
+    min-width:196px; min-height:0; padding:3px;
+    overflow-y:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
+  }
+  .fabs::-webkit-scrollbar{ display:none }
+
+  /* ── الحبّة ──
+     الاستدارةُ تامّةٌ (999px) فتُقرأ حبّةً لا بطاقة. والتدرّجُ من
+     أعلى يعطي عمقًا، وحافّةُ الضوء فوقه تجعلها جسمًا لا طبقةَ لون. */
+  .fab{
+    position:relative; display:flex; align-items:center; gap:12px; flex:none;
+    height:54px; padding:0 20px 0 6px; border:0; border-radius:999px;
+    cursor:pointer; text-align:start; color:#F4F9F6;
+    background:linear-gradient(177deg,#1F7555 0%,#12492F 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.17),
+      inset 0 -1px 0 rgba(0,0,0,.26),
+      0 2px 4px rgba(6,32,22,.3),
+      0 14px 28px -12px rgba(6,32,22,.72);
+    transform-origin:100% 50%;
+    animation:fabPop .46s cubic-bezier(.18,1.3,.34,1) both;
+    animation-delay:calc(var(--i,0) * 58ms);
+    transition:transform .13s ease;
+  }
+  html[dir=ltr] .fab{ padding:0 6px 0 20px; flex-direction:row-reverse;
+    transform-origin:0 50% }
+
+  .fab b{
+    flex:1; min-width:0; font-size:14px; font-weight:700; letter-spacing:-.15px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+
+  /* ── حوضُ الأيقونة: ذهبيٌّ دافئٌ بحافّةِ ضوء ── */
+  .fab .fi{
+    order:2; position:relative; width:42px; height:42px; flex:none;
+    border-radius:999px; display:grid; place-items:center; color:#1A3D2C;
+    background:linear-gradient(177deg,#E2CB9C 0%,#BC9D66 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.55),
+      inset 0 -1px 0 rgba(0,0,0,.14),
+      0 2px 5px rgba(6,32,22,.34);
+  }
+  .fab .fi .ic{ width:20px; height:20px }
+  .fab:active{ transform:scale(.97) }
+  .fab:focus-visible{ outline:2px solid var(--gold2); outline-offset:3px }
+
+  /* الشارةُ على حافّة الحوض لا فوق النصّ */
+  .fab .badge{ inset-inline-end:-3px; inset-inline-start:auto; top:-3px }
+
+  /* ── الزرُّ الرئيسيّ ──
+     أغمقُ من الحبّات وأكبرُ منها، بحلقةٍ ذهبيّةٍ ترُدّه إليها. */
+  .fabmain{
+    width:58px; height:58px; flex:none; border-radius:999px; border:0;
+    display:grid; place-items:center; cursor:pointer; color:#E8D5AE;
+    background:linear-gradient(177deg,#1A6B4C 0%,#082E20 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.2),
+      inset 0 -2px 5px rgba(0,0,0,.3),
+      0 0 0 1px rgba(226,203,156,.26),
+      0 3px 6px rgba(6,32,22,.4),
+      0 18px 34px -12px rgba(6,32,22,.8);
+    animation:fabTurn .4s cubic-bezier(.18,1.3,.34,1) both;
+    transition:transform .13s ease;
+  }
+  .fabmain .ic{ width:24px; height:24px }
+  .fabmain:active{ transform:scale(.94) }
+  .fabmain:focus-visible{ outline:2px solid var(--gold2); outline-offset:4px }
+
+  /* ── الحركة ──
+     زنبركيّةٌ بارتدادٍ خفيف. والأقربُ إلى الإبهام يصعد أوّلًا،
+     فيُقرأ الفتحُ صعودًا من الأسفل. والنصُّ والحوضُ يلحقان. */
+  @keyframes fabPop{
+    0%   { opacity:0; transform:translateY(26px) scale(.82) }
+    55%  { opacity:1 }
     100% { opacity:1; transform:translateY(0) scale(1) }
   }
-  /* النصُّ والحوضُ يلحقان الحبّةَ لا يسبقانها */
-  .fabwrap .fab b, .fabwrap .fab .fi{ animation:fabFade .3s ease both;
-    animation-delay:calc(var(--i,0) * 55ms + 90ms) }
-  @keyframes fabFade{ from{ opacity:0 } }
+  @keyframes fabTurn{
+    from { opacity:0; transform:rotate(-120deg) scale(.5) }
+    to   { opacity:1; transform:rotate(0) scale(1) }
+  }
+  @keyframes fabInk{ from{ opacity:0 } to{ opacity:1 } }
+  .fab b, .fab .fi{
+    animation:fabInk .28s ease both;
+    animation-delay:calc(var(--i,0) * 58ms + 100ms);
+  }
+
+  /* ── الحجاب ──
+     تدرّجٌ شعاعيٌّ من زاوية الزرّ: يُعتم البعيدَ ويُبقي القريبَ
+     ظاهرًا، فيُقرأ أنّ القائمةَ خرجت من الزرّ لا أنّها حلّت محلّ
+     الشاشة. ويُعكس في اللاتينيّة. */
+  .scrim.soft{
+    background:radial-gradient(135% 100% at 86% 92%,
+      rgba(6,32,22,.30) 0%, rgba(6,32,22,.68) 66%);
+    -webkit-backdrop-filter:blur(5px) saturate(.9);
+    backdrop-filter:blur(5px) saturate(.9);
+  }
+  html[dir=ltr] .scrim.soft{
+    background:radial-gradient(135% 100% at 14% 92%,
+      rgba(6,32,22,.30) 0%, rgba(6,32,22,.68) 66%);
+  }
+
+  /* ── الشاشاتُ القصيرة ── */
+  @media (max-height:700px){
+    .fabwrap{ gap:11px; bottom:calc(var(--sab,14px) + 58px) }
+    .fabs{ gap:8px; min-width:182px }
+    .fab{ height:48px; padding-inline-start:17px }
+    .fab b{ font-size:13px }
+    .fab .fi{ width:38px; height:38px }
+    .fabmain{ width:54px; height:54px }
+  }
+
+  /* ── من فضّل تقليلَ الحركة ── */
   @media (prefers-reduced-motion:reduce){
-    .fabwrap .fab, .fabwrap .fabmain,
-    .fabwrap .fab b, .fabwrap .fab .fi{ animation:none }
+    .fab, .fabmain, .fab b, .fab .fi{ animation:none }
   }
 
 </style>
