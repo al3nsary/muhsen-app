@@ -1792,3 +1792,39 @@
   }
 
 </style>
+
+<style>
+  /* ══════════════════════════════════════════════════════════════
+     الملاحظةُ العابرة · خانةُ الراحة · شارةُ الليدر المفوَّض
+     ══════════════════════════════════════════════════════════════ */
+
+  /* تُقال لسببٍ ثمّ تنصرف — والمُوجِّهُ يتولّى توقيتَها بعد الرسم */
+  .note.flash{ animation:noteIn .34s cubic-bezier(.2,.9,.3,1) both }
+  .note.flash.gone{
+    opacity:0; transform:translateY(-6px); max-height:0;
+    margin-block:0; padding-block:0; overflow:hidden;
+    transition:opacity .3s ease, transform .3s ease,
+      max-height .4s ease, padding .4s ease, margin .4s ease;
+  }
+  @keyframes noteIn{ from{ opacity:0; transform:translateY(-5px) } to{ opacity:1; transform:none } }
+
+  /* يومُ راحةٍ لا غياب: رماديٌّ هادئٌ لا أحمرُ يُدين */
+  .wk.off{ background:#F1F3F0; color:#9AA79F; box-shadow:inset 0 0 0 1px #E6EAE5 }
+  .wk.off b{ font-weight:600 }
+
+  /* مهمّةٌ أُسندت إليه قيادتُها: ذهبيّةٌ في قائمته — مهمّةٌ عاديّة
+     يميّزها لونُها أنّه الليدرُ فيها */
+  .c.task.lead{ box-shadow:0 0 0 1.5px rgba(176,141,74,.55),
+    0 1px 2px rgba(16,24,40,.05) }
+  .c.task.lead::before{ background:var(--gold, #B08D4A); opacity:1; width:4px }
+  .strip.gold{ background:#F6EFE1; color:#6E5729 }
+
+  /* باب البصمة حين لا سِمةَ مسجّلة: مقروءٌ لا مطموس */
+  .biobtn.off{ opacity:.6 }
+
+  /* الدخول: الكتلةُ في وسط الشاشة والفراغُ فوقها أقرب.
+     كانت ملتصقةً بالأعلى فيبقى تحتها فراغٌ لا شيء فيه. */
+  .authmain{ justify-content:center }
+  .authtop{ padding:10px 0 18px }
+  @media (min-height:720px){ .authtop{ padding:0 0 22px } }
+</style>

@@ -97,10 +97,11 @@ function screenTask() {
 
 
     '<div class="lbl">المهام الفرعية<small>' + AR(doneSubs) + ' من ' + AR(t.subs.length) + '</small></div>' +
-    (!act && !closed ? '<div class="note ' + (canShootSub(t) ? 'b' : 'a') + '">' + icon('i-info','s16') +
-      '<span>' + (canShootSub(t)
-        ? 'الليدر هو من يؤشّر على الإنجاز — ولك توثيق كل خطوة بالكاميرا.'
-        : 'الليدر هو من يؤشّر على الإنجاز. ' + E(shootSubWhy(t)) + '.') + '</span></div>' : '') +
+    /* شرحُ «من يؤشّر» كان ملاحظةً مقيمةً فوق الخطوات في كلّ زيارة.
+       والخاناتُ نفسُها معطّلةٌ لمن لا يملك التأشير، والنقرُ عليها
+       يقول السبب — فسقط الشرح. ويبقى المانعُ وحدَه إن كان. */
+    (!act && !closed && !canShootSub(t)
+      ? flash('a', 'i-info', E(shootSubWhy(t)), 7) : '') +
     '<div class="c">' + t.subs.map((s, i2) => subRow(t, s, i2, running)).join('') + '</div>' +
 
     /* دليلُ التنفيذ تحت الخطوات: يُقرأ بعد أن يُعرَف ما يُنفَّذ */
@@ -121,8 +122,8 @@ function screenTask() {
       ? '<div class="note a">' + icon('i-info','s16') +
         '<span>' + (running || closed ? 'المهمة بدأت — التسكين مقفل.' : 'حان وقت المهمة — التسكين مقفل.') + '</span></div>'
       : (reqWindowOpen(t)
-        ? '<div class="note b">' + icon('i-clock','s16') +
-          '<span>الطلبات مفتوحة — تُغلق ' + untilTxt(reqCloseAt(t)) + '. ومهلة كل طلب ' + AR(REQ_TTL_H) + ' ساعات.</span></div>'
+        ? '<div class="note a">' + icon('i-clock','s16') +
+          '<span>التسكين مفتوح — يُغلق ' + untilTxt(reqCloseAt(t)) + '</span></div>'
         : '<div class="note a">' + icon('i-clock','s16') + '<span>' + E(reqWindowWhy(t)) +
           (supportOpen(t) ? ' — ولم يبقَ إلا طلب الدعم.' : '') + '</span></div>')) : '') +
       (canAssign(t, u.id) && !closed
@@ -182,9 +183,11 @@ function screenTask() {
        يجمع تعليقاتِ الحالة والملاحظاتِ في مكانٍ واحدٍ أسفلَ الشاشة. */
     taskLog(t, lead, watch, deleg) +
 
-    (!closed ? '<div class="grid2">' +
-      '<button class="btn l sm" data-a="note" data-id="' + t.id + '">' + icon('i-edit','s16') + 'ملاحظة</button>' +
-      '<button class="btn l sm" data-a="report" data-id="' + t.id + '">' + icon('i-flag','s16') + 'بلاغ</button></div>' : '') +
+    /* زرُّ «ملاحظة» سقط: الملاحظةُ الحرّةُ بابٌ ثالثٌ بجانب البلاغ
+       والتذكرة، ولا يُقرأ ما يُكتب فيه إلّا في السجلّ. والبلاغُ
+       هو الطريقُ الذي له مسارٌ ومهلةٌ وصاحبُ قرار. */
+    (!closed ? '<button class="btn l" data-a="report" data-id="' + t.id + '">' +
+      icon('i-flag','s16') + 'رفع بلاغ على المهمة</button>' : '') +
 
     (running ? (act
       ? '<div class="endzone"><button class="cta stop" data-a="end" data-id="' + t.id + '">' +
@@ -202,14 +205,13 @@ function attendCard(t, u, lead) {
   const mine = lead ? t.leaderAttendedAt : (a ? a.attendedAt : null);
   const involved = lead || (a && a.req === 'accepted');
   if (!involved) return '';
-  if (mine) return '<div class="note g">' + icon('i-checkc','s16') +
-    '<span>الحضور مُثبَت ' + t12(mine) + '</span></div>';
+  /* الخبرُ يُقال مرّةً ثمّ ينصرف، والحالةُ تبقى في الزرّ */
+  if (mine) return flash('g', 'i-checkc', 'الحضور مُثبَت ' + t12(mine), 6);
   if (now() < prepOpen(t)) return '<div class="note a">' + icon('i-clock','s16') +
-    '<span>يُفتح التحضير قبل المهمة بساعتين — ' + untilTxt(prepOpen(t)) + '</span></div>';
-  /* أُغلقت النافذة: الزر باهت ومعطّل، والسبب مكتوب */
+    '<span>يُفتح التحضير ' + untilTxt(prepOpen(t)) + '</span></div>';
+  /* أُغلقت النافذة: الزر باهت ومعطّل، والسببُ سطرٌ واحدٌ يمرّ */
   if (now() >= prepDeadline(t)) return '<div class="c">' +
-    '<div class="note r">' + icon('i-xc','s16') +
-      '<span><b>أُغلق التحضير</b><br>يُغلق قبل المهمة بساعة ونصف — ولم تثبت حضورك.</span></div>' +
+    flash('r', 'i-xc', 'أُغلق التحضير — تجاوز الوقت المسموح', 6) +
     '<button class="btn p sm off" style="margin-top:10px" disabled>' + icon('i-target','s16') +
       'إثبات الحضور</button></div>';
   const late = now() >= t.start;

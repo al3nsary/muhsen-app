@@ -4,28 +4,22 @@ const PRI_C = { 'عاجلة':'no', 'متوسطة':'wait', 'عادية':'grey' };
 const ST_C  = { 'مفتوحة':'wait', 'مُسندة':'wait', 'قيد المعالجة':'wait', 'مُصعّدة':'no', 'مغلقة':'grey' };
 const SRC_LBL = { 'حاج':'من حاج', 'كنترول':'من الكنترول', 'محسن':'من محسن', 'ليدر':'من الليدر' };
 
+/* التذاكرُ قائمةٌ واحدةٌ بلا تصنيفات: كانت خمسةَ تبويباتٍ فوق
+   تبويبين، فتُخبَّأ التذكرةُ خلف اختيارٍ لا يُرى. والمفتوحةُ
+   تتصدّر والمغلقةُ تذيّل — وذلك كلُّ الترتيب الذي تحتاجه. */
 function ticketsPane() {
-  const L = isLeader();
-  const f = S.tab.tk || 'open';
-  let list = myTickets();
-  if (f === 'open') list = list.filter(k => k.status !== 'مغلقة');
-  else if (f === 'closed') list = list.filter(k => k.status === 'مغلقة');
-  else if (f === 'mine') list = list.filter(k => k.assignedTo === S.session.id);
-  else if (f === 'hajj') list = list.filter(k => k.src === 'حاج');
-  else if (f === 'ctrl') list = list.filter(k => k.src === 'كنترول');
-  else if (f === 'muh') list = list.filter(k => k.src === 'محسن');
-
-  const segs = L ? [['open','المفتوحة'],['hajj','الحجاج'],['ctrl','الكنترول'],['muh','المحسنون'],['closed','المغلقة']]
-                 : [['open','المفتوحة'],['mine','المسندة إليّ'],['closed','المغلقة']];
+  const closedOf = k => k.status === 'مغلقة' ? 1 : 0;
+  const list = myTickets().slice()
+    .sort((a, b) => (closedOf(a) - closedOf(b)) || (b.at - a.at));
+  const openN = list.filter(k => k.status !== 'مغلقة').length;
 
   /* الإرجاعُ على سطر ما بعده: «return» وحدَه في سطرٍ تُدرَج بعده
      فاصلةٌ تلقائيًّا، فيعود undefined ويموت ما تحته. وقع ذلك حين
      حُذف سطرُ التعريف الذي كان يليه. */
-  return '<div class="seg">' + segs.map(x =>
-      '<button class="' + (f === x[0] ? 'on' : '') + '" data-a="seg" data-k="tk" data-v="' + x[0] + '">' +
-      x[1] + '</button>').join('') + '</div>' +
-    (list.length ? list.map(k => ticketRow(k)).join('')
-      : '<div class="c center" style="padding:26px"><b>لا توجد تذاكر في هذا التصنيف</b></div>');
+  return (list.length
+    ? '<div class="lbl">التذاكر<small>' + AR(openN) + ' مفتوحة من ' + AR(list.length) + '</small></div>' +
+      list.map(k => ticketRow(k)).join('')
+    : '<div class="c center" style="padding:26px"><b>لا توجد تذاكر</b></div>');
 }
 
 /* التوافق: من يفتح «التذاكر» مباشرة يصل الشاشة المدمجة على تبويبها */
@@ -290,11 +284,11 @@ function screenMuhsens() {
         (notes ? '<span style="color:var(--amber)">' + AR(notes) + ' ملاحظة</span>' : '<span>بلا ملاحظات</span>') + '</div></button>';
     }).join('') +
     /* الليدر لا يرى فريق امتثال ولا يختار منه — الدعم يُطلب من الكنترول وهو من يُسند.
-       ويراه المحسن الاحتياطي وحده لأنه فريقه. */
+       ويراه المحسن الاحتياطي وحده لأنه فريقه.
+       وشرحُ ذلك كان ملاحظةً زرقاءَ مقيمةً في أسفل الشاشة: شرحٌ
+       لا حالة، وموضعُه الدليلُ لا كلُّ زيارة. */
     (isLeader()
-      ? '<div class="note b">' + icon('i-shield','s16') +
-        '<span>إن نقص العدد على مهمة، ارفع <b>طلب دعم من الكنترول</b> من داخل المهمة — ' +
-        'وهو من يختار ويُسند.</span></div>'
+      ? ''
       : u.reserve
       ? '<div class="lbl">فريق امتثال<small>مشترك بين الليدرز</small></div>' +
         reserveTeam().filter(m2 => m2.id !== u.id).map(m2 => {
@@ -355,9 +349,9 @@ function screenProfile() {
         '<span>لا ملاحظات مسجّلة — سجلٌّ نظيف.</span></div>') +
 
 
-    (!isMe && isLeader() && !L ? '<div class="note b">' + icon('i-info','s16') +
-      '<span>التسكين والطلبات تُدار من داخل المهمة نفسها — افتح المهمة ثم «إدارة التسكين».</span></div>' +
-      '<a class="btn l" href="tel:' + u.phone.replace(/[^0-9]/g,'') + '">' + icon('i-phone','s16') + 'اتصال</a>' : '') +
+    (!isMe && isLeader() && !L
+      ? '<a class="btn l" href="tel:' + u.phone.replace(/[^0-9]/g,'') + '">' +
+        icon('i-phone','s16') + 'اتصال</a>' : '') +
 
     (isMe ? '<button class="btn d" data-a="logout">' + icon('i-out','s16') + 'تسجيل الخروج</button>' : '') +
     '</div>' + tabs();

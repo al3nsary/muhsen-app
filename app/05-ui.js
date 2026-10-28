@@ -3,6 +3,25 @@ const E = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;
 const icon = (n, cls) => '<svg class="ic ' + (cls || '') + '"><use href="#' + n + '"/></svg>';
 const avat = (u, cls) => '<span class="av ' + (cls || '') + ' ' + u.av + '"><svg viewBox="0 0 44 44"><use href="#av-' + u.g + '"/></svg></span>';
 const pill = (t, c) => '<span class="pill ' + c + '">' + E(t) + '</span>';
+
+/* ============================================================
+   ملاحظةٌ عابرة — تُقال لسببٍ ثمّ تنصرف
+
+   كانت التنبيهاتُ تُقيم في الشاشة بعد أن أدّت معناها: «تم تسجيل
+   الحضور» يبقى طولَ اليوم، و«أُغلق التحضير» يبقى إلى الغد. وهي
+   أخبارٌ لا حالات. فصارت تُعرَض عند فتح الشاشة ثمّ تذوي وحدَها.
+
+   وعمرُها يُحسب من لحظة دخول الشاشة لا من لحظة الرسم: فالشاشةُ
+   تُعاد رسمًا لأسبابٍ شتّى — لافتةٌ تنصرف، عدّادٌ يبلغ مهلتَه —
+   وكان كلُّ رسمٍ يُحيي الملاحظةَ بعمرٍ جديدٍ فلا تنصرف أبدًا.
+   أمّا الآن فيُطرح ما مضى، ويُسلَّم الباقي إلى المُوجِّه.
+   ============================================================ */
+function flash(cls, ic, body, secs) {
+  const left = (secs || 6) * 1000 - (Date.now() - (S._viewAt || 0));
+  if (left <= 0) return '';
+  return '<div class="note ' + cls + ' flash" data-ttl="' + Math.round(left) + '">' +
+    icon(ic, 's16') + '<span>' + body + '</span></div>';
+}
 const IMG = window.IMG;
 
 function toast(text, kind) { S.toast = { text, kind: kind || 'g', at: Date.now() }; }
@@ -60,13 +79,14 @@ const mayRide = () => {
 function tabCatalog() {
   const L = isLeader();
   const inbox = S.requests.filter(x => x.to === S.session.id && x.state === 'pending').length +
-    pendingSwaps().length;
+    pendingDayRequests();
   const openTk = myTickets().filter(k => k.status !== 'مغلقة').length;
   const out = [
     { k:'tasks',   i:'i-tasks',  l:'المهام',    on:['tasks','task','assign','timeline','doc'] },
     { k: L ? 'lreq' : 'requests', i:'i-swap', l:'الطلبات', b:inbox, on:['lreq','requests'] },
     { k:'daily',   i:'i-check',  l:'التحضير',   on:['daily'] },
-    { k:'desk',    i:'i-ticket', l:'البلاغات',  b:openTk + openReports(),
+    /* البابُ يجمع التذاكرَ والبلاغاتِ، فاسمُه يجمعهما */
+    { k:'desk',    i:'i-ticket', l:'التذاكر والبلاغات',  b:openTk + openReports(),
       on:['desk','tickets','ticket','report'] },
     { k:'notifs',  i:'i-bell',   l:'الإشعارات', b:unread(), on:['notifs'] },
     { k:'guide',   i:'i-guide',  l:'الدليل',    on:['guide'] },
@@ -255,8 +275,12 @@ function taskRow(t) {
   const hideDetail = !isLeader() && bucket === 'undone';
   const deleg = t.delegate && t.delegate.state === 'accepted';
   const watchOnly = isLeader() && deleg;
+  /* مهمّةٌ أُسندت إليه قيادتُها: تبقى مهمّةً عاديّةً في قائمته،
+     وتُميَّز بلونٍ وشارةٍ أنّه الليدرُ فيها. */
+  const leadHere = !isLeader() && isDelegate(t, uid_);
 
-  return '<div class="c task b-' + bucket + (ug ? ' ' + ug.k : '') + '" role="button" tabindex="0" style="--kc:' + ui.c + '" ' +
+  return '<div class="c task b-' + bucket + (ug ? ' ' + ug.k : '') + (leadHere ? ' lead' : '') +
+    '" role="button" tabindex="0" style="--kc:' + ui.c + '" ' +
     'data-a="go" data-n="task" data-id="' + t.id + '">' +
     '<div class="fl" style="align-items:flex-start;gap:11px">' +
       '<span class="tthumb bg-' + t.photo + '">' +
@@ -264,6 +288,7 @@ function taskRow(t) {
       '<div class="sp">' +
         '<div class="fl" style="align-items:flex-start;gap:8px">' +
           '<b style="font-size:14.5px;line-height:1.5" class="sp">' + E(t.title) + '</b>' +
+          (leadHere ? '<span class="bpill gold">' + icon('i-shield', 's14') + 'ليدر</span>' : '') +
           '<span class="bpill ' + bk.c + '">' + icon(bk.i, 's14') + bk.l + '</span></div>' +
         '<div class="tiny dim" style="margin-top:4px">' + hijri(t.start) + ' · ' + t12(t.start) + '</div>' +
         '<div class="tiny dim2">' + E(t.place) + '</div>' +
@@ -277,6 +302,8 @@ function taskRow(t) {
       '</div></div>' +
     (watchOnly ? '<div class="strip b">' + icon('i-shield', 's16') +
       '<span>الليدر عليها: ' + E(userById(t.delegate.muhsenId).name) + ' — متابعة بلا قرارات</span></div>' : '') +
+    (leadHere ? '<div class="strip gold">' + icon('i-shield', 's16') +
+      '<span>أنت الليدر على هذه المهمة — البدء والإغلاق والتأشير لك</span></div>' : '') +
     (bucket === 'undone'
       ? '<div class="strip r">' + icon('i-warn', 's16') +
         '<span>' + E(undoneReason(t, uid_)) + '</span></div>'
@@ -428,19 +455,25 @@ function screenLogin() {
           '<button class="btn p wide" data-a="dologin"' + (S.loginBusy ? ' disabled' : '') + '>' +
             (S.loginBusy ? '<span class="spin"></span>' : '') +
             'تسجيل الدخول</button>' +
-        '</form>' +
 
-        /* السِّمةُ الحيويّة: لا تظهر إلّا لمن سجّلها على هذا الجهاز */
-        (bio
-          ? '<div class="orsep">أو</div>' +
-            '<button class="biobtn' + (S.bioBusy ? ' busy' : '') + '" data-a="biologin"' +
-              (S.bioBusy ? ' disabled' : '') + '>' +
-              '<span class="bioic">' +
-                (S.bioBusy ? '<span class="spin"></span>' : icon('i-touch', 's22')) + '</span>' +
-              '<span class="sp"><b>الدخول ببصمة الجهاز</b>' +
-                '<span>' + E(bio.name) + '</span></span>' +
-              icon('i-back', 's16') + '</button>'
-          : '') +
+          /* السِّمةُ الحيويّة بابٌ ثانٍ تحت الأوّل مباشرةً، لا بعد
+             البطاقة: من سجّلها يدخل بها، ومن لم يسجّلها يقرأ أنّها
+             تُفعَّل بعد أوّل دخول — فلا يختفي البابُ بلا بيان. */
+          '<div class="orsep">أو</div>' +
+          (bio
+            ? '<button type="button" class="biobtn' + (S.bioBusy ? ' busy' : '') + '" data-a="biologin"' +
+                (S.bioBusy ? ' disabled' : '') + '>' +
+                '<span class="bioic">' +
+                  (S.bioBusy ? '<span class="spin"></span>' : icon('i-touch', 's22')) + '</span>' +
+                '<span class="sp"><b>الدخول ببصمة الجهاز</b>' +
+                  '<span>' + E(bio.name) + '</span></span>' +
+                icon('i-back', 's16') + '</button>'
+            : '<button type="button" class="biobtn off" data-a="bionone">' +
+                '<span class="bioic">' + icon('i-touch', 's22') + '</span>' +
+                '<span class="sp"><b>الدخول ببصمة الجهاز</b>' +
+                  '<span>تُفعَّل بعد أول دخول بكلمة المرور</span></span>' +
+                icon('i-back', 's16') + '</button>') +
+        '</form>' +
       '</div>' +
 
       '<div class="authfoot"><i class="mnozoly" role="img" aria-label="نُزلي"></i></div>' +
@@ -502,6 +535,7 @@ function pendingCountFor(uid_) {
       if (t.status === 'running' && now() > t.end) n++;
     });
     n += (S.swaps || []).filter(s => s.leaderId === uid_ && s.state === 'pending').length;
+    n += (S.leaves || []).filter(s => s.leaderId === uid_ && s.state === 'pending').length;
     n += S.reports.filter(r => r.to === uid_ && r.status !== 'مغلق').length;
   }
   return n;

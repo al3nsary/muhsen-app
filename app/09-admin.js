@@ -123,26 +123,9 @@ function delegSheet(t) {
     }).join('') + '</div>' +
     '<button class="btn g" style="margin-top:12px" data-a="close">إغلاق</button>';
 }
-function ticketSheet(taskId) {
-  const L = isLeader();
-  const tasks = myTasks();
-  return '<div class="grip"></div><h3>رفع تذكرة</h3>' +
-    '<div class="tiny dim2" style="margin-bottom:12px">' + (L ? 'تصل إلى غرفة العمليات — الكنترول' : 'تصل إلى ليدر فريقك') + '</div>' +
-    '<div class="lbl plain">التصنيف</div>' +
-    '<div class="field" style="margin:8px 0"><select id="kc">' + TCATS.map(c => '<option>' + c + '</option>').join('') + '</select></div>' +
-    '<div class="lbl plain">الأولوية</div>' +
-    '<div class="field" style="margin:8px 0"><select id="kp">' + TPRI.map(c => '<option' + (c === 'متوسطة' ? ' selected' : '') + '>' + c + '</option>').join('') + '</select></div>' +
-    '<div class="lbl plain">المهمة</div>' +
-    '<div class="field" style="margin:8px 0"><select id="kt2"><option value="">بدون ربط بمهمة</option>' +
-      tasks.map(t => '<option value="' + t.id + '"' + (t.id === taskId ? ' selected' : '') + '>' + t.title + ' — ' + hijri(t.start) + '</option>').join('') + '</select></div>' +
-    '<div class="lbl plain">العنوان</div>' +
-    '<div class="field" style="margin:8px 0"><input id="kti" placeholder="عنوان مختصر"></div>' +
-    '<div class="lbl plain">التفاصيل</div>' +
-    '<div class="field" style="margin:8px 0"><input id="kb" placeholder="اشرح الحالة"></div>' +
-    '<div class="grid2" style="margin-top:12px">' +
-      '<button class="btn g" data-a="close">إلغاء</button>' +
-      '<button class="btn p" data-a="sendticket">رفع التذكرة</button></div>';
-}
+/* ورقةُ «رفع تذكرة» حُذفت: التذاكرُ يرفعها الحجّاجُ والكنترول،
+   والفريقُ يرفع بلاغات. وكانت بلا زرٍّ يبلغها أصلًا. والتصنيفاتُ
+   في 03-data باقيةٌ — يُقرأ بها الوارد ويُلوَّن. */
 function ticketStateSheet(k) {
   return '<div class="grip"></div><h3>حالة التذكرة</h3>' +
     '<div class="tiny dim2" style="margin-bottom:12px">' + E(k.title) + '</div>' +
@@ -174,21 +157,9 @@ function flagSheet(kt, p) {
     '<div class="tiny dim2" style="margin-top:10px">يُسجَّل البلاغ كتذكرة تصل الليدر.</div>' +
     '<button class="btn g" style="margin-top:10px" data-a="close">إغلاق</button>';
 }
-function assignToSheet(uid_) {
-  const u = userById(uid_);
-  const rows = myTasks().filter(t => !lockedForAssign(t) && !slotOf(t, uid_)).sort((a, b) => a.start - b.start);
-  return '<div class="grip"></div><h3>إسناد مهمة إلى ' + E(u.name) + '</h3>' +
-    '<div class="tiny dim2" style="margin-bottom:12px">المهام التي لم تُقفل بعد</div>' +
-    (rows.length ? '<div class="col">' + rows.map(t => {
-      const b = busyIn(uid_, t);
-      return '<button class="prow" ' + (b ? 'disabled style="opacity:.5"' : 'data-a="send" data-id="' + t.id + '" data-u="' + uid_ + '"') + '>' +
-        '<span class="thumb bg-' + t.photo + '" style="width:42px;height:42px"></span>' +
-        '<span class="nm sp"><b>' + E(t.title) + '</b><span>' + hijri(t.start) + ' ' + t12(t.start) +
-        (b ? ' · مرتبط بـ«' + E(b.title) + '»' : '') + '</span></span>' +
-        (b ? pill('غير متاح','no') : pill('إرسال طلب','live')) + '</button>';
-    }).join('') + '</div>' : '<div class="c center dim sm">لا توجد مهام متاحة</div>') +
-    '<button class="btn g" style="margin-top:12px" data-a="close">إغلاق</button>';
-}
+/* ورقةُ «إسناد مهمة إلى فلان» حُذفت: التسكينُ يُدار من داخل
+   المهمّة نفسِها لا من ملفّ الشخص، وبابُها سقط من الملفّ منذ
+   حين فبقيت بلا نداء. */
 function reminderSheet() {
   const d = S.calDay || dayStart(now());
   return '<div class="grip"></div><h3>تذكير جديد</h3>' +

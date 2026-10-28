@@ -2,8 +2,8 @@
 /* الأصلُ واحدٌ في GitHub Pages، فالمفتاحُ هو ما يفصل النسختين. */
 /* تطبيقٌ واحدٌ ورابطٌ واحد: الدورُ يُقرأ من الحساب بعد الدخول. */
 const KEY = 'muhsen_app_v3';
-const APP_VER = 'نسخة ٤٫٣';
-const SCHEMA = 24;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
+const APP_VER = 'نسخة ٤٫٤';
+const SCHEMA = 25;              /* يُرفع مع كل تغيير في البنية فتُعاد التهيئة تلقائيًا */
 let S = null;
 
 /* الاهتزازُ: كان ثابتًا محلّيًّا داخل act() في المُوجِّه، فكلُّ نداءٍ
@@ -131,7 +131,7 @@ function seed() {
     v: SCHEMA, clockOffset: 0, myPlace: 'site', session: null, route: { n: 'login' },
     tab: {}, orgs: ORGS, users: USERS.concat(RESERVE), tasks: [], tickets: [], reports: [], notifs: [],
     requests: [], reminders: [], pilgrims: {}, photos: [], guides: {}, support: [],
-    shifts: {}, attend: [], swaps: [], broadcasts: [], toast: null,
+    shifts: {}, attend: [], swaps: [], leaves: [], rota: {}, broadcasts: [], toast: null,
     /* ترتيبُ الشريط: فارغٌ يعني الافتراضيّ — يملؤه المستخدمُ من الإعدادات */
     tabs: null, sheet: null,
     /* يُملآن عند الربط: كتالوجٌ مجلوبٌ وطابورُ ما لم يُرسَل بعد */
@@ -665,7 +665,9 @@ const bucketOf = k => TBUCKETS.find(b => b.k === k) || TBUCKETS[0];
 /* «غير المنجزة» = ما يُدان فيه الشخص وحده، لا كل ما لم يكتمل */
 function isBlamed(t, uid_) {
   const u = userById(uid_); if (!u) return false;
-  if (u.role === 'muhsen') {
+  /* المفوَّضُ يُقاس بمقياس الليدر على هذه المهمّة وحدَها: هو صاحبُ
+     القرار فيها، وحضورُه يُسجَّل في leaderAttendedAt لا في خانته. */
+  if (u.role === 'muhsen' && !isDelegate(t, uid_)) {
     const s = t.assigned.find(a => a.muhsenId === uid_);
     if (!s) return false;
     if (s.req === 'rejected') return true;
@@ -692,8 +694,10 @@ function isOutOfTask(t, uid_) {
 function taskBucket(t, uid_) {
   const u = userById(uid_);
   /* الاستبعاد والاستبدال والانسحاب: تنتقل إلى «غير المنجزة» له وحده،
-     ولو لم تبدأ المهمة أو كانت قد انتهت */
-  if (u && u.role === 'muhsen' && isOutOfTask(t, uid_)) return 'undone';
+     ولو لم تبدأ المهمة أو كانت قد انتهت.
+     والمفوَّضُ مستثنًى: إسنادُ القيادة إليه يُخرجه من التسكين ليتفرّغ،
+     فكانت المهمّةُ تنقلب في تطبيقه «غير منجزة» ساعةَ قبولِه قيادتَها. */
+  if (u && u.role === 'muhsen' && !isDelegate(t, uid_) && isOutOfTask(t, uid_)) return 'undone';
   if (t.status === 'cancelled') return 'cancelled';
   if (isBlamed(t, uid_)) return 'undone';
   if (t.status === 'running') return 'running';

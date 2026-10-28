@@ -89,6 +89,13 @@ function screenSettings() {
        وصفُّ الموقع، وبابُ شاشة التحكّم. ويبقى الخروج. */
     '<div class="c">' +
       '<div class="h"><b>الحساب</b></div>' +
+      /* تحديثُ النسخة: التطبيقُ مثبَّتٌ بذاكرةٍ مؤقّتة، فمن علِقت
+         عنده نسخةٌ قديمةٌ لا يملك سبيلًا إليها إلّا هذا الزرّ.
+         وكان إجراؤه قائمًا في المُوجِّه بلا زرٍّ يبلغه. */
+      '<button class="prow" data-a="appupdate">' + icon('i-reset', 's20') +
+        '<span class="nm sp"><b>تحديث التطبيق</b>' +
+        '<span>جلب آخر نسخة من الخادم</span></span>' +
+        icon('i-back', 's16') + '</button>' +
       '<button class="prow danger" data-a="logout">' + icon('i-out', 's20') +
         '<span class="nm sp"><b>تسجيل الخروج</b></span></button>' +
     '</div>' +

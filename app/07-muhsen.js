@@ -47,10 +47,12 @@ function screenLeaderHome() {
       '<div class="kpi"><b>' + AR(ts.length) + '</b><span>مهمة</span></div></div>' +
 
     '<div class="lbl">المهام القادمة<small>' + AR(live.length) + ' مهمة قائمة</small></div>' +
+    /* العددُ على الزرّ هو عددُ ما يُفتح به: الزرُّ يذهب إلى «كل
+       المهام»، فكان يحمل عددَ القائمة وحدَها فلا يطابق ما يُرى. */
     (upcoming.length ? upcoming.map(t => taskRow(t)).join('') +
-      (live.length > upcoming.length
+      (ts.length > upcoming.length
         ? '<button class="btn l sm" data-a="pickbucket" data-v="all">' + icon('i-tasks','s16') +
-          'عرض بقية المهام (' + AR(live.length - upcoming.length) + ')</button>' : '')
+          'عرض كل المهام (' + AR(ts.length) + ')</button>' : '')
       : '<div class="c center" style="padding:24px"><b>لا توجد مهام قائمة</b>' +
         '<button class="btn l sm" style="margin-top:12px" data-a="pickbucket" data-v="done">' +
           icon('i-checkc','s16') + 'المهام المنجزة</button></div>') +
@@ -59,7 +61,7 @@ function screenLeaderHome() {
 
 /* ============================ رئيسية المحسن ============================ */
 function screenMuhsenHome() {
-  const u = me(), t = currentTask();
+  const u = me(), t = currentTask(), all = myTasks();
   const live = activeTasks(u.id).filter(x => !t || x.id !== t.id);
   return bar('المهمة الحالية') + '<div class="view">' + ground() +
     runningCard() +
@@ -74,8 +76,8 @@ function screenMuhsenHome() {
     (live.length
       ? '<div class="lbl">المهام القادمة<small>' + AR(live.length) + '</small></div>' +
         live.slice(0, 3).map(x => taskRow(x)).join('') +
-        (live.length > 3 ? '<button class="btn l sm" data-a="pickbucket" data-v="all">' +
-          icon('i-tasks','s16') + 'عرض الكل (' + AR(live.length) + ')</button>' : '')
+        (all.length > 3 ? '<button class="btn l sm" data-a="pickbucket" data-v="all">' +
+          icon('i-tasks','s16') + 'عرض كل المهام (' + AR(all.length) + ')</button>' : '')
       : '') +
     '</div>' + tabs();
 }
@@ -95,8 +97,8 @@ function muhsenTaskCard(t, u) {
       '<div class="note b">' + icon('i-info','s16') + '<span>تبدأ المهمة ' + t12(t.start) + ' — ' + untilTxt(t.start) + '</span></div>';
   }
   return svcCard(t) + metaCard(t) +
-    (deleg ? '<div class="note b">' + icon('i-shield','s16') +
-      '<span>أُسندت إليك قيادة هذه المهمة — تبدأها وتغلقها، ولا تملك التسكين.</span></div>' : '') +
+    (deleg ? '<div class="note a">' + icon('i-shield','s16') +
+      '<span><b>أنت الليدر على هذه المهمة</b> — تبدأها وتغلقها، ولا تملك التسكين.</span></div>' : '') +
     '<div class="c">' +
       '<div class="row" style="margin-bottom:10px"><b class="sm">حجاج ' + E(t.kt) + '</b>' +
         pill(AR(ktCount(t.kt)) + ' حاجًا', 'gold') + '</div>' + block + '</div>' +

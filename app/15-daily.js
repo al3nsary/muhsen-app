@@ -19,6 +19,31 @@ const shiftOf = id => (S.shifts && S.shifts[id]) || 'am';
 const shiftInfo = id => SHIFTS[shiftOf(id)];
 const inHQ = () => S.myPlace === 'hq';
 
+/* ============================================================
+   دورةُ الدوام — الدوامُ ليس يوميًّا
+
+   منهم من يداوم يومًا ويرتاح يومًا، ومنهم من يداوم يومًا من كلّ
+   ثلاثة، ولكلٍّ شِفتُه. وكان التقويمُ يسوّي بينهم فيُظهر الجميعَ
+   حاضرين كلَّ يوم، فلا يُقرأ منه شيء. وصار يفرّق: دوامٌ وراحة،
+   والالتزامُ يُحسب على أيّام الدوام وحدَها.
+   ============================================================ */
+const ROTA_L = { 2: 'يوم بعد يوم', 3: 'يوم من كلّ ثلاثة' };
+const rotaOf = id => (S.rota && S.rota[id]) || { every: 1, off: 0 };
+/* اليومُ يُعدّ من مبدأ الحقبة، والإزاحةُ تفرّق بين الزملاء فلا
+   يرتاح الفريقُ كلُّه في يومٍ واحد. */
+function onDuty(id, ts) {
+  const r = rotaOf(id);
+  if (!r.every || r.every < 2) return true;
+  const d = Math.round(dayStart(ts) / DAY);
+  return (((d - (r.off || 0)) % r.every) + r.every) % r.every === 0;
+}
+const rotaTxt = id => { const r = rotaOf(id); return ROTA_L[r.every] || 'دوام يوميّ'; };
+/* أقربُ يومِ دوامٍ قادم — يُقال لمن يومُه راحة */
+function nextDuty(id, ts) {
+  for (let i = 1; i <= 7; i++) { const d = dayStart(ts) + i * DAY; if (onDuty(id, d)) return d; }
+  return null;
+}
+
 /* سجل حضور يوم بعينه */
 const dayRec = (id, ts) => (S.attend || []).find(a => a.userId === id && a.day === dayStart(ts));
 const attendedToday = id => !!dayRec(id, now());
@@ -76,13 +101,14 @@ function checkIn(id) {
   return true;
 }
 
-/* ---------- التزام الأسابيع الماضية ---------- */
+/* ---------- الالتزام: يُحسب على أيّام الدوام وحدَها ---------- */
 function weekStats(id, weeksAgo) {
   const end = dayStart(now()) - weeksAgo * 7 * DAY;
   let done = 0, late = 0, days = 0;
   for (let i = 0; i < 7; i++) {
     const d = end - i * DAY;
     if (d > dayStart(now())) continue;
+    if (!onDuty(id, d)) continue;          /* الراحةُ ليست غيابًا */
     days++;
     const r = dayRec(id, d);
     if (r) { done++; if (r.late) late++; }
@@ -139,6 +165,67 @@ function swapAct(s, act, note_) {
 const hh = h => AR(h) + ':' + AR('00');
 const shiftWindow = k => hh(SHIFTS[k].from) + ' — ' + hh(SHIFTS[k].to);
 
+/* ============================================================
+   الاستئذان — خروجٌ مأذونٌ فيه داخل الشِفت
+
+   مسارُه مسارُ تبديل الشِفت نفسُه: يرفعه صاحبُه، فيعتمده ليدرُه
+   أو يرفعه إلى الكنترول. وسجلُّهما واحدٌ في الشاشة لأنّ السؤالَ
+   واحد: ما الذي ينتظر قرارًا على دوامي؟
+   ============================================================ */
+const LEAVE_WHY = ['موعد طبّيّ', 'ظرف عائليّ', 'مراجعة جهة حكوميّة', 'سببٌ آخر'];
+
+function pendingLeaves() {
+  const u = me(); if (!u) return [];
+  if (u.role === 'leader') return (S.leaves || []).filter(x => x.leaderId === u.id && x.state === 'pending');
+  return (S.leaves || []).filter(x => x.from === u.id && x.state === 'pending');
+}
+const myLeaves = () => {
+  const u = me(); if (!u) return [];
+  return (S.leaves || []).filter(x => x.from === u.id || x.leaderId === u.id);
+};
+function addLeave(fromId, day, fromT, toT, reason) {
+  const u = userById(fromId);
+  const x = {
+    id: uid('L'), no: 'LV-' + AR(5200 + (S.leaves || []).length),
+    from: fromId, leaderId: u.role === 'muhsen' ? u.leaderId : null,
+    day, fromT, toT, reason,
+    state: u.role === 'muhsen' ? 'pending' : 'escalated', at: now(),
+    log: [{ at: now(), by: fromId, text: 'قدّم ' + u.name + ' طلب استئذان' }]
+  };
+  S.leaves.unshift(x);
+  if (x.leaderId) notify(x.leaderId, 'i-out', 'طلب استئذان',
+    u.name + ' يطلب الاستئذان ' + hhmm(fromT) + ' — ' + hhmm(toT) + ' · ' + reason, { n: 'daily' });
+  else x.log.push({ at: now(), by: fromId, text: 'رُفع الطلب إلى الكنترول مباشرة' });
+  return x;
+}
+function leaveAct(x, act, note_) {
+  const by = me();
+  if (act === 'approve') {
+    x.state = 'approved'; x.at2 = now();
+    x.log.push({ at: now(), by: by.id, text: 'أذن ' + by.name + ' بالاستئذان' });
+    notify(x.from, 'i-checkc', 'اعتُمد استئذانك',
+      hijri(x.day) + ' · ' + hhmm(x.fromT) + ' — ' + hhmm(x.toT), { n: 'daily' });
+  } else if (act === 'reject') {
+    x.state = 'rejected'; x.at2 = now(); x.note = note_;
+    x.log.push({ at: now(), by: by.id, text: 'رفض ' + by.name + ' الطلب — ' + note_ });
+    notify(x.from, 'i-xc', 'رُفض الاستئذان', note_, { n: 'daily' });
+  } else if (act === 'escalate') {
+    x.state = 'escalated'; x.at2 = now(); x.note = note_ || '';
+    x.log.push({ at: now(), by: by.id, text: 'رفع ' + by.name + ' الطلب إلى الكنترول' +
+      (note_ ? ' — ' + note_ : '') });
+    notify(x.from, 'i-send', 'رُفع طلبك للكنترول',
+      'رفع الليدر طلب الاستئذان إلى غرفة العمليات.', { n: 'daily' });
+  }
+}
+const hhmm = m => AR(String(Math.floor(m / 60))) + ':' + AR(String(m % 60).padStart(2, '0'));
+const leaveMins = x => Math.max(0, x.toT - x.fromT);
+const durTxt = m => m >= 60
+  ? AR(Math.floor(m / 60)) + ' س' + (m % 60 ? ' ' + AR(m % 60) + ' د' : '')
+  : AR(m) + ' د';
+
+/* ما ينتظر قرارًا على الدوام — تبديلٌ واستئذان */
+const pendingDayRequests = () => pendingSwaps().length + pendingLeaves().length;
+
 /* ---------- الشاشة ---------- */
 function screenDaily() {
   const u = me(), L = isLeader();
@@ -146,109 +233,172 @@ function screenDaily() {
   const team = L ? teamOf(u.id) : [];
   const swaps = mySwaps();
   const inbox = pendingSwaps();
-  const seg = S.tab.dl || 'me';
 
+  /* خليّةُ اليوم تفرّق بين أربعٍ لا ثلاث: حاضرٌ ومتأخّرٌ وغائبٌ
+     و«راحة». وكان يومُ الراحة يُرسَم غيابًا، فيبدو الالتزامُ
+     مثقوبًا بلا ذنب. */
   const weekCells = id => {
     let out = '';
     for (let i = 6; i >= 0; i--) {
       const d = dayStart(now()) - i * DAY;
       const r = dayRec(id, d);
+      const duty2 = onDuty(id, d);
       const isToday = d === dayStart(now());
-      out += '<span class="wk ' + (r ? (r.late ? 'late' : 'ok') : 'no') + (isToday ? ' today' : '') + '">' +
+      const cls = r ? (r.late ? 'late' : 'ok') : duty2 ? 'no' : 'off';
+      out += '<span class="wk ' + cls + (isToday ? ' today' : '') + '">' +
         '<i>' + DAY_AB[new Date(d).getDay()] + '</i><b>' + AR(new Date(d).getDate()) + '</b>' +
-        '<u>' + (r ? (r.late ? 'متأخر' : 'حاضر') : 'غائب') + '</u></span>';
+        '<u>' + (r ? (r.late ? 'متأخر' : 'حاضر') : duty2 ? 'غائب' : 'راحة') + '</u></span>';
     }
     return '<div class="wkrow">' + out + '</div>';
   };
 
+  const duty = onDuty(u.id, now());
+  const leaveInbox = pendingLeaves();
+  const leaves = myLeaves();
+  const todayLeave = leaves.find(x => dayStart(x.day) === dayStart(now()) && x.state === 'approved');
+
   return bar('التحضير اليومي', { right: '<button data-a="place" aria-label="موقعي">' + icon('i-pin') + '</button>' }) +
     '<div class="view">' + ground() +
 
-    '<div class="seg">' +
-      '<button class="' + (seg === 'me' ? 'on' : '') + '" data-a="seg" data-k="dl" data-v="me">تحضيري</button>' +
-      (L ? '<button class="' + (seg === 'team' ? 'on' : '') + '" data-a="seg" data-k="dl" data-v="team">الفريق<i>' +
-        AR(team.filter(m => attendedToday(m.id)).length) + '</i></button>' : '') +
-      '<button class="' + (seg === 'swap' ? 'on' : '') + '" data-a="seg" data-k="dl" data-v="swap">تبديل الشِفت' +
-        (inbox.length ? '<i>' + AR(inbox.length) + '</i>' : '') + '</button>' +
-    '</div>' +
+    /* التبويباتُ سقطت: الفريقُ والتبديلُ صارا قسمين في الصفحة نفسِها،
+       فلا يُخبَّأ خلف تبويبٍ ما يُقرأ في سطر. */
+    '<div class="shift" style="--sc:' + sh.c + '">' +
+      '<span class="si">' + icon(sh.i, 's26') + '</span>' +
+      '<span class="sp"><b>الشِفت ' + sh.l + '</b>' +
+      '<span>' + shiftWindow(shiftOf(u.id)) + ' · ' + rotaTxt(u.id) + '</span></span>' +
+      (me_ ? '<span class="ok">' + icon('i-checkc','s18') + '</span>'
+           : duty ? '' : '<span class="ok">' + icon('i-hour','s18') + '</span>') + '</div>' +
 
-    (seg === 'me' ? (
-      '<div class="shift" style="--sc:' + sh.c + '">' +
-        '<span class="si">' + icon(sh.i, 's26') + '</span>' +
-        '<span class="sp"><b>الشِفت ' + sh.l + '</b>' +
-        '<span>' + shiftWindow(shiftOf(u.id)) + ' · ' + E(HQ) + '</span></span>' +
-        (me_ ? '<span class="ok">' + icon('i-checkc','s18') + '</span>' : '') + '</div>' +
+    /* خبرُ التسجيل يُقال مرّةً ثمّ ينصرف — وما يبقى هو الحالةُ في الزرّ */
+    (me_ ? flash('g', 'i-checkc',
+        '<b>تم تسجيل الحضور ' + t12(me_.at) + '</b>' +
+        (me_.late ? ' · متأخّرًا' : ' · في الوقت') +
+        (me_.outAt ? '<br>الانصراف ' + t12(me_.outAt) + ' · ' + workedTxt(me_) : ''), 7) : '') +
 
-      /* زرّان لا زرٌّ واحد: الحضورُ ثمّ الانصراف، وبينهما المدّةُ تُقرأ. */
-      (me_
-        ? '<div class="note g">' + icon('i-checkc','s16') +
-          '<span><b>تم تسجيل الحضور ' + t12(me_.at) + '</b>' +
-          (me_.late ? ' · متأخّرًا عن بداية الشِفت' : ' · في الوقت') +
-          (me_.outAt ? '<br>تم تسجيل الانصراف ' + t12(me_.outAt) + ' · مدّة الدوام ' + workedTxt(me_)
-                     : '<br>على رأس العمل الآن · ' + workedTxt(me_)) + '</span></div>'
-        : '') +
+    (!me_
+      ? '<button class="cta ' + (canCheckIn(u.id) ? '' : 'off') + '" ' +
+          (canCheckIn(u.id) ? 'data-a="checkin"' : 'disabled') + '>' + icon('i-check','s26') +
+          '<span class="t"><b>تسجيل الحضور</b><span>' +
+          (canCheckIn(u.id)
+            ? (duty ? 'داخل المقر — ' + t12(now())
+                    : 'اليوم راحتك — والتسجيل متاح إن استُدعيت')
+            : E(checkInReason())) +
+          '</span></span></button>'
+      : !me_.outAt
+      ? '<button class="cta out' + (shiftEnded(u.id) ? '' : ' early') + '" data-a="checkout">' +
+          icon('i-out','s26') +
+          '<span class="t"><b>' + outLabel(u.id) + '</b><span>' + t12(now()) +
+          ' · مضى ' + workedTxt(me_) +
+          (shiftEnded(u.id) ? '' : ' · ينتهي الشِفت ' + hh(SHIFTS[shiftOf(u.id)].to)) +
+          '</span></span></button>'
+      : '<div class="cta off done">' + icon('i-checkc','s26') +
+          '<span class="t"><b>اكتمل دوام اليوم</b><span>مدّة الدوام ' + workedTxt(me_) +
+          ' · ' + dayName(now()) + ' ' + hijri(now()) + '</span></span></div>') +
 
-      (!me_
-        ? '<button class="cta ' + (canCheckIn(u.id) ? '' : 'off') + '" ' +
-            (canCheckIn(u.id) ? 'data-a="checkin"' : 'disabled') + '>' + icon('i-check','s26') +
-            '<span class="t"><b>تسجيل الحضور</b><span>' +
-            (canCheckIn(u.id) ? 'داخل المقر — ' + t12(now()) : E(checkInReason())) +
-            '</span></span></button>'
-        : !me_.outAt
-        ? '<button class="cta out' + (shiftEnded(u.id) ? '' : ' early') + '" data-a="checkout">' +
-            icon('i-out','s26') +
-            '<span class="t"><b>' + outLabel(u.id) + '</b><span>' + t12(now()) +
-            ' · مضى ' + workedTxt(me_) +
-            (shiftEnded(u.id) ? '' : ' · ينتهي الشِفت ' + hh(SHIFTS[shiftOf(u.id)].to)) +
-            '</span></span></button>'
-        : '<div class="cta off done">' + icon('i-checkc','s26') +
-            '<span class="t"><b>اكتمل دوام اليوم</b><span>مدّة الدوام ' + workedTxt(me_) +
-            ' · ' + dayName(now()) + ' ' + hijri(now()) + '</span></span></div>') +
+    (todayLeave ? '<div class="note g">' + icon('i-out','s16') +
+      '<span>استئذانٌ معتمدٌ اليوم ' + hhmm(todayLeave.fromT) + ' — ' + hhmm(todayLeave.toT) +
+      '</span></div>' : '') +
 
-      (!inHQ() ? '<button class="note a" data-a="place" style="width:100%">' + icon('i-pin','s16') +
-        '<span class="sp" style="text-align:right">الموقع الآن: ' +
-        (S.myPlace === 'site' ? 'موقع مهمة' : 'خارج النطاق') +
-        ' — التحضير اليومي لا يُقبل إلا من داخل المقر. اضغط للتبديل.</span></button>' : '') +
+    '<div class="lbl">هذا الأسبوع<small>' + AR(weekStats(u.id, 0).done) + ' من ' +
+      AR(weekStats(u.id, 0).days) + ' يوم دوام</small></div>' +
+    '<div class="c">' + weekCells(u.id) +
+      '<div class="row tiny dim2" style="margin-top:10px">' +
+        '<span>' + icon('i-check','s14') + ' في الوقت</span>' +
+        '<span>' + icon('i-clock','s14') + ' متأخر</span>' +
+        '<span>' + icon('i-hour','s14') + ' راحة</span></div></div>' +
 
-      '<div class="lbl">هذا الأسبوع<small>' + AR(weekStats(u.id, 0).done) + ' من ' + AR(weekStats(u.id, 0).days) + '</small></div>' +
-      '<div class="c">' + weekCells(u.id) +
-        '<div class="row tiny dim2" style="margin-top:10px">' +
-          '<span>' + icon('i-check','s14') + ' في الوقت</span>' +
-          '<span>' + icon('i-clock','s14') + ' متأخر</span>' +
-          '<span>' + icon('i-x','s14') + ' لم يحضر</span></div></div>' +
+    '<div class="grid2">' +
+      '<button class="btn l sm" data-a="swapreq">' + icon('i-swap','s16') + 'تبديل الشِفت</button>' +
+      '<button class="btn l sm" data-a="leavereq">' + icon('i-out','s16') + 'طلب استئذان</button></div>' +
 
-      '<div class="lbl">الأسابيع الماضية</div>' +
-      '<div class="grid3">' + [1, 2, 3].map(w => {
-        const st = weekStats(u.id, w);
-        return '<div class="kpi"><b style="color:' + (st.pct >= 90 ? 'var(--g)' : st.pct >= 70 ? 'var(--amber)' : 'var(--red)') + '">' +
-          AR(st.pct) + '٪</b><span>قبل ' + AR(w) + ' أسبوع</span></div>';
-      }).join('') + '</div>' +
+    /* حضورُ الفريق: قسمٌ يُطوى بدل تبويبٍ يُخبّئ */
+    (L && team.length ? foldOf('daily', 'team', 'حضور الفريق اليوم',
+        AR(team.filter(m => attendedToday(m.id)).length) + ' من ' + AR(team.length),
+        team.map(m => {
+          const r = dayRec(m.id, now()), s2 = shiftInfo(m.id), st = weekStats(m.id, 0);
+          const d2 = onDuty(m.id, now());
+          return '<button class="c" data-a="go" data-n="profile" data-id="' + m.id +
+            '" style="width:100%;text-align:right">' +
+            '<div class="fl">' + avat(m) +
+              '<span class="nm sp"><b>' + E(m.name) + '</b>' +
+              '<span>الشِفت ' + s2.l + ' · ' + rotaTxt(m.id) + '</span></span>' +
+              (r ? pill(r.late ? 'حضر متأخرًا ' + t12(r.at) : 'حضر ' + t12(r.at), r.late ? 'wait' : 'live')
+                 : d2 ? pill('لم يحضر', 'no') : pill('راحة', 'grey')) + '</div>' +
+            weekCells(m.id) +
+            '<div class="row tiny dim2" style="margin-top:8px"><span>التزام الأسبوع</span>' +
+            '<b>' + AR(st.pct) + '٪</b></div></button>';
+        }).join(''), 'i-users') : '') +
 
-      '<button class="btn l" data-a="swapreq">' + icon('i-swap','s16') + 'طلب تبديل الشِفت</button>'
-    ) : seg === 'team' ? (
-      '<div class="lbl">حضور اليوم<small>' + AR(team.filter(m => attendedToday(m.id)).length) +
-        ' من ' + AR(team.length) + '</small></div>' +
-      (team.length ? team.map(m => {
-        const r = dayRec(m.id, now()), s2 = shiftInfo(m.id), st = weekStats(m.id, 0);
-        return '<button class="c" data-a="go" data-n="profile" data-id="' + m.id + '" style="width:100%;text-align:right">' +
-          '<div class="fl">' + avat(m) +
-            '<span class="nm sp"><b>' + E(m.name) + '</b>' +
-            '<span>الشِفت ' + s2.l + ' · ' + shiftWindow(shiftOf(m.id)) + '</span></span>' +
-            (r ? pill(r.late ? 'حضر متأخرًا ' + t12(r.at) : 'حضر ' + t12(r.at), r.late ? 'wait' : 'live')
-               : pill('لم يحضر', 'no')) + '</div>' +
-          weekCells(m.id) +
-          '<div class="row tiny dim2" style="margin-top:8px"><span>التزام الأسبوع</span>' +
-          '<b>' + AR(st.pct) + '٪</b></div></button>';
-      }).join('') : '<div class="c center dim sm" style="padding:24px">لا يوجد فريق</div>')
-    ) : (
-      (inbox.length ? '<div class="lbl">بانتظار قرارك<small>' + AR(inbox.length) + '</small></div>' +
-        inbox.map(s => swapCard(s, true)).join('') : '') +
-      '<button class="btn p" data-a="swapreq">' + icon('i-swap','s16') + 'طلب تبديل شِفت جديد</button>' +
-      '<div class="lbl">سجل الطلبات<small>' + AR(swaps.length) + '</small></div>' +
-      (swaps.length ? swaps.map(s => swapCard(s, s.state === 'pending' && L && s.leaderId === u.id)).join('')
-        : '<div class="c center dim sm" style="padding:24px">لا توجد طلبات بعد</div>')
-    )) +
+    ((inbox.length + leaveInbox.length)
+      ? '<div class="lbl">بانتظار قرارك<small>' + AR(inbox.length + leaveInbox.length) + '</small></div>' +
+        inbox.map(s => swapCard(s, true)).join('') +
+        leaveInbox.map(x => leaveCard(x, true)).join('') : '') +
+
+    ((swaps.length + leaves.length)
+      ? foldOf('daily', 'log', 'سجل طلبات الدوام',
+          AR(swaps.length + leaves.length) + ' طلبًا',
+          swaps.map(s => swapCard(s, s.state === 'pending' && L && s.leaderId === u.id)).join('') +
+          leaves.map(x => leaveCard(x, x.state === 'pending' && L && x.leaderId === u.id)).join(''),
+          'i-hist') : '') +
     '</div>' + tabs();
+}
+
+/* بطاقةُ الاستئذان — على بناء بطاقة التبديل: الحالةُ ثمّ المدّةُ ثمّ المسار */
+function leaveCard(x, actionable) {
+  const u = userById(x.from), st = SWAP_STATE[x.state] || [x.state, 'grey'];
+  const L = userById(x.leaderId);
+  return '<div class="c">' +
+    '<div class="row"><b class="sm">طلب استئذان · ' + E(x.no) + '</b>' + pill(st[0], st[1]) + '</div>' +
+    '<div class="fl" style="margin:10px 0;gap:9px">' + avat(u, 'sm') +
+      '<span class="sp"><b class="tiny" style="display:block">' + E(u.name) + '</b>' +
+      '<span class="tiny dim2">' + hijri(x.day) + ' · ' + dayName(x.day) + '</span></span></div>' +
+    '<div class="swapflow">' +
+      '<span class="sb" style="--sc:#1B6E9C">' + icon('i-clock','s16') + hhmm(x.fromT) + '</span>' +
+      '<span class="arrow">' + icon('i-back','s16') + '</span>' +
+      '<span class="sb" style="--sc:#1B6E9C">' + icon('i-clock','s16') + hhmm(x.toT) + '</span>' +
+      '<span class="tiny dim2 sp" style="text-align:left">' + durTxt(leaveMins(x)) + '</span></div>' +
+    '<div class="note b" style="margin-top:9px">' + icon('i-edit','s16') + '<span>' + E(x.reason) + '</span></div>' +
+    (x.note ? '<div class="note ' + (x.state === 'rejected' ? 'r' : 'a') + '" style="margin-top:8px">' +
+      icon('i-info','s16') + '<span>' + E(x.note) + '</span></div>' : '') +
+    (x.state === 'escalated' ? '<div class="strip b">' + icon('i-send','s16') +
+      '<span>لدى غرفة العمليات — الكنترول' + (L ? ' · رفعه ' + E(L.name) : '') + '</span></div>' : '') +
+    '<div class="lbl plain" style="margin-top:10px">مسار الطلب</div>' +
+    '<div class="tline">' + x.log.map(e => '<div class="ti"><span class="d"></span>' +
+      '<span class="tiny"><b>' + E(e.text) + '</b><br><span class="dim2">' + t12(e.at) + ' · ' +
+      hijri(e.at) + '</span></span></div>').join('') + '</div>' +
+    (actionable ? '<div class="grid3" style="margin-top:11px">' +
+      '<button class="btn d sm" data-a="leaveno" data-id="' + x.id + '">رفض</button>' +
+      '<button class="btn l sm" data-a="leaveesc" data-id="' + x.id + '">' + icon('i-send','s16') + 'للكنترول</button>' +
+      '<button class="btn p sm" data-a="leaveok" data-id="' + x.id + '">إذن</button></div>' : '') +
+  '</div>';
+}
+
+/* ورقةُ طلب الاستئذان */
+function leaveSheet() {
+  const why = S.lvWhy || LEAVE_WHY[0];
+  const sh = SHIFTS[shiftOf(S.session.id)];
+  return '<div class="grip"></div><h3>طلب استئذان</h3>' +
+    '<div class="tiny dim2" style="margin-bottom:10px">الشِفت ' + sh.l + ' · ' +
+      shiftWindow(shiftOf(S.session.id)) + '</div>' +
+    '<div class="lbl plain">اليوم</div>' +
+    '<div class="field" style="margin:8px 0"><input type="date" id="lvd" value="' + isoDate(now()) + '"></div>' +
+    '<div class="grid2">' +
+      '<div><div class="lbl plain">من</div>' +
+        '<div class="field" style="margin:8px 0"><input type="time" id="lvf" value="' +
+          String(sh.from).padStart(2, '0') + ':00"></div></div>' +
+      '<div><div class="lbl plain">إلى</div>' +
+        '<div class="field" style="margin:8px 0"><input type="time" id="lvt" value="' +
+          String((sh.from + 2) % 24).padStart(2, '0') + ':00"></div></div>' +
+    '</div>' +
+    '<div class="lbl plain">السبب</div>' +
+    '<div class="col" style="gap:7px;margin:8px 0">' + LEAVE_WHY.map(k =>
+      '<button class="listitem' + (k === why ? ' on' : '') + '" data-a="lvwhy" data-v="' + E(k) + '">' +
+        '<span class="sp"><b style="font-size:13.5px">' + k + '</b></span>' +
+        (k === why ? icon('i-check','s16') : '') + '</button>').join('') + '</div>' +
+    '<div class="field" style="margin:8px 0"><input id="lvn" maxlength="140" placeholder="تفصيلٌ مختصر — اختياري"></div>' +
+    '<div class="grid2" style="margin-top:12px">' +
+      '<button class="btn g" data-a="close">إلغاء</button>' +
+      '<button class="btn p" data-a="dosendleave">إرسال الطلب</button></div>';
 }
 
 function swapCard(s, actionable) {
@@ -305,14 +455,27 @@ function swapSheet() {
 
 /* ---------- بذر ثلاثة أسابيع ماضية وأسبوع جارٍ ---------- */
 function seedDaily(st) {
-  st.shifts = {}; st.attend = []; st.swaps = [];
+  st.shifts = {}; st.attend = []; st.swaps = []; st.leaves = []; st.rota = {};
   const keys = Object.keys(SHIFTS);
-  st.users.forEach((u, i) => { st.shifts[u.id] = keys[i % keys.length]; });
+  /* شِفتٌ ودورةٌ لكلّ واحد: منهم من يداوم يومًا بعد يوم، ومنهم من
+     يداوم يومًا من ثلاثة — والإزاحةُ تفرّق بينهم فلا يغيب الفريقُ
+     كلُّه في يومٍ واحد. */
+  st.users.forEach((u, i) => {
+    st.shifts[u.id] = keys[i % keys.length];
+    const every = (i % 3 === 2) ? 3 : 2;
+    st.rota[u.id] = { every, off: i % every };
+  });
+  const duty = (id, ts) => {
+    const r = st.rota[id];
+    const d = Math.round(ts / DAY);
+    return (((d - r.off) % r.every) + r.every) % r.every === 0;
+  };
 
   const today = (function () { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); })();
   st.users.forEach((u, ui) => {
     for (let d = 27; d >= 0; d--) {          /* أربعة أسابيع: ٣ ماضية + الجاري */
       const day = today - d * DAY;
+      if (!duty(u.id, day)) continue;        /* يومُ راحةٍ لا يُبذَر حضورًا */
       /* غياب نادر ومتفرّق حتى تبدو البيانات حقيقية */
       const skip = ((ui * 7 + d) % 23) === 0;
       if (skip) continue;
@@ -346,5 +509,13 @@ function seedDaily(st) {
       { at: Date.now() - 2 * DAY, by: team[1].id, text: 'قدّم ' + team[1].name + ' طلب تبديل الشِفت' },
       { at: Date.now() - 2 * DAY + 3 * HR, by: L1.id, text: 'رفع ' + L1.name + ' الطلب إلى الكنترول' }
     ]
+  });
+
+  /* استئذانٌ قائمٌ ليُجرَّب مسارُه كما جُرّب مسارُ التبديل */
+  if (team[0]) st.leaves.push({
+    id: uid('L'), no: 'LV-' + AR(5200), from: team[0].id, leaderId: L1.id,
+    day: today, fromT: 15 * 60, toT: 17 * 60 + 30, reason: 'موعد طبّيّ',
+    state: 'pending', at: Date.now() - 2 * HR,
+    log: [{ at: Date.now() - 2 * HR, by: team[0].id, text: 'قدّم ' + team[0].name + ' طلب استئذان' }]
   });
 }

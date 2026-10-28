@@ -191,5 +191,43 @@ miss.length ? fail('شاشاتٌ ناقصة', miss.join(', ')) : console.log('+ 
   hit.length ? fail('return معلَّق', hit.join(', ')) : console.log('+ الإرجاع');
 })();
 
+/* ١١ · شرطٌ بلا قوسين يتبعه إسنادٌ ثانٍ على السطر نفسِه.
+      «if (كلُّها منجزة) S.sheetBare = false; S.sheet = لوحُ الإغلاق;»
+      يبدو سطرًا واحدًا وهو سطران: الثاني خارجُ الشرط، فيجري دائمًا.
+      وقع ذلك خمسَ مرّاتٍ في المُوجِّه، وأشدُّها أنّ تأشيرةً واحدةً
+      على مهمّةٍ فرعيّةٍ كانت تفتح لوحَ إغلاق المهمّة كلِّها.
+      وما كان جسدُه return أو break أو continue أو throw فليس منه:
+      ذاك يقطع فعلًا، وما بعده مقصودٌ أن يُتخطّى. */
+(function () {
+  const RE = /(?:^|[\s)])(?:if\s*\([^()]*(?:\([^()]*\)[^()]*)*\)|else)\s+(?!\{|return\b|break\b|continue\b|throw\b)[^;{}]+;\s*(?!\s*(?:\}|else\b|$))\S/;
+  const hit = [];
+  JS.forEach(f => {
+    read(f).split('\n').forEach((l, i) => {
+      const s = l.replace(/\/\*.*?\*\//g, '').replace(/\/\/.*$/, '');
+      if (RE.test(s)) hit.push(f + ':' + (i + 1));
+    });
+  });
+  hit.length ? fail('شرطٌ بلا قوسين', hit.join(', ')) : console.log('+ أقواسُ الشرط');
+})();
+
+/* ١٢ · كلُّ زرٍّ له إجراءٌ في المُوجِّه.
+      `data-a="X"` بلا `case 'X'` زرٌّ ميّتٌ: يُنقر فلا يقع شيء،
+      ولا يشكو منه النحوُ ولا التشغيل. ويقع حين يُعاد تسميةُ
+      إجراءٍ في مكانٍ ويُنسى في الآخر. */
+(function () {
+  const router = read('10-router.js');
+  const body = router.slice(router.indexOf('switch (a) {'));
+  const cases = new Set([...body.matchAll(/case '([a-zA-Z0-9_]+)'/g)].map(x => x[1]));
+  const used = new Map();
+  JS.forEach(f => {
+    [...read(f).matchAll(/data-a="([a-zA-Z0-9_]+)"/g)].forEach(x => {
+      if (!used.has(x[1])) used.set(x[1], f);
+    });
+  });
+  const dead = [...used.keys()].filter(k => !cases.has(k));
+  dead.length ? fail('أزرارٌ بلا إجراء', dead.map(k => k + ' (' + used.get(k) + ')').join(', '))
+    : console.log('+ الإجراءات (' + used.size + ' زرًّا)');
+})();
+
 console.log(bad ? '\nX ' + bad + ' حارسًا سقط' : '\n+ كلُّ الحرّاس');
 if (bad) process.exitCode = 1;

@@ -33,8 +33,17 @@ function shootSubWhy(t) {
   if (!a.attendedAt) return 'أثبت حضورك أولًا — التصوير لمن حضر';
   return '';
 }
-const canMemories = () => isLeader();
-const canShoot = () => isLeader();
+/* ============================================================
+   من يصوّر؟
+
+   كان التصويرُ كلُّه للّيدر وحدَه، فلا يملك المحسنُ أن يوثّق ما
+   هو عليه. وصار الميزانُ واحدًا للاثنين: **من حضر صوّر**.
+   الليدرُ على مهمّته دائمًا، والمحسنُ على مهمّةٍ قبِل تسكينَها
+   وأثبت حضورَه فيها — إثباتًا على الخطوة الفرعيّة أو ذكرى للمهمّة.
+   وخارجَ المهامّ (الألبوم) يصوّر الاثنان.
+   ============================================================ */
+const canMemories = t => t ? (actsAsLeader(t, S.session.id) || canShootSub(t)) : true;
+const canShoot = () => !!me();
 /* اسم مختصر نظيف: نقطع عند أول فاصل ثم نقصّ إن طال */
 function shortTitle(s) {
   let x = String(s).split(' — ')[0].trim();
@@ -85,7 +94,8 @@ function deletePhoto(id) {
 function photoStrip(ctx, label) {
   const list = photosFor(ctx.taskId, ctx.subId === undefined ? null : ctx.subId,
     ctx.ticketId === undefined ? null : ctx.ticketId);
-  const can = ctx.subId ? canShootSub(ctx.taskId ? taskById(ctx.taskId) : null) : canMemories();
+  const can = ctx.subId ? canShootSub(ctx.taskId ? taskById(ctx.taskId) : null)
+                        : canMemories(ctx.taskId ? taskById(ctx.taskId) : null);
   if (!list.length && !can) return '';
   const ctxAttr = 'data-tid="' + (ctx.taskId || '') + '" data-sid="' + (ctx.subId || '') +
     '" data-kid="' + (ctx.ticketId || '') + '"';
@@ -177,11 +187,7 @@ function screenAlbum() {
     '<div class="c gold"><div class="row"><b class="sm">صور المهام</b>' +
       pill(AR(list.length) + ' صورة', 'gold') + '</div>' +
       '<div class="tiny dim" style="margin-top:5px">' +
-      (canShoot() ? 'التصوير من داخل التطبيق فقط — والصور تبقى مع المهمة بعد انتهائها.'
-                  : 'يصوّر الليدر ويوثّق، وتظهر الصور لكل من له صلاحية المهمة.') + '</div></div>' +
-
-    (canShoot() ? '<div class="note a">' + icon('i-info','s16') +
-      '<span><b>العنوان والوصف يجب أن يكونا لائقين ومرتبطين بحدث فعلي</b> — لا صورًا عامة بلا سياق.</span></div>' : '') +
+      'التصوير من داخل التطبيق فقط — والصور تبقى مع المهمة بعد انتهائها.</div></div>' +
 
     '<div class="seg">' +
       '<button class="' + (seg === 'all' ? 'on' : '') + '" data-a="seg" data-k="alb" data-v="all">الكل<i>' + AR(list.length) + '</i></button>' +
@@ -201,7 +207,7 @@ function screenAlbum() {
       }).join('') + '</div>'
       : '<div class="c center" style="padding:30px 16px"><b>لا توجد صور</b>' +
         '<div class="sm dim" style="margin-top:6px">' +
-        (canShoot() ? 'اضغط أيقونة الكاميرا في الأعلى لتصوير أول لقطة.' : 'سيوثّق الليدر المهام بالصور.') + '</div></div>') +
+        'اضغط أيقونة الكاميرا في الأعلى لتصوير أول لقطة.</div></div>') +
     '</div>' + tabs();
 }
 
@@ -304,7 +310,8 @@ function reopenReason() {
   const nm = t ? t.title : '';
   if (c.kind === 'resp')    return reasonSheet('سبب رفض التسكين', nm, 'data-a="doresp" data-id="' + c.taskId + '"', 'سبب مختصر — اختياري', 'resp', c.taskId);
   if (c.kind === 'rdeleg')  return reasonSheet('سبب رفض التفويض', nm, 'data-a="dordeleg" data-id="' + c.taskId + '"', 'سبب مختصر — اختياري', 'rdeleg', c.taskId);
-  if (c.kind === 'cancel')  return reasonSheet('إلغاء المهمة', 'المبرر إلزامي', 'data-a="docancel" data-id="' + c.taskId + '"', 'مبرر الإلغاء', 'cancel', c.taskId);
+  /* فرعُ «إلغاء المهمة» سقط مع سقوط مساره: لا أحدَ يضع kind='cancel'،
+     وزرُّه docancel بلا إجراءٍ في المُوجِّه. وجده حارسُ الأزرار. */
   return null;
 }
 
@@ -317,36 +324,24 @@ function excuseChip(photoId) {
     '<span class="tiny dim2">صورة مرفقة مع الرفض · ' + t12(p.at) + '</span></span>' + icon('i-eye','s16') + '</button>';
 }
 
-/* ---------- اختيار المهمة الفرعية المراد توثيقها ---------- */
-function subPickSheet(t) {
-  if (!t) return '<div class="grip"></div><h3>لا توجد مهمة</h3>';
-  return '<div class="grip"></div><h3>توثيق مهمة فرعية بصورة</h3>' +
-    '<div class="tiny dim2" style="margin-bottom:10px">اختر ما تريد إثباته — تُربط الصورة به وتبقى معه بعد انتهاء المهمة.</div>' +
-    '<div class="col" style="max-height:46vh;overflow:auto;gap:7px">' +
-      t.subs.map(s => {
-        const n = photosFor(t.id, s.id).length;
-        return '<button class="listitem" data-a="shoot" data-tid="' + t.id + '" data-sid="' + s.id + '" data-kid="">' +
-          '<span class="ico">' + icon(s.done ? 'i-check' : 'i-camera', 's18') + '</span>' +
-          '<span class="sp"><b style="font-size:13px;display:block">' + E(s.name) + '</b>' +
-          '<span class="tiny dim2">' + (s.done ? 'منجزة ' + t12(s.at) : 'لم تُنجز بعد') +
-          (n ? ' · ' + AR(n) + ' صورة' : '') + '</span></span>' + icon('i-back','s16') + '</button>';
-      }).join('') + '</div>' +
-    '<button class="btn g" style="margin-top:12px" data-a="close">إغلاق</button>';
-}
+/* ورقةُ «اختر مهمّةً فرعيّةً لتصويرها» حُذفت: لكلّ صفٍّ فرعيٍّ
+   زرُّ كاميرته بجانبه، فالاختيارُ يقع على الصفّ نفسِه. */
 
 /* ---------- قسم التوثيق داخل تفاصيل المهمة ---------- */
 function taskPhotoSection(t, lead) {
   const all = taskPhotos(t.id).filter(p => !p.excuse);
   const mem = all.filter(p => !p.subId);
   const subShots = all.length - mem.length;
-  const canMem = canMemories() && !['cancelled'].includes(t.status);
+  const canMem = canMemories(t) && !['cancelled'].includes(t.status);
   if (!all.length && !canMem) return '';
   return '<div class="lbl">ميموريز المهمة<small>' + AR(mem.length) + ' صورة' +
       (subShots ? ' · و' + AR(subShots) + ' إثبات فرعية' : '') + '</small></div>' +
     '<div class="c">' +
       (canMem ? '<div class="tiny dim2" style="margin-bottom:8px">صور عامة للمهمة — تُرفع من استوديو جهازك.</div>' : '') +
       '<div class="pscroll">' +
-        (canMem ? '<button class="padd" data-a="memories" data-tid="' + t.id + '">' +
+        (canMem ? '<button class="padd" data-a="shoot" data-tid="' + t.id + '" data-sid="" data-kid="">' +
+          icon('i-camera','s26') + '<span>تصوير</span></button>' +
+          '<button class="padd" data-a="memories" data-tid="' + t.id + '">' +
           icon('i-album','s26') + '<span>رفع صور</span></button>' : '') +
         mem.map(p => '<button ' + thumbAttr(p).replace('__C__', 'pthumb') + ' data-a="viewphoto" data-id="' + p.id + '">' +
           '<span>' + E(p.title) + '</span></button>').join('') +
