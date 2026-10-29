@@ -400,14 +400,14 @@ document.addEventListener('click', ev => {
         const t = taskById(tid);
         if (!t) { toast('المهمة غير موجودة', 'r'); break; }
         if (sid ? !canShootSub(t) : !canMemories(t)) {
-          toast(shootSubWhy(t) || 'التصوير لمن حضر على المهمة', 'r'); break; }
+          toast(shootSubWhy(t) || 'لستَ على هذه المهمة', 'r'); break; }
       } else if (!canShoot()) { toast('سجّل الدخول أوّلًا', 'r'); break; }
       S.pendingPhoto = null;
       openCamera({ taskId: tid || null, subId: sid || null, ticketId: kid || null });
       return; }
     case 'memories': {
       const mt = b.dataset.tid ? taskById(b.dataset.tid) : null;
-      if (!canMemories(mt)) { toast(shootSubWhy(mt) || 'الميموريز لمن حضر على المهمة', 'r'); break; }
+      if (!canMemories(mt)) { toast(shootSubWhy(mt) || 'لستَ على هذه المهمة', 'r'); break; }
       S.pendingPhoto = null;
       S.camCtx = { taskId: b.dataset.tid || null, subId: null, ticketId: null, gallery: true };
       const g = document.getElementById('gal');

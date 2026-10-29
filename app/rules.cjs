@@ -89,13 +89,26 @@ setTimeout(function () {
       a = t.assigned[t.assigned.length - 1]; }
     a.req = 'accepted'; a.removed = false; a.out = null; a.attendedAt = null;
     S.session = { id: m.id, at: Date.now() };
-    ok(!canShootSub(t), 'قبل إثبات الحضور: لا تصوير');
-    a.attendedAt = Date.now();
-    ok(canShootSub(t), 'وبعد إثبات الحضور: يصوّر الخطوة الفرعيّة');
+    /* «مثل الليدر»: من قبِل تسكينَه صوّر — ولا يُنتظر إثباتُ حضورٍ
+       لا يُفتح بابُه إلّا في نافذةِ ساعتين قبل المهمّة. */
+    ok(canShootSub(t), 'على المهمّة بلا حضورٍ بعد: يصوّر الخطوة الفرعيّة');
     ok(canMemories(t), 'ويرفع ميموريز المهمّة');
     S.route = { n: 'task', id: t.id }; render();
     ok(!!document.querySelector('[data-a="shoot"][data-tid="' + t.id + '"]'),
       'وزرُّ التصوير ظاهرٌ له في المهمّة');
+    var sub = t.subs[0];
+    ok(!!document.querySelector('[data-a="shoot"][data-sid="' + sub.id + '"]'),
+      'وعلى كلّ خطوةٍ فرعيّةٍ زرُّها');
+    /* والصورُ التذكاريّةُ مثلُها: طُلبت للمحسن كما هي للّيدر */
+    ok(!!document.querySelector('[data-a="memories"][data-tid="' + t.id + '"]'),
+      'وزرُّ الصور التذكاريّة ظاهرٌ له');
+    a.attendedAt = Date.now();
+    ok(canShootSub(t), 'وبعد إثبات الحضور كذلك');
+    /* والحدُّ قائم: من ليس على المهمّة لا يصوّرها */
+    a.req = 'rejected';
+    ok(!canShootSub(t), 'ومن ليس على المهمّة: لا تصوير');
+    ok(shootSubWhy(t) === 'لستَ على هذه المهمة', 'ويُقال له السبب');
+    a.req = 'accepted'; a.attendedAt = Date.now();
     S.route = { n: 'album' }; render();
     ok(!!document.querySelector('[data-a="shoot"]'), 'وفي الألبوم كذلك');
   })();
