@@ -10553,6 +10553,56 @@
   :root[data-ux="dga"]:not([data-legacy]) .menu:not(.top){
     margin-block-end:4px }
 </style>
+<style>
+  /* ══════════════════════════════════════════════════════════
+     أسطحٌ ثابتةُ اللونِ داخلَ هويّاتٍ متغيّرة
+
+     ظهرت حين امتلأت الشاشاتُ بالبيانات: شريطُ المهمّةِ في بطاقةِ
+     الطلبِ وصفُّ التنبيهِ المقروء مطليّانِ بلونٍ كريميٍّ ثابتٍ في
+     الورقة، والحبرُ يتبعُ الهويّة. ففي الداكنةِ والخضراءِ صار نصٌّ
+     فاتحٌ على سطحٍ فاتح — ١٫٠٤:١ أي غيرُ مرئيٍّ أصلًا.
+
+     والعلاجُ لا يمسُّ المعتمَد: الفاتحةُ تبقى كما هي حرفًا بحرف،
+     وتُعطى الداكنةُ والخضراءُ سطحَهما الذي تستعمله البطاقةُ نفسُها
+     (بياضٌ شفّافٌ على الأرضيّة) فيعود الحبرُ مقروءًا.
+     ══════════════════════════════════════════════════════════ */
+  :root[data-ident="dark"] .reqtask,
+  :root[data-ident="green"] .reqtask,
+  :root[data-ident="dark"] .nrow.read,
+  :root[data-ident="green"] .nrow.read{
+    background:rgba(255,255,255,.075) !important;
+    color:var(--ink) !important }
+  :root[data-ident="dark"] .nrow.read .ni,
+  :root[data-ident="green"] .nrow.read .ni{
+    background:rgba(255,255,255,.10) !important;
+    color:var(--dim) !important }
+
+
+  /* لوحةُ النظام مطليّةٌ داكنةً في كلِّ الهويّات، ووسومُ الحالةِ
+     فيها بحبرِ الوضعِ الفاتح: أحمرُ غامقٌ على كحليٍّ غامقٍ ١٫٧٣:١.
+     تُعطى حبرًا فاتحًا على الداكن — ٦٫٨٩:١ و٨٫٠٦:١. */
+  .adm .pill.no{   color:#F0998F !important; background:rgba(192,57,43,.18) !important }
+  .adm .pill.live{ color:#6FD6A2 !important; background:rgba(11,138,75,.18) !important }
+  .adm .pill.wait{ color:#F0C27A !important; background:rgba(184,121,26,.18) !important }
+  .adm .pill.grey{ color:#C3D0D8 !important; background:rgba(255,255,255,.10) !important }
+  .adm .pill.blue{ color:#8FC8E8 !important; background:rgba(27,110,156,.20) !important }
+  .adm .pill.gold{ color:#E6C98A !important; background:rgba(198,164,92,.18) !important }
+</style>
+<style>
+  /* تتمّةُ التباين بعد امتلاء الشاشات — أرقامٌ محسوبةٌ لا مقدَّرة */
+
+  /* صفُّ التنبيهِ المقروء صار أفتحَ في الداكنة بعد تصحيحِ سطحه،
+     فهبط حبرُه الخافتُ إلى ٤٫٢٨:١ — يُرفع إلى ٥٫٢٢:١. */
+  :root[data-ident="dark"] .nrow.read .nt{ color:#8B978E !important }
+  /* أرضيّةُ الخضراءِ أفتحُ من الداكنة، فلها قيمتُها: ٤٫٦٩:١ */
+  :root[data-ident="green"] .nrow.read .nt{ color:#A4B0A7 !important }
+
+  /* تاريخُ المهمّةِ في شريطِ بطاقةِ الطلب: ٤٫٤٢:١ → ٤٫٩٠:١ */
+  :root[data-ident="light"] .reqtask .tiny.dim2{ color:#656C78 !important }
+
+  /* زرُّ «رفض» على بطاقةِ الطلبِ في الخضراء: ٣٫٦٩:١ → ٤٫٥٥:١ */
+  :root[data-ident="green"] .c .grid2 > .btn.d.sm{ color:#F5A69B !important }
+</style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <symbol id="av-m" viewBox="0 0 44 44">
@@ -11159,17 +11209,6 @@ function setLang(k) {
 
 /* ─────────────  الإنجليزية  ───────────── */
 DICT.en = {
-  "إجراءات هذه الصفحة": "Actions on this page",
-  "تفويض المهمّة": "Delegate the task",
-  "تحرير خطوات الدليل": "Edit guide steps",
-  "طلب استبعاد محسن": "Request to remove a Muhsen",
-  "إعادة تقييم المنجز": "Re-rate completed work",
-  "طلب تغيير كلمة المرور": "Request a password change",
-  "طلب رحلة": "Request a ride",
-  "الأصليّة": "Original",
-  "الشكلُ الأوّلُ كما نُشر: سطحٌ أخضرُ عميقٌ ونقشٌ هندسيّ": "The first published look: a deep green ground with a geometric motif",
-  "الوظائفُ واحدةٌ في الستّة، والفرقُ في طريقة العرض.": "The functions are identical in all six; the difference is in how it is presented.",
-  "تسري على التصاميم الستّة، والفرقُ في الدرجات لا في البنية.": "They apply to all six designs; the difference is in the tones, not the structure.",
   "\">{n}": "\">{n}",
   "#M{n} · ثِقل السجلّ {n}": "#M{n} · Record weight {n}",
   "#RS{n} · ثِقل السجلّ {n}": "#RS{n} · Record weight {n}",
@@ -11415,6 +11454,7 @@ DICT.en = {
   "{n} ربيع الأول {n} هـ": "{n} Rabi‘ al-Awwal {n} AH",
   "{n} ربيع الأول {n} هـهـ — {n} جمادى الأولى {n} هـهـ": "{n} Rabi‘ al-Awwal {n} AH — {n} Jumada al-Ula {n} AH",
   "{n} رحلة": "{n} trips",
+  "{n} رد": "{n} replies",
   "{n} ردًّا": "{n} runs",
   "{n} رسالة": "{n} messages",
   "{n} ريال": "SAR {n}",
@@ -11439,14 +11479,13 @@ DICT.en = {
   "{n} عقدًا لم يُسجَّل في نظام ضيف": "{n} contracts not registered in the Dhaif system",
   "{n} عنصرًا في {n} أشرطة": "{n} items in {n} strips",
   "{n} غرفة": "{n} rooms",
-  "{n} منجزة": "{n} completed",
-  "{n} رد": "{n} replies",
   "{n} فرعية": "{n} subtasks",
   "{n} فرق": "{n} teams",
   "{n} فعليًّا · {n} أثبتوا حضورهم": "{n} actual · {n} checked in",
   "{n} فعلًا": "{n} actions",
   "{n} فعلًا ممنوحًا": "{n} actions granted",
   "{n} فلاتر أخرى": "{n} more filters",
+  "{n} قائمة": "{n} open",
   "{n} قائمًا": "{n} standing",
   "{n} قطاعًا": "{n} sectors",
   "{n} قيد": "{n} entries",
@@ -11474,14 +11513,17 @@ DICT.en = {
   "{n} معروضة": "{n} shown",
   "{n} مفتوحة من {n}": "{n} open of {n}",
   "{n} مقعدًا": "{n} seats",
+  "{n} مقيَّمة": "{n} rated",
   "{n} ملاحظة": "{n} notes",
   "{n} من {n}": "{n} of {n}",
   "{n} من {n} · وصورُ إثباتها": "{n} of {n} · with their evidence photos",
   "{n} من {n} خطوة": "{n} of {n} steps",
   "{n} من {n} شرطًا": "{n} of {n} conditions",
+  "{n} من {n} محسنين": "{n} of {n} muhsens",
   "{n} من {n} مقعدًا": "{n} of {n} seats",
   "{n} من {n} منجزة": "{n} of {n} completed",
   "{n} من {n} — تغطية {n}٪": "{n} of {n} — {n}% coverage",
+  "{n} منجزة": "{n} completed",
   "{n} منها خطورتها عالية": "{n} of them are high severity",
   "{n} مهمة": "{n} tasks",
   "{n} مهمة إجمالًا": "{n} tasks in total",
@@ -11981,6 +12023,7 @@ DICT.en = {
   "أطول فجوة بلا مهمّة: {n} ساعة من {n}:{n} م": "Longest gap with no task: {n} hours from {n}:{n} PM",
   "أطول فجوة بلا مهمّة: لا فجوة": "Longest gap with no task: none",
   "أعاد فتح": "Reopened",
+  "أعتذر — عندي تعارضٌ مع جولة الحرم في الوقت نفسه": "Sorry — I have a clash with the Haram tour at the same time",
   "أعد تقييم الكل": "Re-rate all",
   "أعرف مسار هذا التفويج أكثر من زميلي.": "I know this dispatch route better than my colleague does.",
   "أعضاء الفريق": "Team members",
@@ -11996,6 +12039,8 @@ DICT.en = {
   "أغلقها الكنترول": "Closed by Control",
   "أغوس": "Agus",
   "أفاد به المحسن": "Reported by the muhsen",
+  "أفوّضك في قرارات المهمّة حتى عودتي من اجتماع الكنترول": "I delegate task decisions to you until I return from the control meeting",
+  "أقترح زميلي بدلًا عنّي — تخصّصه أقرب للمهمّة": "I suggest my colleague in my place — his specialty fits the task better",
   "أقرب تخصّصًا للمطلوب": "closest specialism to what is needed",
   "أقربها «": "nearest “",
   "أقلّ": "Fewest",
@@ -12073,6 +12118,7 @@ DICT.en = {
   "أيام": "days",
   "أيمن بن صابر": "Ayman bin Saber",
   "أين تتكدّس المهام": "Where tasks pile up",
+  "أين نقطة تجمّع الفوج بعد الجولة؟ الحجّاج يسألون.": "Where is the group gathering point after the tour? The pilgrims are asking.",
   "أين وقع؟": "Where did it happen?",
   "أين ومتى وماذا — بوضوحٍ يُغني عن السؤال": "Where, when and what — clearly enough that nobody need ask",
   "أين يتوزّع الجهد": "Where the effort is spread",
@@ -12283,6 +12329,7 @@ DICT.en = {
   "إثراء التجربة — تعديل": "Experience Enrichment — edit",
   "إثراء التجربة — حذف": "Experience Enrichment — delete",
   "إجراء": "Action",
+  "إجراءات هذه الصفحة": "Actions on this page",
   "إجراءاتٌ على المهمة": "Actions on the task",
   "إجراءً": "actions",
   "إجمالي الحافلات": "Total buses",
@@ -12379,6 +12426,7 @@ DICT.en = {
   "إعادة الإصدار": "Reissue",
   "إعادة الجدولة": "Reschedule",
   "إعادة الضبط": "Reset",
+  "إعادة تقييم المنجز": "Re-rate completed work",
   "إعادة توزيع التخصّصات": "Redistribute specialities",
   "إعادة ضبط البيانات": "Reset the data",
   "إعادة ضبط كل البيانات": "Reset all data",
@@ -12545,6 +12593,7 @@ DICT.en = {
   "ابحث في التذاكر": "Search tickets",
   "ابحث في السجل…": "Search the log…",
   "ابحث في المتاحين…": "Search available…",
+  "ابحث في المهام والتذاكر": "Search tasks and tickets",
   "ابحث…": "Search…",
   "ابدأ التجميع قبل الموعد بساعتين، وتحقق من عدد الحقائب لكل حاج.": "Begin assembly two hours before the time and verify each pilgrim’s bag count.",
   "ابدأ التجميع وتحقق من عدد الحقائب": "Begin assembly and verify the bag count",
@@ -12623,6 +12672,7 @@ DICT.en = {
   "اربط الصورة بحدث فعلي في المهمة — لا وصفًا عشوائيًا. مثال: «استلام المفاتيح من الاستقبال» لا «صورة {n}».": "Tie the photo to a real event in the task — not an arbitrary label. For example, “Receiving the keys at reception”, not “Photo {n}”.",
   "ارتباط بمهمة أخرى": "Commitment to another task",
   "ارتباط بموعد طبي في الصباح": "A medical appointment in the morning",
+  "ارتباطٌ عائليٌّ طارئ، واعتذر عن هذا التوقيت": "An urgent family commitment; I apologise for this slot",
   "ارتباطٌ عائليّ لا يُؤجَّل في هذا اليوم.": "An unavoidable family commitment on that day.",
   "ارتفاعٌ في السكّر عند والدتي وتحتاج مراجعةً عاجلة.": "My mother’s blood sugar is high and she needs urgent medical attention.",
   "ارفع القالب المعبّأ، أو أدخِل حاجًّا واحدًا": "Upload the completed template, or enter a single pilgrim",
@@ -12633,6 +12683,7 @@ DICT.en = {
   "ازدحام شديد عند بوابة المخيم": "Severe congestion at the camp gate",
   "ازدحام على الطريق": "Congestion on the route",
   "ازدحام عند البوابة الشرقية وقت الدخول. أطلب تنسيقًا مع الأمن لفتح مسار إضافي.": "Congestion at the east gate at entry time. I request coordination with security to open an extra lane.",
+  "ازدحام عند المصاعد": "Crowding at the lifts",
   "استئذانٌ معتمدٌ اليوم": "Approved leave today",
   "استبدال": "Substitute",
   "استبدال بمحسن آخر": "Substitute with another Muhsen",
@@ -12652,6 +12703,7 @@ DICT.en = {
   "استفسار عن مواعيد الحافلات لمنى": "Enquiry about bus times to Mina",
   "استفسار عن موعد التفويج": "Enquiry about the movement time",
   "استفسار عن موعد المغادرة": "Enquiry about the departure time",
+  "استفسار عن نقطة التجمّع": "Question about the gathering point",
   "استفسارات": "Enquiries",
   "استفسارٌ عن كيفيّة إثبات الحضور خارج النطاق.": "An enquiry about how to check in from outside the range.",
   "استفسارٌ عن مسار المزارات المعتمد.": "An enquiry about the approved landmark route.",
@@ -12936,6 +12988,7 @@ DICT.en = {
   "الأشرطة ترتيبها ثابت: المؤشّرات ثم الصفوف العريضة ثم الرسوم": "The strips keep a fixed order: indicators, then wide rows, then charts",
   "الأشرطة ترتيبها ثابت: المؤشّرات ثم الصفوف العريضة ثم الرسوم ثم القوائم ثم الخرائط. وأنت ترتّب داخل الشريط.": "The strips keep a fixed order: indicators, then wide rows, then charts, then lists, then maps. You arrange within each strip.",
   "الأصلي": "Original",
+  "الأصليّة": "Original",
   "الأعلى": "Highest",
   "الأقدم أوّلًا": "Oldest first",
   "الأقرب موعدًا": "Soonest first",
@@ -13217,6 +13270,8 @@ DICT.en = {
   "التسكين مقفل — بدأت المهمة": "Rooming is locked — The task has started",
   "التسكين من صلاحية الليدر": "Rostering is the leader’s permission",
   "التسكين والطلبات تُدار من داخل المهمة نفسها — افتح المهمة ثم «إدارة التسكين».": "Rostering and requests are managed from within the task itself — open the task, then “Manage rostering”.",
+  "التسكينُ يبدأ من شاشة المهام، وكلُّ طلبٍ ترسله يُتابَع": "Assignment starts from the Tasks screen, and every request you send is tracked",
+  "التسكينُ يبدأ من شاشة المهام، وكلُّ طلبٍ ترسله يُتابَع هنا.": "Assignment starts from the Tasks screen, and every request you send is tracked here.",
   "التسليم": "Handover",
   "التسليم للحاجّ": "Handover to the pilgrim",
   "التشغيل": "Operation",
@@ -13231,6 +13286,7 @@ DICT.en = {
   "التصريح الموحّد": "Unified permit",
   "التصريح والجواز والاسم والميلاد لا بدّ منها": "The permit, passport, name and date of birth are required",
   "التصعيد": "Escalation",
+  "التصميم": "Design",
   "التصنيف": "Category",
   "التصنيف المعروض": "Displayed category",
   "التصنيف والأولوية": "Category and Priority",
@@ -13478,6 +13534,7 @@ DICT.en = {
   "الششة": "Al-Shisha",
   "الششة — {n} كم": "Al-Shisha — {n} km",
   "الشكاوى": "Complaints",
+  "الشكلُ الأوّلُ كما نُشر: سطحٌ أخضرُ عميقٌ ونقشٌ هندسيّ": "The first published look: a deep green ground with a geometric motif",
   "الشمري": "Al-Shammari",
   "الشهري": "Al-Shehri",
   "الشِفت": "Shift",
@@ -13701,6 +13758,7 @@ DICT.en = {
   "المتوسط التراكمي": "Cumulative average",
   "المتوسط العام لتقييم المهام": "Overall task rating average",
   "المتوسط العام لكل مهامه": "The overall average across all their tasks",
+  "المتوسّط": "Average",
   "المجموع الموزون": "Weighted total",
   "المجموع الموزون {n}٪ — أي {n} من {n} نجوم.": "Weighted total {n}% — that is {n} out of {n} stars.",
   "المجموعات": "Groups",
@@ -13750,6 +13808,7 @@ DICT.en = {
   "المرجع والتوثيق": "Reference and documentation",
   "المرحلة": "Stage",
   "المرحلة {n} من {n}": "Stage {n} of {n}",
+  "المرسل": "Sender",
   "المرسلة": "Sent",
   "المرسلة والمستقبلة": "Sent and Received",
   "المرشد لم يحضر، وحالة التواصل معه ....": "The guide did not arrive, and contact with them is ....",
@@ -13772,6 +13831,7 @@ DICT.en = {
   "المسار": "Route",
   "المسارات الحيّة تتحرّك باتجاه التفويج": "Live routes move in the direction of the dispatch",
   "المستخدمون": "Users",
+  "المستقبل": "Recipient",
   "المستقبلة": "Received",
   "المسجد الحرام": "The Grand Mosque",
   "المسجد الحرام — باب الملك عبدالعزيز": "The Grand Mosque — King Abdulaziz Gate",
@@ -13826,6 +13886,7 @@ DICT.en = {
   "المصدر الأصل": "The master source",
   "المصدر الذي يقرأ منه التطبيق": "The source the app reads from",
   "المصدر — من أين جاءت المعلومة؟": "Source — where did the information come from?",
+  "المصعدان الأيمنان متوقّفان فالانتظار يتجاوز ربع ساعة.": "Both right-hand lifts are out of service, so the wait exceeds fifteen minutes.",
   "المصفوفة": "Matrix",
   "المطار والمغادرة والجولات ورحلات المزارات": "Airport, departure, tours and landmark trips",
   "المطلوب": "Required",
@@ -13847,6 +13908,7 @@ DICT.en = {
   "المقترح بناءً على سجلّه: إنذار أول": "Proposed on their record: first warning",
   "المكان": "Place",
   "المكتوب في النموذج": "Written on the form",
+  "المكيّف المركزي للدور الثالث متوقّف منذ الفجر، والغرف حارّة.": "The third floor central air conditioning has been off since dawn and the rooms are hot.",
   "المكيّف في الغرفة لا يبرّد منذ الأمس، والغرفة فيها ثلاثةٌ من كبار السنّ.": "The room’s air conditioning has not cooled since yesterday, and there are three elderly pilgrims in it.",
   "المكيّف متوقف منذ الظهر والغرفة حارّة جدًّا.": "The air conditioning has been off since noon and the room is very hot.",
   "الملاحظات المسجّلة": "Recorded remarks",
@@ -13864,41 +13926,6 @@ DICT.en = {
   "المهام": "Tasks",
   "المهام التي لك فيها دور": "Tasks in which you have a role",
   "المهام التي لم تُقفل بعد": "Tasks not yet closed",
-  "المُبلِّغ": "Reported by",
-  "ستّةُ تصاميمَ لعرض التطبيق نفسِه، وثلاثُ هويّاتٍ تسري عليها — الوظائفُ واحدةٌ في الستّة، والفرقُ في طريقة العرض. وتبدّلهما متى شئتَ من شاشة الدخول.": "Six designs for the same app, and three identities that apply to them — the functions are identical in all five; the difference is in how it is presented. Switch either one whenever you like from the sign-in screen.",
-  "التصميم": "Design",
-  "الهوية": "Identity",
-  "فريقك": "Your team",
-  "مميّزةُ اليوم": "Featured today",
-  "كل القادمة": "All upcoming",
-  "توزيع التقييم": "Rating distribution",
-  "المتوسّط": "Average",
-  "لا سجلَّ بعد": "No record yet",
-  "مثبَّت على اختيارك.": "Fixed to your choice.",
-  "هيكلُ كلّ تجربةٍ على شكل محتواها هي.": "Each experience is structured after its own content.",
-  "خطوات التنفيذ لكل نوع": "Execution steps for each kind",
-  "صور المهام والخطوات": "Task and step photos",
-  "تقييمك وتقييم فريقك": "Your rating and your team’s",
-  "سطحٌ أخضرُ عميقٌ وألواحٌ شفّافةٌ يفصلها خيطٌ ذهبيّ": "A deep green surface with translucent panels divided by a gold hairline",
-  "بطاقاتٌ كاملةٌ تُظهر كلَّ شيءٍ دفعةً": "Full cards that show everything at once",
-  "ثلاثُ شاشاتٍ مرجعيّةٍ لا تُغيّر شيئًا — للقراءة وحدَها": "Three reference screens that change nothing — read-only",
-  "التسكينُ يبدأ من شاشة المهام، وكلُّ طلبٍ ترسله يُتابَع": "Assignment starts from the Tasks screen, and every request you send is tracked",
-  "ستصلك طلبات التسكين والتفويض هنا، وتردّ عليها بضغطة.": "Assignment and delegation requests arrive here, and you answer them with one tap.",
-  "كلُّ طلبٍ رددتَ عليه أو أرسلتَه يبقى هنا.": "Every request you answered or sent stays here.",
-  "ستّةُ تصاميمَ لعرض التطبيق نفسِه — الوظائفُ واحدةٌ في الستّة.": "Five designs for the same app — the functions are identical in all six.",
-  "صباح الخير،": "Good morning,",
-  "طاب يومك،": "Good day,",
-  "مساء الخير،": "Good evening,",
-  "ابحث في المهام والتذاكر": "Search tasks and tickets",
-  "قبل {n} دقيقة": "{n} min ago",
-  "قبل {n} ساعة": "{n} h ago",
-  "قبل {n} أيام": "{n} days ago",
-  "النهاية": "End",
-  "{n} من {n} محسنين": "{n} of {n} muhsens",
-  "{n} قائمة": "{n} open",
-  "{n} مقيَّمة": "{n} rated",
-  "التسكينُ يبدأ من شاشة المهام، وكلُّ طلبٍ ترسله يُتابَع هنا.": "Assignment starts from the Tasks screen, and every request you send is tracked here.",
-  "عرض الكل": "View all",
   "المهام الفرعية": "Subtasks",
   "المهام الفرعية المعتمدة": "Approved subtasks",
   "المهام القادمة": "Upcoming tasks",
@@ -13959,6 +13986,7 @@ DICT.en = {
   "الميدانيّة": "Field",
   "الميلاد": "Date of birth",
   "الميموريز لمن حضر على المهمة": "Memories are for those present on the task",
+  "المُبلِّغ": "Reported by",
   "المُسنَد إليه": "Assigned to",
   "المُسنَد إليه غائب عن شِفته": "The assignee is absent from their shift",
   "المُسنَد إليه ليس في شِفت هذا الموعد": "The assignee is not on shift at this time",
@@ -13998,11 +14026,13 @@ DICT.en = {
   "النقل والمبيت في المخيم": "Transport and overnight stay at the camp",
   "النماذج المعبّأة": "Filled forms",
   "النموذج": "Form",
+  "النهاية": "End",
   "النوبة الليلية": "Night shift",
   "النوع": "Type",
   "النوعُ يجلب دليلَ تنفيذه ومهامَه الفرعية": "The type brings its execution guide and sub-tasks",
   "الهادئة": "Calm",
   "الهلال الأحمر": "The Red Crescent",
+  "الهوية": "Identity",
   "الوارد على المهمة": "Received on the task",
   "الواصل الآن": "Arriving now",
   "الوثائق": "Documents",
@@ -14033,6 +14063,7 @@ DICT.en = {
   "الوضع الافتراضي عند أوّل دخول": "The default state on first sign-in",
   "الوضع الليلي": "Dark mode",
   "الوضع النهاري": "Day Mode",
+  "الوظائفُ واحدةٌ في الستّة، والفرقُ في طريقة العرض.": "The functions are identical in all six; the difference is in how it is presented.",
   "الوقت": "Time",
   "الوقت الآن": "Time now",
   "الوقت الأصلي": "Original time",
@@ -14108,6 +14139,8 @@ DICT.en = {
   "ب م هـ {n}": "B M H {n}",
   "بإدخالاتها ودرجاتها": "with its entries and scores",
   "بإسناد": "by assigning",
+  "باب الطوارئ في الممرّ الغربي مقفلٌ بسلسلة — يلزم فتحه فورًا.": "The emergency door in the west corridor is chained shut — it must be opened at once.",
+  "باب الطوارئ مُقفل": "Emergency door locked",
   "باب واحد": "One heading",
   "باستبعاده لعدم الحاجة تتحمّل مسؤولية ما ينتج عن نقص العدد في هذه المهمة.": "By dropping them as surplus you accept responsibility for whatever follows from the shortfall on this task.",
   "باص": "Bus",
@@ -14144,6 +14177,7 @@ DICT.en = {
   "بانتظار معلومات": "Awaiting information",
   "بانتظار مهمّة": "Awaiting a task",
   "بانتظار موافقتك أو رفضك": "Awaiting your approval or rejection",
+  "بانتظارك": "Awaiting you",
   "بثّ": "Broadcast",
   "بثّ إلى": "Broadcast to",
   "بثّ إلى {n} مستلمًا": "Broadcast to {n} recipients",
@@ -14232,6 +14266,7 @@ DICT.en = {
   "بطاقات نُسك بحوزة الحجاج": "Pilgrims have their Nusuk cards",
   "بطاقات نُسك متوفّرة بعدد الحجاج": "Nusuk cards available to match the pilgrim count",
   "بطاقات نُسك مفعّلة لكل الحجاج": "Nusuk cards are active for all pilgrims",
+  "بطاقاتٌ كاملةٌ تُظهر كلَّ شيءٍ دفعةً": "Full cards that show everything at once",
   "بطاقة نسك": "Nusuk card",
   "بطاقة نسك — المفقودات": "Nusuk card — Lost & found",
   "بطاقة نُسك تالفةٌ ولا تُقرأ في البوّابة.": "A damaged Nusuk card that will not scan at the gate.",
@@ -14459,6 +14494,7 @@ DICT.en = {
   "تأجيل المهمة": "Postpone the task",
   "تأجيل مهمة": "Postpone a task",
   "تأخر": "Late",
+  "تأخر إثبات حضور": "Late attendance proof",
   "تأخر الإغلاق": "Closure overdue",
   "تأخر الباص عن موعد الجولة": "Bus late for the tour time",
   "تأخر الحافلة عن موعد التفويج": "Bus late for the dispatch time",
@@ -14469,6 +14505,7 @@ DICT.en = {
   "تأخر وصول الحافلات": "Buses arrived late",
   "تأخر وصول الدينات الخاصة بالأمتegة": "Luggage vans arriving late",
   "تأخر وصول الدينات الخاصة بالأمتعة": "Luggage vans arriving late",
+  "تأخرت بداية المهمّة عن موعدها — راجع الحضور.": "The task started later than scheduled — review attendance.",
   "تأخرت حافلة المجموعة أربعين دقيقة عن موعدها، وتعطّل الجدول على من بعدها.": "The group’s bus was forty minutes late, disrupting the schedule for those after it.",
   "تأخرت حافلة المجموعة أربعين دقيقة، وتعطّل الجدول على من بعدها.": "The group’s bus was forty minutes late, disrupting the schedule for those after it.",
   "تأخرت عن إثبات الحضور": "You were late to check in",
@@ -14483,6 +14520,7 @@ DICT.en = {
   "تأخّر جزءٌ من الفريق عن التحضير، ونُبّه ليدر المجموعة.": "Part of the team was late to the briefing, and the group leader was notified.",
   "تأخّر خمسًا وعشرين دقيقة عن «": "Twenty-five minutes late for “",
   "تأخّر عن مهمّة": "Late for a task",
+  "تأخّر وجبة العشاء": "Dinner delayed",
   "تأخّر وصول الحافلة أربك التوقيت فاحتجنا تنظيمًا إضافيًّا.": "The bus’s late arrival upset the timing, so we needed extra marshalling.",
   "تأخّر وصول الفوج ساعةً كاملة — نطلب تأخير بداية المهمة.": "The group arrived a full hour late — we request a later task start.",
   "تأخّر وصول حافلة واحدة عشرين دقيقة — عولج ميدانيًّا ولم يتأثّر الجدول.": "One bus arrived twenty minutes late — handled on site with no effect on the schedule.",
@@ -14525,6 +14563,7 @@ DICT.en = {
   "تاريخ غير صالح": "Invalid date",
   "تبادل باتفاق الطرفين": "Swap by mutual agreement",
   "تبدأ": "Starts",
+  "تبدأ أمس": "Was due yesterday",
   "تبدأ المهمة": "The task starts",
   "تبدأ المهمة {n}:{n} am": "The task starts at {n}:{n} am",
   "تبدأ المهمة {n}:{n} am — بعد {n} ساعة و{n} د": "The task starts at {n}:{n} am — in {n} hours and {n} min",
@@ -14532,16 +14571,15 @@ DICT.en = {
   "تبدأ المهمة {n}:{n} pm — بعد {n} ساعة و{n} د": "The task starts at {n}:{n} pm — in {n} hours and {n} min",
   "تبدأ المهمة {n}:{n} ص": "Task starts {n}:{n} am",
   "تبدأ المهمة {n}:{n} ص — بعد {n} ساعة و{n} د": "The task starts at {n}:{n} AM — in {n} hours and {n} min",
+  "تبدأ بعد {n} أيام": "Starts in {n} days",
   "تبدأ بعد {n} دقيقة": "Starts in {n} min",
   "تبدأ بعد {n} ساعة": "Starts in {n} h",
   "تبدأ بعد {n} ساعة و{n} د": "Starts in {n} h {n} m",
-  "تبدأ بعد {n} أيام": "Starts in {n} days",
+  "تبدأ غدًا": "Starts tomorrow",
+  "تبدأ منذ {n} أيام": "Was due {n} days ago",
   "تبدأ منذ {n} دقيقة": "Was due {n} min ago",
   "تبدأ منذ {n} ساعة": "Was due {n} h ago",
   "تبدأ منذ {n} ساعة و{n} د": "Was due {n} h {n} m ago",
-  "تبدأ منذ {n} أيام": "Was due {n} days ago",
-  "تبدأ غدًا": "Starts tomorrow",
-  "تبدأ أمس": "Was due yesterday",
   "تبديل الشِفت": "Change shift",
   "تبديل الشِفتات": "Shift Swaps",
   "تبديل المحسن": "Swap the muhsen",
@@ -14619,6 +14657,7 @@ DICT.en = {
   "تحذير: تسكين متأخر": "Warning: late rostering",
   "تحرير": "Edit",
   "تحرير التعليمات": "Edit instructions",
+  "تحرير خطوات الدليل": "Edit guide steps",
   "تحضير اليوم": "Today’s check-in",
   "تحضير يومي": "Daily briefing",
   "تحضيري": "My check-in",
@@ -14693,12 +14732,14 @@ DICT.en = {
   "تذكرة ·": "Ticket ·",
   "تذكرة أُسندت إليك": "A ticket was assigned to you",
   "تذكرة جديدة": "New ticket",
+  "تذكرة جديدة من حاجّ": "New ticket from a pilgrim",
   "تذكرة حرجة": "Critical ticket",
   "تذكرة حرجة —": "Critical ticket —",
   "تذكرة حرجة — KT{n}": "Critical ticket — KT{n}",
   "تذكرة مفتوحة": "Open ticket",
   "تذكرة مُصعّدة": "Escalated ticket",
   "تذكير": "Reminder",
+  "تذكير الكنترول": "Control room reminder",
   "تذكير بمهل المعالجة": "Reminder of response deadlines",
   "تذكير جديد": "New reminder",
   "تذكير على": "Reminder on",
@@ -14706,6 +14747,7 @@ DICT.en = {
   "تذكير على الثلاثاء {n}‏/{n}‏/{n}": "Reminder on Tuesday {n}‏/{n}‏/{n}",
   "تذكير: التحضير داخل النطاق": "Reminder: check in within range",
   "تذكيرات": "Reminders",
+  "تذكيرٌ من غرفة العمليات بموعد التجمّع قبل الجولة.": "A reminder from the operations room about the gathering time before the tour.",
   "تذكّرني": "Remember me",
   "تراجع": "Undo",
   "ترتيب الفرق": "Team ranking",
@@ -14763,6 +14805,7 @@ DICT.en = {
   "تسجيل خروج مبكر": "Early check-out",
   "تسجيل عقد": "Register contract",
   "تسجيل عقد نقل": "Register a transport contract",
+  "تسري على التصاميم الستّة، والفرقُ في الدرجات لا في البنية.": "They apply to all six designs; the difference is in the tones, not the structure.",
   "تسريبُ ماءٍ في دورة مياه الدور الثالث.": "A water leak in the third-floor washroom.",
   "تسكين": "Placement",
   "تسكين أو تفويض": "Rooming or delegation",
@@ -14938,6 +14981,7 @@ DICT.en = {
   "تغيير وقت": "Time change",
   "تغيير وقت التفويج": "Change movement time",
   "تغيير وقت المناسك": "Change rite timing",
+  "تغيّر جدول الفوج من الكنترول — دُمجت مع جولة اليوم التالي": "The group schedule changed from control — merged with the next day's tour",
   "تغيّرت الحالة إلى «": "Status changed to “",
   "تغيّرت الحالة إلى «مغلق»": "Status changed to “closed”",
   "تفاصيل البلاغ": "Report details",
@@ -14956,6 +15000,7 @@ DICT.en = {
   "تفويج الحجاج إلى عرفة": "Dispatching pilgrims to Arafah",
   "تفويض": "Delegation",
   "تفويض القيادة": "Delegate leadership",
+  "تفويض المهمّة": "Delegate the task",
   "تفويض قيادة المهمة": "Delegate task leadership",
   "تقدم المهمة": "Task progress",
   "تقديم الساعة يكشف سلوك النوافذ الزمنية.": "Advancing the clock reveals how the time windows behave.",
@@ -14974,6 +15019,7 @@ DICT.en = {
   "تقييم هذه المهمة": "Rate this task",
   "تقييمك التراكمي": "Your cumulative rating",
   "تقييمك وترتيب الفريق": "Your rating and team ranking",
+  "تقييمك وتقييم فريقك": "Your rating and your team’s",
   "تقييمك وملاحظاتك": "Your rating and notes",
   "تقييمي": "My rating",
   "تكرار التأخير أو عدم الإنجاز": "Repeated lateness or non-completion",
@@ -15002,6 +15048,7 @@ DICT.en = {
   "تم تسجيل الخروج المبكر {t}": "Early check-out recorded {t}",
   "تم توثيق الوقت الصحيح , وإبلاغ الأطراف المعنية": "The correct time was documented and the parties concerned notified",
   "تم قبول الاستلام من مقدّم الخدمة": "Handover from the service provider was accepted",
+  "تمام، أكون هناك قبل الموعد بنصف ساعة": "Noted, I will be there half an hour early",
   "تمت الطباعة": "Printed",
   "تمّ": "Done",
   "تمّ التعديل": "Edited",
@@ -15081,6 +15128,7 @@ DICT.en = {
   "توزيع الأماكن حسب الكشف": "Allocating places by the manifest",
   "توزيع البطاقات على الحجاج والتأكد من مطابقة الأسماء.": "Distribute the cards to the pilgrims and confirm the names match.",
   "توزيع التخصّصات": "Speciality distribution",
+  "توزيع التقييم": "Rating distribution",
   "توزيع التقييمات": "Rating distribution",
   "توزيع الحجاج على الأفرشة بالكشف": "Allocate pilgrims to bedding by the manifest",
   "توزيع الدرجات": "Score distribution",
@@ -15166,6 +15214,7 @@ DICT.en = {
   "ثلاثة حجاج يحتاجون وجبات خاصة لمرضى السكري ابتداءً من الغد.": "Three pilgrims need diabetic meals starting tomorrow.",
   "ثلاثة قبل وثلاثة بعد — والمضيء هو اليوم": "Three before and three after — the lit one is today",
   "ثلاثة مصادر لا مصدر واحد": "Three sources, not one",
+  "ثلاثُ شاشاتٍ مرجعيّةٍ لا تُغيّر شيئًا — للقراءة وحدَها": "Three reference screens that change nothing — read-only",
   "ثم القوائم ثم الخرائط. وأنت ترتّب داخل الشريط.": "then lists, then maps. You arrange within each strip.",
   "ثم تُوزَّع على المجموعات تلقائيًّا": "then they are distributed among the groups automatically",
   "ثناءٌ على وضوح الإرشاد وحُسن التعامل في المجموعة.": "Praise for clear guidance and good conduct within the group.",
@@ -15315,7 +15364,9 @@ DICT.en = {
   "حاجًّا)": "pilgrims)",
   "حاجٌّ أصيب بإجهادٍ حراريٍّ في ساحة المشعر.": "A pilgrim suffered heat exhaustion in the holy site’s courtyard.",
   "حاجٌّ انفصل عن الفوج عند الجمرات.": "A pilgrim became separated from the group at the Jamarat.",
+  "حاجٌّ كبير في السنّ يحتاج مرافقًا ملازمًا في يوم المشاعر.": "An elderly pilgrim needs a dedicated escort on the holy sites day.",
   "حاجّ": "Pilgrim",
+  "حاجّ يحتاج مرافقًا للمشاعر": "A pilgrim needs an escort for the holy sites",
   "حاجّةٌ تحتاج متابعةً يوميّةً ولم تُسجَّل في الكشف.": "A pilgrim needs daily follow-up and was not recorded on the manifest.",
   "حادثة": "Incident",
   "حارث": "Harith",
@@ -15466,6 +15517,8 @@ DICT.en = {
   "حفظ جهة التصعيد": "Save escalation target",
   "حفظ نسخة PDF أو طباعة": "Save as PDF or print",
   "حفظ ونشر": "Save and publish",
+  "حقيبة أحد الحجّاج لم تصل مع شحنة الفندق، ويحتاج أدويته.": "One pilgrim's bag did not arrive with the hotel shipment and he needs his medication.",
+  "حقيبة حاجّ لم تصل": "A pilgrim's bag has not arrived",
   "حقيبة مفقودة": "Lost bag",
   "حقيبةُ حاجٍّ لم تصل مع الفوج.": "A pilgrim’s bag did not arrive with the group.",
   "حقيبتي لم تصل مع الفوج من المطار.": "My bag did not arrive with the group from the airport.",
@@ -15557,6 +15610,7 @@ DICT.en = {
   "خطة الإخلاء الصحي جاهزة": "The medical evacuation plan is ready",
   "خطة الإخلاء معلومة لكل المحسنين": "The evacuation plan is known to every Muhsen",
   "خطوات التنفيذ": "Execution steps",
+  "خطوات التنفيذ لكل نوع": "Execution steps for each kind",
   "خطوات الرد": "Trip steps",
   "خطوة": "Step",
   "خطوة «": "step “",
@@ -15715,6 +15769,7 @@ DICT.en = {
   "رحمواتي": "Rahmawati",
   "رد": "Reply",
   "رد الكنترول:": "Control’s reply:",
+  "رد المستقبِل": "Recipient's reply",
   "رد المستقبِل:": "Recipient’s reply:",
   "رد على": "Reply to",
   "رد على البلاغ": "Reply to the report",
@@ -15924,6 +15979,7 @@ DICT.en = {
   "رُفع ملفّ المرشدين —": "Guides file uploaded —",
   "رُفع من تطبيق مُحسن": "Raised from muhsen app",
   "رُفعت التذكرة": "Ticket submitted",
+  "رُفعت تذكرةٌ جديدةٌ على فوجك — فُتحت للمتابعة.": "A new ticket was raised for your group — opened for follow-up.",
   "رُفعت صورة إثبات على خطوةٍ من خطوات المهمة": "A proof photo was uploaded on one of the task’s steps",
   "رُفعت مسودة دليل جولة المزارات — بانتظار المراجعة": "A draft landmark-tour guide was submitted — awaiting review",
   "زاد عدد الحجّاج أربعين بعد دفعة اكسترا كوتا.": "The pilgrim count rose by forty after an extra quota batch.",
@@ -15995,12 +16051,15 @@ DICT.en = {
   "سبت": "Sat",
   "ستصلك التحديثات هنا أولًا بأول.": "Updates will reach you here as they happen.",
   "ستصلك طلبات التسكين والتفويض هنا.": "Rooming and delegation requests will arrive here.",
+  "ستصلك طلبات التسكين والتفويض هنا، وتردّ عليها بضغطة.": "Assignment and delegation requests arrive here, and you answer them with one tap.",
   "ستصلك طلبات الليدر هنا.": "The leader’s requests will reach you here.",
   "ستظهر مهمتك هنا فور قبولك طلب تسكين.": "Your task will appear here as soon as you accept a rooming request.",
   "ستملك: بدء المهمة · إغلاقها · المهام الفرعية.": "You will have: start the task · close it · the sub-tasks.",
   "ستُحذف كل التسكينات والردود والتنبيهات والتذاكر والتقييمات.": "All rostering, replies, alerts, tickets and ratings will be deleted.",
   "ستُسجَّل": "will be recorded",
   "ستُسجَّل غير منجزة في ملاحظات المهمة وتؤثر في التقييم.": "It will be recorded as not completed in the task’s remarks and affect the rating.",
+  "ستّةُ تصاميمَ لعرض التطبيق نفسِه — الوظائفُ واحدةٌ في الستّة.": "Five designs for the same app — the functions are identical in all six.",
+  "ستّةُ تصاميمَ لعرض التطبيق نفسِه، وثلاثُ هويّاتٍ تسري عليها — الوظائفُ واحدةٌ في الستّة، والفرقُ في طريقة العرض. وتبدّلهما متى شئتَ من شاشة الدخول.": "Six designs for the same app, and three identities that apply to them — the functions are identical in all five; the difference is in how it is presented. Switch either one whenever you like from the sign-in screen.",
   "سجل": "Log",
   "سجل إجراءات المهمة": "Task action log",
   "سجل الإجراءات": "Action log",
@@ -16050,6 +16109,7 @@ DICT.en = {
   "سحبه الليدر": "Withdrawn by the leader",
   "سداد المستحقات وفق الدفعات المتفق عليها في الملحق المالي.": "Settlement of dues according to the instalments agreed in the financial annex.",
   "سري": "Sri",
+  "سطحٌ أخضرُ عميقٌ وألواحٌ شفّافةٌ يفصلها خيطٌ ذهبيّ": "A deep green surface with translucent panels divided by a gold hairline",
   "سطحٌ دافئٌ وبطاقاتٌ بظلالٍ وأزرارٌ مستديرة": "Warm surface, shadowed cards, pill buttons",
   "سطر توضيحي": "Caption",
   "سطر واحد يُقرأ في الإشعار": "One line read in the notification",
@@ -16298,6 +16358,7 @@ DICT.en = {
   "صارت الحالة:": "Status became:",
   "صالة الحج — مطار الملك عبدالعزيز": "Hajj Terminal — King Abdulaziz Airport",
   "صالح بن دخيل": "Saleh bin Dakhil",
+  "صباح الخير،": "Good morning,",
   "صباحي": "Morning",
   "صباحية": "Morning",
   "صباحية · {n}:{n} — {n}:{n}": "Morning · {n}:{n} — {n}:{n}",
@@ -16336,6 +16397,7 @@ DICT.en = {
   "صور التذكرة": "Ticket photos",
   "صور الجولة مرفوعة على المهمة": "The tour photos are uploaded to the task",
   "صور المهام": "Task photos",
+  "صور المهام والخطوات": "Task and step photos",
   "صور عامة للمهمة — تُرفع من استوديو جهازك.": "General task photos — uploaded from your device’s gallery.",
   "صورة": "Image",
   "صورة إلى ميموريز المهمة": "Photo to task memories",
@@ -16383,6 +16445,7 @@ DICT.en = {
   "ضيافة الحجاج": "Pilgrim hospitality",
   "ضيافة الوجبات في المشاعر": "Meal service in the Holy Sites",
   "ضيافة الوجبة الأولى": "Serving the first meal",
+  "طاب يومك،": "Good day,",
   "طاقم الحركة": "Movement crew",
   "طباعة": "Print",
   "طباعة / حفظ PDF": "Print / Save PDF",
@@ -16409,6 +16472,7 @@ DICT.en = {
   "طلب استبدالك": "Requested to substitute you",
   "طلب استبعاد": "Drop request",
   "طلب استبعاد بانتظار رده": "A drop request awaits their reply",
+  "طلب استبعاد محسن": "Request to remove a Muhsen",
   "طلب استبعاد من مهمة": "Drop request from task",
   "طلب استبعادك من مهمة": "A request to drop you from a task",
   "طلب الإصدار": "Issuance request",
@@ -16427,9 +16491,11 @@ DICT.en = {
   "طلب تبديل شِفت ·": "Shift swap request ·",
   "طلب تبديل شِفت جديد": "New shift swap request",
   "طلب تسكين": "Rooming request",
-  "طلب تسكين جديد": "New rooming request",
+  "طلب تسكين جديد": "New assignment request",
   "طلب تعديل بيانات غرفة": "Request to edit room data",
   "طلب تغيير غرفة": "Room change request",
+  "طلب تغيير كلمة المرور": "Request a password change",
+  "طلب تفويض": "Delegation request",
   "طلب حلول مكان زميل": "Request to stand in for a colleague",
   "طلب دعم": "Support request",
   "طلب دعم ·": "Support request ·",
@@ -16452,6 +16518,7 @@ DICT.en = {
   "طلب دعم —": "Support request —",
   "طلب دعم — KT{n}": "Support request — KT{n}",
   "طلب دعمٍ من الليدر": "A support request from the leader",
+  "طلب رحلة": "Request a ride",
   "طلب كرسي متحرك": "Wheelchair request",
   "طلب لم يُرد عليه في «": "An unanswered request on “",
   "طلب محسن الانسحاب لارتباطٍ بمهمة أخرى": "A Muhsen asked to withdraw due to another task commitment",
@@ -16473,6 +16540,7 @@ DICT.en = {
   "طلبك على «": "your request on “",
   "طلبًا": "requests",
   "طلبًا من ليدر المجموعة": "a request from the group leader",
+  "طلبٌ سُحب بعد إعادة توزيع الفريق على الأفواج": "Request withdrawn after the team was redistributed across groups",
   "طلبُ": "Request for",
   "طلبُ تبديل": "Swap request",
   "طلبُ تبديل SW-{n} من أحمد الشهري": "Swap request SW-{n} from Ahmed Al-Shehri",
@@ -16624,6 +16692,7 @@ DICT.en = {
   "عرض التذاكر": "Show tickets",
   "عرض الجدول الرحله": "Show the itinerary",
   "عرض الطلبات": "Show requests",
+  "عرض الكل": "View all",
   "عرض الكل (": "Show all (",
   "عرض الكل ({n})": "Show all ({n})",
   "عرض المزيد ({n})": "Show more ({n})",
@@ -16646,6 +16715,7 @@ DICT.en = {
   "عطل الحافلة": "Bus breakdown",
   "عطل حافلة": "Bus breakdown",
   "عطل حافلة — النقل": "Bus breakdown — Transport",
+  "عطل في مكيّف الدور الثالث": "Air conditioning fault on the third floor",
   "عطلٌ في مكيّف الحافلة والحجّاج بداخلها.": "The bus air conditioning failed with the pilgrims inside.",
   "عقد": "Contract",
   "عقد أضافه الكنترول": "A contract added by Control",
@@ -16835,6 +16905,7 @@ DICT.en = {
   "فريق امتثال": "Imtithal Team",
   "فريق ليدرها أوّلًا، ثم الاحتياط، ثم بقيّة المحسنين — والكنترول يسكّن من شاء.": "Its leader’s team first, then the reserve, then the other Muhsens — and Control may roster whomever it wishes.",
   "فريق ميداني": "Field team",
+  "فريقك": "Your team",
   "فريقك وتقييماتهم": "Your team and their ratings",
   "فريقه ومهامه": "their team and tasks",
   "فريقي": "My team",
@@ -16918,6 +16989,7 @@ DICT.en = {
   "في شِفت ليلية": "On night shift",
   "في كشوف العقود": "In contract lists",
   "في مجموعات قائمة": "In existing groups",
+  "في مهمة": "On a task",
   "في مهمة الآن": "On a task now",
   "في هذه المدّة": "in this period",
   "فيديو": "Video",
@@ -16962,8 +17034,11 @@ DICT.en = {
   "قالب فارغ": "Blank template",
   "قبل": "Before",
   "قبل {n} أسبوع": "{n} weeks ago",
+  "قبل {n} أيام": "{n} days ago",
   "قبل {n} د": "{n} m ago",
+  "قبل {n} دقيقة": "{n} min ago",
   "قبل {n} س": "{n} h ago",
+  "قبل {n} ساعة": "{n} h ago",
   "قبل {n} يوم": "{n} days ago",
   "قبل الإغلاق": "Before closing",
   "قبل التحرّك": "before moving off",
@@ -16987,6 +17062,7 @@ DICT.en = {
   "قبِل": "Accepted",
   "قبِل التسكين": "Accepted the rooming",
   "قبِل الحلول مكان": "Agreed to stand in for",
+  "قبِل الليدرُ انسحابَك، وأُخرجتَ من التسكين.": "The leader accepted your withdrawal and removed you from the assignment.",
   "قدِّم الرحلة أو أخِّرها": "Move the trip earlier or later",
   "قدّم": "Submitted",
   "قرأت كل شيء": "You have read everything",
@@ -17069,6 +17145,7 @@ DICT.en = {
   "كل الصفوف مكتملة": "All rows complete",
   "كل الطلبات": "All requests",
   "كل الفرق": "All teams",
+  "كل القادمة": "All upcoming",
   "كل الليدرز": "All leaders",
   "كل الليدرز والمحسنين": "All leaders and Muhsens",
   "كل الليدرز والمحسنين · {n} شخصًا": "All leaders and Muhsens · {n} people",
@@ -17102,6 +17179,7 @@ DICT.en = {
   "كلمة المرور غير صحيحة": "Incorrect password",
   "كلمة المرور لكل الحسابات التجريبية:": "Password for all demo accounts:",
   "كلُّ ردودك اليوم": "All your runs today",
+  "كلُّ طلبٍ رددتَ عليه أو أرسلتَه يبقى هنا.": "Every request you answered or sent stays here.",
   "كلُّ نقلٍ أو سحبٍ أو استبدالٍ — بسببه كما كُتب وقتَه": "Every move, withdrawal or substitution — with its reason as written at the time",
   "كلّ التنبيهات": "All alerts",
   "كلّ ما في التطبيق — وزيادةُ ما يملكه الكنترول": "Everything in the app — plus what Control holds",
@@ -17229,6 +17307,7 @@ DICT.en = {
   "لا ردّ بعد": "No reply yet",
   "لا رسالة تطابق": "No matching message",
   "لا ركّاب بعد": "No passengers yet",
+  "لا سجلَّ بعد": "No record yet",
   "لا سجلّ — الحالة سليمة": "No record — all clear",
   "لا سِمة مسجّلة على هذا الجهاز": "No biometric is enrolled on this device",
   "لا شروط بعد — أضِفها أو اربط قالبًا.": "No conditions yet — add them or link a template.",
@@ -17649,6 +17728,7 @@ DICT.en = {
   "مثبَّت": "Pinned",
   "مثبَّت · {n}×{n} · فراغ {n}": "Installed · {n}×{n} · free {n}",
   "مثبَّت · {n}×{n} · فراغ —": "Installed · {n}×{n} · free —",
+  "مثبَّت على اختيارك.": "Fixed to your choice.",
   "مجدول": "Scheduled",
   "مجدول {n}:{n} am": "Scheduled {n}:{n} am",
   "مجدول {n}:{n} pm": "Scheduled {n}:{n} pm",
@@ -17801,6 +17881,7 @@ DICT.en = {
   "مزدلفة ← منى": "Muzdalifah → Mina",
   "مسؤولين النقل في المركز": "Transport officers at the centre",
   "مسؤولين النقل في هوليدي ان": "Transport officers at Holiday Inn",
+  "مساء الخير،": "Good evening,",
   "مسائي": "Evening",
   "مسائية": "Evening",
   "مساحة أوسع للمحتوى": "More room for content",
@@ -18019,6 +18100,7 @@ DICT.en = {
   "ملاحظة": "Note",
   "ملاحظة (اختيارية)": "Remark (optional)",
   "ملاحظة الكنترول": "Control’s note",
+  "ملاحظة المرسِل": "Sender's note",
   "ملاحظة المرسِل:": "Sender’s remark:",
   "ملاحظة تشغيلية": "Operational note",
   "ملاحظة على المهمة": "Remark on the task",
@@ -18048,6 +18130,7 @@ DICT.en = {
   "ملفّاتٌ وعقودٌ عامّة على المهمّة": "General files and contracts on the task",
   "ممتاز": "Excellent",
   "ممنوحةٌ لـ": "granted to",
+  "مميّزةُ اليوم": "Featured today",
   "من": "From",
   "من {n}": "of {n}",
   "من {n} Sept {n} إلى {n} Oct {n}": "From {n} Sept {n} to {n} Oct {n}",
@@ -18325,6 +18408,8 @@ DICT.en = {
   "نجمة: {n}": "Stars: {n}",
   "نجمتان": "2 stars",
   "نجمتان: {n}": "2 stars: {n}",
+  "نحتاج كرسيّين متحرّكين إضافيّين قبل التوجّه للحرم.": "We need two extra wheelchairs before heading to the Haram.",
+  "نحتاجك في استقبال الفوج — خبرتُك في البوابة الشمالية": "We need you for the group arrival — your experience at the north gate",
   "نزلوا الميدان": "In the field",
   "نزِّل القالب فارغًا، عبّئه بأسماء المرشدين وأرقامهم، ثم ارفعه —": "Download the blank template, fill it with the guides’ names and numbers, then upload it —",
   "نزِّل القالب فارغًا، عبّئه بأسماء المرشدين وأرقامهم، ثم ارفعه — تُقرأ العناوين لا المواضع، فلا يضرّ ترتيبك.": "Download the blank template, fill it with the guides’ names and numbers, then upload it — headers are read, not positions, so your ordering does no harm.",
@@ -18401,6 +18486,7 @@ DICT.en = {
   "نقص في عدد المحسنين": "Shortfall in the number of Muhsens",
   "نقص في متابعة كبار السن": "Insufficient follow-up on elderly pilgrims",
   "نقص في وجبات الغداء": "Shortfall in lunch meals",
+  "نقص كراسي متحرّكة للجولة": "Shortage of wheelchairs for the tour",
   "نقص مستلزمات الاستقبال": "Shortage of reception supplies",
   "نقصٌ في البطانيات — أربعةٌ في الغرفة وبطانيتان فقط.": "Short of blankets — four people in the room and only two blankets.",
   "نقصٌ في مستلزمات السكن لثلاث غرف.": "A shortfall in accommodation supplies for three rooms.",
@@ -18546,6 +18632,7 @@ DICT.en = {
   "هياكل التحميل": "Loading skeletons",
   "هيفاء": "Haifa",
   "هيفاء بن حسين": "Haifa bin Hussein",
+  "هيكلُ كلّ تجربةٍ على شكل محتواها هي.": "Each experience is structured after its own content.",
   "و{n} بندًا آخر في أقسامها": "and {n} more items in their sections",
   "وأقدمُ منها": "and older than it",
   "وأُبلغ الطرفان": "and both parties notified",
@@ -18584,6 +18671,7 @@ DICT.en = {
   "وثيقة إلكترونية معتمدة — تقرير آليّ لا يحتاج توقيعًا": "Approved electronic document — an automated report requiring no signature",
   "وجبة العشاء تأخّرت ساعتين عن موعدها.": "Dinner was two hours late.",
   "وجبة العشاء لم تصل": "Dinner did not arrive",
+  "وجبة العشاء لم تصل حتى الآن، والحجّاج ينتظرون في الصالة.": "Dinner has not arrived yet and the pilgrims are waiting in the hall.",
   "وجبة الوصول مؤكّدة مع المورّد": "The arrival meal is confirmed with the supplier",
   "وجبةُ الغداء تأخّرت عن موعدها المعتمد.": "Lunch was late against its approved time.",
   "وجدان": "Wijdan",
@@ -18637,6 +18725,7 @@ DICT.en = {
   "وصلت": "Delivered",
   "وصلت إلى مركز التوزيع": "Arrived at the distribution centre",
   "وصلت الوجبات ناقصة اثنتي عشرة وجبة عن كشف المجموعة. عُوِّض الفرق من المخزون الاحتياطي.": "The meals arrived twelve short of the group’s manifest. The shortfall was covered from the reserve stock.",
+  "وصلك طلبُ تسكينٍ على مهمّةٍ قادمة — بانتظار ردّك.": "You have an assignment request for an upcoming task — awaiting your reply.",
   "وصلك هذا الإشعار بنجاح.": "This alert reached you successfully.",
   "وصلوا": "Arrived",
   "وصلوا ·": "Arrived ·",
@@ -18730,6 +18819,10 @@ DICT.en = {
   "يتبع الوقت — داكن الآن": "Follows the time — dark now",
   "يتبع الوقت — فاتح الآن": "Follows the time — light now",
   "يتبقّى": "remaining",
+  "يتبقّى {n} د للرد": "{n} min left to reply",
+  "يتبقّى {n} د.": "{n} min left.",
+  "يتبقّى {n} س {n} د للرد": "{n} h {n} min left to reply",
+  "يتبقّى {n} س {n} د.": "{n} h {n} min left.",
   "يحتاج إجراءً": "Needs action",
   "يحتاج تحسينًا في التواصل": "Needs to improve communication",
   "يحتاج ردًا": "Needs a reply",
@@ -18977,17 +19070,6 @@ DICT.en = {
 
 /* ─────────────  الماليزية  ───────────── */
 DICT.ms = {
-  "إجراءات هذه الصفحة": "Tindakan pada halaman ini",
-  "تفويض المهمّة": "Wakilkan tugasan",
-  "تحرير خطوات الدليل": "Sunting langkah panduan",
-  "طلب استبعاد محسن": "Mohon keluarkan seorang Muhsin",
-  "إعادة تقييم المنجز": "Nilai semula kerja selesai",
-  "طلب تغيير كلمة المرور": "Mohon tukar kata laluan",
-  "طلب رحلة": "Mohon perjalanan",
-  "الأصليّة": "Asal",
-  "الشكلُ الأوّلُ كما نُشر: سطحٌ أخضرُ عميقٌ ونقشٌ هندسيّ": "Rupa pertama yang diterbitkan: permukaan hijau pekat dengan corak geometri",
-  "الوظائفُ واحدةٌ في الستّة، والفرقُ في طريقة العرض.": "Fungsinya sama dalam keenam-enamnya; bezanya pada cara paparan.",
-  "تسري على التصاميم الستّة، والفرقُ في الدرجات لا في البنية.": "Ia digunakan pada keenam-enam reka bentuk; bezanya pada tona, bukan struktur.",
   "\">{n}": "\">{n}",
   "#M{n} · ثِقل السجلّ {n}": "#M{n} · Berat rekod {n}",
   "#RS{n} · ثِقل السجلّ {n}": "#RS{n} · Berat rekod {n}",
@@ -19233,6 +19315,7 @@ DICT.ms = {
   "{n} ربيع الأول {n} هـ": "{n} Rabiulawal {n}H",
   "{n} ربيع الأول {n} هـهـ — {n} جمادى الأولى {n} هـهـ": "{n} Rabiulawal {n} H — {n} Jamadilawal {n} H",
   "{n} رحلة": "{n} perjalanan",
+  "{n} رد": "{n} balasan",
   "{n} ردًّا": "{n} pusingan",
   "{n} رسالة": "{n} mesej",
   "{n} ريال": "SAR {n}",
@@ -19257,14 +19340,13 @@ DICT.ms = {
   "{n} عقدًا لم يُسجَّل في نظام ضيف": "{n} kontrak tidak didaftarkan dalam sistem Dhaif",
   "{n} عنصرًا في {n} أشرطة": "{n} perkara dalam {n} jalur",
   "{n} غرفة": "{n} bilik",
-  "{n} منجزة": "{n} selesai",
-  "{n} رد": "{n} balasan",
   "{n} فرعية": "{n} subtugasan",
   "{n} فرق": "{n} pasukan",
   "{n} فعليًّا · {n} أثبتوا حضورهم": "{n} sebenar · {n} mendaftar hadir",
   "{n} فعلًا": "{n} tindakan",
   "{n} فعلًا ممنوحًا": "{n} tindakan diberikan",
   "{n} فلاتر أخرى": "{n} penapis lain",
+  "{n} قائمة": "{n} terbuka",
   "{n} قائمًا": "{n} masih berkuat kuasa",
   "{n} قطاعًا": "{n} sektor",
   "{n} قيد": "{n} catatan",
@@ -19292,14 +19374,17 @@ DICT.ms = {
   "{n} معروضة": "{n} dipaparkan",
   "{n} مفتوحة من {n}": "{n} dibuka daripada {n}",
   "{n} مقعدًا": "{n} tempat duduk",
+  "{n} مقيَّمة": "{n} dinilai",
   "{n} ملاحظة": "{n} catatan",
   "{n} من {n}": "{n} daripada {n}",
   "{n} من {n} · وصورُ إثباتها": "{n} daripada {n} · dengan foto buktinya",
   "{n} من {n} خطوة": "{n} daripada {n} langkah",
   "{n} من {n} شرطًا": "{n} daripada {n} syarat",
+  "{n} من {n} محسنين": "{n} daripada {n} muhsin",
   "{n} من {n} مقعدًا": "{n} daripada {n} tempat duduk",
   "{n} من {n} منجزة": "{n} daripada {n} selesai",
   "{n} من {n} — تغطية {n}٪": "{n} daripada {n} — liputan {n}%",
+  "{n} منجزة": "{n} selesai",
   "{n} منها خطورتها عالية": "{n} daripadanya berisiko tinggi",
   "{n} مهمة": "{n} tugasan",
   "{n} مهمة إجمالًا": "{n} tugasan kesemuanya",
@@ -19799,6 +19884,7 @@ DICT.ms = {
   "أطول فجوة بلا مهمّة: {n} ساعة من {n}:{n} م": "Jurang terpanjang tanpa tugas: {n} jam bermula {n}:{n} petang",
   "أطول فجوة بلا مهمّة: لا فجوة": "Jurang terpanjang tanpa tugas: tiada",
   "أعاد فتح": "Membuka semula",
+  "أعتذر — عندي تعارضٌ مع جولة الحرم في الوقت نفسه": "Maaf — saya ada pertembungan dengan lawatan Haram pada masa yang sama",
   "أعد تقييم الكل": "Nilai semula semua",
   "أعرف مسار هذا التفويج أكثر من زميلي.": "Saya lebih mengenali laluan penghantaran ini berbanding rakan sekerja saya.",
   "أعضاء الفريق": "Ahli pasukan",
@@ -19814,6 +19900,8 @@ DICT.ms = {
   "أغلقها الكنترول": "Ditutup oleh Kawalan",
   "أغوس": "Agus",
   "أفاد به المحسن": "Dilaporkan oleh muhsin",
+  "أفوّضك في قرارات المهمّة حتى عودتي من اجتماع الكنترول": "Saya mewakilkan keputusan tugas kepada anda sehingga saya pulang dari mesyuarat kawalan",
+  "أقترح زميلي بدلًا عنّي — تخصّصه أقرب للمهمّة": "Saya cadangkan rakan saya menggantikan saya — kepakarannya lebih sesuai",
   "أقرب تخصّصًا للمطلوب": "kepakaran terdekat dengan keperluan",
   "أقربها «": "terdekat “",
   "أقلّ": "Paling sedikit",
@@ -19891,6 +19979,7 @@ DICT.ms = {
   "أيام": "hari",
   "أيمن بن صابر": "Ayman bin Saber",
   "أين تتكدّس المهام": "Di mana tugasan menimbun",
+  "أين نقطة تجمّع الفوج بعد الجولة؟ الحجّاج يسألون.": "Di manakah titik perhimpunan kumpulan selepas lawatan? Jemaah bertanya.",
   "أين وقع؟": "Di mana ia berlaku?",
   "أين ومتى وماذا — بوضوحٍ يُغني عن السؤال": "Di mana, bila dan apa — cukup jelas sehingga tiada siapa perlu bertanya",
   "أين يتوزّع الجهد": "Di mana usaha diagihkan",
@@ -20101,6 +20190,7 @@ DICT.ms = {
   "إثراء التجربة — تعديل": "Pengayaan Pengalaman — sunting",
   "إثراء التجربة — حذف": "Pengayaan Pengalaman — padam",
   "إجراء": "Tindakan",
+  "إجراءات هذه الصفحة": "Tindakan pada halaman ini",
   "إجراءاتٌ على المهمة": "Tindakan ke atas tugas",
   "إجراءً": "tindakan",
   "إجمالي الحافلات": "Jumlah bas",
@@ -20197,6 +20287,7 @@ DICT.ms = {
   "إعادة الإصدار": "Terbit semula",
   "إعادة الجدولة": "Jadual semula",
   "إعادة الضبط": "Set semula",
+  "إعادة تقييم المنجز": "Nilai semula kerja selesai",
   "إعادة توزيع التخصّصات": "Agih semula kepakaran",
   "إعادة ضبط البيانات": "Tetapkan semula data",
   "إعادة ضبط كل البيانات": "Set semula semua data",
@@ -20363,6 +20454,7 @@ DICT.ms = {
   "ابحث في التذاكر": "Cari tiket",
   "ابحث في السجل…": "Cari dalam log…",
   "ابحث في المتاحين…": "Cari yang tersedia…",
+  "ابحث في المهام والتذاكر": "Cari tugasan dan tiket",
   "ابحث…": "Cari…",
   "ابدأ التجميع قبل الموعد بساعتين، وتحقق من عدد الحقائب لكل حاج.": "Mulakan perhimpunan dua jam sebelum waktunya dan sahkan bilangan beg setiap jemaah.",
   "ابدأ التجميع وتحقق من عدد الحقائب": "Mulakan perhimpunan dan sahkan bilangan beg",
@@ -20441,6 +20533,7 @@ DICT.ms = {
   "اربط الصورة بحدث فعلي في المهمة — لا وصفًا عشوائيًا. مثال: «استلام المفاتيح من الاستقبال» لا «صورة {n}».": "Kaitkan foto dengan peristiwa sebenar dalam tugas — bukan label sembarangan. Contoh, “Menerima kunci di kaunter sambutan”, bukan “Foto {n}”.",
   "ارتباط بمهمة أخرى": "Komitmen kepada tugas lain",
   "ارتباط بموعد طبي في الصباح": "Temu janji perubatan pada waktu pagi",
+  "ارتباطٌ عائليٌّ طارئ، واعتذر عن هذا التوقيت": "Komitmen keluarga mendesak; saya memohon maaf untuk waktu ini",
   "ارتباطٌ عائليّ لا يُؤجَّل في هذا اليوم.": "Komitmen keluarga yang tidak dapat ditangguhkan pada hari itu.",
   "ارتفاعٌ في السكّر عند والدتي وتحتاج مراجعةً عاجلة.": "Gula dalam darah ibu saya tinggi dan dia memerlukan rawatan segera.",
   "ارفع القالب المعبّأ، أو أدخِل حاجًّا واحدًا": "Muat naik templat yang telah diisi, atau masukkan seorang jemaah",
@@ -20451,6 +20544,7 @@ DICT.ms = {
   "ازدحام شديد عند بوابة المخيم": "Kesesakan teruk di pintu perkhemahan",
   "ازدحام على الطريق": "Kesesakan di laluan",
   "ازدحام عند البوابة الشرقية وقت الدخول. أطلب تنسيقًا مع الأمن لفتح مسار إضافي.": "Kesesakan di pintu timur semasa masuk. Saya meminta penyelarasan dengan pihak keselamatan untuk membuka laluan tambahan.",
+  "ازدحام عند المصاعد": "Kesesakan di lif",
   "استئذانٌ معتمدٌ اليوم": "Izin diluluskan hari ini",
   "استبدال": "Ganti",
   "استبدال بمحسن آخر": "Ganti dengan Muhsin lain",
@@ -20470,6 +20564,7 @@ DICT.ms = {
   "استفسار عن مواعيد الحافلات لمنى": "Pertanyaan tentang waktu bas ke Mina",
   "استفسار عن موعد التفويج": "Pertanyaan tentang masa pergerakan",
   "استفسار عن موعد المغادرة": "Pertanyaan tentang waktu pelepasan",
+  "استفسار عن نقطة التجمّع": "Pertanyaan tentang titik perhimpunan",
   "استفسارات": "Pertanyaan",
   "استفسارٌ عن كيفيّة إثبات الحضور خارج النطاق.": "Pertanyaan tentang cara mendaftar hadir dari luar julat.",
   "استفسارٌ عن مسار المزارات المعتمد.": "Pertanyaan tentang laluan mercu tanda yang diluluskan.",
@@ -20608,7 +20703,7 @@ DICT.ms = {
   "اعتُذر عن طلب دعم SP-{n} — الاحتياط مرتبط بعرفة": "Permintaan sokongan SP-{n} ditolak — simpanan terikat dengan Arafah",
   "اعتُمد": "Diluluskan",
   "اعتُمد استئذانك": "Izin anda diluluskan",
-  "اعتُمد الانسحاب": "Penarikan diri diluluskan",
+  "اعتُمد الانسحاب": "Penarikan diluluskan",
   "اعتُمد التبديل": "Pertukaran diluluskan",
   "اعتُمد التصريح الجديد": "Permit baharu diluluskan",
   "اعتُمد الطلب ووقع أثرُه": "Permintaan diluluskan dan berkuat kuasa",
@@ -20754,6 +20849,7 @@ DICT.ms = {
   "الأشرطة ترتيبها ثابت: المؤشّرات ثم الصفوف العريضة ثم الرسوم": "Jalur mengekalkan susunan tetap: penunjuk, kemudian baris lebar, kemudian carta",
   "الأشرطة ترتيبها ثابت: المؤشّرات ثم الصفوف العريضة ثم الرسوم ثم القوائم ثم الخرائط. وأنت ترتّب داخل الشريط.": "Jalur mengekalkan susunan tetap: penunjuk, kemudian baris lebar, kemudian carta, kemudian senarai, kemudian peta. Anda menyusun di dalam setiap jalur.",
   "الأصلي": "Asal",
+  "الأصليّة": "Asal",
   "الأعلى": "Tertinggi",
   "الأقدم أوّلًا": "Terdahulu dahulu",
   "الأقرب موعدًا": "Paling hampir dahulu",
@@ -21035,6 +21131,8 @@ DICT.ms = {
   "التسكين مقفل — بدأت المهمة": "Penempatan dikunci — Tugas telah bermula",
   "التسكين من صلاحية الليدر": "Penempatan ialah kebenaran ketua",
   "التسكين والطلبات تُدار من داخل المهمة نفسها — افتح المهمة ثم «إدارة التسكين».": "Penempatan dan permintaan diuruskan dari dalam tugas itu sendiri — buka tugas, kemudian “Urus penempatan”.",
+  "التسكينُ يبدأ من شاشة المهام، وكلُّ طلبٍ ترسله يُتابَع": "Penempatan bermula dari skrin Tugasan, dan setiap permohonan yang anda hantar dijejaki",
+  "التسكينُ يبدأ من شاشة المهام، وكلُّ طلبٍ ترسله يُتابَع هنا.": "Penempatan bermula dari skrin Tugasan, dan setiap permohonan yang anda hantar dijejaki di sini.",
   "التسليم": "Penyerahan",
   "التسليم للحاجّ": "Penyerahan kepada jemaah",
   "التشغيل": "Operasi",
@@ -21049,6 +21147,7 @@ DICT.ms = {
   "التصريح الموحّد": "Permit bersepadu",
   "التصريح والجواز والاسم والميلاد لا بدّ منها": "Permit, pasport, nama dan tarikh lahir diperlukan",
   "التصعيد": "Eskalasi",
+  "التصميم": "Reka bentuk",
   "التصنيف": "Kategori",
   "التصنيف المعروض": "Kategori dipaparkan",
   "التصنيف والأولوية": "Kategori dan Keutamaan",
@@ -21296,6 +21395,7 @@ DICT.ms = {
   "الششة": "Al-Shisha",
   "الششة — {n} كم": "Al-Shisha — {n} km",
   "الشكاوى": "Aduan",
+  "الشكلُ الأوّلُ كما نُشر: سطحٌ أخضرُ عميقٌ ونقشٌ هندسيّ": "Rupa pertama yang diterbitkan: permukaan hijau pekat dengan corak geometri",
   "الشمري": "Al-Shammari",
   "الشهري": "Al-Shehri",
   "الشِفت": "Syif",
@@ -21519,6 +21619,7 @@ DICT.ms = {
   "المتوسط التراكمي": "Purata terkumpul",
   "المتوسط العام لتقييم المهام": "Purata keseluruhan penarafan tugas",
   "المتوسط العام لكل مهامه": "Purata keseluruhan bagi semua tugasnya",
+  "المتوسّط": "Purata",
   "المجموع الموزون": "Jumlah berwajaran",
   "المجموع الموزون {n}٪ — أي {n} من {n} نجوم.": "Jumlah berwajaran {n}% — iaitu {n} daripada {n} bintang.",
   "المجموعات": "Kumpulan",
@@ -21568,6 +21669,7 @@ DICT.ms = {
   "المرجع والتوثيق": "Rujukan dan dokumentasi",
   "المرحلة": "Peringkat",
   "المرحلة {n} من {n}": "Peringkat {n} daripada {n}",
+  "المرسل": "Penghantar",
   "المرسلة": "Dihantar",
   "المرسلة والمستقبلة": "Dihantar dan Diterima",
   "المرشد لم يحضر، وحالة التواصل معه ....": "Pembimbing tidak hadir, dan status hubungan dengannya ialah ....",
@@ -21590,6 +21692,7 @@ DICT.ms = {
   "المسار": "Laluan",
   "المسارات الحيّة تتحرّك باتجاه التفويج": "Laluan langsung bergerak mengikut arah penghantaran",
   "المستخدمون": "Pengguna",
+  "المستقبل": "Penerima",
   "المستقبلة": "Diterima",
   "المسجد الحرام": "Masjidil Haram",
   "المسجد الحرام — باب الملك عبدالعزيز": "Masjidil Haram — Pintu Raja Abdulaziz",
@@ -21644,6 +21747,7 @@ DICT.ms = {
   "المصدر الأصل": "Sumber induk",
   "المصدر الذي يقرأ منه التطبيق": "Sumber yang dibaca oleh aplikasi",
   "المصدر — من أين جاءت المعلومة؟": "Sumber — dari mana maklumat ini datang?",
+  "المصعدان الأيمنان متوقّفان فالانتظار يتجاوز ربع ساعة.": "Kedua-dua lif sebelah kanan tidak berfungsi, jadi menunggu melebihi lima belas minit.",
   "المصفوفة": "Matriks",
   "المطار والمغادرة والجولات ورحلات المزارات": "Lapangan terbang, pelepasan, lawatan dan perjalanan mercu tanda",
   "المطلوب": "Diperlukan",
@@ -21665,6 +21769,7 @@ DICT.ms = {
   "المقترح بناءً على سجلّه: إنذار أول": "Dicadangkan berdasarkan rekodnya: amaran pertama",
   "المكان": "Tempat",
   "المكتوب في النموذج": "Ditulis pada borang",
+  "المكيّف المركزي للدور الثالث متوقّف منذ الفجر، والغرف حارّة.": "Penghawa dingin pusat tingkat tiga terhenti sejak subuh dan bilik menjadi panas.",
   "المكيّف في الغرفة لا يبرّد منذ الأمس، والغرفة فيها ثلاثةٌ من كبار السنّ.": "Penghawa dingin bilik tidak menyejukkan sejak semalam, dan terdapat tiga warga emas di dalamnya.",
   "المكيّف متوقف منذ الظهر والغرفة حارّة جدًّا.": "Penghawa dingin tidak berfungsi sejak tengah hari dan bilik sangat panas.",
   "الملاحظات المسجّلة": "Catatan yang direkodkan",
@@ -21682,41 +21787,6 @@ DICT.ms = {
   "المهام": "Tugasan",
   "المهام التي لك فيها دور": "Tugas yang anda mempunyai peranan",
   "المهام التي لم تُقفل بعد": "Tugas yang belum ditutup",
-  "المُبلِّغ": "Dilaporkan oleh",
-  "ستّةُ تصاميمَ لعرض التطبيق نفسِه، وثلاثُ هويّاتٍ تسري عليها — الوظائفُ واحدةٌ في الستّة، والفرقُ في طريقة العرض. وتبدّلهما متى شئتَ من شاشة الدخول.": "Enam reka bentuk untuk aplikasi yang sama, dan tiga identiti yang digunakan padanya — fungsinya sama dalam kelima-limanya; bezanya pada cara paparan. Tukar mana-mana satu bila-bila masa dari skrin log masuk.",
-  "التصميم": "Reka bentuk",
-  "الهوية": "Identiti",
-  "فريقك": "Pasukan anda",
-  "مميّزةُ اليوم": "Pilihan hari ini",
-  "كل القادمة": "Semua akan datang",
-  "توزيع التقييم": "Taburan penilaian",
-  "المتوسّط": "Purata",
-  "لا سجلَّ بعد": "Tiada rekod lagi",
-  "مثبَّت على اختيارك.": "Ditetapkan pada pilihan anda.",
-  "هيكلُ كلّ تجربةٍ على شكل محتواها هي.": "Setiap pengalaman disusun mengikut kandungannya sendiri.",
-  "خطوات التنفيذ لكل نوع": "Langkah pelaksanaan bagi setiap jenis",
-  "صور المهام والخطوات": "Foto tugasan dan langkah",
-  "تقييمك وتقييم فريقك": "Penilaian anda dan pasukan anda",
-  "سطحٌ أخضرُ عميقٌ وألواحٌ شفّافةٌ يفصلها خيطٌ ذهبيّ": "Permukaan hijau pekat dengan panel lut sinar dipisahkan garis halus emas",
-  "بطاقاتٌ كاملةٌ تُظهر كلَّ شيءٍ دفعةً": "Kad penuh yang memaparkan segalanya sekali gus",
-  "ثلاثُ شاشاتٍ مرجعيّةٍ لا تُغيّر شيئًا — للقراءة وحدَها": "Tiga skrin rujukan yang tidak mengubah apa-apa — baca sahaja",
-  "التسكينُ يبدأ من شاشة المهام، وكلُّ طلبٍ ترسله يُتابَع": "Penempatan bermula dari skrin Tugasan, dan setiap permohonan yang anda hantar dijejaki",
-  "ستصلك طلبات التسكين والتفويض هنا، وتردّ عليها بضغطة.": "Permohonan penempatan dan perwakilan tiba di sini, dan anda menjawabnya dengan satu ketikan.",
-  "كلُّ طلبٍ رددتَ عليه أو أرسلتَه يبقى هنا.": "Setiap permohonan yang anda jawab atau hantar kekal di sini.",
-  "ستّةُ تصاميمَ لعرض التطبيق نفسِه — الوظائفُ واحدةٌ في الستّة.": "Lima reka bentuk untuk aplikasi yang sama — fungsinya sama dalam keenam-enamnya.",
-  "صباح الخير،": "Selamat pagi,",
-  "طاب يومك،": "Selamat sejahtera,",
-  "مساء الخير،": "Selamat petang,",
-  "ابحث في المهام والتذاكر": "Cari tugasan dan tiket",
-  "قبل {n} دقيقة": "{n} minit lalu",
-  "قبل {n} ساعة": "{n} jam lalu",
-  "قبل {n} أيام": "{n} hari lalu",
-  "النهاية": "Tamat",
-  "{n} من {n} محسنين": "{n} daripada {n} muhsin",
-  "{n} قائمة": "{n} terbuka",
-  "{n} مقيَّمة": "{n} dinilai",
-  "التسكينُ يبدأ من شاشة المهام، وكلُّ طلبٍ ترسله يُتابَع هنا.": "Penempatan bermula dari skrin Tugasan, dan setiap permohonan yang anda hantar dijejaki di sini.",
-  "عرض الكل": "Lihat semua",
   "المهام الفرعية": "Subtugasan",
   "المهام الفرعية المعتمدة": "Subtugasan diluluskan",
   "المهام القادمة": "Tugasan akan datang",
@@ -21777,6 +21847,7 @@ DICT.ms = {
   "الميدانيّة": "Lapangan",
   "الميلاد": "Tarikh lahir",
   "الميموريز لمن حضر على المهمة": "Memori untuk yang hadir pada tugas",
+  "المُبلِّغ": "Dilaporkan oleh",
   "المُسنَد إليه": "Ditugaskan kepada",
   "المُسنَد إليه غائب عن شِفته": "Penerima tugas tidak hadir pada syifnya",
   "المُسنَد إليه ليس في شِفت هذا الموعد": "Penerima tugas tidak bertugas pada waktu ini",
@@ -21816,11 +21887,13 @@ DICT.ms = {
   "النقل والمبيت في المخيم": "Pengangkutan dan bermalam di perkhemahan",
   "النماذج المعبّأة": "Borang diisi",
   "النموذج": "Borang",
+  "النهاية": "Tamat",
   "النوبة الليلية": "Syif malam",
   "النوع": "Jenis",
   "النوعُ يجلب دليلَ تنفيذه ومهامَه الفرعية": "Jenis membawa panduan pelaksanaan dan subtugasnya",
   "الهادئة": "Tenang",
   "الهلال الأحمر": "Bulan Sabit Merah",
+  "الهوية": "Identiti",
   "الوارد على المهمة": "Diterima untuk tugasan",
   "الواصل الآن": "Tiba sekarang",
   "الوثائق": "Dokumen",
@@ -21851,6 +21924,7 @@ DICT.ms = {
   "الوضع الافتراضي عند أوّل دخول": "Keadaan lalai pada log masuk pertama",
   "الوضع الليلي": "Mod gelap",
   "الوضع النهاري": "Mod Siang",
+  "الوظائفُ واحدةٌ في الستّة، والفرقُ في طريقة العرض.": "Fungsinya sama dalam keenam-enamnya; bezanya pada cara paparan.",
   "الوقت": "Masa",
   "الوقت الآن": "Waktu kini",
   "الوقت الأصلي": "Waktu asal",
@@ -21926,6 +22000,8 @@ DICT.ms = {
   "ب م هـ {n}": "B M H {n}",
   "بإدخالاتها ودرجاتها": "dengan kemasukan dan markahnya",
   "بإسناد": "dengan menugaskan",
+  "باب الطوارئ في الممرّ الغربي مقفلٌ بسلسلة — يلزم فتحه فورًا.": "Pintu kecemasan di koridor barat dirantai — perlu dibuka segera.",
+  "باب الطوارئ مُقفل": "Pintu kecemasan berkunci",
   "باب واحد": "Satu tajuk",
   "باستبعاده لعدم الحاجة تتحمّل مسؤولية ما ينتج عن نقص العدد في هذه المهمة.": "Dengan mengeluarkannya kerana lebihan, anda bertanggungjawab atas apa jua akibat kekurangan pada tugas ini.",
   "باص": "Bas",
@@ -21962,6 +22038,7 @@ DICT.ms = {
   "بانتظار معلومات": "Menunggu maklumat",
   "بانتظار مهمّة": "Menunggu tugasan",
   "بانتظار موافقتك أو رفضك": "Menunggu kelulusan atau penolakan anda",
+  "بانتظارك": "Menunggu anda",
   "بثّ": "Siaran",
   "بثّ إلى": "Siar kepada",
   "بثّ إلى {n} مستلمًا": "Siaran kepada {n} penerima",
@@ -22050,6 +22127,7 @@ DICT.ms = {
   "بطاقات نُسك بحوزة الحجاج": "Jemaah memegang kad Nusuk",
   "بطاقات نُسك متوفّرة بعدد الحجاج": "Kad Nusuk tersedia mengikut bilangan jemaah",
   "بطاقات نُسك مفعّلة لكل الحجاج": "Kad Nusuk aktif untuk semua jemaah",
+  "بطاقاتٌ كاملةٌ تُظهر كلَّ شيءٍ دفعةً": "Kad penuh yang memaparkan segalanya sekali gus",
   "بطاقة نسك": "Kad Nusuk",
   "بطاقة نسك — المفقودات": "Kad Nusuk — Kehilangan",
   "بطاقة نُسك تالفةٌ ولا تُقرأ في البوّابة.": "Kad Nusuk rosak dan tidak dapat diimbas di pintu masuk.",
@@ -22277,6 +22355,7 @@ DICT.ms = {
   "تأجيل المهمة": "Tangguh tugas",
   "تأجيل مهمة": "Tangguh tugas",
   "تأخر": "Lewat",
+  "تأخر إثبات حضور": "Bukti kehadiran lewat",
   "تأخر الإغلاق": "Penutupan lewat",
   "تأخر الباص عن موعد الجولة": "Bas lewat untuk masa lawatan",
   "تأخر الحافلة عن موعد التفويج": "Bas lewat daripada masa penghantaran",
@@ -22287,6 +22366,7 @@ DICT.ms = {
   "تأخر وصول الحافلات": "Bas tiba lewat",
   "تأخر وصول الدينات الخاصة بالأمتegة": "Van bagasi tiba lewat",
   "تأخر وصول الدينات الخاصة بالأمتعة": "Van bagasi tiba lewat",
+  "تأخرت بداية المهمّة عن موعدها — راجع الحضور.": "Tugas bermula lewat daripada jadual — semak kehadiran.",
   "تأخرت حافلة المجموعة أربعين دقيقة عن موعدها، وتعطّل الجدول على من بعدها.": "Bas kumpulan lewat empat puluh minit daripada waktunya, mengganggu jadual bagi yang seterusnya.",
   "تأخرت حافلة المجموعة أربعين دقيقة، وتعطّل الجدول على من بعدها.": "Bas kumpulan lewat empat puluh minit, mengganggu jadual bagi yang seterusnya.",
   "تأخرت عن إثبات الحضور": "Anda lewat mendaftar hadir",
@@ -22301,6 +22381,7 @@ DICT.ms = {
   "تأخّر جزءٌ من الفريق عن التحضير، ونُبّه ليدر المجموعة.": "Sebahagian pasukan lewat ke taklimat, dan ketua kumpulan dimaklumkan.",
   "تأخّر خمسًا وعشرين دقيقة عن «": "Lewat dua puluh lima minit untuk “",
   "تأخّر عن مهمّة": "Lewat untuk tugasan",
+  "تأخّر وجبة العشاء": "Makan malam lewat",
   "تأخّر وصول الحافلة أربك التوقيت فاحتجنا تنظيمًا إضافيًّا.": "Ketibaan bas yang lewat mengganggu jadual, jadi kami memerlukan pengurusan tambahan.",
   "تأخّر وصول الفوج ساعةً كاملة — نطلب تأخير بداية المهمة.": "Rombongan tiba lewat sejam penuh — kami meminta permulaan tugas ditangguhkan.",
   "تأخّر وصول حافلة واحدة عشرين دقيقة — عولج ميدانيًّا ولم يتأثّر الجدول.": "Satu bas tiba lewat dua puluh minit — ditangani di lokasi tanpa menjejaskan jadual.",
@@ -22343,6 +22424,7 @@ DICT.ms = {
   "تاريخ غير صالح": "Tarikh tidak sah",
   "تبادل باتفاق الطرفين": "Pertukaran dengan persetujuan bersama",
   "تبدأ": "Bermula",
+  "تبدأ أمس": "Sepatutnya semalam",
   "تبدأ المهمة": "Tugas bermula",
   "تبدأ المهمة {n}:{n} am": "Tugas bermula {n}:{n} pagi",
   "تبدأ المهمة {n}:{n} am — بعد {n} ساعة و{n} د": "Tugas bermula {n}:{n} pagi — dalam {n} jam {n} min",
@@ -22350,16 +22432,15 @@ DICT.ms = {
   "تبدأ المهمة {n}:{n} pm — بعد {n} ساعة و{n} د": "Tugas bermula {n}:{n} petang — dalam {n} jam {n} min",
   "تبدأ المهمة {n}:{n} ص": "Tugasan bermula {n}:{n} pg",
   "تبدأ المهمة {n}:{n} ص — بعد {n} ساعة و{n} د": "Tugas bermula {n}:{n} pagi — dalam {n} jam {n} min",
+  "تبدأ بعد {n} أيام": "Bermula dalam {n} hari",
   "تبدأ بعد {n} دقيقة": "Bermula dalam {n} min",
   "تبدأ بعد {n} ساعة": "Bermula dalam {n} jam",
   "تبدأ بعد {n} ساعة و{n} د": "Bermula dalam {n} jam {n} min",
-  "تبدأ بعد {n} أيام": "Bermula dalam {n} hari",
+  "تبدأ غدًا": "Bermula esok",
+  "تبدأ منذ {n} أيام": "Sepatutnya {n} hari lalu",
   "تبدأ منذ {n} دقيقة": "Sepatutnya {n} min lalu",
   "تبدأ منذ {n} ساعة": "Sepatutnya {n} jam lalu",
   "تبدأ منذ {n} ساعة و{n} د": "Sepatutnya {n} jam {n} min lalu",
-  "تبدأ منذ {n} أيام": "Sepatutnya {n} hari lalu",
-  "تبدأ غدًا": "Bermula esok",
-  "تبدأ أمس": "Sepatutnya semalam",
   "تبديل الشِفت": "Tukar syif",
   "تبديل الشِفتات": "Pertukaran Syif",
   "تبديل المحسن": "Tukar muhsin",
@@ -22437,6 +22518,7 @@ DICT.ms = {
   "تحذير: تسكين متأخر": "Amaran: penempatan lewat",
   "تحرير": "Sunting",
   "تحرير التعليمات": "Sunting arahan",
+  "تحرير خطوات الدليل": "Sunting langkah panduan",
   "تحضير اليوم": "Daftar hadir hari ini",
   "تحضير يومي": "Taklimat harian",
   "تحضيري": "Pendaftaran saya",
@@ -22511,12 +22593,14 @@ DICT.ms = {
   "تذكرة ·": "Tiket ·",
   "تذكرة أُسندت إليك": "Satu tiket ditugaskan kepada anda",
   "تذكرة جديدة": "Tiket baharu",
+  "تذكرة جديدة من حاجّ": "Tiket baharu daripada jemaah",
   "تذكرة حرجة": "Tiket kritikal",
   "تذكرة حرجة —": "Tiket kritikal —",
   "تذكرة حرجة — KT{n}": "Tiket kritikal — KT{n}",
   "تذكرة مفتوحة": "Tiket terbuka",
   "تذكرة مُصعّدة": "Tiket dieskalasi",
   "تذكير": "Peringatan",
+  "تذكير الكنترول": "Peringatan bilik kawalan",
   "تذكير بمهل المعالجة": "Peringatan tempoh tindak balas",
   "تذكير جديد": "Peringatan baharu",
   "تذكير على": "Peringatan pada",
@@ -22524,6 +22608,7 @@ DICT.ms = {
   "تذكير على الثلاثاء {n}‏/{n}‏/{n}": "Peringatan pada Selasa {n}‏/{n}‏/{n}",
   "تذكير: التحضير داخل النطاق": "Peringatan: daftar hadir dalam kawasan",
   "تذكيرات": "Peringatan",
+  "تذكيرٌ من غرفة العمليات بموعد التجمّع قبل الجولة.": "Peringatan daripada bilik operasi tentang waktu perhimpunan sebelum lawatan.",
   "تذكّرني": "Ingat saya",
   "تراجع": "Buat asal",
   "ترتيب الفرق": "Kedudukan pasukan",
@@ -22581,6 +22666,7 @@ DICT.ms = {
   "تسجيل خروج مبكر": "Daftar keluar awal",
   "تسجيل عقد": "Daftar kontrak",
   "تسجيل عقد نقل": "Daftar kontrak pengangkutan",
+  "تسري على التصاميم الستّة، والفرقُ في الدرجات لا في البنية.": "Ia digunakan pada keenam-enam reka bentuk; bezanya pada tona, bukan struktur.",
   "تسريبُ ماءٍ في دورة مياه الدور الثالث.": "Kebocoran air di tandas tingkat tiga.",
   "تسكين": "Penempatan",
   "تسكين أو تفويض": "Penempatan atau perwakilan",
@@ -22756,6 +22842,7 @@ DICT.ms = {
   "تغيير وقت": "Tukar masa",
   "تغيير وقت التفويج": "Tukar masa pergerakan",
   "تغيير وقت المناسك": "Tukar masa ibadat",
+  "تغيّر جدول الفوج من الكنترول — دُمجت مع جولة اليوم التالي": "Jadual kumpulan berubah daripada kawalan — digabungkan dengan lawatan hari berikutnya",
   "تغيّرت الحالة إلى «": "Status berubah kepada “",
   "تغيّرت الحالة إلى «مغلق»": "Status berubah kepada “ditutup”",
   "تفاصيل البلاغ": "Butiran laporan",
@@ -22774,6 +22861,7 @@ DICT.ms = {
   "تفويج الحجاج إلى عرفة": "Menghantar jemaah ke Arafah",
   "تفويض": "Perwakilan",
   "تفويض القيادة": "Wakilkan kepimpinan",
+  "تفويض المهمّة": "Wakilkan tugasan",
   "تفويض قيادة المهمة": "Wakilkan kepimpinan tugasan",
   "تقدم المهمة": "Kemajuan tugas",
   "تقديم الساعة يكشف سلوك النوافذ الزمنية.": "Melaraskan jam ke hadapan menunjukkan kelakuan tetingkap masa.",
@@ -22792,6 +22880,7 @@ DICT.ms = {
   "تقييم هذه المهمة": "Nilai tugasan ini",
   "تقييمك التراكمي": "Penilaian terkumpul anda",
   "تقييمك وترتيب الفريق": "Penilaian anda dan kedudukan pasukan",
+  "تقييمك وتقييم فريقك": "Penilaian anda dan pasukan anda",
   "تقييمك وملاحظاتك": "Penilaian dan catatan anda",
   "تقييمي": "Penarafan saya",
   "تكرار التأخير أو عدم الإنجاز": "Kelewatan berulang atau tugas tidak disiapkan",
@@ -22820,6 +22909,7 @@ DICT.ms = {
   "تم تسجيل الخروج المبكر {t}": "Daftar keluar awal direkod {t}",
   "تم توثيق الوقت الصحيح , وإبلاغ الأطراف المعنية": "Waktu yang betul didokumenkan dan pihak berkaitan dimaklumkan",
   "تم قبول الاستلام من مقدّم الخدمة": "Penyerahan daripada penyedia perkhidmatan telah diterima",
+  "تمام، أكون هناك قبل الموعد بنصف ساعة": "Baik, saya akan tiba setengah jam lebih awal",
   "تمت الطباعة": "Telah dicetak",
   "تمّ": "Selesai",
   "تمّ التعديل": "Telah disunting",
@@ -22899,6 +22989,7 @@ DICT.ms = {
   "توزيع الأماكن حسب الكشف": "Mengagihkan tempat mengikut manifes",
   "توزيع البطاقات على الحجاج والتأكد من مطابقة الأسماء.": "Agihkan kad kepada jemaah dan pastikan nama sepadan.",
   "توزيع التخصّصات": "Taburan kepakaran",
+  "توزيع التقييم": "Taburan penilaian",
   "توزيع التقييمات": "Taburan penilaian",
   "توزيع الحجاج على الأفرشة بالكشف": "Agihkan jemaah ke tilam mengikut manifes",
   "توزيع الدرجات": "Taburan markah",
@@ -22984,6 +23075,7 @@ DICT.ms = {
   "ثلاثة حجاج يحتاجون وجبات خاصة لمرضى السكري ابتداءً من الغد.": "Tiga jemaah memerlukan hidangan diabetik bermula esok.",
   "ثلاثة قبل وثلاثة بعد — والمضيء هو اليوم": "Tiga sebelum dan tiga selepas — yang menyala ialah hari ini",
   "ثلاثة مصادر لا مصدر واحد": "Tiga sumber, bukan satu",
+  "ثلاثُ شاشاتٍ مرجعيّةٍ لا تُغيّر شيئًا — للقراءة وحدَها": "Tiga skrin rujukan yang tidak mengubah apa-apa — baca sahaja",
   "ثم القوائم ثم الخرائط. وأنت ترتّب داخل الشريط.": "kemudian senarai, kemudian peta. Anda menyusun di dalam setiap jalur.",
   "ثم تُوزَّع على المجموعات تلقائيًّا": "kemudian diagihkan kepada kumpulan secara automatik",
   "ثناءٌ على وضوح الإرشاد وحُسن التعامل في المجموعة.": "Pujian atas panduan yang jelas dan layanan yang baik dalam kumpulan.",
@@ -23133,7 +23225,9 @@ DICT.ms = {
   "حاجًّا)": "jemaah)",
   "حاجٌّ أصيب بإجهادٍ حراريٍّ في ساحة المشعر.": "Seorang jemaah mengalami keletihan haba di dataran tapak suci.",
   "حاجٌّ انفصل عن الفوج عند الجمرات.": "Seorang jemaah terpisah daripada rombongan di Jamarat.",
+  "حاجٌّ كبير في السنّ يحتاج مرافقًا ملازمًا في يوم المشاعر.": "Jemaah warga emas memerlukan pengiring khusus pada hari tapak suci.",
   "حاجّ": "Jemaah",
+  "حاجّ يحتاج مرافقًا للمشاعر": "Jemaah memerlukan pengiring ke tapak suci",
   "حاجّةٌ تحتاج متابعةً يوميّةً ولم تُسجَّل في الكشف.": "Seorang jemaah memerlukan susulan harian dan tidak direkodkan dalam manifes.",
   "حادثة": "Insiden",
   "حارث": "Harith",
@@ -23284,6 +23378,8 @@ DICT.ms = {
   "حفظ جهة التصعيد": "Simpan sasaran eskalasi",
   "حفظ نسخة PDF أو طباعة": "Simpan sebagai PDF atau cetak",
   "حفظ ونشر": "Simpan dan siarkan",
+  "حقيبة أحد الحجّاج لم تصل مع شحنة الفندق، ويحتاج أدويته.": "Beg seorang jemaah tidak tiba bersama penghantaran hotel dan dia memerlukan ubatnya.",
+  "حقيبة حاجّ لم تصل": "Beg jemaah belum tiba",
   "حقيبة مفقودة": "Beg hilang",
   "حقيبةُ حاجٍّ لم تصل مع الفوج.": "Beg seorang jemaah tidak tiba bersama rombongan.",
   "حقيبتي لم تصل مع الفوج من المطار.": "Beg saya tidak tiba bersama rombongan dari lapangan terbang.",
@@ -23375,6 +23471,7 @@ DICT.ms = {
   "خطة الإخلاء الصحي جاهزة": "Pelan pemindahan perubatan telah sedia",
   "خطة الإخلاء معلومة لكل المحسنين": "Pelan pemindahan diketahui oleh setiap Muhsin",
   "خطوات التنفيذ": "Langkah pelaksanaan",
+  "خطوات التنفيذ لكل نوع": "Langkah pelaksanaan bagi setiap jenis",
   "خطوات الرد": "Langkah perjalanan",
   "خطوة": "Langkah",
   "خطوة «": "langkah “",
@@ -23533,6 +23630,7 @@ DICT.ms = {
   "رحمواتي": "Rahmawati",
   "رد": "Balas",
   "رد الكنترول:": "Balasan Kawalan:",
+  "رد المستقبِل": "Jawapan penerima",
   "رد المستقبِل:": "Balasan penerima:",
   "رد على": "Balas",
   "رد على البلاغ": "Balas laporan",
@@ -23742,6 +23840,7 @@ DICT.ms = {
   "رُفع ملفّ المرشدين —": "Fail pembimbing dimuat naik —",
   "رُفع من تطبيق مُحسن": "Dilaporkan daripada aplikasi Muhsin",
   "رُفعت التذكرة": "Tiket dihantar",
+  "رُفعت تذكرةٌ جديدةٌ على فوجك — فُتحت للمتابعة.": "Tiket baharu dibuka untuk kumpulan anda — dibuka untuk susulan.",
   "رُفعت صورة إثبات على خطوةٍ من خطوات المهمة": "Foto bukti dimuat naik pada salah satu langkah tugas",
   "رُفعت مسودة دليل جولة المزارات — بانتظار المراجعة": "Draf panduan lawatan mercu tanda dihantar — menunggu semakan",
   "زاد عدد الحجّاج أربعين بعد دفعة اكسترا كوتا.": "Bilangan jemaah bertambah empat puluh selepas kelompok kuota tambahan.",
@@ -23813,12 +23912,15 @@ DICT.ms = {
   "سبت": "Sab",
   "ستصلك التحديثات هنا أولًا بأول.": "Kemas kini akan sampai kepada anda di sini.",
   "ستصلك طلبات التسكين والتفويض هنا.": "Permintaan penempatan dan perwakilan akan tiba di sini.",
+  "ستصلك طلبات التسكين والتفويض هنا، وتردّ عليها بضغطة.": "Permohonan penempatan dan perwakilan tiba di sini, dan anda menjawabnya dengan satu ketikan.",
   "ستصلك طلبات الليدر هنا.": "Permohonan ketua akan sampai di sini.",
   "ستظهر مهمتك هنا فور قبولك طلب تسكين.": "Tugas anda akan muncul di sini sebaik anda menerima permintaan penempatan.",
   "ستملك: بدء المهمة · إغلاقها · المهام الفرعية.": "Anda akan memiliki: mulakan tugas · tutupnya · subtugas.",
   "ستُحذف كل التسكينات والردود والتنبيهات والتذاكر والتقييمات.": "Semua penempatan, balasan, amaran, tiket dan penarafan akan dipadam.",
   "ستُسجَّل": "akan direkodkan",
   "ستُسجَّل غير منجزة في ملاحظات المهمة وتؤثر في التقييم.": "Ia akan direkodkan sebagai tidak disiapkan dalam catatan tugas dan menjejaskan penarafan.",
+  "ستّةُ تصاميمَ لعرض التطبيق نفسِه — الوظائفُ واحدةٌ في الستّة.": "Lima reka bentuk untuk aplikasi yang sama — fungsinya sama dalam keenam-enamnya.",
+  "ستّةُ تصاميمَ لعرض التطبيق نفسِه، وثلاثُ هويّاتٍ تسري عليها — الوظائفُ واحدةٌ في الستّة، والفرقُ في طريقة العرض. وتبدّلهما متى شئتَ من شاشة الدخول.": "Enam reka bentuk untuk aplikasi yang sama, dan tiga identiti yang digunakan padanya — fungsinya sama dalam kelima-limanya; bezanya pada cara paparan. Tukar mana-mana satu bila-bila masa dari skrin log masuk.",
   "سجل": "Log",
   "سجل إجراءات المهمة": "Log tindakan tugas",
   "سجل الإجراءات": "Log tindakan",
@@ -23868,6 +23970,7 @@ DICT.ms = {
   "سحبه الليدر": "Ditarik oleh ketua",
   "سداد المستحقات وفق الدفعات المتفق عليها في الملحق المالي.": "Penjelasan bayaran mengikut ansuran yang dipersetujui dalam lampiran kewangan.",
   "سري": "Sri",
+  "سطحٌ أخضرُ عميقٌ وألواحٌ شفّافةٌ يفصلها خيطٌ ذهبيّ": "Permukaan hijau pekat dengan panel lut sinar dipisahkan garis halus emas",
   "سطحٌ دافئٌ وبطاقاتٌ بظلالٍ وأزرارٌ مستديرة": "Permukaan hangat, kad berbayang, butang bulat",
   "سطر توضيحي": "Keterangan",
   "سطر واحد يُقرأ في الإشعار": "Satu baris dibaca dalam pemberitahuan",
@@ -24116,6 +24219,7 @@ DICT.ms = {
   "صارت الحالة:": "Status menjadi:",
   "صالة الحج — مطار الملك عبدالعزيز": "Terminal Haji — Lapangan Terbang Raja Abdulaziz",
   "صالح بن دخيل": "Saleh bin Dakhil",
+  "صباح الخير،": "Selamat pagi,",
   "صباحي": "Pagi",
   "صباحية": "Pagi",
   "صباحية · {n}:{n} — {n}:{n}": "Pagi · {n}:{n} — {n}:{n}",
@@ -24154,6 +24258,7 @@ DICT.ms = {
   "صور التذكرة": "Foto tiket",
   "صور الجولة مرفوعة على المهمة": "Foto lawatan telah dimuat naik ke tugas",
   "صور المهام": "Foto tugasan",
+  "صور المهام والخطوات": "Foto tugasan dan langkah",
   "صور عامة للمهمة — تُرفع من استوديو جهازك.": "Foto umum tugas — dimuat naik daripada galeri peranti anda.",
   "صورة": "Imej",
   "صورة إلى ميموريز المهمة": "Foto hingga memori tugasan",
@@ -24201,6 +24306,7 @@ DICT.ms = {
   "ضيافة الحجاج": "Layanan jemaah",
   "ضيافة الوجبات في المشاعر": "Layanan hidangan di Masyair",
   "ضيافة الوجبة الأولى": "Hidangan pertama",
+  "طاب يومك،": "Selamat sejahtera,",
   "طاقم الحركة": "Kru pergerakan",
   "طباعة": "Cetak",
   "طباعة / حفظ PDF": "Cetak / Simpan PDF",
@@ -24227,6 +24333,7 @@ DICT.ms = {
   "طلب استبدالك": "Meminta menggantikan anda",
   "طلب استبعاد": "Permintaan keluarkan",
   "طلب استبعاد بانتظار رده": "Permintaan pengeluaran menunggu balasannya",
+  "طلب استبعاد محسن": "Mohon keluarkan seorang Muhsin",
   "طلب استبعاد من مهمة": "Permintaan keluarkan daripada tugasan",
   "طلب استبعادك من مهمة": "Permintaan mengeluarkan anda daripada tugas",
   "طلب الإصدار": "Permintaan pengeluaran",
@@ -24245,9 +24352,11 @@ DICT.ms = {
   "طلب تبديل شِفت ·": "Permintaan tukar syif ·",
   "طلب تبديل شِفت جديد": "Permintaan tukar syif baharu",
   "طلب تسكين": "Permintaan penempatan",
-  "طلب تسكين جديد": "Permintaan penempatan baharu",
+  "طلب تسكين جديد": "Permintaan penugasan baharu",
   "طلب تعديل بيانات غرفة": "Permintaan menyunting data bilik",
   "طلب تغيير غرفة": "Permintaan tukar bilik",
+  "طلب تغيير كلمة المرور": "Mohon tukar kata laluan",
+  "طلب تفويض": "Permintaan perwakilan",
   "طلب حلول مكان زميل": "Permintaan menggantikan rakan sekerja",
   "طلب دعم": "Permintaan sokongan",
   "طلب دعم ·": "Permintaan sokongan ·",
@@ -24270,6 +24379,7 @@ DICT.ms = {
   "طلب دعم —": "Permintaan sokongan —",
   "طلب دعم — KT{n}": "Permohonan sokongan — KT{n}",
   "طلب دعمٍ من الليدر": "Permintaan sokongan daripada ketua",
+  "طلب رحلة": "Mohon perjalanan",
   "طلب كرسي متحرك": "Permohonan kerusi roda",
   "طلب لم يُرد عليه في «": "Permintaan tanpa balasan pada “",
   "طلب محسن الانسحاب لارتباطٍ بمهمة أخرى": "Seorang Muhsin meminta untuk berundur kerana komitmen tugas lain",
@@ -24291,6 +24401,7 @@ DICT.ms = {
   "طلبك على «": "permintaan anda pada “",
   "طلبًا": "permintaan",
   "طلبًا من ليدر المجموعة": "permintaan daripada ketua kumpulan",
+  "طلبٌ سُحب بعد إعادة توزيع الفريق على الأفواج": "Permintaan ditarik balik selepas pasukan diagihkan semula",
   "طلبُ": "Permintaan untuk",
   "طلبُ تبديل": "Permintaan tukar",
   "طلبُ تبديل SW-{n} من أحمد الشهري": "Permintaan tukar SW-{n} daripada Ahmed Al-Shehri",
@@ -24442,6 +24553,7 @@ DICT.ms = {
   "عرض التذاكر": "Papar tiket",
   "عرض الجدول الرحله": "Papar jadual perjalanan",
   "عرض الطلبات": "Papar permohonan",
+  "عرض الكل": "Lihat semua",
   "عرض الكل (": "Papar semua (",
   "عرض الكل ({n})": "Papar semua ({n})",
   "عرض المزيد ({n})": "Papar lagi ({n})",
@@ -24464,6 +24576,7 @@ DICT.ms = {
   "عطل الحافلة": "Bas rosak",
   "عطل حافلة": "Bas rosak",
   "عطل حافلة — النقل": "Bas rosak — Pengangkutan",
+  "عطل في مكيّف الدور الثالث": "Kerosakan penghawa dingin di tingkat tiga",
   "عطلٌ في مكيّف الحافلة والحجّاج بداخلها.": "Penghawa dingin bas rosak dengan jemaah di dalamnya.",
   "عقد": "Kontrak",
   "عقد أضافه الكنترول": "Kontrak yang ditambah Kawalan",
@@ -24653,6 +24766,7 @@ DICT.ms = {
   "فريق امتثال": "Pasukan Imtithal",
   "فريق ليدرها أوّلًا، ثم الاحتياط، ثم بقيّة المحسنين — والكنترول يسكّن من شاء.": "Pasukan ketuanya dahulu, kemudian simpanan, kemudian Muhsin lain — dan Kawalan boleh menempatkan sesiapa sahaja.",
   "فريق ميداني": "Pasukan lapangan",
+  "فريقك": "Pasukan anda",
   "فريقك وتقييماتهم": "Pasukan anda dan penilaiannya",
   "فريقه ومهامه": "pasukan dan tugasnya",
   "فريقي": "Pasukan saya",
@@ -24736,6 +24850,7 @@ DICT.ms = {
   "في شِفت ليلية": "Dalam syif malam",
   "في كشوف العقود": "Dalam senarai kontrak",
   "في مجموعات قائمة": "Dalam kumpulan sedia ada",
+  "في مهمة": "Dalam tugas",
   "في مهمة الآن": "Dalam tugas sekarang",
   "في هذه المدّة": "dalam tempoh ini",
   "فيديو": "Video",
@@ -24780,8 +24895,11 @@ DICT.ms = {
   "قالب فارغ": "Templat kosong",
   "قبل": "Sebelum",
   "قبل {n} أسبوع": "{n} minggu lalu",
+  "قبل {n} أيام": "{n} hari lalu",
   "قبل {n} د": "{n} m lalu",
+  "قبل {n} دقيقة": "{n} minit lalu",
   "قبل {n} س": "{n} j lalu",
+  "قبل {n} ساعة": "{n} jam lalu",
   "قبل {n} يوم": "{n} hari lalu",
   "قبل الإغلاق": "Sebelum ditutup",
   "قبل التحرّك": "sebelum bergerak",
@@ -24805,6 +24923,7 @@ DICT.ms = {
   "قبِل": "Menerima",
   "قبِل التسكين": "Menerima penempatan",
   "قبِل الحلول مكان": "Bersetuju menggantikan",
+  "قبِل الليدرُ انسحابَك، وأُخرجتَ من التسكين.": "Ketua menerima penarikan anda dan mengeluarkan anda daripada penugasan.",
   "قدِّم الرحلة أو أخِّرها": "Awalkan atau lewatkan perjalanan",
   "قدّم": "Mengemukakan",
   "قرأت كل شيء": "Anda telah membaca semuanya",
@@ -24887,6 +25006,7 @@ DICT.ms = {
   "كل الصفوف مكتملة": "Semua baris lengkap",
   "كل الطلبات": "Semua permohonan",
   "كل الفرق": "Semua pasukan",
+  "كل القادمة": "Semua akan datang",
   "كل الليدرز": "Semua ketua",
   "كل الليدرز والمحسنين": "Semua ketua dan Muhsin",
   "كل الليدرز والمحسنين · {n} شخصًا": "Semua ketua dan Muhsin · {n} orang",
@@ -24920,6 +25040,7 @@ DICT.ms = {
   "كلمة المرور غير صحيحة": "Kata laluan salah",
   "كلمة المرور لكل الحسابات التجريبية:": "Kata laluan untuk semua akaun demo:",
   "كلُّ ردودك اليوم": "Semua pusingan anda hari ini",
+  "كلُّ طلبٍ رددتَ عليه أو أرسلتَه يبقى هنا.": "Setiap permohonan yang anda jawab atau hantar kekal di sini.",
   "كلُّ نقلٍ أو سحبٍ أو استبدالٍ — بسببه كما كُتب وقتَه": "Setiap pemindahan, penarikan atau gantian — dengan sebabnya sebagaimana ditulis",
   "كلّ التنبيهات": "Semua amaran",
   "كلّ ما في التطبيق — وزيادةُ ما يملكه الكنترول": "Segala yang ada dalam aplikasi — serta apa yang dimiliki Kawalan",
@@ -25047,6 +25168,7 @@ DICT.ms = {
   "لا ردّ بعد": "Belum ada balasan",
   "لا رسالة تطابق": "Tiada mesej sepadan",
   "لا ركّاب بعد": "Belum ada penumpang",
+  "لا سجلَّ بعد": "Tiada rekod lagi",
   "لا سجلّ — الحالة سليمة": "Tiada rekod — semuanya baik",
   "لا سِمة مسجّلة على هذا الجهاز": "Tiada biometrik didaftarkan pada peranti ini",
   "لا شروط بعد — أضِفها أو اربط قالبًا.": "Belum ada syarat — tambah atau pautkan templat.",
@@ -25137,7 +25259,7 @@ DICT.ms = {
   "لبسٌ وتعاملٌ وسلامة": "Pakaian, tingkah laku dan keselamatan",
   "لبّى الكنترول الطلب بـ": "Kawalan memenuhi permintaan dengan",
   "لتحديث قاعدة البيانات.": "untuk mengemas kini pangkalan data.",
-  "لدى": "Pada",
+  "لدى": "Dengan",
   "لدى الكنترول": "pada Kawalan",
   "لدى الليدر أو الكنترول": "Pada ketua atau Kawalan",
   "لدى غرفة العمليات — الكنترول": "Pada bilik operasi — Kawalan",
@@ -25467,6 +25589,7 @@ DICT.ms = {
   "مثبَّت": "Dikunci",
   "مثبَّت · {n}×{n} · فراغ {n}": "Dipasang · {n}×{n} · ruang kosong {n}",
   "مثبَّت · {n}×{n} · فراغ —": "Dipasang · {n}×{n} · ruang kosong —",
+  "مثبَّت على اختيارك.": "Ditetapkan pada pilihan anda.",
   "مجدول": "Dijadualkan",
   "مجدول {n}:{n} am": "Dijadualkan {n}:{n} am",
   "مجدول {n}:{n} pm": "Dijadualkan {n}:{n} pm",
@@ -25619,6 +25742,7 @@ DICT.ms = {
   "مزدلفة ← منى": "Muzdalifah → Mina",
   "مسؤولين النقل في المركز": "Pegawai pengangkutan di pusat",
   "مسؤولين النقل في هوليدي ان": "Pegawai pengangkutan di Holiday Inn",
+  "مساء الخير،": "Selamat petang,",
   "مسائي": "Petang",
   "مسائية": "Petang",
   "مساحة أوسع للمحتوى": "Ruang lebih luas untuk kandungan",
@@ -25837,6 +25961,7 @@ DICT.ms = {
   "ملاحظة": "Catatan",
   "ملاحظة (اختيارية)": "Catatan (pilihan)",
   "ملاحظة الكنترول": "Catatan Kawalan",
+  "ملاحظة المرسِل": "Nota penghantar",
   "ملاحظة المرسِل:": "Catatan penghantar:",
   "ملاحظة تشغيلية": "Catatan operasi",
   "ملاحظة على المهمة": "Catatan pada tugas",
@@ -25866,7 +25991,8 @@ DICT.ms = {
   "ملفّاتٌ وعقودٌ عامّة على المهمّة": "Fail dan kontrak umum pada tugas",
   "ممتاز": "Cemerlang",
   "ممنوحةٌ لـ": "diberikan kepada",
-  "من": "Dari",
+  "مميّزةُ اليوم": "Pilihan hari ini",
+  "من": "Daripada",
   "من {n}": "daripada {n}",
   "من {n} Sept {n} إلى {n} Oct {n}": "Dari {n} Sept {n} hingga {n} Oct {n}",
   "من {n} إدخالًا": "daripada {n} kemasukan",
@@ -26143,6 +26269,8 @@ DICT.ms = {
   "نجمة: {n}": "Bintang: {n}",
   "نجمتان": "2 bintang",
   "نجمتان: {n}": "2 bintang: {n}",
+  "نحتاج كرسيّين متحرّكين إضافيّين قبل التوجّه للحرم.": "Kami perlukan dua kerusi roda tambahan sebelum ke Haram.",
+  "نحتاجك في استقبال الفوج — خبرتُك في البوابة الشمالية": "Kami perlukan anda untuk ketibaan kumpulan — pengalaman anda di pintu utara",
   "نزلوا الميدان": "Di lapangan",
   "نزِّل القالب فارغًا، عبّئه بأسماء المرشدين وأرقامهم، ثم ارفعه —": "Muat turun templat kosong, isikan nama dan nombor pembimbing, kemudian muat naik —",
   "نزِّل القالب فارغًا، عبّئه بأسماء المرشدين وأرقامهم، ثم ارفعه — تُقرأ العناوين لا المواضع، فلا يضرّ ترتيبك.": "Muat turun templat kosong, isikan nama dan nombor pembimbing, kemudian muat naik — pengepala yang dibaca, bukan kedudukan, jadi susunan anda tidak menjejaskan.",
@@ -26219,6 +26347,7 @@ DICT.ms = {
   "نقص في عدد المحسنين": "Kekurangan bilangan Muhsin",
   "نقص في متابعة كبار السن": "Susulan warga emas tidak mencukupi",
   "نقص في وجبات الغداء": "Kekurangan hidangan makan tengah hari",
+  "نقص كراسي متحرّكة للجولة": "Kekurangan kerusi roda untuk lawatan",
   "نقص مستلزمات الاستقبال": "Kekurangan keperluan penyambutan",
   "نقصٌ في البطانيات — أربعةٌ في الغرفة وبطانيتان فقط.": "Kekurangan selimut — empat orang dalam bilik dan hanya dua selimut.",
   "نقصٌ في مستلزمات السكن لثلاث غرف.": "Kekurangan keperluan penginapan bagi tiga bilik.",
@@ -26364,6 +26493,7 @@ DICT.ms = {
   "هياكل التحميل": "Rangka pemuatan",
   "هيفاء": "Haifa",
   "هيفاء بن حسين": "Haifa bin Hussein",
+  "هيكلُ كلّ تجربةٍ على شكل محتواها هي.": "Setiap pengalaman disusun mengikut kandungannya sendiri.",
   "و{n} بندًا آخر في أقسامها": "dan {n} perkara lain dalam bahagiannya",
   "وأقدمُ منها": "dan lebih lama daripadanya",
   "وأُبلغ الطرفان": "dan kedua-dua pihak dimaklumkan",
@@ -26402,6 +26532,7 @@ DICT.ms = {
   "وثيقة إلكترونية معتمدة — تقرير آليّ لا يحتاج توقيعًا": "Dokumen elektronik diluluskan — laporan automatik yang tidak memerlukan tandatangan",
   "وجبة العشاء تأخّرت ساعتين عن موعدها.": "Makan malam lewat dua jam.",
   "وجبة العشاء لم تصل": "Hidangan malam tidak sampai",
+  "وجبة العشاء لم تصل حتى الآن، والحجّاج ينتظرون في الصالة.": "Makan malam belum tiba dan jemaah sedang menunggu di dewan.",
   "وجبة الوصول مؤكّدة مع المورّد": "Hidangan ketibaan disahkan dengan pembekal",
   "وجبةُ الغداء تأخّرت عن موعدها المعتمد.": "Makan tengah hari lewat daripada waktu yang diluluskan.",
   "وجدان": "Wijdan",
@@ -26455,6 +26586,7 @@ DICT.ms = {
   "وصلت": "Sampai",
   "وصلت إلى مركز التوزيع": "Tiba di pusat agihan",
   "وصلت الوجبات ناقصة اثنتي عشرة وجبة عن كشف المجموعة. عُوِّض الفرق من المخزون الاحتياطي.": "Hidangan tiba kurang dua belas daripada manifes kumpulan. Kekurangan ditampung daripada stok simpanan.",
+  "وصلك طلبُ تسكينٍ على مهمّةٍ قادمة — بانتظار ردّك.": "Anda menerima permintaan penugasan untuk tugas akan datang — menunggu jawapan anda.",
   "وصلك هذا الإشعار بنجاح.": "Amaran ini sampai kepada anda.",
   "وصلوا": "Telah tiba",
   "وصلوا ·": "Telah tiba ·",
@@ -26548,6 +26680,10 @@ DICT.ms = {
   "يتبع الوقت — داكن الآن": "Mengikut waktu — gelap sekarang",
   "يتبع الوقت — فاتح الآن": "Mengikut waktu — cerah sekarang",
   "يتبقّى": "berbaki",
+  "يتبقّى {n} د للرد": "Tinggal {n} min untuk menjawab",
+  "يتبقّى {n} د.": "Tinggal {n} min.",
+  "يتبقّى {n} س {n} د للرد": "Tinggal {n} j {n} min untuk menjawab",
+  "يتبقّى {n} س {n} د.": "Tinggal {n} j {n} min.",
   "يحتاج إجراءً": "Perlu tindakan",
   "يحتاج تحسينًا في التواصل": "Perlu memperbaik komunikasi",
   "يحتاج ردًا": "Memerlukan balasan",
@@ -27339,6 +27475,7 @@ function seed() {
   seedDaily(st);
   seedReports(st);
   seedRides(st);
+  seedLife(st);
   return st;
 }
 
@@ -28522,7 +28659,7 @@ function uxTktFacts(k) {
   out += '<span class="uxfact">' + E(ago(k.at)) + '</span>';
   if (k.replies.length) { out += uxFact(AR(k.replies.length), 'رد'); }
   if (k.assignedTo) {
-    out += '<span class="uxfact">لدى ' + E(userById(k.assignedTo).name.split(' ')[0]) + '</span>';
+    out += '<span class="uxfact"><i>لدى</i> ' + E(userById(k.assignedTo).name.split(' ')[0]) + '</span>';
   }
   if (t) { out += '<span class="uxfact wide">' + E(t.title) + '</span>'; }
   return '<span class="uxfacts">' + out + '</span>';
@@ -28890,7 +29027,7 @@ function ticketRowGoogle(k) {
         (k.replies.length ? ' · ' + AR(k.replies.length) + ' رد' : '') + '</span>' +
       '<span class="uxchips">' + pill(k.status, ST_C[k.status] || 'grey') +
         pill(k.pri, PRI_C[k.pri]) + pill(k.cat, 'grey') +
-        (k.assignedTo ? pill('لدى ' + E(userById(k.assignedTo).name.split(' ')[0]), 'live') : '') +
+        (k.assignedTo ? pillH('<i>لدى</i> ' + E(userById(k.assignedTo).name.split(' ')[0]), 'live') : '') +
         (t ? pill(t.title, 'blue') : '') + '</span></span>' +
     '<span class="uxtime"><b>' + E(k.no.replace(/^TK-/, 'TK')) + '</b><i>' + ago(k.at) + '</i></span>' +
     '</button>';
@@ -29869,6 +30006,194 @@ function pageActs() {
   '</div>';
 }
 
+/* ============================================================
+   بذرةُ الحياة — «لا أريد أن أرى أيَّ صفحةٍ فارغةٍ في أيِّ نوعٍ ولون»
+
+   البذرةُ الأولى تركت `requests: []` فكان مركزُ الطلباتِ خاويًا في
+   تصنيفاته الخمسة للدورين، وجعلت كلَّ تذكرةٍ «مفتوحةً» بلا مُسنَدٍ
+   إليه فخلت «قيد المعالجة» و«لديّ» و«مغلقة»، ولم تترك مهمّةً جاريةً
+   ولا ملغاةً فخلا تصنيفاهما.
+
+   فهذه تُكمل البذرةَ لا تُبدّلها: لكلِّ محسنٍ طلباتُه الخمسةُ
+   وتذاكرُه الأربع، ولكلِّ ليدرٍ مهمّةٌ تجري الآن وأخرى ملغاة —
+   حتّى يمتلئ كلُّ تصنيفٍ للدورين معًا.
+   ============================================================ */
+
+/* أسبابٌ حقيقيّةٌ من الميدان لا نصٌّ معاد */
+const RQ_LIFE = [
+  { k:'تسكين',  n:'نحتاجك في استقبال الفوج — خبرتُك في البوابة الشمالية' },
+  { k:'انسحاب', n:'ارتباطٌ عائليٌّ طارئ، واعتذر عن هذا التوقيت' },
+  { k:'تفويض',  n:'أفوّضك في قرارات المهمّة حتى عودتي من اجتماع الكنترول' },
+  { k:'استبدال',n:'أقترح زميلي بدلًا عنّي — تخصّصه أقرب للمهمّة' },
+  { k:'تسكين',  n:'طلبٌ سُحب بعد إعادة توزيع الفريق على الأفواج' }
+];
+const RQ_RESP = {
+  accepted: 'تمام، أكون هناك قبل الموعد بنصف ساعة',
+  rejected: 'أعتذر — عندي تعارضٌ مع جولة الحرم في الوقت نفسه',
+  withdrawn: ''
+};
+
+/* تذاكرُ الميدان: لكلِّ محسنٍ أربعٌ تملأ التصنيفاتِ الأربعة */
+const TK_LIFE = [
+  { t:'عطل في مكيّف الدور الثالث', cat:'مشكلة سكن',      pri:'متوسطة',
+    b:'المكيّف المركزي للدور الثالث متوقّف منذ الفجر، والغرف حارّة.' },
+  { t:'نقص كراسي متحرّكة للجولة',  cat:'حالة صحية',      pri:'عاجلة',
+    b:'نحتاج كرسيّين متحرّكين إضافيّين قبل التوجّه للحرم.' },
+  { t:'تأخّر وجبة العشاء',          cat:'مشكلة إعاشة',    pri:'متوسطة',
+    b:'وجبة العشاء لم تصل حتى الآن، والحجّاج ينتظرون في الصالة.' },
+  { t:'باب الطوارئ مُقفل',          cat:'ملاحظة تشغيلية', pri:'عاجلة',
+    b:'باب الطوارئ في الممرّ الغربي مقفلٌ بسلسلة — يلزم فتحه فورًا.' },
+  { t:'استفسار عن نقطة التجمّع',    cat:'استفسار',        pri:'عادية',
+    b:'أين نقطة تجمّع الفوج بعد الجولة؟ الحجّاج يسألون.' },
+  { t:'حقيبة حاجّ لم تصل',          cat:'ملاحظة تشغيلية', pri:'متوسطة',
+    b:'حقيبة أحد الحجّاج لم تصل مع شحنة الفندق، ويحتاج أدويته.' },
+  { t:'ازدحام عند المصاعد',         cat:'ملاحظة تشغيلية', pri:'عادية',
+    b:'المصعدان الأيمنان متوقّفان فالانتظار يتجاوز ربع ساعة.' },
+  { t:'حاجّ يحتاج مرافقًا للمشاعر',  cat:'حالة صحية',      pri:'متوسطة',
+    b:'حاجٌّ كبير في السنّ يحتاج مرافقًا ملازمًا في يوم المشاعر.' }
+];
+
+function seedLife(st) {
+  const leaders = st.users.filter(u => u.role === 'leader' && !u.admin);
+  let kn = 0;
+
+  leaders.forEach((L, li) => {
+    const team = st.users.filter(u => u.role === 'muhsen' && u.leaderId === L.id && !u.reserve);
+    if (!team.length) { return; }
+    const mine = st.tasks.filter(t => t.leaderId === L.id);
+    const future = mine.filter(t => t.start > Date.now());
+    const past = mine.filter(t => t.start <= Date.now());
+    if (!future.length || !past.length) { return; }
+
+    /* ── مهمّةٌ تجري الآن: تُسحب أوّلُ القادمةِ إلى داخل وقتها ── */
+    const run = future[0];
+    run.start = Date.now() - 40 * MIN;
+    run.end = run.start + run.durH * HR;
+    run.status = 'running';
+    run.startedAt = run.start + 3 * MIN;
+    run.startedBy = L.id;
+    run.autoStarted = false;
+    run.endedAt = null; run.endedBy = null; run.rating = null;
+    run.leaderAttendedAt = run.start - 25 * MIN;
+    run.leaderFarKm = 0.3;
+    run.assigned.forEach((a, k) => {
+      a.req = 'accepted';
+      a.attendedAt = k % 5 === 3 ? null : run.start - (12 + k * 4) * MIN;
+      a.farKm = 0.5;
+    });
+    run.subs.forEach((s, k) => {
+      if (k < Math.max(1, run.subs.length - 2)) {
+        s.done = true; s.at = run.startedAt + (k + 1) * 9 * MIN;
+        s.by = (run.assigned[k % run.assigned.length] || {}).muhsenId || L.id;
+      }
+    });
+    run.history.unshift({ at: run.startedAt, text: 'بدأت المهمة' });
+
+    /* ── مهمّةٌ ملغاةٌ بسببٍ مكتوب ── */
+    const cx = future[future.length - 1];
+    if (cx && cx !== run) {
+      cx.status = 'cancelled';
+      cx.cancelReason = 'تغيّر جدول الفوج من الكنترول — دُمجت مع جولة اليوم التالي';
+      cx.history.unshift({ at: Date.now() - 5 * HR, text: 'أُلغيت المهمة' });
+    }
+
+    /* ── طلباتُ كلِّ محسن: خمسةٌ تملأ التصنيفاتِ الخمسةَ للدورين ── */
+    team.forEach((M, mi) => {
+      const q = (ix, from, to, state, t, h) => {
+        const at = Date.now() - h * HR;
+        st.requests.push({
+          id: uid('Q'), kind: RQ_LIFE[ix].k, from, to, taskId: t ? t.id : null,
+          note: RQ_LIFE[ix].n, at, state,
+          respAt: state === 'pending' ? null : at + 40 * MIN,
+          respNote: state === 'pending' ? '' : RQ_RESP[state]
+        });
+      };
+      const fA = future[(mi + 1) % future.length];
+      const fB = future[(mi + 2) % future.length];
+      const pA = past[mi % past.length];
+      const pB = past[(mi + 1) % past.length];
+      q(0, L.id, M.id, 'pending',   fA, 3 + mi * 0.4);          /* وصلَه ولم يردّ */
+      q(1, M.id, L.id, 'pending',   fB, 5 + mi * 0.4);          /* أرسلَه ولم يُردّ عليه */
+      q(2, L.id, M.id, 'accepted',  pA, 26 + mi);               /* منتهٍ مقبول */
+      q(3, M.id, L.id, 'rejected',  pB, 32 + mi);               /* منتهٍ مرفوض */
+      q(4, L.id, M.id, 'withdrawn', pA, 44 + mi);               /* منتهٍ مسحوب */
+    });
+
+    /* ── تذاكرُ كلِّ محسن: أربعٌ تملأ التصنيفاتِ الأربعةَ للدورين ── */
+    const pls = st.pilgrims[L.kt] || [];
+    const tkOf = (M, ix, status, assignedTo, hAgo, fromMuhsen) => {
+      const d = TK_LIFE[ix % TK_LIFE.length];
+      const pl = pls[(ix + li) % (pls.length || 1)] || null;
+      const t0 = mine[(ix + li) % mine.length];
+      st.tickets.push({
+        id: uid('K'), no: 'TK-' + (4200 + kn++), title: d.t, body: d.b,
+        cat: d.cat, src: fromMuhsen ? 'محسن' : 'حاج', pri: d.pri,
+        leaderId: L.id, taskId: t0 ? t0.id : null,
+        pilgrimId: fromMuhsen ? null : (pl ? pl.id : null),
+        from: fromMuhsen ? M.name : (pl ? pl.name : 'غرفة العمليات — الكنترول'),
+        fromId: fromMuhsen ? M.id : null,
+        fromAv: fromMuhsen ? M.av : (pl ? pl.av : null),
+        fromG: fromMuhsen ? M.g : (pl ? pl.g : null),
+        at: Date.now() - hAgo * MIN, status, assignedTo,
+        replies: [], escalated: false
+      });
+    };
+    team.forEach((M, mi) => {
+      const other = team[(mi + 1) % team.length];
+      tkOf(M, mi * 2,     'مفتوحة',       null,     18 + mi * 7,  true);   /* مفتوحة */
+      tkOf(M, mi * 2 + 1, 'قيد المعالجة', other.id, 55 + mi * 9,  true);   /* قيد المعالجة */
+      tkOf(M, mi + 3,     'مُسندة',       M.id,     90 + mi * 11, false);  /* لديّ */
+      tkOf(M, mi + 5,     'مغلقة',        M.id,     210 + mi * 13, false); /* مغلقة */
+    });
+    /* ── تسكينٌ معلّقٌ حقيقيٌّ: شاشةُ «طلباتي» تقرأ خانةَ المهمّة
+         لا سجلَّ الطلبات، فلا يكفي سطرٌ في السجلّ ── */
+    /* بابُ الطلبِ يُغلق قبل البدءِ بـ١٢ ساعة، ومهلةُ الردّ ٤ — فلا
+         يُوضع طلبٌ معلّقٌ إلّا على مهمّةٍ أبعدَ من ذلك، وإلّا انقضى
+         ساعةَ وُضع فنقل المهمّةَ إلى «غير منجزة» وأفرغ «اليوم». */
+    const openT = future.filter(t => t !== cx && t.start > Date.now() + (REQ_CLOSE_H + 2) * HR);
+    team.forEach((M, mi) => {
+      const t = openT[mi % openT.length]; if (!t) { return; }
+      const a = t.assigned.find(x => x.muhsenId === M.id); if (!a) { return; }
+      a.req = "pending"; a.auto = false;
+      a.reqAt = Date.now() - (18 + mi * 7) * MIN;
+      a.reqNote = RQ_LIFE[0].n;
+      a.respAt = null; a.respNote = "";
+    });
+    /* تفويضٌ معلّقٌ على أوّلِ الفريق — بابٌ ثانٍ مختلفُ الإجراء */
+    const dgT = openT[openT.length - 1];
+    if (dgT && team[0] && !dgT.delegate) {
+      dgT.delegate = { muhsenId: team[0].id, state: "pending",
+        at: Date.now() - 90 * MIN, note: RQ_LIFE[2].n, respAt: null };
+    }
+
+    /* تذكرةٌ على الليدر نفسِه ليمتلئ تصنيفُ «لديّ» عنده */
+    tkOf(team[0], li + 2, 'مُسندة', L.id, 40 + li * 6, false);
+  });
+
+  /* ── التنبيهات: أربعةُ أنواعٍ لكلِّ شخصٍ فتمتلئ «غيرُ المقروءة»
+       و«يحتاج إجراءً» و«الكلّ» معًا، ولا تبقى الشاشةُ خاوية ── */
+  const NOTE_SET = [
+    { i:"i-assign", t:"طلب تسكين جديد",      b:"وصلك طلبُ تسكينٍ على مهمّةٍ قادمة — بانتظار ردّك.", h:2,  read:false },
+    { i:"i-warn",   t:"تأخر إثبات حضور",     b:"تأخرت بداية المهمّة عن موعدها — راجع الحضور.",     h:6,  read:false },
+    { i:"i-checkc", t:"اعتُمد الانسحاب",      b:"قبِل الليدرُ انسحابَك، وأُخرجتَ من التسكين.", h:21, read:true  },
+    { i:"i-ticket", t:"تذكرة جديدة من حاجّ",  b:"رُفعت تذكرةٌ جديدةٌ على فوجك — فُتحت للمتابعة.",   h:30, read:true  },
+    { i:"i-info",   t:"تذكير الكنترول",       b:"تذكيرٌ من غرفة العمليات بموعد التجمّع قبل الجولة.", h:44, read:true  }
+  ];
+  st.users.filter(u => !u.reserve && !u.admin).forEach((u, ui) => {
+    NOTE_SET.forEach((n, k) => {
+      st.notifs.push({ id: uid("N"), to: u.id, icon: n.i, title: n.t, body: n.b,
+        /* ختمٌ صحيحٌ: الكسرُ كان يُخرج «قبل NaN» في سطر الوقت */
+        at: Math.round(Date.now() - (n.h * 60 + ui * 18 + k * 6) * MIN),
+        read: n.read, route: null });
+    });
+  });
+  st.notifs.sort((a, b) => b.at - a.at);
+
+  st.requests.sort((a, b) => b.at - a.at);
+  st.tickets.sort((a, b) => b.at - a.at);
+  return st;
+}
+
 /* ============================ أدوات العرض ============================ */
 const E = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 /* الأيقونةُ زخرفيّةٌ دائمًا في هذا التطبيق: ما من أيقونةٍ تحمل معنًى
@@ -29880,6 +30205,9 @@ const icon = (n, cls) => '<svg class="ic ' + (cls || '') +
   '" aria-hidden="true" focusable="false"><use href="#' + n + '"/></svg>';
 const avat = (u, cls) => '<span class="av ' + (cls || '') + ' ' + u.av + '"><svg viewBox="0 0 44 44"><use href="#av-' + u.g + '"/></svg></span>';
 const pill = (t, c) => '<span class="pill ' + c + '">' + E(t) + '</span>';
+/* حبّةٌ بمحتوًى جاهزٍ: تُستعمل حين تُفصل التسميةُ عن قيمةٍ تُهرَّب
+   وحدَها، فالعقدتان تُطابقان المعجمَ والاسمُ يبقى كما هو. */
+const pillH = (h, c) => '<span class="pill ' + c + '">' + h + '</span>';
 
 /* ============================================================
    ملاحظةٌ عابرة — تُقال لسببٍ ثمّ تنصرف
@@ -31247,7 +31575,7 @@ function reqActionCard(r) {
         '<span class="tiny dim2">' + E(t.place) + ' · ' + AR(t.subs.length) + ' مهمة فرعية</span></span></div>' +
       (a && a.reqNote ? '<div class="note a">' + icon('i-edit','s16') + '<span>' + E(a.reqNote) + '</span></div>' : '') +
       '<div class="fl tiny dim2" style="margin:8px 0">' + avat(userById(t.leaderId), 'sm') +
-        '<span>من ' + E(userById(t.leaderId).name) + ' · ' + (a ? ago(a.reqAt) : '') + '</span></div>' +
+        '<span><i>من</i> ' + E(userById(t.leaderId).name) + ' · <i>' + (a ? ago(a.reqAt) : '') + '</i></span></div>' +
       (a ? '<div class="strip a">' + (exc ? exCountdown(a) : reqCountdown(t, a)) + '</div>' : '') +
       '<div class="grid2" style="margin-top:8px">' +
       '<button class="btn d sm" data-a="' + (exc ? 'rex' : rep ? 'rrepl' : 'resp') + '" data-id="' + t.id + '" data-v="0">' +
@@ -31377,7 +31705,7 @@ function ticketRowDGA(k) {
       pill(k.pri, PRI_C[k.pri]) +
       pill(k.cat, 'grey') +
       (t ? pill(t.title, 'blue') : '') +
-      (k.assignedTo ? pill('لدى ' + userById(k.assignedTo).name.split(' ')[0], 'live') : '') +
+      (k.assignedTo ? pillH('<i>لدى</i> ' + E(userById(k.assignedTo).name.split(' ')[0]), 'live') : '') +
       (k.replies.length ? pill(AR(k.replies.length) + ' رد', 'grey') : '') +
     '</div>' +
     '<button class="btn l sm" data-a="go" data-n="ticket" data-id="' + k.id + '">' +
@@ -31502,7 +31830,8 @@ function screenTaskRating() {
 const NKIND = [
   { k:'bad',   c:'#C0392B', i:'i-warn',   t:'يحتاج إجراءً',
     re:/تأخر|تأخرت|تخلّف|رفض|رُفض|أُزلت|أُلغيت|بدأها النظام|تجاوزت|خارج النطاق/ },
-  { k:'ask',   c:'#B8791A', i:'i-assign', t:'بانتظار ردّك',
+  /* ذهبٌ أغمقُ قليلًا: الأوّلُ كان ٣٫١٨:١ على حبّته الشاحبة */
+  { k:'ask',   c:'#8A5A10', i:'i-assign', t:'بانتظار ردّك',
     re:/طلب|تسكين|تفويض|إسناد|تبديل|بلا رد|تحتاج|راجع/ },
   { k:'ok',    c:'#0B8A4B', i:'i-checkc', t:'تمّ',
     re:/قبول|قبِل|اعتُمد|اكتمل|أثبت|حضّر|أُغلقت|أُنجزت|تحضير/ },
@@ -32311,9 +32640,9 @@ function reqCardFull(r, actionable) {
       (r.respAt ? '<span>الرد ' + t12(r.respAt) + '</span>' : '<span>' + ago(r.at) + '</span>') + '</div>' +
 
     (r.note ? '<div class="note a" style="margin-top:8px">' + icon('i-edit','s16') +
-      '<span>ملاحظة المرسِل: ' + E(r.note) + '</span></div>' : '') +
+      '<span><i>ملاحظة المرسِل</i>: ' + E(r.note) + '</span></div>' : '') +
     (r.respNote ? '<div class="note ' + (r.state === 'rejected' ? 'r' : 'g') + '" style="margin-top:8px">' +
-      icon('i-info','s16') + '<span>رد المستقبِل: ' + E(r.respNote) + '</span></div>' : '') +
+      icon('i-info','s16') + '<span><i>رد المستقبِل</i>: ' + E(r.respNote) + '</span></div>' : '') +
     (r.respPhoto ? excuseChip(r.respPhoto) : '') +
     (urgent ? '<div class="strip r">' + icon('i-warn','s16') +
       '<span>اقترب إغلاق الطلبات على هذه المهمة</span></div>' : '') +
@@ -35906,7 +36235,7 @@ const SCREENS = {
    مركزَ الطلبات ولا تسلسلَ الإجراءات ولا قائمةَ المحسنين. */
 const roleOut = () => (isLeader()
   ? ['requests', 'rides']
-  : ['lreq', 'timeline', 'muhsens'])
+  : ['lreq', 'timeline', 'muhsens', 'assign'])
   /* لوحةُ النظام لحساب النظام وحدَه: البابُ مخفيٌّ والوجهةُ مردودة.
      فلا يكفي إخفاءُ الزرّ — من كتب الوجهةَ يُردّ كذلك. */
   .concat(isAdmin() ? [] : ['admin']);
