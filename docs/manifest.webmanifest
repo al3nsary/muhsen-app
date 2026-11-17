@@ -29,5 +29,35 @@
       "type": "image/png",
       "purpose": "maskable"
     }
+  ],
+  "screenshots": [
+    {
+      "src": "shot-home.png",
+      "sizes": "500x880",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "الرئيسيّة: المهمّةُ الجاريةُ وأرقامُ اليوم"
+    },
+    {
+      "src": "shot-tasks.png",
+      "sizes": "500x880",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "المهامّ: القائمةُ والتصنيفُ والفرز"
+    },
+    {
+      "src": "shot-task.png",
+      "sizes": "500x880",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "المهمّة: التفاصيلُ والفرعيّاتُ والحضور"
+    },
+    {
+      "src": "shot-mhome.png",
+      "sizes": "500x880",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "المحسن: مهمّتُه وطلباتُه"
+    }
   ]
 }

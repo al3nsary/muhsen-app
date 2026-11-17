@@ -34,7 +34,7 @@
     --gold:#A8875A; --gold2:#C6A86F;
     --ink:#101914; --dim:#4C5A53; --dim2:#596860;
     --pGreenB:#E7F0EA; --pGoldB:#F5EEE3; --pRedB:#FBEAE7;
-    --bg:#FCFBF8; --amber:#B8791A; --red:#C0392B;
+    --bg:#FCFBF8; --amber:#B8791A; --red:#C0392B; --badge-bg:#C0392B;
     --card:0 0 0 1px var(--line);   /* نظامُهم: البطاقةُ بحدٍّ لا بظلّ — وحلقةٌ بـbox-shadow لا تزيح المقاس */
     --f:"IBM Plex Sans Arabic","Almarai","SF Arabic","Segoe UI",system-ui,sans-serif;
 
@@ -172,7 +172,7 @@
   .tabs .tl,.tabs .hl{display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%}
   /* شعارُ مُحسن: هو أيقونةُ وجهته، بمقاس أيقوناتهم لا قرصًا طافيًا */
   .tabs .hb{             ;                   }
-  .badge{position:absolute; top:-6px; inset-inline-start:-9px; background:var(--red); color:#fff; font-size:0.75rem;
+  .badge{position:absolute; top:-6px; inset-inline-start:-9px; background:var(--badge-bg,var(--red)); color:#fff; font-size:0.75rem;
     line-height:18px; min-width:16px; height:16px; border-radius:var(--r-md); display:grid; place-items:center;
     font-weight:600; padding:0 var(--sp-xs)}
 
@@ -791,7 +791,7 @@
   .drop .cnt { background:var(--bg-soft2) !important; color: var(--g) !important; }
   .ghero span span { font-size:0.75rem; }
 
-  .kpicker { display: flex; gap:6px; overflow-x: auto; scrollbar-width: none; padding-bottom:2px; }
+  .kpicker { display: flex; gap:8px; overflow-x: auto; scrollbar-width: none; padding-bottom:2px; }
   .kpicker::-webkit-scrollbar { display: none; }
   .kpicker button {
     flex: none; display: flex; flex-direction: column; align-items: center; gap:4px;
@@ -1765,7 +1765,7 @@
     --ink:#E8EEE9; --dim:#9AA89F; --dim2:#7B887F;
     --g:#4FAE86; --g2:#0A1711; --g3:#3E9E78; --live:#49C98A;
     --gold:#C6A86F; --gold2:#E0C68F;
-    --amber:#D79C3E; --red:#E0695C;
+    --amber:#D79C3E; --red:#E0695C; --badge-bg:#D23B2C;
     --n25:#0F1812; --n50:#141E18; --n100:#1A2620; --n200:#22302A;
     --n300:#2C3A33; --n400:#425049; --n500:#8A978E; --n700:#C3CDC6;
     --n800:#DCE4DE; --n950:#F0F4F1;
@@ -2815,7 +2815,7 @@
   /* الشارةُ واحدةُ الشكل على كلّ أيقونة */
   .tabs .badge{ position:absolute; top:-6px; inset-inline-end:-9px; inset-inline-start:auto;
     min-width:16px; height:16px; padding:0 var(--sp-xs); border-radius:var(--r-full);
-    background:var(--red); color:#fff; font-size:0.75rem; line-height:16px;
+    background:var(--badge-bg,var(--red)); color:#fff; font-size:0.75rem; line-height:16px;
     font-weight:600; display:grid; place-items:center }
 
   /* الارتفاعُ الأدنى لأهدافِ اللمس — سقط مع القواعد المحذوفة فأُعيد */
@@ -3483,7 +3483,7 @@
     display:grid; place-items:center; background:transparent; color:var(--n500) }
   .uxdrawitem:active{ background:var(--ux-s2) }
   .uxdrawitem .num{ min-width:24px; height:24px; padding:0 var(--sp-md);
-    border-radius:var(--r-full); background:var(--red); color:#fff;
+    border-radius:var(--r-full); background:var(--badge-bg,var(--red)); color:#fff;
     font-size:0.75rem; line-height:24px; font-weight:600; text-align:center; flex:none }
 
   /* ── الزجاجيّة: شبكةُ بلاطاتٍ تملأ الشاشة ── */
@@ -7165,7 +7165,7 @@
     --ink:#EDF3EF; --dim:rgba(237,243,239,.72); --dim2:rgba(237,243,239,.56);
     --g:#8FD3B0; --g2:#0E1C15; --g3:#7CC8A2; --live:#6FD6A4;
     --gold:#C9A978; --gold2:#DCC08C;
-    --amber:#E0B268; --red:#F08C80;
+    --amber:#E0B268; --red:#F08C80; --badge-bg:#D23B2C;
     --n25:rgba(255,255,255,.03); --n50:rgba(255,255,255,.045);
     --n100:rgba(255,255,255,.065); --n200:rgba(255,255,255,.09);
     --n300:rgba(255,255,255,.13); --n400:rgba(255,255,255,.2);
@@ -9382,7 +9382,7 @@
     background:transparent; color:var(--g);
     font-family:inherit; font-size:0.8125rem; line-height:18px; font-weight:600;
     cursor:pointer; text-align:center }
-  .pactbtn span{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+  .pactbtn span{ min-width:0; white-space:normal; overflow-wrap:anywhere; text-align:center }
   .pactbtn:active{ transform:scale(.985) }
   .pactbtn:focus-visible{ outline:2px solid var(--g); outline-offset:2px }
 
@@ -9682,7 +9682,7 @@
   }:root[data-legacy] .ghero .gicon{
     width: 46px; height: 46px; border-radius: 15px; display: grid; place-items: center;
     background: rgba(255,255,255,.18); flex: none;
-  }:root[data-legacy] .ghero b{ display: block; font-size: 15px; line-height: 1.5; }:root[data-legacy] .drop .cnt{ background: #EFF4F0 !important; color: var(--g) !important; }:root[data-legacy] .ghero span span{ font-size: 11px; opacity: .85; }:root[data-legacy] .kpicker{ display: flex; gap: 7px; overflow-x: auto; scrollbar-width: none; padding-bottom: 3px; }:root[data-legacy] .kpicker::-webkit-scrollbar{ display: none; }:root[data-legacy] .kpicker button{
+  }:root[data-legacy] .ghero b{ display: block; font-size: 15px; line-height: 1.5; }:root[data-legacy] .drop .cnt{ background: #EFF4F0 !important; color: var(--g) !important; }:root[data-legacy] .ghero span span{ font-size: 11px; opacity: .85; }:root[data-legacy] .kpicker{ display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 3px; }:root[data-legacy] .kpicker::-webkit-scrollbar{ display: none; }:root[data-legacy] .kpicker button{
     flex: none; display: flex; flex-direction: column; align-items: center; gap: 5px;
     width: 78px; padding: 10px 6px; border-radius: 16px; background: #fff;
     box-shadow: var(--card); font-size: 10px; color: #5A6C63; position: relative;
@@ -10360,7 +10360,7 @@
      هو ما يأذن لعنصر الشبكةِ بالانكماش. */
   .pactsrow > *{ min-width:0 }
   .pactbtn{ min-width:0; max-width:100% }
-  .pactbtn span{ min-width:0; flex:0 1 auto }
+  .pactbtn span{ min-width:0; flex:0 1 auto; white-space:normal }
 
   /* وعنوانُ الإعدادات في الأصليّة يُقَصّ في الماليزيّة: يُلَفّ */
   :root[data-legacy] .view b{ overflow-wrap:break-word }
@@ -10602,6 +10602,22 @@
 
   /* زرُّ «رفض» على بطاقةِ الطلبِ في الخضراء: ٣٫٦٩:١ → ٤٫٥٥:١ */
   :root[data-ident="green"] .c .grid2 > .btn.d.sm{ color:#F5A69B !important }
+</style>
+<style>
+  /* منطقةُ اللمسِ أوسعُ من المنظر: الحبّةُ والشطرُ يبقيان بمقاسهما
+     المعتمد، و‎::before‎ شفّافٌ يمدُّ ما يُلمَس إلى ٤٤×٤٤. وهو يلتقط
+     اللمسَ فعلًا — لا ‎pointer-events:none‎ — وإلّا كان توسيعًا في
+     القياس دون توسيعٍ في اليد. و‎::after‎ مشغولٌ بموجةِ الدافئة،
+     فأُخِذ الزائفُ الآخر. والإزاحةُ ماديّةٌ بـ‎left‎ لا منطقيّةٌ،
+     فـ‎translateX‎ لا يقلبه ‎dir‎. */
+  :root .uxseg > button, :root .uxchipbar .uxchip, :root .uxchiprow .uxfchip,
+  :root .seg > button, :root .subrow .sshot{ position:relative; overflow:visible }
+  :root .uxseg > button::before, :root .uxchipbar .uxchip::before,
+  :root .uxchiprow .uxfchip::before, :root .seg > button::before,
+  :root .subrow .sshot::before{
+    content:""; position:absolute; left:50%; top:50%;
+    width:44px; height:44px; transform:translate(-50%,-50%);
+    border-radius:inherit }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
